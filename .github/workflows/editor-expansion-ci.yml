@@ -10,6 +10,7 @@ on:
       - "packages/animation-editor-core/**"
       - "packages/art-direction/**"
       - "packages/bitmap-font/**"
+      - "packages/bitmap-font-editor-core/**"
       - "packages/asset-pipeline/**"
       - "packages/project-editor-core/**"
       - "packages/editor-core/**"
@@ -31,6 +32,7 @@ on:
       - "packages/animation-editor-core/**"
       - "packages/art-direction/**"
       - "packages/bitmap-font/**"
+      - "packages/bitmap-font-editor-core/**"
       - "packages/asset-pipeline/**"
       - "packages/project-editor-core/**"
       - "packages/editor-core/**"
@@ -93,6 +95,7 @@ jobs:
           packages/animation-editor-core/tests
           packages/art-direction/tests
           packages/bitmap-font/tests
+          packages/bitmap-font-editor-core/tests
           packages/asset-pipeline/tests/art-evidence.test.ts
           packages/compiler/tests/bitmap-font-compilation.test.ts
           packages/runtime-bundle/tests/bitmap-font-runtime.test.ts
