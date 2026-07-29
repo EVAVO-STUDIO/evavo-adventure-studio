@@ -7,6 +7,11 @@ import type {
   Scalar,
 } from "@evavo/adventure-project-schema";
 
+export interface ActiveDialogueState {
+  readonly dialogueId: Id<"dialogue">;
+  readonly nodeId: Id<"dialogue-node">;
+}
+
 export interface RuntimeState {
   readonly schemaVersion: 1;
   readonly projectId: Id<"project">;
@@ -18,6 +23,8 @@ export interface RuntimeState {
   readonly inventory: readonly Id<"item">[];
   readonly awardedScoreIds: readonly Id<"score-award">[];
   readonly consumedInteractionIds: readonly Id<"interaction">[];
+  readonly consumedDialogueChoiceIds: readonly Id<"dialogue-choice">[];
+  readonly activeDialogue: ActiveDialogueState | null;
   readonly objectStates: Readonly<Record<string, string>>;
   readonly randomStreams: Readonly<Record<string, number>>;
   readonly score: number;
@@ -50,6 +57,11 @@ export type RuntimeEvent =
     }
   | { readonly kind: "sequence-requested"; readonly sequenceId: Id<"sequence"> }
   | {
+      readonly kind: "dialogue-requested";
+      readonly dialogueId: Id<"dialogue">;
+      readonly nodeId: Id<"dialogue-node"> | null;
+    }
+  | {
       readonly kind: "object-state-changed";
       readonly objectId: Id<"object">;
       readonly state: string;
@@ -57,6 +69,19 @@ export type RuntimeEvent =
   | {
       readonly kind: "interaction-completed";
       readonly interactionId: Id<"interaction">;
+    }
+  | {
+      readonly kind: "dialogue-choice-completed";
+      readonly choiceId: Id<"dialogue-choice">;
+    }
+  | {
+      readonly kind: "dialogue-node-entered";
+      readonly dialogueId: Id<"dialogue">;
+      readonly nodeId: Id<"dialogue-node">;
+    }
+  | {
+      readonly kind: "dialogue-ended";
+      readonly dialogueId: Id<"dialogue">;
     }
   | {
       readonly kind: "random-generated";
@@ -108,6 +133,8 @@ export const createInitialState = (
     inventory: [],
     awardedScoreIds: [],
     consumedInteractionIds: [],
+    consumedDialogueChoiceIds: [],
+    activeDialogue: null,
     objectStates: {},
     randomStreams: { main: normalizeSeed(seed) },
     score: 0,
@@ -178,6 +205,8 @@ export const evaluateCondition = (
       return state.inventory.includes(condition.itemId);
     case "interaction-used":
       return state.consumedInteractionIds.includes(condition.interactionId);
+    case "dialogue-choice-used":
+      return state.consumedDialogueChoiceIds.includes(condition.choiceId);
     case "all":
       return condition.conditions.every((child) => evaluateCondition(child, state));
     case "any":
@@ -279,6 +308,17 @@ const applyAction = (state: RuntimeState, action: Action): RuntimeTransition => 
       return {
         state,
         events: [{ kind: "sequence-requested", sequenceId: action.sequenceId }],
+      };
+    case "start-dialogue":
+      return {
+        state,
+        events: [
+          {
+            kind: "dialogue-requested",
+            dialogueId: action.dialogueId,
+            nodeId: action.nodeId ?? null,
+          },
+        ],
       };
     case "set-object-state":
       return {
