@@ -9,6 +9,7 @@
   "include": ["src/**/*.ts", "src/**/*.tsx", "tests/**/*.ts", "tests/**/*.tsx"],
   "references": [
     { "path": "../../packages/project-schema" },
+    { "path": "../../packages/project-editor-core" },
     { "path": "../../packages/scene-instances" },
     { "path": "../../packages/editor-core" }
   ]
