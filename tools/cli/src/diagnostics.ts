@@ -1,0 +1,57 @@
+export interface CliDiagnostic {
+  readonly severity: "error" | "warning";
+  readonly source:
+    | "cli"
+    | "project-file"
+    | "project-schema"
+    | "project-semantics"
+    | "asset-manifest-file"
+    | "asset-manifest-schema"
+    | "asset-manifest-semantics"
+    | "asset-evidence";
+  readonly code: string;
+  readonly path: string;
+  readonly message: string;
+}
+
+export class CliDataError extends Error {
+  readonly diagnostics: readonly CliDiagnostic[];
+
+  constructor(diagnostics: readonly CliDiagnostic[]) {
+    super(diagnostics[0]?.message ?? "Input validation failed.");
+    this.name = "CliDataError";
+    this.diagnostics = diagnostics;
+  }
+}
+
+export const errorCode = (error: unknown): string | null =>
+  typeof error === "object" && error !== null && "code" in error
+    ? String((error as { readonly code: unknown }).code)
+    : null;
+
+export const sortDiagnostics = (
+  diagnostics: readonly CliDiagnostic[],
+): readonly CliDiagnostic[] =>
+  [...diagnostics].sort((left, right) => {
+    const severityDifference = left.severity.localeCompare(right.severity);
+    if (severityDifference !== 0) {
+      return severityDifference;
+    }
+    const sourceDifference = left.source.localeCompare(right.source);
+    if (sourceDifference !== 0) {
+      return sourceDifference;
+    }
+    const pathDifference = left.path.localeCompare(right.path);
+    return pathDifference !== 0
+      ? pathDifference
+      : left.code.localeCompare(right.code);
+  });
+
+export const hasErrors = (
+  diagnostics: readonly CliDiagnostic[],
+): boolean => diagnostics.some((diagnostic) => diagnostic.severity === "error");
+
+export const formatDiagnostic = (diagnostic: CliDiagnostic): string =>
+  `${diagnostic.severity.toUpperCase()} ${diagnostic.source}:${
+    diagnostic.code
+  } ${diagnostic.path} — ${diagnostic.message}`;
