@@ -1,4 +1,3 @@
-import type { RuntimeAssetRecord } from "@evavo/adventure-asset-contract/runtime-asset";
 import type { Id } from "@evavo/adventure-project-schema";
 import type { ResolvedFrame } from "@evavo/adventure-render-contract";
 import type { RuntimeBundle } from "@evavo/adventure-runtime-bundle";
@@ -13,9 +12,11 @@ import { uiSkinById, type UiSkin } from "@evavo/adventure-ui-skin";
 import type { SoftwareCursorState } from "./input.js";
 import { appendNativeStatusPanel } from "./native-status.js";
 
+type RuntimeAsset = RuntimeBundle["assets"][number];
+
 const runtimeAssetsById = (
   bundle: Pick<RuntimeBundle, "assets">,
-): ReadonlyMap<string, RuntimeAssetRecord> =>
+): ReadonlyMap<string, RuntimeAsset> =>
   new Map(bundle.assets.map((asset) => [asset.assetId as string, asset] as const));
 
 export const createRuntimeUiGeometryResolver = (
