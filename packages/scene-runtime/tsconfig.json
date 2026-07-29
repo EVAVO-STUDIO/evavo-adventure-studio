@@ -1,0 +1,19 @@
+{
+  "extends": "../../tsconfig.package.json",
+  "compilerOptions": {
+    "rootDir": ".",
+    "outDir": "dist"
+  },
+  "include": ["src/**/*.ts", "tests/**/*.ts"],
+  "references": [
+    { "path": "../project-schema" },
+    { "path": "../asset-contract" },
+    { "path": "../core" },
+    { "path": "../animation" },
+    { "path": "../scene" },
+    { "path": "../render-contract" },
+    { "path": "../frame-resolver" },
+    { "path": "../scene-instances" },
+    { "path": "../runtime-bundle" }
+  ]
+}
