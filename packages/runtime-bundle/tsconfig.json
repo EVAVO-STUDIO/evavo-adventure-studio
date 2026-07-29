@@ -9,6 +9,7 @@
     { "path": "../asset-contract" },
     { "path": "../bitmap-font" },
     { "path": "../project-schema" },
-    { "path": "../scene-instances" }
+    { "path": "../scene-instances" },
+    { "path": "../ui-skin" }
   ]
 }
