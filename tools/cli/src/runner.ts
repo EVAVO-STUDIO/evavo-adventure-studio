@@ -12,6 +12,10 @@ import {
   type AssetBuildManifest,
   type CompiledOutputFile,
 } from "@evavo/adventure-asset-contract";
+import {
+  portablePathKey,
+  validatePortableRuntimePaths,
+} from "@evavo/adventure-asset-contract/portable-path";
 import { compileProject } from "@evavo/adventure-compiler";
 import {
   parseAdventureProject,
@@ -39,10 +43,9 @@ export const CLI_VERSION = "0.1.0";
 
 const BUNDLE_FILE_NAME = "game.bundle.json";
 const RELEASE_MANIFEST_FILE_NAME = "release.manifest.json";
-const RESERVED_RELEASE_PATHS = new Set([
-  BUNDLE_FILE_NAME,
-  RELEASE_MANIFEST_FILE_NAME,
-]);
+const RESERVED_RELEASE_PATHS = new Set(
+  [BUNDLE_FILE_NAME, RELEASE_MANIFEST_FILE_NAME].map(portablePathKey),
+);
 
 export interface CliDiagnostic {
   readonly severity: "error" | "warning";
@@ -405,6 +408,10 @@ const loadInputs = async (
       ...issue,
       source: "asset-manifest-semantics" as const,
     })),
+    ...validatePortableRuntimePaths(assetManifest).map((issue) => ({
+      ...issue,
+      source: "asset-manifest-semantics" as const,
+    })),
   );
   const fingerprintDiagnostic = manifestFingerprintDiagnostic(assetManifest);
   if (fingerprintDiagnostic) {
@@ -597,6 +604,11 @@ const runCompile = async (
   return 0;
 };
 
+const isReservedReleasePath = (runtimePath: string): boolean => {
+  const firstSegment = runtimePath.split("/")[0] ?? "";
+  return RESERVED_RELEASE_PATHS.has(portablePathKey(firstSegment));
+};
+
 const readRuntimeOutputs = async (
   manifestPath: string,
   manifest: AssetBuildManifest,
@@ -614,13 +626,13 @@ const readRuntimeOutputs = async (
         ? roleDifference
         : left.runtimePath.localeCompare(right.runtimePath);
     })) {
-      if (RESERVED_RELEASE_PATHS.has(output.runtimePath)) {
+      if (isReservedReleasePath(output.runtimePath)) {
         diagnostics.push({
           severity: "error",
           source: "asset-evidence",
           code: "reserved-release-path",
           path: `${asset.assetId}.output:${output.runtimePath}`,
-          message: `Runtime path '${output.runtimePath}' is reserved by the release package.`,
+          message: `Runtime path '${output.runtimePath}' conflicts with a reserved release file.`,
         });
         continue;
       }
