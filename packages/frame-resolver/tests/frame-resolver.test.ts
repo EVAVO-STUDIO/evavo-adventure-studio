@@ -64,6 +64,8 @@ describe("resolved frame composition", () => {
     expect(node.transform.pivot).toEqual(frame.footPoint);
     expect(node.transform.scale.x).toBeLessThan(0);
     expect(node.transform.scale.y).toBeCloseTo(0.8646666667);
+    expect(node.assetId).toBe(frame.assetId);
+    expect(node.frameId).toBe(frame.id);
     expect(node.sourceRect).toEqual(frame.sourceRect);
     expect(node.originalSize).toEqual(frame.sourceSize);
     expect(node.trimOffset).toEqual(frame.trimOffset);
