@@ -7,6 +7,7 @@
     { "path": "packages/sequence-editor-core" },
     { "path": "packages/narrative-library-editor-core" },
     { "path": "packages/animation-editor-core" },
+    { "path": "packages/art-direction" },
     { "path": "packages/asset-contract" },
     { "path": "packages/core" },
     { "path": "packages/scene" },
