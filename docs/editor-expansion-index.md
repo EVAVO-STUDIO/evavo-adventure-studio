@@ -7,6 +7,7 @@ This index maps the current authoring surfaces to their canonical data and comma
 | Scene Composer | `/?workspace=composer` | scene composition manifest | `@evavo/adventure-editor-core` |
 | Project Geometry | `/?workspace=geometry` | source `project.json` scenes | `@evavo/adventure-project-editor-core` |
 | Object States | `/?workspace=objects` | scene composition object definitions | `@evavo/adventure-editor-core` |
+| Sprite & Animation | `/?workspace=animation` | focused actor definition | `@evavo/adventure-animation-editor-core` |
 | Dialogue | `/?workspace=dialogue` | focused dialogue graph | `@evavo/adventure-dialogue-editor-core` |
 | Validation | `/?workspace=validation` | source project plus scene composition | canonical validators |
 | Cinematic Timeline Lab | port `5175` | focused sequence | `@evavo/adventure-sequence-editor-core` |
@@ -26,9 +27,11 @@ All command packages use:
 
 ## Focused documents and project integration
 
-Dialogue graphs and cinematic sequences are edited as focused documents for usable tooling. They are not independent shipping formats.
+Dialogue graphs, cinematic sequences and actors are edited as focused documents for usable tooling. They are not independent shipping formats.
 
-When saved into a project, the Narrative Project Library performs protected replacement in canonical `project.json`. Typed action callers prevent unsafe removal.
+The Narrative Project Library performs protected dialogue and sequence replacement in canonical `project.json`. Typed action callers prevent unsafe removal.
+
+The animation project-integration contract performs protected actor replacement. It rejects global ID collisions and missing performance states or facings requested by dialogue and cinematic cues.
 
 ## Verification
 
@@ -53,6 +56,7 @@ pnpm exec vitest run `
   packages/dialogue-editor-core/tests `
   packages/sequence-editor-core/tests `
   packages/narrative-library-editor-core/tests `
+  packages/animation-editor-core/tests `
   apps/studio/tests `
   apps/timeline-lab/tests
 pnpm --filter @evavo/adventure-studio-app build
