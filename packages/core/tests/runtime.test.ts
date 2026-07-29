@@ -21,6 +21,8 @@ const createState = (): RuntimeState => ({
   inventory: [],
   awardedScoreIds: [],
   consumedInteractionIds: [],
+  consumedDialogueChoiceIds: [],
+  activeDialogue: null,
   objectStates: {},
   randomStreams: { main: 123456789 },
   score: 0,
@@ -56,6 +58,18 @@ describe("deterministic runtime", () => {
     expect(state.score).toBe(0);
   });
 
+  it("evaluates consumed dialogue choice memory", () => {
+    const choiceId = id<"dialogue-choice">("choice.ask-about-ledger");
+    const state: RuntimeState = {
+      ...createState(),
+      consumedDialogueChoiceIds: [choiceId],
+    };
+
+    expect(
+      evaluateCondition({ kind: "dialogue-choice-used", choiceId }, state),
+    ).toBe(true);
+  });
+
   it("awards each score event at most once", () => {
     const award = {
       kind: "award-score" as const,
@@ -70,6 +84,24 @@ describe("deterministic runtime", () => {
     expect(first.events).toHaveLength(1);
     expect(second.state.score).toBe(10);
     expect(second.events).toHaveLength(0);
+  });
+
+  it("emits dialogue requests without guessing graph state", () => {
+    const transition = applyActions(createState(), [
+      {
+        kind: "start-dialogue",
+        dialogueId: id<"dialogue">("dialogue.receptionist"),
+      },
+    ]);
+
+    expect(transition.state.activeDialogue).toBeNull();
+    expect(transition.events).toEqual([
+      {
+        kind: "dialogue-requested",
+        dialogueId: "dialogue.receptionist",
+        nodeId: null,
+      },
+    ]);
   });
 
   it("rejects a consumed one-time interaction", () => {
