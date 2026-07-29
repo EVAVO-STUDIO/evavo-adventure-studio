@@ -8,6 +8,7 @@ import { StudioErrorBoundary } from "./ErrorBoundary.js";
 import { FontApp } from "./FontApp.js";
 import { GeometryApp } from "./GeometryApp.js";
 import { ObjectApp } from "./ObjectApp.js";
+import { UiSkinApp } from "./UiSkinApp.js";
 import { ValidationApp } from "./ValidationApp.js";
 import "./style.css";
 import "./switcher.css";
@@ -29,6 +30,8 @@ const application: ReactNode =
     <ArtDirectionApp />
   ) : workspace === "fonts" ? (
     <FontApp />
+  ) : workspace === "interface" ? (
+    <UiSkinApp />
   ) : workspace === "dialogue" ? (
     <DialogueApp />
   ) : workspace === "validation" ? (
@@ -47,6 +50,7 @@ const workspaces = [
   { id: "animation", href: "/?workspace=animation", label: "Animation" },
   { id: "art", href: "/?workspace=art", label: "Art" },
   { id: "fonts", href: "/?workspace=fonts", label: "Fonts" },
+  { id: "interface", href: "/?workspace=interface", label: "Interface" },
   { id: "dialogue", href: "/?workspace=dialogue", label: "Dialogue" },
   { id: "validation", href: "/?workspace=validation", label: "Validate" },
 ] as const;
@@ -56,6 +60,7 @@ const activeWorkspace =
   workspace === "animation" ||
   workspace === "art" ||
   workspace === "fonts" ||
+  workspace === "interface" ||
   workspace === "dialogue" ||
   workspace === "validation"
     ? workspace
