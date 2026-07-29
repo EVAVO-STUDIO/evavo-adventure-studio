@@ -46,10 +46,7 @@ export const resolveActorSprite = (
     input.presentation.pixelMotionPolicy,
     "entity",
   );
-  const scaleSolution = resolveScaleAtY(
-    input.depthBands,
-    position.y,
-  );
+  const scaleSolution = resolveScaleAtY(input.depthBands, position.y);
   const perspectiveScale = scaleSolution?.scale ?? 1;
   const scale = perspectiveScale * (input.scaleMultiplier ?? 1);
   if (!Number.isFinite(scale) || scale <= 0) {
@@ -78,6 +75,7 @@ export const resolveActorSprite = (
     opacity: input.opacity ?? 1,
     visible: input.visible ?? true,
     assetId: input.frame.assetId,
+    frameId: input.frame.id,
     sourceRect: input.frame.sourceRect,
     originalSize: input.frame.sourceSize,
     trimOffset: input.frame.trimOffset,
@@ -122,7 +120,9 @@ export const buildResolvedFrame = (
   input: FrameBuildInput,
 ): FrameBuildResult => {
   if (!Number.isSafeInteger(input.tick) || input.tick < 0) {
-    throw new RangeError("Resolved frame tick must be a non-negative safe integer.");
+    throw new RangeError(
+      "Resolved frame tick must be a non-negative safe integer.",
+    );
   }
 
   const frame: ResolvedFrame = {
