@@ -9,6 +9,12 @@ import type {
   SolidRectangleRenderNode,
 } from "@evavo/adventure-render-contract";
 import { PixiWebGLRenderer } from "@evavo/adventure-renderer-pixi";
+import { PixiAssetTextureStore } from "@evavo/adventure-renderer-pixi/texture-store";
+import type { RuntimeBundle } from "@evavo/adventure-runtime-bundle";
+import {
+  createRuntimeStartFrame,
+  loadRuntimeBundle,
+} from "./runtime-loader.js";
 import "./style.css";
 
 const id = <T extends string>(value: string) => value as Id<T>;
@@ -147,26 +153,27 @@ const createLaboratoryFrame = (tick: number): ResolvedFrame => {
   };
 };
 
-const boot = async (): Promise<void> => {
-  const host = document.querySelector<HTMLElement>("#player-host");
-  if (!host) {
-    throw new Error("Player host element was not found.");
-  }
+interface MountedPlayer {
+  readonly renderer: PixiWebGLRenderer;
+  readonly disposeAdditional?: () => Promise<void>;
+  readonly ticksPerSecond: number;
+  readonly createFrame: (tick: number) => ResolvedFrame;
+}
 
-  const renderer = new PixiWebGLRenderer({
-    textures: {
-      getTexture: () => null,
-    },
-  });
-  await renderer.initialize(
+const mountPlayer = async (
+  host: HTMLElement,
+  player: MountedPlayer,
+): Promise<void> => {
+  const initialFrame = player.createFrame(0);
+  await player.renderer.initialize(
     { target: host, devicePixelRatio: window.devicePixelRatio },
-    createLaboratoryFrame(0).canvas,
+    initialFrame.canvas,
   );
 
   const resize = (): void => {
     const bounds = host.getBoundingClientRect();
     if (bounds.width > 0 && bounds.height > 0) {
-      renderer.resize(bounds.width, bounds.height);
+      player.renderer.resize(bounds.width, bounds.height);
     }
   };
   const observer = new ResizeObserver(resize);
@@ -177,38 +184,99 @@ const boot = async (): Promise<void> => {
   let logicalTick = 0;
   let previousTime = performance.now();
   let animationFrame = 0;
+  let disposed = false;
 
   const renderLoop = (now: number): void => {
+    if (disposed) {
+      return;
+    }
     const advanced = advanceFixedStepClock(clock, now - previousTime, {
-      ticksPerSecond: 60,
+      ticksPerSecond: player.ticksPerSecond,
       maxCatchUpTicks: 4,
       maxFrameDeltaMilliseconds: 250,
     });
     clock = advanced.state;
     logicalTick += advanced.ticksToRun;
     previousTime = now;
-    renderer.render(createLaboratoryFrame(logicalTick));
+    player.renderer.render(player.createFrame(logicalTick));
     animationFrame = requestAnimationFrame(renderLoop);
   };
 
-  renderer.render(createLaboratoryFrame(logicalTick));
+  player.renderer.render(initialFrame);
   animationFrame = requestAnimationFrame(renderLoop);
 
   window.addEventListener(
     "pagehide",
     () => {
+      disposed = true;
       cancelAnimationFrame(animationFrame);
       observer.disconnect();
-      void renderer.destroy();
+      void player.renderer
+        .destroy()
+        .then(() => player.disposeAdditional?.())
+        .catch((error: unknown) => console.error(error));
     },
     { once: true },
   );
+};
+
+const packagedPlayer = async (
+  bundle: RuntimeBundle,
+  bundleUrl: string,
+): Promise<MountedPlayer> => {
+  const textures = new PixiAssetTextureStore({
+    aliasNamespace: bundle.projectId,
+  });
+  await textures.loadRuntimeAssets(bundle.assets, bundleUrl);
+  const renderer = new PixiWebGLRenderer({ textures });
+
+  return {
+    renderer,
+    disposeAdditional: () => textures.dispose(),
+    ticksPerSecond: bundle.presentation.logicalTicksPerSecond,
+    createFrame: (tick) => createRuntimeStartFrame(bundle, tick),
+  };
+};
+
+const laboratoryPlayer = (): MountedPlayer => ({
+  renderer: new PixiWebGLRenderer({
+    textures: {
+      getTexture: () => null,
+    },
+  }),
+  ticksPerSecond: 60,
+  createFrame: createLaboratoryFrame,
+});
+
+const boot = async (): Promise<void> => {
+  const host = document.querySelector<HTMLElement>("#player-host");
+  if (!host) {
+    throw new Error("Player host element was not found.");
+  }
+
+  const bundleParameter = new URLSearchParams(window.location.search).get(
+    "bundle",
+  );
+  if (!bundleParameter) {
+    host.dataset.mode = "rendering-lab";
+    await mountPlayer(host, laboratoryPlayer());
+    return;
+  }
+
+  const bundleUrl = new URL(bundleParameter, window.location.href).href;
+  host.dataset.mode = "runtime-bundle";
+  host.textContent = "Loading runtime bundle…";
+  const bundle = await loadRuntimeBundle(bundleUrl);
+  host.textContent = "";
+  document.title = `${bundle.title} — EVAVO Adventure Player`;
+  await mountPlayer(host, await packagedPlayer(bundle, bundleUrl));
 };
 
 void boot().catch((error: unknown) => {
   console.error(error);
   const host = document.querySelector<HTMLElement>("#player-host");
   if (host) {
+    host.dataset.mode = "error";
     host.textContent =
       error instanceof Error ? error.message : "The player could not start.";
   }
