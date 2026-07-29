@@ -1,0 +1,23 @@
+{
+  "name": "@evavo/adventure-testkit",
+  "version": "0.1.0",
+  "private": true,
+  "type": "module",
+  "exports": {
+    ".": {
+      "types": "./dist/src/index.d.ts",
+      "import": "./dist/src/index.js"
+    }
+  },
+  "files": ["dist"],
+  "scripts": {
+    "build": "tsc -b",
+    "typecheck": "tsc -b --pretty false"
+  },
+  "dependencies": {
+    "@evavo/adventure-asset-contract": "workspace:*",
+    "@evavo/adventure-asset-pipeline": "workspace:*",
+    "@evavo/adventure-compiler": "workspace:*",
+    "@evavo/adventure-project-schema": "workspace:*"
+  }
+}
