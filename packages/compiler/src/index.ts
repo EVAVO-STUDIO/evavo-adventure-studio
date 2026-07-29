@@ -2,10 +2,12 @@ import type {
   Actor,
   AdventureProject,
   Asset,
+  DialogueGraph,
   Hotspot,
   Id,
   InventoryItem,
   Scene,
+  Sequence,
 } from "@evavo/adventure-project-schema";
 import {
   hasValidationErrors,
@@ -33,6 +35,14 @@ export interface CompiledScene
   readonly entrances: Scene["entrances"];
 }
 
+export interface CompiledDialogue extends DialogueGraph {
+  readonly nodeIndex: Readonly<Record<string, number>>;
+}
+
+export interface CompiledSequence extends Sequence {
+  readonly cueCount: number;
+}
+
 export interface RuntimeBundle {
   readonly bundleVersion: 1;
   readonly sourceSchemaVersion: 1;
@@ -45,6 +55,8 @@ export interface RuntimeBundle {
   readonly inventoryItems: readonly InventoryItem[];
   readonly actors: readonly Actor[];
   readonly scenes: readonly CompiledScene[];
+  readonly dialogues: readonly CompiledDialogue[];
+  readonly sequences: readonly CompiledSequence[];
 }
 
 export interface CompiledProject {
@@ -104,6 +116,26 @@ const compileActor = (actor: Actor): Actor => ({
   ...actor,
   frames: sortById(actor.frames),
   animations: sortById(actor.animations),
+});
+
+const compileDialogue = (dialogue: DialogueGraph): CompiledDialogue => {
+  const nodes = sortById(dialogue.nodes);
+  const nodeIndex: Record<string, number> = {};
+  nodes.forEach((node, index) => {
+    nodeIndex[node.id] = index;
+  });
+
+  return {
+    ...dialogue,
+    nodes,
+    nodeIndex,
+  };
+};
+
+const compileSequence = (sequence: Sequence): CompiledSequence => ({
+  ...sequence,
+  tracks: sortById(sequence.tracks),
+  cueCount: sequence.tracks.reduce((total, track) => total + track.cues.length, 0),
 });
 
 const canonicalize = (value: unknown): unknown => {
@@ -167,6 +199,8 @@ export const compileProject = (project: AdventureProject): CompiledProject => {
     inventoryItems: sortById(project.inventoryItems),
     actors: sortById(project.actors).map(compileActor),
     scenes: sortById(project.scenes).map(compileScene),
+    dialogues: sortById(project.dialogues).map(compileDialogue),
+    sequences: sortById(project.sequences).map(compileSequence),
   };
   const canonicalJson = canonicalStringify(bundle);
 
