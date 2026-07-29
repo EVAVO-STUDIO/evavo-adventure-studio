@@ -15,11 +15,19 @@ import {
   type ArtDirectionIssue,
   type ArtPreset,
 } from "@evavo/adventure-art-direction";
+import {
+  evaluateArtDirectionWithVisualEvidence,
+  type ArtVisualEvidenceIssue,
+  type ArtVisualEvidenceManifest,
+} from "@evavo/adventure-art-direction/evidence";
 import type { AdventureProject, Id } from "@evavo/adventure-project-schema";
+
+export type ArtWorkspaceIssue = ArtDirectionIssue | ArtVisualEvidenceIssue;
 
 export interface ArtDirectionWorkspaceState {
   readonly project: AdventureProject;
   readonly compiledEvidence: AssetBuildManifest | null;
+  readonly visualEvidence: ArtVisualEvidenceManifest | null;
   readonly history: ArtDirectionEditorHistoryState;
   readonly selectedAssetId: Id<"asset">;
   readonly notice: string | null;
@@ -49,11 +57,13 @@ export const createArtDirectionWorkspace = (
   project: AdventureProject,
   compiledEvidence: AssetBuildManifest | null,
   initialManifest = createArtDirectionManifest(project, "vga-256-320x200"),
+  visualEvidence: ArtVisualEvidenceManifest | null = null,
 ): ArtDirectionWorkspaceState => {
   const history = createArtDirectionEditorHistory(project, initialManifest);
   return {
     project,
     compiledEvidence,
+    visualEvidence,
     history,
     selectedAssetId: firstRule(history).assetId,
     notice: null,
@@ -74,17 +84,27 @@ export const selectedArtDirectionRule = (
 
 export const artDirectionWorkspaceIssues = (
   state: ArtDirectionWorkspaceState,
-): readonly ArtDirectionIssue[] =>
-  state.compiledEvidence
-    ? evaluateCompiledArtDirection(
-        state.project,
-        state.history.document.manifest,
-        state.compiledEvidence,
-      )
-    : validateArtDirectionManifest(
-        state.project,
-        state.history.document.manifest,
-      );
+): readonly ArtWorkspaceIssue[] => {
+  if (state.compiledEvidence && state.visualEvidence) {
+    return evaluateArtDirectionWithVisualEvidence(
+      state.project,
+      state.history.document.manifest,
+      state.compiledEvidence,
+      state.visualEvidence,
+    );
+  }
+  if (state.compiledEvidence) {
+    return evaluateCompiledArtDirection(
+      state.project,
+      state.history.document.manifest,
+      state.compiledEvidence,
+    );
+  }
+  return validateArtDirectionManifest(
+    state.project,
+    state.history.document.manifest,
+  );
+};
 
 export const artDirectionWorkspaceIsDirty = (
   state: ArtDirectionWorkspaceState,
@@ -93,7 +113,7 @@ export const artDirectionWorkspaceIsDirty = (
 export const artDirectionIssuesForAsset = (
   state: ArtDirectionWorkspaceState,
   assetId: Id<"asset">,
-): readonly ArtDirectionIssue[] =>
+): readonly ArtWorkspaceIssue[] =>
   artDirectionWorkspaceIssues(state).filter(
     (entry) =>
       entry.path.includes(assetId) || entry.message.includes(`'${assetId}'`),
