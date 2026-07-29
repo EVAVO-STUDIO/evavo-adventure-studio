@@ -7,6 +7,10 @@
     ".": {
       "types": "./dist/src/index.d.ts",
       "import": "./dist/src/index.js"
+    },
+    "./with-instances": {
+      "types": "./dist/src/with-instances.d.ts",
+      "import": "./dist/src/with-instances.js"
     }
   },
   "files": ["dist"],
@@ -18,6 +22,7 @@
     "@evavo/adventure-asset-contract": "workspace:*",
     "@evavo/adventure-project-schema": "workspace:*",
     "@evavo/adventure-runtime-bundle": "workspace:*",
+    "@evavo/adventure-scene-instances": "workspace:*",
     "@evavo/adventure-validation": "workspace:*"
   }
 }
