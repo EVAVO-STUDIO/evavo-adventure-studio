@@ -1,11 +1,13 @@
+import type {
+  BitmapFontDefinition,
+  BitmapFontManifest,
+  BitmapGlyph,
+  BitmapKerning,
+} from "@evavo/adventure-bitmap-font";
 import {
   layoutBitmapText,
-  type BitmapFontDefinition,
-  type BitmapFontManifest,
-  type BitmapGlyph,
-  type BitmapKerning,
   type BitmapTextLayout,
-} from "@evavo/adventure-bitmap-font";
+} from "@evavo/adventure-bitmap-font/layout";
 import {
   createBitmapFontEditorHistory,
   executeBitmapFontEditorCommand,
