@@ -1,4 +1,5 @@
 import type { AssetBuildManifest } from "@evavo/adventure-asset-contract";
+import type { BitmapFontManifest } from "@evavo/adventure-bitmap-font";
 import type { AdventureProject } from "@evavo/adventure-project-schema";
 import { parseRuntimeBundle } from "@evavo/adventure-runtime-bundle";
 import {
@@ -76,6 +77,7 @@ export const compileProjectWithInstances = (
   project: AdventureProject,
   assetManifest: AssetBuildManifest,
   sceneInstances: SceneInstanceManifest = emptySceneInstanceManifest(project.id),
+  bitmapFonts?: BitmapFontManifest,
 ): CompiledProject => {
   const instanceIssues = validateSceneInstanceManifest(
     {
@@ -101,7 +103,7 @@ export const compileProjectWithInstances = (
     throw new SceneInstanceCompilationError(issues);
   }
 
-  const base = compileProject(project, assetManifest);
+  const base = compileProject(project, assetManifest, bitmapFonts);
   const bundle = parseRuntimeBundle({
     ...base.bundle,
     sceneInstances: canonicalSceneInstances(sceneInstances),
@@ -127,11 +129,17 @@ export const tryCompileProjectWithInstances = (
   project: AdventureProject,
   assetManifest: AssetBuildManifest,
   sceneInstances?: SceneInstanceManifest,
+  bitmapFonts?: BitmapFontManifest,
 ): SceneInstanceCompilationResult => {
   try {
     return {
       kind: "compiled",
-      project: compileProjectWithInstances(project, assetManifest, sceneInstances),
+      project: compileProjectWithInstances(
+        project,
+        assetManifest,
+        sceneInstances,
+        bitmapFonts,
+      ),
     };
   } catch (error) {
     if (error instanceof SceneInstanceCompilationError) {
