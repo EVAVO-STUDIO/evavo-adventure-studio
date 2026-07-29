@@ -1,11 +1,14 @@
 import { describe, expect, it } from "vitest";
+import { bitmapFontManifestSchema } from "@evavo/adventure-bitmap-font";
+import type { Id } from "@evavo/adventure-project-schema";
 import type { PixiAssetTextureStore } from "@evavo/adventure-renderer-pixi/texture-store";
 import { createPackagedRendererOptions } from "../src/runtime-renderer.js";
 
+const id = <T extends string>(value: string): Id<T> => value as Id<T>;
 const textures = {} as PixiAssetTextureStore;
 
-const bitmapFonts = {
-  manifestVersion: 1 as const,
+const bitmapFonts = bitmapFontManifestSchema.parse({
+  manifestVersion: 1,
   projectId: "project.player-fonts",
   fonts: [
     {
@@ -29,7 +32,7 @@ const bitmapFonts = {
       kernings: [],
     },
   ],
-};
+});
 
 describe("packaged runtime renderer options", () => {
   it("preserves fontless bundle compatibility", () => {
@@ -42,12 +45,20 @@ describe("packaged runtime renderer options", () => {
     const options = createPackagedRendererOptions({ bitmapFonts }, textures);
     const resolver = options.bitmapFonts;
 
-    expect(resolver?.getFont("bitmap-font.dialogue", "asset.font.dialogue")).toMatchObject({
-      name: "Dialogue",
-    });
-    expect(resolver?.getFont(null, "asset.font.dialogue")?.id).toBe(
-      "bitmap-font.dialogue",
-    );
-    expect(resolver?.getFont("bitmap-font.dialogue", "asset.other")).toBeNull();
+    expect(
+      resolver?.getFont(
+        id<"bitmap-font">("bitmap-font.dialogue"),
+        id<"asset">("asset.font.dialogue"),
+      ),
+    ).toMatchObject({ name: "Dialogue" });
+    expect(
+      resolver?.getFont(null, id<"asset">("asset.font.dialogue"))?.id,
+    ).toBe("bitmap-font.dialogue");
+    expect(
+      resolver?.getFont(
+        id<"bitmap-font">("bitmap-font.dialogue"),
+        id<"asset">("asset.other"),
+      ),
+    ).toBeNull();
   });
 });
