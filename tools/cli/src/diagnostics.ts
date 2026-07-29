@@ -11,6 +11,12 @@ export interface CliDiagnostic {
     | "scene-instances-file"
     | "scene-instances-schema"
     | "scene-instances-semantics"
+    | "art-direction-file"
+    | "art-direction-schema"
+    | "art-direction-semantics"
+    | "art-evidence-file"
+    | "art-evidence-schema"
+    | "art-evidence-semantics"
     | "asset-evidence";
   readonly code: string;
   readonly path: string;
@@ -37,13 +43,9 @@ export const sortDiagnostics = (
 ): readonly CliDiagnostic[] =>
   [...diagnostics].sort((left, right) => {
     const severityDifference = left.severity.localeCompare(right.severity);
-    if (severityDifference !== 0) {
-      return severityDifference;
-    }
+    if (severityDifference !== 0) return severityDifference;
     const sourceDifference = left.source.localeCompare(right.source);
-    if (sourceDifference !== 0) {
-      return sourceDifference;
-    }
+    if (sourceDifference !== 0) return sourceDifference;
     const pathDifference = left.path.localeCompare(right.path);
     return pathDifference !== 0
       ? pathDifference
