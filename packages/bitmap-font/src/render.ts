@@ -7,6 +7,7 @@ import type {
 import {
   type BitmapFontDefinition,
   type BitmapFontManifest,
+  type BitmapGlyph,
 } from "./index.js";
 import { layoutBitmapText } from "./layout.js";
 
@@ -61,7 +62,6 @@ export const createBitmapFontResolver = (
 };
 
 type RenderColor = number | readonly [number, number, number, number];
-
 type Rgba = readonly [number, number, number, number];
 
 const colorToRgba = (color: RenderColor): Rgba => {
@@ -119,23 +119,12 @@ const OUTLINE_OFFSETS: readonly Point[] = [
 const glyphSprite = (
   node: BitmapTextRenderNode,
   font: BitmapFontDefinition,
+  glyph: BitmapGlyph,
   glyphIndex: number,
   localPosition: Point,
   color: Rgba,
   outlineIndex: number | null,
 ): SpriteRenderNode => {
-  const placement = layoutBitmapText(
-    { ...font, lineHeight: node.lineHeight },
-    node.text,
-    {
-      maxWidth: node.maximumWidth,
-      alignment: node.align,
-    },
-  ).placements[glyphIndex];
-  if (!placement) {
-    throw new RangeError(`Bitmap glyph placement ${glyphIndex} is unavailable.`);
-  }
-  const glyph = placement.glyph;
   const suffix =
     outlineIndex === null ? "fill" : `outline.${outlineIndex.toString()}`;
   const alpha = color[3] / 255;
@@ -145,8 +134,7 @@ const glyphSprite = (
     id: renderNodeId(`${node.id}.glyph.${glyphIndex}.${suffix}`),
     order: {
       ...node.order,
-      zOffset:
-        node.order.zOffset + (outlineIndex === null ? 0 : -1),
+      zOffset: node.order.zOffset + (outlineIndex === null ? 0 : -1),
       stableId: `${node.order.stableId}.glyph.${glyphIndex}.${suffix}`,
     },
     transform: {
@@ -194,9 +182,10 @@ export const resolveBitmapTextNode = (
     },
   );
   const fill = colorToRgba(node.color);
-  const outline = node.outlineColor
-    ? colorToRgba(node.outlineColor)
-    : null;
+  const outline =
+    node.outlineColor === undefined
+      ? null
+      : colorToRgba(node.outlineColor);
   const sprites: SpriteRenderNode[] = [];
 
   layout.placements.forEach((placement, glyphIndex) => {
@@ -206,6 +195,7 @@ export const resolveBitmapTextNode = (
           glyphSprite(
             node,
             font,
+            placement.glyph,
             glyphIndex,
             {
               x: placement.x + offset.x,
@@ -221,6 +211,7 @@ export const resolveBitmapTextNode = (
       glyphSprite(
         node,
         font,
+        placement.glyph,
         glyphIndex,
         { x: placement.x, y: placement.y },
         fill,
