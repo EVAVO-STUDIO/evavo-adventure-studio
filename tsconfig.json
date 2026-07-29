@@ -6,6 +6,7 @@
     { "path": "packages/scene" },
     { "path": "packages/interaction" },
     { "path": "packages/render-contract" },
-    { "path": "packages/validation" }
+    { "path": "packages/validation" },
+    { "path": "packages/compiler" }
   ]
 }
