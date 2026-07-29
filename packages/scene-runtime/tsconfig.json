@@ -11,6 +11,7 @@
     { "path": "../core" },
     { "path": "../animation" },
     { "path": "../scene" },
+    { "path": "../interaction" },
     { "path": "../render-contract" },
     { "path": "../frame-resolver" },
     { "path": "../scene-instances" },
