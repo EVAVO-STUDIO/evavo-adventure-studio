@@ -13,7 +13,8 @@
     "@evavo/adventure-core": "workspace:*",
     "@evavo/adventure-project-schema": "workspace:*",
     "@evavo/adventure-render-contract": "workspace:*",
-    "@evavo/adventure-renderer-pixi": "workspace:*"
+    "@evavo/adventure-renderer-pixi": "workspace:*",
+    "@evavo/adventure-runtime-bundle": "workspace:*"
   },
   "devDependencies": {
     "vite": "catalog:"
