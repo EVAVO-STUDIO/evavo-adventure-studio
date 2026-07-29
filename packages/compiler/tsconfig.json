@@ -1,0 +1,13 @@
+{
+  "extends": "../../tsconfig.package.json",
+  "compilerOptions": {
+    "rootDir": ".",
+    "outDir": "dist"
+  },
+  "include": ["src/**/*.ts", "tests/**/*.ts"],
+  "references": [
+    { "path": "../project-schema" },
+    { "path": "../scene" },
+    { "path": "../validation" }
+  ]
+}
