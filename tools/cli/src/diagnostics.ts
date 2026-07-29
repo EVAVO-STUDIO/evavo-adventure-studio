@@ -20,6 +20,9 @@ export interface CliDiagnostic {
     | "bitmap-fonts-file"
     | "bitmap-fonts-schema"
     | "bitmap-fonts-semantics"
+    | "ui-skins-file"
+    | "ui-skins-schema"
+    | "ui-skins-semantics"
     | "asset-evidence";
   readonly code: string;
   readonly path: string;
