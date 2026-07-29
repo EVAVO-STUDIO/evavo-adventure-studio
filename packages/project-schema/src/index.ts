@@ -52,6 +52,7 @@ export type Condition =
     }
   | { readonly kind: "has-item"; readonly itemId: Id<"item"> }
   | { readonly kind: "interaction-used"; readonly interactionId: Id<"interaction"> }
+  | { readonly kind: "dialogue-choice-used"; readonly choiceId: Id<"dialogue-choice"> }
   | { readonly kind: "all"; readonly conditions: readonly Condition[] }
   | { readonly kind: "any"; readonly conditions: readonly Condition[] }
   | { readonly kind: "not"; readonly condition: Condition };
@@ -84,6 +85,12 @@ export const conditionSchema: z.ZodType<Condition> = z.lazy(() =>
       .object({
         kind: z.literal("interaction-used"),
         interactionId: idSchema("interaction"),
+      })
+      .strict(),
+    z
+      .object({
+        kind: z.literal("dialogue-choice-used"),
+        choiceId: idSchema("dialogue-choice"),
       })
       .strict(),
     z
@@ -159,6 +166,13 @@ export const actionSchema = z.discriminatedUnion("kind", [
     .object({
       kind: z.literal("play-sequence"),
       sequenceId: idSchema("sequence"),
+    })
+    .strict(),
+  z
+    .object({
+      kind: z.literal("start-dialogue"),
+      dialogueId: idSchema("dialogue"),
+      nodeId: idSchema("dialogue-node").optional(),
     })
     .strict(),
   z
@@ -299,6 +313,181 @@ export const actorSchema = z
   .strict();
 export type Actor = z.infer<typeof actorSchema>;
 
+export const dialogueLineSchema = z
+  .object({
+    id: idSchema("dialogue-line"),
+    speakerId: idSchema("actor").optional(),
+    text: z.string().min(1),
+    animationState: z.string().min(1).optional(),
+    durationTicks: z.number().int().positive().optional(),
+    interruptible: z.boolean().default(true),
+  })
+  .strict();
+export type DialogueLine = z.infer<typeof dialogueLineSchema>;
+
+export const dialogueChoiceSchema = z
+  .object({
+    id: idSchema("dialogue-choice"),
+    text: z.string().min(1),
+    visibleWhen: conditionSchema.optional(),
+    enabledWhen: conditionSchema.optional(),
+    once: z.boolean().default(false),
+    actions: z.array(actionSchema).default([]),
+    nextNodeId: idSchema("dialogue-node").optional(),
+    closeDialogue: z.boolean().default(false),
+  })
+  .strict();
+export type DialogueChoice = z.infer<typeof dialogueChoiceSchema>;
+
+export const dialogueNodeSchema = z
+  .object({
+    id: idSchema("dialogue-node"),
+    enterActions: z.array(actionSchema).default([]),
+    lines: z.array(dialogueLineSchema),
+    choices: z.array(dialogueChoiceSchema),
+    autoNextNodeId: idSchema("dialogue-node").optional(),
+    exitActions: z.array(actionSchema).default([]),
+  })
+  .strict();
+export type DialogueNode = z.infer<typeof dialogueNodeSchema>;
+
+export const dialogueGraphSchema = z
+  .object({
+    id: idSchema("dialogue"),
+    name: z.string().min(1),
+    startNodeId: idSchema("dialogue-node"),
+    nodes: z.array(dialogueNodeSchema).min(1),
+  })
+  .strict();
+export type DialogueGraph = z.infer<typeof dialogueGraphSchema>;
+
+const easingSchema = z.enum([
+  "step",
+  "linear",
+  "ease-in",
+  "ease-out",
+  "ease-in-out",
+]);
+
+export const sequenceCueSchema = z.discriminatedUnion("kind", [
+  z
+    .object({
+      kind: z.literal("story-action"),
+      atTick: z.number().int().nonnegative(),
+      action: actionSchema,
+    })
+    .strict(),
+  z
+    .object({
+      kind: z.literal("speech"),
+      atTick: z.number().int().nonnegative(),
+      speakerId: idSchema("actor").optional(),
+      text: z.string().min(1),
+      durationTicks: z.number().int().positive().optional(),
+      animationState: z.string().min(1).optional(),
+    })
+    .strict(),
+  z
+    .object({
+      kind: z.literal("actor-move"),
+      atTick: z.number().int().nonnegative(),
+      durationTicks: z.number().int().positive(),
+      actorId: idSchema("actor"),
+      destination: pointSchema,
+      easing: easingSchema.default("linear"),
+      faceOnArrival: z.string().min(1).optional(),
+    })
+    .strict(),
+  z
+    .object({
+      kind: z.literal("actor-animation"),
+      atTick: z.number().int().nonnegative(),
+      actorId: idSchema("actor"),
+      animationState: z.string().min(1),
+      facing: z.string().min(1).optional(),
+      awaitCompletion: z.boolean().default(false),
+    })
+    .strict(),
+  z
+    .object({
+      kind: z.literal("camera-shot"),
+      atTick: z.number().int().nonnegative(),
+      durationTicks: z.number().int().nonnegative(),
+      position: pointSchema,
+      easing: easingSchema.default("linear"),
+    })
+    .strict(),
+  z
+    .object({
+      kind: z.literal("sound"),
+      atTick: z.number().int().nonnegative(),
+      assetId: idSchema("asset"),
+      bus: z.enum(["speech", "music", "ambience", "effects", "interface"]),
+      volume: z.number().min(0).max(1).default(1),
+      loop: z.boolean().default(false),
+    })
+    .strict(),
+  z
+    .object({
+      kind: z.literal("stop-audio"),
+      atTick: z.number().int().nonnegative(),
+      bus: z.enum(["speech", "music", "ambience", "effects", "interface"]),
+      fadeTicks: z.number().int().nonnegative().default(0),
+    })
+    .strict(),
+  z
+    .object({
+      kind: z.literal("layer-visibility"),
+      atTick: z.number().int().nonnegative(),
+      layerId: z.string().min(1),
+      visible: z.boolean(),
+    })
+    .strict(),
+  z
+    .object({
+      kind: z.literal("palette-cycle"),
+      atTick: z.number().int().nonnegative(),
+      paletteAssetId: idSchema("asset"),
+      rangeStart: z.number().int().nonnegative(),
+      rangeEnd: z.number().int().nonnegative(),
+      ticksPerStep: z.number().int().positive(),
+      direction: z.enum(["forward", "reverse"]),
+      enabled: z.boolean(),
+    })
+    .strict(),
+]);
+export type SequenceCue = z.infer<typeof sequenceCueSchema>;
+
+export const sequenceTrackSchema = z
+  .object({
+    id: idSchema("sequence-track"),
+    kind: z.enum(["actor", "camera", "dialogue", "audio", "story", "effects"]),
+    cues: z.array(sequenceCueSchema),
+  })
+  .strict();
+export type SequenceTrack = z.infer<typeof sequenceTrackSchema>;
+
+export const sequenceSchema = z
+  .object({
+    id: idSchema("sequence"),
+    name: z.string().min(1),
+    mode: z.enum(["cutscene", "ambient"]),
+    durationTicks: z.number().int().positive(),
+    loop: z.boolean().default(false),
+    blocking: z.boolean().default(true),
+    savePolicy: z.enum(["allowed", "boundary-only", "disabled"]).default("boundary-only"),
+    skip: z
+      .object({
+        allowed: z.boolean(),
+        safeAfterTick: z.number().int().nonnegative().default(0),
+        completionActions: z.array(actionSchema).default([]),
+      })
+      .strict(),
+    tracks: z.array(sequenceTrackSchema),
+  })
+  .strict();
+export type Sequence = z.infer<typeof sequenceSchema>;
+
 export const sceneSchema = z
   .object({
     id: idSchema("scene"),
@@ -367,6 +556,8 @@ export const adventureProjectSchema = z
     startEntranceId: idSchema("entrance"),
     scenes: z.array(sceneSchema).min(1),
     actors: z.array(actorSchema),
+    dialogues: z.array(dialogueGraphSchema).default([]),
+    sequences: z.array(sequenceSchema).default([]),
     assets: z.array(assetSchema),
     inventoryItems: z.array(inventoryItemSchema),
   })
