@@ -3,6 +3,7 @@
   "references": [
     { "path": "packages/project-schema" },
     { "path": "packages/asset-contract" },
+    { "path": "packages/runtime-bundle" },
     { "path": "packages/core" },
     { "path": "packages/scene" },
     { "path": "packages/animation" },
