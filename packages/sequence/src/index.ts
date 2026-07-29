@@ -149,6 +149,23 @@ const activeAt = (
   nextCueIndexByTrack: cueCursorsAtTick(sequence, elapsedTicks),
 });
 
+const assertValidActiveState = (
+  active: ActiveSequenceState,
+  sequence: Sequence,
+): void => {
+  if (
+    !Number.isSafeInteger(active.elapsedTicks) ||
+    active.elapsedTicks < 0 ||
+    active.elapsedTicks > sequence.durationTicks ||
+    !Number.isSafeInteger(active.iteration) ||
+    active.iteration < 0
+  ) {
+    throw new RangeError(
+      `Saved playback state for sequence '${sequence.id}' is outside its valid timeline bounds.`,
+    );
+  }
+};
+
 export const startSequence = (
   state: RuntimeState,
   sequence: Sequence,
@@ -191,6 +208,7 @@ export const advanceSequence = (
   if (!active) {
     return { kind: "rejected", reason: "not-active", state };
   }
+  assertValidActiveState(active, sequence);
   if (ticks === 0) {
     return { kind: "active", transition: { state, events: [] } };
   }
@@ -222,8 +240,15 @@ export const advanceSequence = (
     }
 
     if (!sequence.loop) {
-      nextState = removeActiveSequence(nextState, sequence.id);
-      events.push({ kind: "sequence-completed", sequenceId: sequence.id });
+      const completed = applyActions(
+        nextState,
+        sequence.skip.completionActions,
+      );
+      nextState = removeActiveSequence(completed.state, sequence.id);
+      events.push(
+        ...completed.events,
+        { kind: "sequence-completed", sequenceId: sequence.id },
+      );
       return {
         kind: "completed",
         transition: { state: nextState, events },
@@ -264,6 +289,7 @@ export const skipSequence = (
   if (!active) {
     return { kind: "rejected", reason: "not-active", state };
   }
+  assertValidActiveState(active, sequence);
   if (!sequence.skip.allowed) {
     return { kind: "rejected", reason: "skip-not-allowed", state };
   }
