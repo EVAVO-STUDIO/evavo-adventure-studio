@@ -11,6 +11,8 @@ on:
       - "packages/art-direction/**"
       - "packages/bitmap-font/**"
       - "packages/bitmap-font-editor-core/**"
+      - "packages/ui-skin/**"
+      - "packages/ui-skin-editor-core/**"
       - "packages/asset-pipeline/**"
       - "packages/project-editor-core/**"
       - "packages/editor-core/**"
@@ -33,6 +35,8 @@ on:
       - "packages/art-direction/**"
       - "packages/bitmap-font/**"
       - "packages/bitmap-font-editor-core/**"
+      - "packages/ui-skin/**"
+      - "packages/ui-skin-editor-core/**"
       - "packages/asset-pipeline/**"
       - "packages/project-editor-core/**"
       - "packages/editor-core/**"
@@ -96,9 +100,13 @@ jobs:
           packages/art-direction/tests
           packages/bitmap-font/tests
           packages/bitmap-font-editor-core/tests
+          packages/ui-skin/tests
+          packages/ui-skin-editor-core/tests
           packages/asset-pipeline/tests/art-evidence.test.ts
           packages/compiler/tests/bitmap-font-compilation.test.ts
+          packages/compiler/tests/ui-skin-compilation.test.ts
           packages/runtime-bundle/tests/bitmap-font-runtime.test.ts
+          packages/runtime-bundle/tests/ui-skin-runtime.test.ts
           packages/renderer-pixi/tests
           apps/player/tests
           apps/studio/tests
