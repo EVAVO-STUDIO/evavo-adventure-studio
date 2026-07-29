@@ -176,10 +176,11 @@ describe("bitmap font render resolution", () => {
         { ...manifest.fonts[0], id: "bitmap-font.dialogue.compact" },
       ],
     });
+    const { fontId: _fontId, ...atlasOnlyNode } = textNode();
 
     expect(() =>
       resolveBitmapTextNode(
-        textNode({ fontId: undefined }),
+        atlasOnlyNode,
         createBitmapFontResolver(ambiguous),
       ),
     ).toThrow(BitmapFontResolutionError);
