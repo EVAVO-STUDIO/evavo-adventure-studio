@@ -13,6 +13,8 @@ describe("cli arguments", () => {
         "game/project.json",
         "--asset-manifest",
         "build/assets.json",
+        "--scene-instances",
+        "game/scene-instances.json",
         "--out",
         "build/game.bundle.json",
         "--report",
@@ -23,6 +25,7 @@ describe("cli arguments", () => {
       kind: "compile",
       projectPath: "game/project.json",
       assetManifestPath: "build/assets.json",
+      sceneInstancesPath: "game/scene-instances.json",
       outputPath: "build/game.bundle.json",
       reportPath: "build/report.json",
       format: "json",
@@ -45,6 +48,7 @@ describe("cli arguments", () => {
       kind: "package",
       projectPath: "game/project.json",
       assetManifestPath: "build/assets.json",
+      sceneInstancesPath: null,
       outputDirectory: "release/windows",
       format: "json",
     });
@@ -57,6 +61,7 @@ describe("cli arguments", () => {
       kind: "validate",
       projectPath: "project.json",
       assetManifestPath: null,
+      sceneInstancesPath: null,
       format: "human",
     });
   });
