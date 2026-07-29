@@ -9,6 +9,7 @@
   "references": [
     { "path": "../../packages/art-direction" },
     { "path": "../../packages/asset-contract" },
+    { "path": "../../packages/bitmap-font" },
     { "path": "../../packages/compiler" },
     { "path": "../../packages/project-schema" },
     { "path": "../../packages/scene-instances" },
