@@ -12,39 +12,36 @@ import {
 } from "../src/art-workspace.js";
 import {
   studioArtDirectionManifest,
+  studioArtVisualEvidence,
   studioCompiledArtEvidence,
 } from "../src/art-fixture.js";
 import { studioProject } from "../src/fixture.js";
 
 const id = <T extends string>(value: string): Id<T> => value as Id<T>;
 
-describe("art direction workspace", () => {
-  it("loads compiled evidence and groups warnings by asset", () => {
-    const state = createArtDirectionWorkspace(
-      studioProject,
-      studioCompiledArtEvidence,
-      studioArtDirectionManifest,
-    );
+const createWorkspace = () =>
+  createArtDirectionWorkspace(
+    studioProject,
+    studioCompiledArtEvidence,
+    studioArtDirectionManifest,
+    studioArtVisualEvidence,
+  );
 
-    expect(
-      artDirectionWorkspaceIssues(state).filter(
-        (issue) => issue.severity === "error",
-      ),
-    ).toEqual([]);
+describe("art direction workspace", () => {
+  it("loads a clean proof-level compiled baseline", () => {
+    const state = createWorkspace();
+
+    expect(artDirectionWorkspaceIssues(state)).toEqual([]);
     expect(
       artDirectionIssuesForAsset(
         state,
         id<"asset">("asset.actor.detective"),
-      ).map((issue) => issue.code),
-    ).toContain("compiled-palette-unverified");
+      ),
+    ).toEqual([]);
   });
 
   it("selects assets without changing the document", () => {
-    const initial = createArtDirectionWorkspace(
-      studioProject,
-      studioCompiledArtEvidence,
-      studioArtDirectionManifest,
-    );
+    const initial = createWorkspace();
     const next = artDirectionWorkspaceReducer(initial, {
       type: "select-asset",
       assetId: id<"asset">("asset.actor.detective"),
@@ -58,11 +55,7 @@ describe("art direction workspace", () => {
   });
 
   it("updates asset colour budgets with undo and redo", () => {
-    let state = createArtDirectionWorkspace(
-      studioProject,
-      studioCompiledArtEvidence,
-      studioArtDirectionManifest,
-    );
+    let state = createWorkspace();
     const selected = selectedArtDirectionRule(state);
 
     state = artDirectionWorkspaceReducer(state, {
@@ -80,6 +73,7 @@ describe("art direction workspace", () => {
 
     state = artDirectionWorkspaceReducer(state, { type: "undo" });
     expect(selectedArtDirectionRule(state).maxColours).toBeUndefined();
+    expect(artDirectionWorkspaceIssues(state)).toEqual([]);
     expect(artDirectionWorkspaceIsDirty(state)).toBe(false);
 
     state = artDirectionWorkspaceReducer(state, { type: "redo" });
@@ -87,11 +81,7 @@ describe("art direction workspace", () => {
   });
 
   it("switches between compatible native-size era presets", () => {
-    let state = createArtDirectionWorkspace(
-      studioProject,
-      studioCompiledArtEvidence,
-      studioArtDirectionManifest,
-    );
+    let state = createWorkspace();
     state = artDirectionWorkspaceReducer(state, {
       type: "execute",
       command: replaceArtPresetCommand(state, "ega-16-320x200"),
@@ -103,15 +93,16 @@ describe("art direction workspace", () => {
     });
     expect(
       artDirectionWorkspaceIssues(state).map((issue) => issue.code),
-    ).toContain("compiled-colour-budget-exceeded");
+    ).toEqual(
+      expect.arrayContaining([
+        "compiled-colour-budget-exceeded",
+        "visual-evidence-colour-budget-exceeded",
+      ]),
+    );
   });
 
   it("marks the art-direction document saved", () => {
-    let state = createArtDirectionWorkspace(
-      studioProject,
-      studioCompiledArtEvidence,
-      studioArtDirectionManifest,
-    );
+    let state = createWorkspace();
     const selected = selectedArtDirectionRule(state);
     state = artDirectionWorkspaceReducer(state, {
       type: "execute",
