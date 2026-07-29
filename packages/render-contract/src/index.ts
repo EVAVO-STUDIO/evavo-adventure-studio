@@ -80,6 +80,7 @@ export interface IndexedSpriteRenderNode extends BaseRenderNode {
 export interface BitmapTextRenderNode extends BaseRenderNode {
   readonly kind: "bitmap-text";
   readonly fontAssetId: Id<"asset">;
+  readonly fontId?: Id<"bitmap-font">;
   readonly text: string;
   readonly maximumWidth: number;
   readonly lineHeight: number;
@@ -139,7 +140,8 @@ export interface RenderFrameIssue {
     | "invalid-canvas"
     | "unknown-mask"
     | "mask-cycle"
-    | "invalid-dither-progress";
+    | "invalid-dither-progress"
+    | "invalid-bitmap-text";
   readonly nodeId: Id<"render-node"> | null;
   readonly message: string;
 }
@@ -235,6 +237,21 @@ export const validateResolvedFrame = (
         code: "invalid-dither-progress",
         nodeId: node.id,
         message: `Dither fade '${node.id}' has progress outside the 0 to 1 range.`,
+      });
+    }
+
+    if (
+      node.kind === "bitmap-text" &&
+      (!Number.isSafeInteger(node.maximumWidth) ||
+        node.maximumWidth <= 0 ||
+        !Number.isSafeInteger(node.lineHeight) ||
+        node.lineHeight <= 0)
+    ) {
+      issues.push({
+        severity: "error",
+        code: "invalid-bitmap-text",
+        nodeId: node.id,
+        message: `Bitmap text '${node.id}' requires positive integer width and line-height metrics.`,
       });
     }
   }
