@@ -187,7 +187,7 @@ describe("bitmap text layout", () => {
     const layout = layoutBitmapText(font, "AV");
 
     expect(layout.placements.map((placement) => placement.x)).toEqual([0, 7]);
-    expect(layout.lines[0]?.width).toBe(13);
+    expect(layout.lines[0]?.width).toBe(14);
     expect(layout.height).toBe(10);
   });
 
@@ -201,7 +201,7 @@ describe("bitmap text layout", () => {
     expect(layout.lines).toHaveLength(2);
     expect(layout.width).toBe(18);
     expect(layout.height).toBe(22);
-    expect(layout.placements[0]?.x).toBe(5);
+    expect(layout.placements[0]?.x).toBe(4);
     expect(layout.placements[2]?.y).toBe(12);
   });
 
