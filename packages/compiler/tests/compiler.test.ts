@@ -136,8 +136,8 @@ const createManifest = (
     ],
     metadata: {
       kind: "image" as const,
-      width: 16,
-      height: 16,
+      width: asset.id === "asset.background" ? 320 : 16,
+      height: asset.id === "asset.background" ? 200 : 16,
       palette: false,
       colourCount: 2,
     },
