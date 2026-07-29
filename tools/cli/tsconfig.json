@@ -13,6 +13,7 @@
     { "path": "../../packages/compiler" },
     { "path": "../../packages/project-schema" },
     { "path": "../../packages/scene-instances" },
+    { "path": "../../packages/ui-skin" },
     { "path": "../../packages/validation" }
   ]
 }
