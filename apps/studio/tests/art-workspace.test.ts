@@ -1,4 +1,5 @@
 import { describe, expect, it } from "vitest";
+import type { Id } from "@evavo/adventure-project-schema";
 import {
   artDirectionIssuesForAsset,
   artDirectionWorkspaceIsDirty,
@@ -15,6 +16,8 @@ import {
 } from "../src/art-fixture.js";
 import { studioProject } from "../src/fixture.js";
 
+const id = <T extends string>(value: string): Id<T> => value as Id<T>;
+
 describe("art direction workspace", () => {
   it("loads compiled evidence and groups warnings by asset", () => {
     const state = createArtDirectionWorkspace(
@@ -23,11 +26,16 @@ describe("art direction workspace", () => {
       studioArtDirectionManifest,
     );
 
-    expect(artDirectionWorkspaceIssues(state).filter((issue) => issue.severity === "error")).toEqual([]);
     expect(
-      artDirectionIssuesForAsset(state, "asset.actor.detective").map(
-        (issue) => issue.code,
+      artDirectionWorkspaceIssues(state).filter(
+        (issue) => issue.severity === "error",
       ),
+    ).toEqual([]);
+    expect(
+      artDirectionIssuesForAsset(
+        state,
+        id<"asset">("asset.actor.detective"),
+      ).map((issue) => issue.code),
     ).toContain("compiled-palette-unverified");
   });
 
@@ -39,7 +47,7 @@ describe("art direction workspace", () => {
     );
     const next = artDirectionWorkspaceReducer(initial, {
       type: "select-asset",
-      assetId: "asset.actor.detective",
+      assetId: id<"asset">("asset.actor.detective"),
     });
 
     expect(selectedArtDirectionRule(next)).toMatchObject({
@@ -66,9 +74,9 @@ describe("art direction workspace", () => {
     });
 
     expect(artDirectionWorkspaceIsDirty(state)).toBe(true);
-    expect(artDirectionWorkspaceIssues(state).map((issue) => issue.code)).toContain(
-      "compiled-colour-budget-exceeded",
-    );
+    expect(
+      artDirectionWorkspaceIssues(state).map((issue) => issue.code),
+    ).toContain("compiled-colour-budget-exceeded");
 
     state = artDirectionWorkspaceReducer(state, { type: "undo" });
     expect(selectedArtDirectionRule(state).maxColours).toBeUndefined();
@@ -93,9 +101,9 @@ describe("art direction workspace", () => {
       preset: "ega-16-320x200",
       palette: { maxColours: 16 },
     });
-    expect(artDirectionWorkspaceIssues(state).map((issue) => issue.code)).toContain(
-      "compiled-colour-budget-exceeded",
-    );
+    expect(
+      artDirectionWorkspaceIssues(state).map((issue) => issue.code),
+    ).toContain("compiled-colour-budget-exceeded");
   });
 
   it("marks the art-direction document saved", () => {
