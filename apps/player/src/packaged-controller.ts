@@ -20,6 +20,7 @@ import {
   type ControlledActorSelection,
   type SoftwareCursorState,
 } from "./input.js";
+import { appendNativeStatusPanel } from "./native-status.js";
 
 export interface PackagedRuntimeController {
   readonly selection: Exclude<ControlledActorSelection, { readonly kind: "invalid" }>;
@@ -264,7 +265,8 @@ export const createPackagedRuntimeController = (
       }
       baseFrame = resolveRuntimeSceneFrame(bundle, world);
       refreshCursor();
-      return appendSoftwareCursor(baseFrame, cursor);
+      const withStatus = appendNativeStatusPanel(baseFrame, bundle, status);
+      return appendSoftwareCursor(withStatus, cursor);
     },
   };
 };
