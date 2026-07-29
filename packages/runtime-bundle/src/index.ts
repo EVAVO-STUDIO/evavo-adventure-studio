@@ -11,6 +11,11 @@ import {
   sceneSchema,
   sequenceSchema,
 } from "@evavo/adventure-project-schema";
+import { sceneInstanceManifestSchema } from "@evavo/adventure-scene-instances";
+import {
+  RuntimeSceneInstanceValidationError,
+  validateRuntimeSceneInstances,
+} from "./instance-validation.js";
 import {
   RuntimeBundleValidationError,
   validateRuntimeBundleSemantics,
@@ -59,6 +64,7 @@ export const runtimeBundleSchema = z
     scenes: z.array(compiledSceneSchema).min(1),
     dialogues: z.array(compiledDialogueSchema),
     sequences: z.array(compiledSequenceSchema),
+    sceneInstances: sceneInstanceManifestSchema.optional(),
   })
   .strict();
 export type RuntimeBundle = z.infer<typeof runtimeBundleSchema>;
@@ -69,7 +75,12 @@ export const parseRuntimeBundle = (input: unknown): RuntimeBundle => {
   if (issues.length > 0) {
     throw new RuntimeBundleValidationError(issues);
   }
+  const sceneInstanceIssues = validateRuntimeSceneInstances(bundle);
+  if (sceneInstanceIssues.length > 0) {
+    throw new RuntimeSceneInstanceValidationError(sceneInstanceIssues);
+  }
   return bundle;
 };
 
+export * from "./instance-validation.js";
 export * from "./validation.js";
