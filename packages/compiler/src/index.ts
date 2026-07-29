@@ -3,7 +3,6 @@ import {
   validateAssetBuildManifest,
   type AssetBuildManifest,
   type AssetManifestIssue,
-  type RuntimeAssetRecord,
 } from "@evavo/adventure-asset-contract";
 import {
   validateCompiledFrameMappings,
@@ -13,63 +12,28 @@ import {
   validatePortableRuntimePaths,
   type PortableRuntimePathIssue,
 } from "@evavo/adventure-asset-contract/portable-path";
+import type { RuntimeAssetRecord } from "@evavo/adventure-asset-contract/runtime-asset";
 import type {
   Actor,
   AdventureProject,
   DialogueGraph,
   Hotspot,
   Id,
-  InventoryItem,
   Scene,
   Sequence,
 } from "@evavo/adventure-project-schema";
+import type {
+  CompiledDialogue,
+  CompiledHotspot,
+  CompiledScene,
+  CompiledSequence,
+  RuntimeBundle,
+} from "@evavo/adventure-runtime-bundle";
 import {
   hasValidationErrors,
   validateProjectSemantics,
   type ValidationIssue,
 } from "@evavo/adventure-validation";
-
-export interface CompiledHotspot extends Hotspot {
-  readonly interactionIndex: Readonly<Record<string, readonly Id<"interaction">[]>>;
-}
-
-export interface CompiledScene
-  extends Omit<
-    Scene,
-    "navigationAreas" | "depthBands" | "occluders" | "hotspots" | "entrances"
-  > {
-  readonly navigationAreas: Scene["navigationAreas"];
-  readonly depthBands: Scene["depthBands"];
-  readonly occluders: Scene["occluders"];
-  readonly hotspots: readonly CompiledHotspot[];
-  readonly entrances: Scene["entrances"];
-}
-
-export interface CompiledDialogue extends DialogueGraph {
-  readonly nodeIndex: Readonly<Record<string, number>>;
-}
-
-export interface CompiledSequence extends Sequence {
-  readonly cueCount: number;
-}
-
-export interface RuntimeBundle {
-  readonly bundleVersion: 1;
-  readonly sourceSchemaVersion: 1;
-  readonly projectId: Id<"project">;
-  readonly title: string;
-  readonly presentation: AdventureProject["presentation"];
-  readonly startSceneId: Id<"scene">;
-  readonly startEntranceId: Id<"entrance">;
-  readonly assetManifestFingerprint: string;
-  readonly assetCompilerVersion: string;
-  readonly assets: readonly RuntimeAssetRecord[];
-  readonly inventoryItems: readonly InventoryItem[];
-  readonly actors: readonly Actor[];
-  readonly scenes: readonly CompiledScene[];
-  readonly dialogues: readonly CompiledDialogue[];
-  readonly sequences: readonly CompiledSequence[];
-}
 
 export type CompilationIssue =
   | ValidationIssue
@@ -188,7 +152,7 @@ const compileRuntimeAssets = (
 ): readonly RuntimeAssetRecord[] =>
   manifest.assets
     .map(toRuntimeAssetRecord)
-    .map(canonicalRuntimeAsset)
+    .map((asset) => canonicalRuntimeAsset(asset as RuntimeAssetRecord))
     .sort((left, right) => left.assetId.localeCompare(right.assetId));
 
 const canonicalize = (value: unknown): unknown => {
