@@ -10,6 +10,8 @@
     { "path": "packages/art-direction" },
     { "path": "packages/bitmap-font" },
     { "path": "packages/bitmap-font-editor-core" },
+    { "path": "packages/ui-skin" },
+    { "path": "packages/ui-skin-editor-core" },
     { "path": "packages/asset-contract" },
     { "path": "packages/core" },
     { "path": "packages/scene" },
