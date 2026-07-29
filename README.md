@@ -24,6 +24,7 @@ Source projects compile into deterministic runtime bundles. The editor, renderer
 - [Technology stack](docs/technology-stack.md)
 - [Authentic pixel rendering](docs/pixel-rendering.md)
 - [Project format and compilation](docs/project-format.md)
+- [Command-line build workflow](docs/cli.md)
 - [Implementation roadmap](docs/foundation-roadmap.md)
 
 ## First playable milestone
@@ -48,6 +49,19 @@ corepack enable
 corepack prepare pnpm@11.17.0 --activate
 pnpm install
 pnpm check
+```
+
+Run the native-resolution browser rendering laboratory:
+
+```powershell
+pnpm dev:player
+```
+
+After `pnpm run build:types`, inspect the CLI or validate a project:
+
+```powershell
+pnpm cli -- help
+pnpm cli -- validate --project .\game\project.json
 ```
 
 The repository is in active development. Builds and tests must only be reported after they have been executed against a checked-out workspace.
