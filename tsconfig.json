@@ -2,6 +2,7 @@
   "files": [],
   "references": [
     { "path": "packages/project-schema" },
+    { "path": "packages/project-editor-core" },
     { "path": "packages/asset-contract" },
     { "path": "packages/core" },
     { "path": "packages/scene" },
