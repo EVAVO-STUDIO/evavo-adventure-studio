@@ -7,6 +7,10 @@
     ".": {
       "types": "./dist/src/index.d.ts",
       "import": "./dist/src/index.js"
+    },
+    "./interactions": {
+      "types": "./dist/src/interactions.d.ts",
+      "import": "./dist/src/interactions.js"
     }
   },
   "files": ["dist"],
@@ -19,6 +23,7 @@
     "@evavo/adventure-asset-contract": "workspace:*",
     "@evavo/adventure-core": "workspace:*",
     "@evavo/adventure-frame-resolver": "workspace:*",
+    "@evavo/adventure-interaction": "workspace:*",
     "@evavo/adventure-project-schema": "workspace:*",
     "@evavo/adventure-render-contract": "workspace:*",
     "@evavo/adventure-runtime-bundle": "workspace:*",
