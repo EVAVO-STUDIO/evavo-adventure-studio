@@ -53,6 +53,9 @@ const canonicalSceneInstances = (
       objectInstances: [...composition.objectInstances].sort((left, right) =>
         left.id.localeCompare(right.id),
       ),
+      navigationPortals: [...composition.navigationPortals].sort(
+        (left, right) => left.id.localeCompare(right.id),
+      ),
     })),
 });
 
