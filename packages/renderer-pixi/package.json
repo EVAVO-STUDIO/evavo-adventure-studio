@@ -7,6 +7,10 @@
     ".": {
       "types": "./dist/src/index.d.ts",
       "import": "./dist/src/index.js"
+    },
+    "./texture-store": {
+      "types": "./dist/src/texture-store.d.ts",
+      "import": "./dist/src/texture-store.js"
     }
   },
   "files": ["dist"],
