@@ -10,6 +10,8 @@
     { "path": "packages/narrative-library-editor-core" },
     { "path": "packages/animation-editor-core" },
     { "path": "packages/art-direction" },
+    { "path": "packages/asset-contract" },
+    { "path": "packages/asset-pipeline" },
     { "path": "apps/studio" },
     { "path": "apps/timeline-lab" }
   ]
