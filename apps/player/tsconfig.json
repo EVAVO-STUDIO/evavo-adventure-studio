@@ -12,6 +12,7 @@
     { "path": "../../packages/render-contract" },
     { "path": "../../packages/renderer-pixi" },
     { "path": "../../packages/runtime-bundle" },
+    { "path": "../../packages/scene" },
     { "path": "../../packages/scene-runtime" }
   ]
 }
