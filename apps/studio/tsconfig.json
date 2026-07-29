@@ -12,6 +12,8 @@
     { "path": "../../packages/project-editor-core" },
     { "path": "../../packages/dialogue-editor-core" },
     { "path": "../../packages/animation-editor-core" },
+    { "path": "../../packages/art-direction" },
+    { "path": "../../packages/asset-contract" },
     { "path": "../../packages/scene-instances" },
     { "path": "../../packages/editor-core" }
   ]
