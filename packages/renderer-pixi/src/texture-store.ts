@@ -1,6 +1,8 @@
 import type {
   RuntimeAssetRecord,
 } from "@evavo/adventure-asset-contract";
+import type { BitmapFontResolver } from "@evavo/adventure-bitmap-font/render";
+import { bitmapFontResolverForAssetCollection } from "@evavo/adventure-bitmap-font/runtime-registry";
 import type { Id } from "@evavo/adventure-project-schema";
 import { Assets, Texture } from "pixi.js";
 
@@ -171,11 +173,16 @@ export class PixiAssetTextureStore {
   private readonly ownedAliases = new Map<string, string>();
   private readonly aliasesByAsset = new Map<string, Set<string>>();
   private readonly frameKeysByAsset = new Map<string, Set<string>>();
+  private runtimeBitmapFonts: BitmapFontResolver | null = null;
 
   constructor(options: PixiTextureStoreOptions = {}) {
     this.aliasNamespace = normalizeNamespace(
       options.aliasNamespace ?? "evavo-adventure",
     );
+  }
+
+  getBitmapFontResolver(): BitmapFontResolver | null {
+    return this.runtimeBitmapFonts;
   }
 
   getTexture(
@@ -331,6 +338,7 @@ export class PixiAssetTextureStore {
     for (const asset of renderable) {
       await this.loadRuntimeAsset(asset, bundleUrl);
     }
+    this.runtimeBitmapFonts = bitmapFontResolverForAssetCollection(assets);
   }
 
   async unloadAsset(assetId: Id<"asset">): Promise<void> {
@@ -362,6 +370,7 @@ export class PixiAssetTextureStore {
     this.frameTextures.clear();
     this.frameKeysByAsset.clear();
     this.ownedAliases.clear();
+    this.runtimeBitmapFonts = null;
   }
 
   private aliasFor(assetId: Id<"asset">, role: string): string {
