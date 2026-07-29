@@ -24,11 +24,20 @@ export interface CompileCommand {
   readonly format: OutputFormat;
 }
 
+export interface PackageCommand {
+  readonly kind: "package";
+  readonly projectPath: string;
+  readonly assetManifestPath: string;
+  readonly outputDirectory: string;
+  readonly format: OutputFormat;
+}
+
 export type CliCommand =
   | HelpCommand
   | VersionCommand
   | ValidateCommand
-  | CompileCommand;
+  | CompileCommand
+  | PackageCommand;
 
 export class CliUsageError extends Error {
   constructor(message: string) {
@@ -92,6 +101,23 @@ const parseOptions = (tokens: readonly string[]): ParsedOptions => {
   return { values, flags };
 };
 
+const assertAllowedOptions = (
+  options: ParsedOptions,
+  allowedValues: ReadonlySet<string>,
+  allowedFlags: ReadonlySet<string>,
+): void => {
+  for (const option of options.values.keys()) {
+    if (!allowedValues.has(option)) {
+      throw new CliUsageError(`Option '${option}' is not valid for this command.`);
+    }
+  }
+  for (const option of options.flags) {
+    if (!allowedFlags.has(option)) {
+      throw new CliUsageError(`Option '${option}' is not valid for this command.`);
+    }
+  }
+};
+
 const requiredValue = (options: ParsedOptions, key: string): string => {
   const value = options.values.get(key);
   if (!value) {
@@ -103,8 +129,13 @@ const requiredValue = (options: ParsedOptions, key: string): string => {
 const optionalValue = (options: ParsedOptions, key: string): string | null =>
   options.values.get(key) ?? null;
 
+const outputValue = (options: ParsedOptions): string =>
+  optionalValue(options, "--out") ?? requiredValue(options, "--output");
+
 const outputFormat = (options: ParsedOptions): OutputFormat =>
   options.flags.has("--json") ? "json" : "human";
+
+const JSON_FLAG = new Set(["--json"]);
 
 export const parseCliArguments = (argv: readonly string[]): CliCommand => {
   const [command, ...tokens] = argv;
@@ -121,6 +152,11 @@ export const parseCliArguments = (argv: readonly string[]): CliCommand => {
   const options = parseOptions(tokens);
   switch (command) {
     case "validate":
+      assertAllowedOptions(
+        options,
+        new Set(["--project", "--asset-manifest"]),
+        JSON_FLAG,
+      );
       return {
         kind: "validate",
         projectPath: requiredValue(options, "--project"),
@@ -128,13 +164,36 @@ export const parseCliArguments = (argv: readonly string[]): CliCommand => {
         format: outputFormat(options),
       };
     case "compile":
+      assertAllowedOptions(
+        options,
+        new Set([
+          "--project",
+          "--asset-manifest",
+          "--out",
+          "--output",
+          "--report",
+        ]),
+        JSON_FLAG,
+      );
       return {
         kind: "compile",
         projectPath: requiredValue(options, "--project"),
         assetManifestPath: requiredValue(options, "--asset-manifest"),
-        outputPath:
-          optionalValue(options, "--out") ?? requiredValue(options, "--output"),
+        outputPath: outputValue(options),
         reportPath: optionalValue(options, "--report"),
+        format: outputFormat(options),
+      };
+    case "package":
+      assertAllowedOptions(
+        options,
+        new Set(["--project", "--asset-manifest", "--out", "--output"]),
+        JSON_FLAG,
+      );
+      return {
+        kind: "package",
+        projectPath: requiredValue(options, "--project"),
+        assetManifestPath: requiredValue(options, "--asset-manifest"),
+        outputDirectory: outputValue(options),
         format: outputFormat(options),
       };
     default:
@@ -147,6 +206,7 @@ export const CLI_HELP = `EVAVO Adventure Studio CLI
 Usage:
   evavo-adventure validate --project <project.json> [--asset-manifest <assets.json>] [--json]
   evavo-adventure compile --project <project.json> --asset-manifest <assets.json> --out <game.bundle.json> [--report <report.json>] [--json]
+  evavo-adventure package --project <project.json> --asset-manifest <assets.json> --out <release-directory> [--json]
   evavo-adventure version
 
 Exit codes:
