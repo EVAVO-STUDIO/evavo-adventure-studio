@@ -2,6 +2,7 @@ import { z } from "zod";
 import { sha256Schema } from "@evavo/adventure-asset-contract";
 import { runtimeAssetRecordSchema } from "@evavo/adventure-asset-contract/runtime-asset";
 import { bitmapFontManifestSchema } from "@evavo/adventure-bitmap-font";
+import { registerBitmapFontsForAssetCollection } from "@evavo/adventure-bitmap-font/runtime-registry";
 import {
   actorSchema,
   dialogueGraphSchema,
@@ -88,6 +89,9 @@ export const parseRuntimeBundle = (input: unknown): RuntimeBundle => {
   const bitmapFontIssues = validateRuntimeBitmapFonts(bundle);
   if (bitmapFontIssues.length > 0) {
     throw new RuntimeBitmapFontValidationError(bitmapFontIssues);
+  }
+  if (bundle.bitmapFonts) {
+    registerBitmapFontsForAssetCollection(bundle.assets, bundle.bitmapFonts);
   }
   return bundle;
 };
