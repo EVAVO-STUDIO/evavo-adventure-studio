@@ -20,6 +20,8 @@
     "@evavo/adventure-project-editor-core": "workspace:*",
     "@evavo/adventure-project-schema": "workspace:*",
     "@evavo/adventure-scene-instances": "workspace:*",
+    "@evavo/adventure-ui-skin": "workspace:*",
+    "@evavo/adventure-ui-skin-editor-core": "workspace:*",
     "react": "catalog:",
     "react-dom": "catalog:"
   },
