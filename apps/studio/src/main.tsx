@@ -1,6 +1,7 @@
 import { StrictMode, type ReactNode } from "react";
 import { createRoot } from "react-dom/client";
 import { App } from "./App.js";
+import { AnimationApp } from "./AnimationApp.js";
 import { DialogueApp } from "./DialogueApp.js";
 import { StudioErrorBoundary } from "./ErrorBoundary.js";
 import { GeometryApp } from "./GeometryApp.js";
@@ -20,6 +21,8 @@ const application: ReactNode =
     <GeometryApp />
   ) : workspace === "objects" ? (
     <ObjectApp />
+  ) : workspace === "animation" ? (
+    <AnimationApp />
   ) : workspace === "dialogue" ? (
     <DialogueApp />
   ) : workspace === "validation" ? (
@@ -35,12 +38,14 @@ const workspaces = [
   { id: "composer", href: "/", label: "Composer" },
   { id: "geometry", href: "/?workspace=geometry", label: "Geometry" },
   { id: "objects", href: "/?workspace=objects", label: "Objects" },
+  { id: "animation", href: "/?workspace=animation", label: "Animation" },
   { id: "dialogue", href: "/?workspace=dialogue", label: "Dialogue" },
   { id: "validation", href: "/?workspace=validation", label: "Validate" },
 ] as const;
 const activeWorkspace =
   workspace === "geometry" ||
   workspace === "objects" ||
+  workspace === "animation" ||
   workspace === "dialogue" ||
   workspace === "validation"
     ? workspace
