@@ -91,7 +91,7 @@ const atlasColourCount = (assetId: Id<"asset">): number => {
   }
 };
 
-export const studioCompiledArtEvidence = assetBuildManifestSchema.parse({
+export const studioCompiledAssetManifest = assetBuildManifestSchema.parse({
   manifestVersion: 1,
   projectId: studioProject.id,
   compilerVersion: "0.1.0-studio-fixture",
@@ -172,7 +172,7 @@ export const studioArtVisualEvidence = artVisualEvidenceManifestSchema.parse({
   manifestVersion: 1,
   projectId: studioProject.id,
   compilerVersion: "0.1.0-studio-fixture",
-  assets: studioCompiledArtEvidence.assets.flatMap((asset) => {
+  assets: studioCompiledAssetManifest.assets.flatMap((asset) => {
     if (asset.kind === "image") {
       return [
         {
@@ -201,3 +201,8 @@ export const studioArtVisualEvidence = artVisualEvidenceManifestSchema.parse({
     return [];
   }),
 });
+
+export const studioCompiledArtEvidence = {
+  manifest: studioCompiledAssetManifest,
+  visualEvidence: studioArtVisualEvidence,
+} as const;
