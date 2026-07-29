@@ -7,6 +7,10 @@
     ".": {
       "types": "./dist/src/index.d.ts",
       "import": "./dist/src/index.js"
+    },
+    "./validated-history": {
+      "types": "./dist/src/validated-history.d.ts",
+      "import": "./dist/src/validated-history.js"
     }
   },
   "files": ["dist"],
