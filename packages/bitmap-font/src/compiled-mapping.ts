@@ -2,6 +2,7 @@ import type {
   AssetBuildManifest,
   CompiledAssetRecord,
 } from "@evavo/adventure-asset-contract";
+import type { RuntimeAssetRecord } from "@evavo/adventure-asset-contract/runtime-asset";
 import type { Rectangle } from "@evavo/adventure-project-schema";
 import type {
   BitmapFontManifest,
@@ -20,6 +21,17 @@ export interface BitmapFontCompiledIssue {
   readonly code: BitmapFontCompiledIssueCode;
   readonly path: string;
   readonly message: string;
+}
+
+type FontAssetRecord = CompiledAssetRecord | RuntimeAssetRecord;
+type ImageFontAsset = Extract<FontAssetRecord, { readonly kind: "image" }>;
+type SpritesheetFontAsset = Extract<
+  FontAssetRecord,
+  { readonly kind: "spritesheet" }
+>;
+
+export interface BitmapFontAssetCollection {
+  readonly assets: readonly FontAssetRecord[];
 }
 
 const addIssue = (
@@ -47,7 +59,7 @@ const rectangleInside = (
 
 const validateImageGlyph = (
   issues: BitmapFontCompiledIssue[],
-  asset: Extract<CompiledAssetRecord, { readonly kind: "image" }>,
+  asset: ImageFontAsset,
   glyph: BitmapGlyph,
   path: string,
 ): void => {
@@ -69,7 +81,7 @@ const validateImageGlyph = (
 
 const validateSpritesheetGlyph = (
   issues: BitmapFontCompiledIssue[],
-  asset: Extract<CompiledAssetRecord, { readonly kind: "spritesheet" }>,
+  asset: SpritesheetFontAsset,
   glyph: BitmapGlyph,
   path: string,
 ): void => {
@@ -106,7 +118,7 @@ const validateSpritesheetGlyph = (
 
 export const validateCompiledBitmapFontMappings = (
   fonts: BitmapFontManifest,
-  compiled: AssetBuildManifest,
+  compiled: BitmapFontAssetCollection | Pick<AssetBuildManifest, "assets">,
 ): readonly BitmapFontCompiledIssue[] => {
   const issues: BitmapFontCompiledIssue[] = [];
   const assets = new Map(
