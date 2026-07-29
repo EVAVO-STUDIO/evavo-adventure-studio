@@ -5,11 +5,19 @@ import type {
   Id,
   Interaction,
   Scalar,
+  SequenceCue,
 } from "@evavo/adventure-project-schema";
 
 export interface ActiveDialogueState {
   readonly dialogueId: Id<"dialogue">;
   readonly nodeId: Id<"dialogue-node">;
+}
+
+export interface ActiveSequenceState {
+  readonly sequenceId: Id<"sequence">;
+  readonly elapsedTicks: number;
+  readonly iteration: number;
+  readonly nextCueIndexByTrack: Readonly<Record<string, number>>;
 }
 
 export interface RuntimeState {
@@ -25,6 +33,7 @@ export interface RuntimeState {
   readonly consumedInteractionIds: readonly Id<"interaction">[];
   readonly consumedDialogueChoiceIds: readonly Id<"dialogue-choice">[];
   readonly activeDialogue: ActiveDialogueState | null;
+  readonly activeSequences: readonly ActiveSequenceState[];
   readonly objectStates: Readonly<Record<string, string>>;
   readonly randomStreams: Readonly<Record<string, number>>;
   readonly score: number;
@@ -56,6 +65,21 @@ export type RuntimeEvent =
       readonly entranceId: Id<"entrance">;
     }
   | { readonly kind: "sequence-requested"; readonly sequenceId: Id<"sequence"> }
+  | { readonly kind: "sequence-started"; readonly sequenceId: Id<"sequence"> }
+  | {
+      readonly kind: "sequence-cue-reached";
+      readonly sequenceId: Id<"sequence">;
+      readonly trackId: Id<"sequence-track">;
+      readonly cueIndex: number;
+      readonly cue: SequenceCue;
+    }
+  | {
+      readonly kind: "sequence-looped";
+      readonly sequenceId: Id<"sequence">;
+      readonly iteration: number;
+    }
+  | { readonly kind: "sequence-completed"; readonly sequenceId: Id<"sequence"> }
+  | { readonly kind: "sequence-skipped"; readonly sequenceId: Id<"sequence"> }
   | {
       readonly kind: "dialogue-requested";
       readonly dialogueId: Id<"dialogue">;
@@ -135,6 +159,7 @@ export const createInitialState = (
     consumedInteractionIds: [],
     consumedDialogueChoiceIds: [],
     activeDialogue: null,
+    activeSequences: [],
     objectStates: {},
     randomStreams: { main: normalizeSeed(seed) },
     score: 0,
