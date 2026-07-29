@@ -24,6 +24,11 @@ import type { AdventureProject, Id } from "@evavo/adventure-project-schema";
 
 export type ArtWorkspaceIssue = ArtDirectionIssue | ArtVisualEvidenceIssue;
 
+export interface ArtDirectionEvidenceBundle {
+  readonly manifest: AssetBuildManifest;
+  readonly visualEvidence: ArtVisualEvidenceManifest | null;
+}
+
 export interface ArtDirectionWorkspaceState {
   readonly project: AdventureProject;
   readonly compiledEvidence: AssetBuildManifest | null;
@@ -53,17 +58,37 @@ const firstRule = (
   return rule;
 };
 
+const normalizeEvidence = (
+  evidence: AssetBuildManifest | ArtDirectionEvidenceBundle | null,
+  explicitVisualEvidence: ArtVisualEvidenceManifest | null,
+): {
+  readonly manifest: AssetBuildManifest | null;
+  readonly visualEvidence: ArtVisualEvidenceManifest | null;
+} => {
+  if (!evidence) {
+    return { manifest: null, visualEvidence: explicitVisualEvidence };
+  }
+  if ("manifest" in evidence) {
+    return {
+      manifest: evidence.manifest,
+      visualEvidence: explicitVisualEvidence ?? evidence.visualEvidence,
+    };
+  }
+  return { manifest: evidence, visualEvidence: explicitVisualEvidence };
+};
+
 export const createArtDirectionWorkspace = (
   project: AdventureProject,
-  compiledEvidence: AssetBuildManifest | null,
+  evidence: AssetBuildManifest | ArtDirectionEvidenceBundle | null,
   initialManifest = createArtDirectionManifest(project, "vga-256-320x200"),
-  visualEvidence: ArtVisualEvidenceManifest | null = null,
+  explicitVisualEvidence: ArtVisualEvidenceManifest | null = null,
 ): ArtDirectionWorkspaceState => {
   const history = createArtDirectionEditorHistory(project, initialManifest);
+  const normalized = normalizeEvidence(evidence, explicitVisualEvidence);
   return {
     project,
-    compiledEvidence,
-    visualEvidence,
+    compiledEvidence: normalized.manifest,
+    visualEvidence: normalized.visualEvidence,
     history,
     selectedAssetId: firstRule(history).assetId,
     notice: null,
