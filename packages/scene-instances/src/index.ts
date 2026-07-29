@@ -7,10 +7,14 @@ import {
   polygonSchema,
   rectangleSchema,
   sizeSchema,
+  type Action,
   type Actor,
+  type DialogueGraph,
   type Id,
+  type InventoryItem,
   type NavigationArea,
   type Scene,
+  type Sequence,
 } from "@evavo/adventure-project-schema";
 import { pointInPolygon } from "@evavo/adventure-scene";
 
@@ -130,14 +134,26 @@ export const emptySceneInstanceManifest = (
 
 export interface SceneInstanceAssetReference {
   readonly id: Id<"asset">;
-  readonly kind: "image" | "spritesheet" | "audio" | "font" | "video" | "palette";
+  readonly kind:
+    | "image"
+    | "spritesheet"
+    | "audio"
+    | "font"
+    | "video"
+    | "palette";
 }
 
 export interface SceneInstanceProjectContext {
   readonly projectId: Id<"project">;
-  readonly scenes: readonly Pick<Scene, "id" | "navigationAreas">[];
+  readonly scenes: readonly Pick<
+    Scene,
+    "id" | "navigationAreas" | "entrances"
+  >[];
   readonly actors: readonly Actor[];
   readonly assets: readonly SceneInstanceAssetReference[];
+  readonly inventoryItems?: readonly Pick<InventoryItem, "id">[];
+  readonly dialogues?: readonly Pick<DialogueGraph, "id" | "nodes">[];
+  readonly sequences?: readonly Pick<Sequence, "id">[];
 }
 
 export type SceneInstanceIssueCode =
@@ -146,14 +162,23 @@ export type SceneInstanceIssueCode =
   | "duplicate-scene-composition"
   | "missing-instance-scene"
   | "missing-instance-actor"
-  | "duplicate-actor-placement"
   | "missing-instance-animation"
   | "invalid-actor-instance-position"
   | "missing-object-definition"
   | "missing-object-state"
   | "missing-object-visual"
   | "missing-object-visual-asset"
-  | "invalid-object-visual-asset-kind";
+  | "invalid-object-visual-asset-kind"
+  | "degenerate-object-interaction-shape"
+  | "missing-interaction-actor"
+  | "missing-interaction-item"
+  | "missing-interaction-scene"
+  | "missing-interaction-entrance"
+  | "missing-interaction-dialogue"
+  | "missing-interaction-dialogue-node"
+  | "missing-interaction-sequence"
+  | "missing-interaction-object"
+  | "invalid-interaction-object-state";
 
 export interface SceneInstanceIssue {
   readonly severity: "error";
@@ -195,18 +220,195 @@ const pointInsideNavigation = (
   areas: readonly NavigationArea[],
 ): boolean => areas.some((area) => pointInPolygon(position, area.shape));
 
+const polygonArea = (
+  points: readonly { readonly x: number; readonly y: number }[],
+): number => {
+  let total = 0;
+  for (let index = 0; index < points.length; index += 1) {
+    const current = points[index];
+    const next = points[(index + 1) % points.length];
+    if (current && next) {
+      total += current.x * next.y - next.x * current.y;
+    }
+  }
+  return total / 2;
+};
+
+interface PlacedObjectReference {
+  readonly instance: SceneObjectInstance;
+  readonly definition: ObjectDefinition | null;
+}
+
+interface ActionValidationContext {
+  readonly actorsById: ReadonlyMap<string, Actor>;
+  readonly itemsById: ReadonlySet<string>;
+  readonly scenesById: ReadonlyMap<
+    string,
+    Pick<Scene, "id" | "navigationAreas" | "entrances">
+  >;
+  readonly dialoguesById: ReadonlyMap<
+    string,
+    Pick<DialogueGraph, "id" | "nodes">
+  >;
+  readonly sequencesById: ReadonlySet<string>;
+  readonly objectsById: ReadonlyMap<string, PlacedObjectReference>;
+}
+
+const validateInteractionAction = (
+  action: Action,
+  path: string,
+  context: ActionValidationContext,
+  issues: SceneInstanceIssue[],
+): void => {
+  switch (action.kind) {
+    case "say":
+      if (action.speakerId && !context.actorsById.has(action.speakerId)) {
+        addIssue(
+          issues,
+          "missing-interaction-actor",
+          `${path}.speakerId`,
+          `Speech action references missing actor '${action.speakerId}'.`,
+        );
+      }
+      return;
+    case "give-item":
+    case "remove-item":
+      if (!context.itemsById.has(action.itemId)) {
+        addIssue(
+          issues,
+          "missing-interaction-item",
+          `${path}.itemId`,
+          `Interaction action references missing item '${action.itemId}'.`,
+        );
+      }
+      return;
+    case "change-scene": {
+      const scene = context.scenesById.get(action.sceneId);
+      if (!scene) {
+        addIssue(
+          issues,
+          "missing-interaction-scene",
+          `${path}.sceneId`,
+          `Interaction action references missing scene '${action.sceneId}'.`,
+        );
+      } else if (
+        !scene.entrances.some((entrance) => entrance.id === action.entranceId)
+      ) {
+        addIssue(
+          issues,
+          "missing-interaction-entrance",
+          `${path}.entranceId`,
+          `Scene '${action.sceneId}' has no entrance '${action.entranceId}'.`,
+        );
+      }
+      return;
+    }
+    case "play-sequence":
+      if (!context.sequencesById.has(action.sequenceId)) {
+        addIssue(
+          issues,
+          "missing-interaction-sequence",
+          `${path}.sequenceId`,
+          `Interaction action references missing sequence '${action.sequenceId}'.`,
+        );
+      }
+      return;
+    case "start-dialogue": {
+      const dialogue = context.dialoguesById.get(action.dialogueId);
+      if (!dialogue) {
+        addIssue(
+          issues,
+          "missing-interaction-dialogue",
+          `${path}.dialogueId`,
+          `Interaction action references missing dialogue '${action.dialogueId}'.`,
+        );
+      } else if (
+        action.nodeId &&
+        !dialogue.nodes.some((node) => node.id === action.nodeId)
+      ) {
+        addIssue(
+          issues,
+          "missing-interaction-dialogue-node",
+          `${path}.nodeId`,
+          `Dialogue '${action.dialogueId}' has no node '${action.nodeId}'.`,
+        );
+      }
+      return;
+    }
+    case "set-object-state": {
+      const placed = context.objectsById.get(action.objectId);
+      if (!placed) {
+        addIssue(
+          issues,
+          "missing-interaction-object",
+          `${path}.objectId`,
+          `Interaction action references missing object '${action.objectId}'.`,
+        );
+      } else if (
+        placed.definition &&
+        !placed.definition.states.some((state) => state.id === action.state)
+      ) {
+        addIssue(
+          issues,
+          "invalid-interaction-object-state",
+          `${path}.state`,
+          `Object '${action.objectId}' definition '${placed.definition.id}' has no state '${action.state}'.`,
+        );
+      }
+      return;
+    }
+    case "set-flag":
+    case "set-variable":
+    case "award-score":
+      return;
+  }
+};
+
 export const validateSceneInstanceManifest = (
   context: SceneInstanceProjectContext,
   manifest: SceneInstanceManifest,
 ): readonly SceneInstanceIssue[] => {
   const issues: SceneInstanceIssue[] = [];
   const ids = new Map<string, string>();
-  const scenesById = new Map(context.scenes.map((scene) => [scene.id as string, scene]));
-  const actorsById = new Map(context.actors.map((actor) => [actor.id as string, actor]));
-  const assetsById = new Map(context.assets.map((asset) => [asset.id as string, asset]));
-  const definitionsById = new Map(
-    manifest.objectDefinitions.map((definition) => [definition.id as string, definition]),
+  const scenesById = new Map(
+    context.scenes.map((scene) => [scene.id as string, scene]),
   );
+  const actorsById = new Map(
+    context.actors.map((actor) => [actor.id as string, actor]),
+  );
+  const assetsById = new Map(
+    context.assets.map((asset) => [asset.id as string, asset]),
+  );
+  const definitionsById = new Map(
+    manifest.objectDefinitions.map(
+      (definition) => [definition.id as string, definition] as const,
+    ),
+  );
+  const objectsById = new Map<string, PlacedObjectReference>();
+
+  for (const composition of manifest.scenes) {
+    for (const instance of composition.objectInstances) {
+      const definition = definitionsById.get(instance.definitionId) ?? null;
+      if (!objectsById.has(instance.id)) {
+        objectsById.set(instance.id, { instance, definition });
+      }
+    }
+  }
+
+  const actionContext: ActionValidationContext = {
+    actorsById,
+    itemsById: new Set((context.inventoryItems ?? []).map((item) => item.id)),
+    scenesById,
+    dialoguesById: new Map(
+      (context.dialogues ?? []).map(
+        (dialogue) => [dialogue.id as string, dialogue] as const,
+      ),
+    ),
+    sequencesById: new Set(
+      (context.sequences ?? []).map((sequence) => sequence.id),
+    ),
+    objectsById,
+  };
 
   if (manifest.projectId !== context.projectId) {
     addIssue(
@@ -236,17 +438,19 @@ export const validateSceneInstanceManifest = (
         );
       }
 
-      if (state.visual) {
-        const asset = assetsById.get(state.visual.assetId);
+      const visual = state.visual;
+      if (visual) {
+        const asset = assetsById.get(visual.assetId);
         if (!asset) {
           addIssue(
             issues,
             "missing-object-visual-asset",
             `${statePath}.visual.assetId`,
-            `Object state '${state.id}' references missing asset '${state.visual.assetId}'.`,
+            `Object state '${state.id}' references missing asset '${visual.assetId}'.`,
           );
         } else {
-          const expectedKind = state.visual.kind === "image" ? "image" : "spritesheet";
+          const expectedKind =
+            visual.kind === "image" ? "image" : "spritesheet";
           if (asset.kind !== expectedKind) {
             addIssue(
               issues,
@@ -258,14 +462,30 @@ export const validateSceneInstanceManifest = (
         }
       }
 
-      state.interactions.forEach((interaction, interactionIndex) =>
-        registerId(
-          ids,
+      if (
+        state.interactionShape &&
+        Math.abs(polygonArea(state.interactionShape.points)) < 1e-7
+      ) {
+        addIssue(
           issues,
-          interaction.id,
-          `${statePath}.interactions[${interactionIndex}].id`,
-        ),
-      );
+          "degenerate-object-interaction-shape",
+          `${statePath}.interactionShape`,
+          `Object state '${state.id}' interaction shape has no usable area.`,
+        );
+      }
+
+      state.interactions.forEach((interaction, interactionIndex) => {
+        const interactionPath = `${statePath}.interactions[${interactionIndex}]`;
+        registerId(ids, issues, interaction.id, `${interactionPath}.id`);
+        interaction.actions.forEach((action, actionIndex) =>
+          validateInteractionAction(
+            action,
+            `${interactionPath}.actions[${actionIndex}]`,
+            actionContext,
+            issues,
+          ),
+        );
+      });
     });
 
     if (!stateIds.has(definition.initialStateId)) {
@@ -301,7 +521,6 @@ export const validateSceneInstanceManifest = (
       );
     }
 
-    const actorDefinitionsInScene = new Set<string>();
     composition.actorInstances.forEach((instance, instanceIndex) => {
       const instancePath = `${compositionPath}.actorInstances[${instanceIndex}]`;
       registerId(ids, issues, instance.id, `${instancePath}.id`);
@@ -327,16 +546,6 @@ export const validateSceneInstanceManifest = (
           `Actor '${actor.id}' has no '${instance.animationState}' animation facing '${instance.facing}'.`,
         );
       }
-
-      if (actorDefinitionsInScene.has(instance.actorId)) {
-        addIssue(
-          issues,
-          "duplicate-actor-placement",
-          `${instancePath}.actorId`,
-          `Actor '${instance.actorId}' is placed more than once in scene '${composition.sceneId}'.`,
-        );
-      }
-      actorDefinitionsInScene.add(instance.actorId);
 
       if (
         scene &&
@@ -384,4 +593,8 @@ export const validateSceneInstanceManifest = (
 export const sceneCompositionById = (
   manifest: SceneInstanceManifest,
 ): ReadonlyMap<string, SceneComposition> =>
-  new Map(manifest.scenes.map((composition) => [composition.sceneId as string, composition]));
+  new Map(
+    manifest.scenes.map(
+      (composition) => [composition.sceneId as string, composition] as const,
+    ),
+  );
