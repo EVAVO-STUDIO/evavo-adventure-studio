@@ -1,0 +1,15 @@
+{
+  "extends": "../../tsconfig.package.json",
+  "compilerOptions": {
+    "rootDir": ".",
+    "outDir": "dist",
+    "types": ["node"]
+  },
+  "include": ["src/**/*.ts", "tests/**/*.ts"],
+  "references": [
+    { "path": "../../packages/asset-contract" },
+    { "path": "../../packages/compiler" },
+    { "path": "../../packages/project-schema" },
+    { "path": "../../packages/validation" }
+  ]
+}
