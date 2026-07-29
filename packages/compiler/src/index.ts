@@ -40,6 +40,11 @@ import {
   type RuntimeBundle,
 } from "@evavo/adventure-runtime-bundle";
 import {
+  validateUiSkinManifest,
+  type UiSkinIssue,
+  type UiSkinManifest,
+} from "@evavo/adventure-ui-skin";
+import {
   hasValidationErrors,
   validateProjectSemantics,
   type ValidationIssue,
@@ -51,7 +56,8 @@ export type CompilationIssue =
   | PortableRuntimePathIssue
   | FrameAssetMappingIssue
   | BitmapFontIssue
-  | BitmapFontCompiledIssue;
+  | BitmapFontCompiledIssue
+  | UiSkinIssue;
 
 export interface CompiledProject {
   readonly bundle: RuntimeBundle;
@@ -155,6 +161,13 @@ const compileBitmapFonts = (
     })),
 });
 
+const compileUiSkins = (manifest: UiSkinManifest): UiSkinManifest => ({
+  ...manifest,
+  skins: [...manifest.skins].sort((left, right) =>
+    left.id.localeCompare(right.id),
+  ),
+});
+
 const canonicalRuntimeAsset = (asset: RuntimeAssetRecord): RuntimeAssetRecord => {
   const outputFiles = [...asset.outputFiles].sort((left, right) => {
     const roleDifference = left.role.localeCompare(right.role);
@@ -237,6 +250,7 @@ export const compileProject = (
   project: AdventureProject,
   assetManifest: AssetBuildManifest,
   bitmapFonts?: BitmapFontManifest,
+  uiSkins?: UiSkinManifest,
 ): CompiledProject => {
   const projectIssues = validateProjectSemantics(project);
   const assetIssues = validateAssetBuildManifest(project, assetManifest);
@@ -248,6 +262,9 @@ export const compileProject = (
   const bitmapFontMappingIssues = bitmapFonts
     ? validateCompiledBitmapFontMappings(bitmapFonts, assetManifest)
     : [];
+  const uiSkinIssues = uiSkins
+    ? validateUiSkinManifest(project, bitmapFonts ?? null, uiSkins)
+    : [];
   const issues: CompilationIssue[] = [
     ...projectIssues,
     ...assetIssues,
@@ -255,6 +272,7 @@ export const compileProject = (
     ...frameIssues,
     ...bitmapFontIssues,
     ...bitmapFontMappingIssues,
+    ...uiSkinIssues,
   ];
   if (
     hasValidationErrors(projectIssues) ||
@@ -262,7 +280,8 @@ export const compileProject = (
     pathIssues.length > 0 ||
     frameIssues.length > 0 ||
     bitmapFontIssues.length > 0 ||
-    bitmapFontMappingIssues.length > 0
+    bitmapFontMappingIssues.length > 0 ||
+    uiSkinIssues.some((issue) => issue.severity === "error")
   ) {
     throw new ProjectCompilationError(issues);
   }
@@ -286,6 +305,7 @@ export const compileProject = (
     ...(bitmapFonts
       ? { bitmapFonts: compileBitmapFonts(bitmapFonts) }
       : {}),
+    ...(uiSkins ? { uiSkins: compileUiSkins(uiSkins) } : {}),
   });
   const canonicalJson = canonicalStringify(bundle);
 
@@ -305,11 +325,12 @@ export const tryCompileProject = (
   project: AdventureProject,
   assetManifest: AssetBuildManifest,
   bitmapFonts?: BitmapFontManifest,
+  uiSkins?: UiSkinManifest,
 ): CompilationResult => {
   try {
     return {
       kind: "compiled",
-      project: compileProject(project, assetManifest, bitmapFonts),
+      project: compileProject(project, assetManifest, bitmapFonts, uiSkins),
     };
   } catch (error) {
     if (error instanceof ProjectCompilationError) {
