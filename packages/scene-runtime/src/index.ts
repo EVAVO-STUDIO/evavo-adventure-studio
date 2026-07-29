@@ -37,7 +37,6 @@ import {
 import type {
   ObjectDefinition,
   ObjectStateDefinition,
-  SceneActorInstance,
   SceneObjectInstance,
 } from "@evavo/adventure-scene-instances";
 
@@ -232,7 +231,6 @@ export const setActorInstancePosition = (
   world: RuntimeWorldState,
   actorInstanceId: Id<"actor-instance">,
   position: Point,
-  facing?: string,
 ): RuntimeWorldState => {
   const current = world.actorInstances[actorInstanceId];
   if (!current) {
@@ -242,11 +240,7 @@ export const setActorInstancePosition = (
     ...world,
     actorInstances: {
       ...world.actorInstances,
-      [actorInstanceId]: {
-        ...current,
-        position,
-        facing: facing ?? current.facing,
-      },
+      [actorInstanceId]: { ...current, position },
     },
   };
 };
@@ -301,20 +295,55 @@ export const setActorInstanceVisibility = (
   };
 };
 
+const findObjectPlacement = (
+  bundle: RuntimeBundle,
+  objectInstanceId: Id<"object">,
+): {
+  readonly instance: SceneObjectInstance;
+  readonly definition: ObjectDefinition;
+} => {
+  const definitions = objectDefinitionsById(bundle);
+  for (const composition of bundle.sceneInstances?.scenes ?? []) {
+    const instance = composition.objectInstances.find(
+      (candidate) => candidate.id === objectInstanceId,
+    );
+    if (!instance) {
+      continue;
+    }
+    const definition = definitions.get(instance.definitionId);
+    if (!definition) {
+      throw new Error(
+        `Object instance '${objectInstanceId}' definition '${instance.definitionId}' is missing.`,
+      );
+    }
+    return { instance, definition };
+  }
+  throw new Error(`Object instance '${objectInstanceId}' does not exist.`);
+};
+
 export const setObjectInstanceState = (
+  bundle: RuntimeBundle,
   world: RuntimeWorldState,
   objectInstanceId: Id<"object">,
   stateId: Id<"object-state">,
-): RuntimeWorldState => ({
-  ...world,
-  story: applyActions(world.story, [
-    {
-      kind: "set-object-state",
-      objectId: objectInstanceId,
-      state: stateId,
-    },
-  ]).state,
-});
+): RuntimeWorldState => {
+  const { definition } = findObjectPlacement(bundle, objectInstanceId);
+  if (!definition.states.some((state) => state.id === stateId)) {
+    throw new Error(
+      `Object definition '${definition.id}' has no state '${stateId}'.`,
+    );
+  }
+  return {
+    ...world,
+    story: applyActions(world.story, [
+      {
+        kind: "set-object-state",
+        objectId: objectInstanceId,
+        state: stateId,
+      },
+    ]).state,
+  };
+};
 
 const backgroundNode = (
   bundle: RuntimeBundle,
@@ -355,48 +384,6 @@ const backgroundNode = (
   };
 };
 
-const resolveActorInstanceNode = (
-  bundle: RuntimeBundle,
-  scene: RuntimeBundle["scenes"][number],
-  authored: SceneActorInstance,
-  runtime: ActorInstanceRuntimeState,
-): SpriteRenderNode | null => {
-  if (
-    authored.visibleWhen &&
-    !evaluateCondition(authored.visibleWhen, bundleWorldStory(bundle, runtime))
-  ) {
-    return null;
-  }
-  if (runtime.visibleOverride === false) {
-    return null;
-  }
-
-  const actor = actorsById(bundle).get(authored.actorId);
-  if (!actor) {
-    throw new Error(`Actor '${authored.actorId}' does not exist.`);
-  }
-  const frame = currentAnimationFrame(actor, runtime.playback);
-  return resolveActorSprite({
-    nodeId: `render.actor-instance.${authored.id}` as Id<"render-node">,
-    stableId: authored.id,
-    frame,
-    footPosition: runtime.position,
-    depthBands: scene.depthBands,
-    presentation: bundle.presentation,
-    elevation: authored.elevation,
-    zOffset: authored.zOffset,
-    scaleMultiplier: authored.scaleMultiplier,
-    visible: runtime.visibleOverride ?? true,
-  });
-};
-
-const bundleWorldStory = (
-  _bundle: RuntimeBundle,
-  _runtime: ActorInstanceRuntimeState,
-): RuntimeState => {
-  throw new Error("Internal scene condition context was not supplied.");
-};
-
 const objectStateFor = (
   definition: ObjectDefinition,
   stateId: string,
@@ -414,7 +401,6 @@ const objectNode = (
   bundle: RuntimeBundle,
   scene: RuntimeBundle["scenes"][number],
   instance: SceneObjectInstance,
-  definition: ObjectDefinition,
   state: ObjectStateDefinition,
 ): SpriteRenderNode | null => {
   if (!state.visible || !state.visual) {
@@ -515,7 +501,8 @@ export const resolveRuntimeSceneFrame = (
     }
     const conditionVisible =
       !authored.visibleWhen || evaluateCondition(authored.visibleWhen, world.story);
-    if (!conditionVisible || runtime.visibleOverride === false) {
+    const visible = runtime.visibleOverride ?? conditionVisible;
+    if (!visible) {
       continue;
     }
     const actor = actorsById(bundle).get(authored.actorId);
@@ -534,7 +521,7 @@ export const resolveRuntimeSceneFrame = (
         elevation: authored.elevation,
         zOffset: authored.zOffset,
         scaleMultiplier: authored.scaleMultiplier,
-        visible: runtime.visibleOverride ?? true,
+        visible: true,
       }),
     );
   }
@@ -557,7 +544,7 @@ export const resolveRuntimeSceneFrame = (
       instance.initialStateId ??
       definition.initialStateId;
     const state = objectStateFor(definition, stateId);
-    const resolved = objectNode(bundle, scene, instance, definition, state);
+    const resolved = objectNode(bundle, scene, instance, state);
     if (resolved) {
       nodes.push(resolved);
     }
