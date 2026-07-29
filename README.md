@@ -6,9 +6,9 @@ The project is designed around the production grammar of classic Sierra, LucasAr
 
 ## Product pillars
 
-- **Authentic presentation:** integer-scaled low-resolution rendering, palette-aware art, deliberate animation timing, scene transitions, cursor language and era-appropriate UI layouts.
+- **Authentic presentation:** integer-scaled low-resolution rendering, palette-aware art, bitmap typography, deliberate animation timing, scene transitions, cursor language and era-appropriate UI layouts.
 - **Complete adventure runtime:** navigation, hotspots, verbs, inventory, dialogue, conditions, flags, scoring, cutscenes, audio and save-state persistence.
-- **Visual production studio:** scene composition, walkmesh editing, depth maps, occluders, hotspot authoring, character animation, dialogue graphs, timeline sequencing and project validation.
+- **Visual production studio:** scene composition, walkmesh editing, depth maps, occluders, hotspot authoring, character animation, art-direction policy, bitmap fonts, dialogue graphs, timeline sequencing and project validation.
 - **Flexible game identity:** supports parser-like, icon-bar, verb-coin, two-button and context-sensitive interaction models without copying any one commercial game.
 - **Deterministic projects:** human-readable project files, stable IDs, schema validation, reproducible builds and revision-safe exports.
 
@@ -27,6 +27,10 @@ Source projects compile into deterministic runtime bundles. The editor, renderer
 - [Command-line build workflow](docs/cli.md)
 - [Scene composition and runtime](docs/scene-composition.md)
 - [Visual studio workspace](docs/studio-workspace.md)
+- [Editor expansion map](docs/editor-expansion-index.md)
+- [Sprite and animation authoring](docs/animation-authoring.md)
+- [Art direction and compiled pixel evidence](docs/art-direction.md)
+- [Native bitmap fonts](docs/bitmap-fonts.md)
 - [Implementation roadmap](docs/foundation-roadmap.md)
 
 ## First playable milestone
@@ -36,10 +40,10 @@ The first milestone is a small five-room mystery vignette that proves:
 1. canonical project schemas and migrations;
 2. deterministic runtime commands, saves and replays;
 3. navigation, depth, scale and partial occlusion;
-4. authentic native-resolution rendering and sprite timing;
+4. authentic native-resolution rendering, palettes, sprite timing and bitmap text;
 5. verbs, cursors, dialogue, inventory and score policies;
 6. skippable in-scene cinematics with equivalent completion state;
-7. validation fixtures, a rendering laboratory and compiled exports;
+7. validation fixtures, rendering laboratories and compiled exports;
 8. browser and Windows development players.
 
 ## Development
@@ -53,19 +57,32 @@ pnpm install
 pnpm check
 ```
 
-Run the native-resolution browser rendering laboratory:
+Run the native-resolution browser player and rendering laboratory:
 
 ```powershell
 pnpm dev:player
 ```
 
-Run the visual scene-composition workspace:
+Run the visual production Studio:
 
 ```powershell
 pnpm dev:studio
 ```
 
-The player uses port `5173`; the studio uses port `5174`.
+The player uses port `5173`; the Studio uses port `5174`; the Cinematic Timeline Lab uses port `5175`.
+
+Studio routes currently include:
+
+```text
+/?workspace=composer
+/?workspace=geometry
+/?workspace=objects
+/?workspace=animation
+/?workspace=art
+/?workspace=fonts
+/?workspace=dialogue
+/?workspace=validation
+```
 
 After `pnpm run build:types`, inspect the CLI or validate a project:
 
