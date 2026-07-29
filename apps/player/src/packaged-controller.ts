@@ -11,6 +11,11 @@ import {
 } from "@evavo/adventure-scene-runtime/commands";
 import { hitTestSceneObject } from "@evavo/adventure-scene-runtime/interactions";
 import { beginActorMovement } from "@evavo/adventure-scene-runtime/movement";
+import { uiSkinById, type UiSkin } from "@evavo/adventure-ui-skin";
+import {
+  hitTestUiSkin,
+  type UiHitTarget,
+} from "@evavo/adventure-ui-skin/hit-testing";
 import {
   appendSoftwareCursor,
   cursorIdForObjectTarget,
@@ -20,7 +25,11 @@ import {
   type ControlledActorSelection,
   type SoftwareCursorState,
 } from "./input.js";
-import { appendRuntimeInterface } from "./runtime-ui.js";
+import {
+  appendRuntimeInterface,
+  runtimeUiState,
+  type RuntimeUiInteractionState,
+} from "./runtime-ui.js";
 
 export interface PackagedRuntimeController {
   readonly selection: Exclude<ControlledActorSelection, { readonly kind: "invalid" }>;
@@ -49,9 +58,7 @@ const selectionStatus = (
     : "VIEW-ONLY RUNTIME";
 };
 
-const movementFailureStatus = (
-  reason: string,
-): string => {
+const movementFailureStatus = (reason: string): string => {
   switch (reason) {
     case "no-connected-route":
       return "NO ROUTE TO THAT POINT";
@@ -93,6 +100,9 @@ const statusFromCommandEvent = (event: SceneCommandEvent): string => {
   }
 };
 
+const initialVerbId = (skin: UiSkin | null): Id<"ui-verb"> | null =>
+  skin?.verbs.find((verb) => verb.primary)?.id ?? skin?.verbs[0]?.id ?? null;
+
 export const createPackagedRuntimeController = (
   bundle: RuntimeBundle,
   options: PackagedRuntimeControllerOptions = {},
@@ -112,6 +122,12 @@ export const createPackagedRuntimeController = (
   const selection = resolvedSelection;
   const controlledActorInstanceId =
     selection.kind === "selected" ? selection.actorInstanceId : null;
+  const runtimeSkin =
+    bundle.uiSkins && bundle.bitmapFonts ? uiSkinById(bundle.uiSkins) : null;
+  let selectedVerbId = initialVerbId(runtimeSkin);
+  let hoveredVerbId: Id<"ui-verb"> | null = null;
+  let selectedItemId: Id<"item"> | null = null;
+  let verbCoinPosition: Point | null = null;
   let world = createInitialInteractiveRuntimeWorldState(bundle);
   let renderedTick = 0;
   let baseFrame = resolveRuntimeSceneFrame(bundle, world);
@@ -122,18 +138,38 @@ export const createPackagedRuntimeController = (
   };
   let status = selectionStatus(selection);
 
+  const interactionState = (): RuntimeUiInteractionState => ({
+    ...(selectedVerbId ? { activeVerbId: selectedVerbId } : {}),
+    ...(hoveredVerbId ? { hoveredVerbId } : {}),
+    ...(selectedItemId ? { selectedItemId } : {}),
+    ...(verbCoinPosition ? { verbCoinPosition } : {}),
+  });
+
   const setStatus = (text: string): void => {
-    if (status === text) {
-      return;
-    }
+    if (status === text) return;
     status = text;
     options.onStatusChange?.(text);
   };
 
+  const currentUiTarget = (position: Point): UiHitTarget | null => {
+    if (!runtimeSkin || !bundle.bitmapFonts) return null;
+    return hitTestUiSkin(
+      runtimeSkin,
+      bundle.bitmapFonts,
+      runtimeUiState(
+        bundle,
+        world,
+        runtimeSkin,
+        status,
+        cursor,
+        interactionState(),
+      ),
+      position,
+    );
+  };
+
   const pointerTarget = () => {
-    if (!cursor.position) {
-      return null;
-    }
+    if (!cursor.position) return null;
     return hitTestSceneObject(
       bundle,
       world,
@@ -142,10 +178,75 @@ export const createPackagedRuntimeController = (
   };
 
   const refreshCursor = (): void => {
+    if (!cursor.position) {
+      hoveredVerbId = null;
+      return;
+    }
+    const uiTarget = currentUiTarget(cursor.position);
+    if (uiTarget) {
+      hoveredVerbId =
+        uiTarget.kind === "verb" || uiTarget.kind === "verb-coin"
+          ? uiTarget.verb.id
+          : null;
+      const cursorId =
+        uiTarget.kind === "verb" || uiTarget.kind === "verb-coin"
+          ? uiTarget.verb.cursorId
+          : uiTarget.kind === "dialogue-choice"
+            ? "talk"
+            : "use";
+      cursor = { ...cursor, cursorId };
+      return;
+    }
+    hoveredVerbId = null;
     cursor = {
       ...cursor,
       cursorId: cursorIdForObjectTarget(pointerTarget()),
     };
+  };
+
+  const selectedVerb = () =>
+    runtimeSkin?.verbs.find((verb) => verb.id === selectedVerbId) ?? null;
+
+  const itemName = (itemId: Id<"item">): string =>
+    bundle.inventoryItems.find((item) => item.id === itemId)?.name ?? itemId;
+
+  const handleUiActivation = (position: Point): boolean => {
+    if (!runtimeSkin || !bundle.bitmapFonts) return false;
+    const target = currentUiTarget(position);
+    if (target) {
+      switch (target.kind) {
+        case "verb":
+        case "verb-coin":
+          selectedVerbId = target.verb.id;
+          verbCoinPosition = null;
+          setStatus(`${target.verb.label} SELECTED`);
+          return true;
+        case "inventory-slot":
+          selectedItemId = target.itemId;
+          setStatus(
+            target.itemId
+              ? `${itemName(target.itemId).toUpperCase()} SELECTED`
+              : "EMPTY INVENTORY SLOT",
+          );
+          return true;
+        case "parser":
+          setStatus("PARSER INPUT READY");
+          return true;
+        case "dialogue-choice":
+          setStatus(
+            target.enabled
+              ? `DIALOGUE CHOICE ${target.choiceId}`
+              : "THAT DIALOGUE CHOICE IS DISABLED",
+          );
+          return true;
+      }
+    }
+    if (runtimeSkin.interactionMode === "verb-coin") {
+      verbCoinPosition = position;
+      setStatus("CHOOSE A VERB");
+      return true;
+    }
+    return false;
   };
 
   const clearPendingCommand = (
@@ -160,14 +261,13 @@ export const createPackagedRuntimeController = (
   const activate = (position: Point): void => {
     cursor = { ...cursor, position };
     refreshCursor();
-    if (!controlledActorInstanceId) {
-      return;
-    }
+    if (handleUiActivation(position)) return;
+    if (!controlledActorInstanceId) return;
 
     const worldPoint = nativeScreenPointToWorld(position, baseFrame.camera);
     const target = pointerTarget();
     if (target) {
-      const verb = verbForCursorId(cursorIdForObjectTarget(target));
+      const verb = selectedVerb()?.verb ?? verbForCursorId(cursorIdForObjectTarget(target));
       try {
         const queued = queueSceneObjectCommand(
           bundle,
@@ -175,12 +275,10 @@ export const createPackagedRuntimeController = (
           controlledActorInstanceId,
           target.objectInstanceId,
           verb,
+          selectedItemId,
         );
         switch (queued.kind) {
           case "queued":
-            world = queued.state;
-            setStatus(statusFromCommandEvent(queued.event));
-            return;
           case "resolved":
             world = queued.state;
             setStatus(statusFromCommandEvent(queued.event));
@@ -271,6 +369,7 @@ export const createPackagedRuntimeController = (
         world,
         status,
         cursor,
+        interactionState(),
       );
       return appendSoftwareCursor(withInterface, cursor);
     },
