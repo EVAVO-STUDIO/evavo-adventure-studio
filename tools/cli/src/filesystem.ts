@@ -6,10 +6,22 @@ import {
   rm,
   stat,
 } from "node:fs/promises";
-import { dirname, resolve } from "node:path";
+import {
+  basename,
+  dirname,
+  isAbsolute,
+  join,
+  parse,
+  resolve,
+} from "node:path";
 
 export interface AtomicFileWrite {
   readonly path: string;
+  readonly data: string | Uint8Array;
+}
+
+export interface AtomicDirectoryFile {
+  readonly relativePath: string;
   readonly data: string | Uint8Array;
 }
 
@@ -24,7 +36,7 @@ interface StagedWrite {
 const isMissingPathError = (error: unknown): boolean =>
   (error as NodeJS.ErrnoException | null)?.code === "ENOENT";
 
-const pathExists = async (path: string): Promise<boolean> => {
+export const pathExists = async (path: string): Promise<boolean> => {
   try {
     await stat(path);
     return true;
@@ -39,22 +51,29 @@ const pathExists = async (path: string): Promise<boolean> => {
 const duplicateKey = (path: string): string =>
   process.platform === "win32" ? path.toLocaleLowerCase("en-US") : path;
 
-const stageFile = async (
-  targetPath: string,
+const writeFlushedFile = async (
+  path: string,
   data: string | Uint8Array,
-  token: string,
-  index: number,
-): Promise<StagedWrite> => {
-  await mkdir(dirname(targetPath), { recursive: true });
-  const temporaryPath = `${targetPath}.tmp-${token}-${index}`;
-  const backupPath = `${targetPath}.bak-${token}-${index}`;
-  const handle = await open(temporaryPath, "wx");
+): Promise<void> => {
+  await mkdir(dirname(path), { recursive: true });
+  const handle = await open(path, "wx");
   try {
     await handle.writeFile(data);
     await handle.sync();
   } finally {
     await handle.close();
   }
+};
+
+const stageFile = async (
+  targetPath: string,
+  data: string | Uint8Array,
+  token: string,
+  index: number,
+): Promise<StagedWrite> => {
+  const temporaryPath = `${targetPath}.tmp-${token}-${index}`;
+  const backupPath = `${targetPath}.bak-${token}-${index}`;
+  await writeFlushedFile(temporaryPath, data);
 
   return {
     targetPath,
@@ -65,7 +84,7 @@ const stageFile = async (
   };
 };
 
-const rollback = async (writes: readonly StagedWrite[]): Promise<void> => {
+const rollbackFiles = async (writes: readonly StagedWrite[]): Promise<void> => {
   for (const write of [...writes].reverse()) {
     if (write.committed) {
       await rm(write.targetPath, { force: true }).catch(() => undefined);
@@ -124,7 +143,87 @@ export const writeFilesAtomically = async (
 
     return staged.map((write) => write.targetPath);
   } catch (error) {
-    await rollback(staged);
+    await rollbackFiles(staged);
+    throw error;
+  }
+};
+
+export const assertSafeRelativePath = (relativePath: string): string => {
+  if (!relativePath || isAbsolute(relativePath) || relativePath.includes("\\")) {
+    throw new RangeError(
+      `Release path '${relativePath}' must be a non-empty relative path using forward slashes.`,
+    );
+  }
+  const segments = relativePath.split("/");
+  if (
+    segments.some(
+      (segment) => segment.length === 0 || segment === "." || segment === "..",
+    )
+  ) {
+    throw new RangeError(
+      `Release path '${relativePath}' contains an unsafe path segment.`,
+    );
+  }
+  return relativePath;
+};
+
+export const replaceDirectoryAtomically = async (
+  targetDirectory: string,
+  files: readonly AtomicDirectoryFile[],
+): Promise<string> => {
+  const targetPath = resolve(targetDirectory);
+  if (targetPath === parse(targetPath).root) {
+    throw new RangeError("A filesystem root cannot be used as a release directory.");
+  }
+
+  const seen = new Set<string>();
+  const normalizedFiles = files.map((file) => {
+    const relativePath = assertSafeRelativePath(file.relativePath);
+    const key = duplicateKey(relativePath);
+    if (seen.has(key)) {
+      throw new RangeError(`Release path '${relativePath}' is duplicated.`);
+    }
+    seen.add(key);
+    return { relativePath, data: file.data };
+  });
+
+  const token = `${process.pid}-${randomUUID()}`;
+  const parent = dirname(targetPath);
+  const name = basename(targetPath);
+  const temporaryPath = join(parent, `${name}.tmp-${token}`);
+  const backupPath = join(parent, `${name}.bak-${token}`);
+  let hadExistingTarget = false;
+  let committed = false;
+
+  await mkdir(parent, { recursive: true });
+  await mkdir(temporaryPath);
+  try {
+    for (const file of normalizedFiles) {
+      const destination = join(temporaryPath, ...file.relativePath.split("/"));
+      await writeFlushedFile(destination, file.data);
+    }
+
+    hadExistingTarget = await pathExists(targetPath);
+    if (hadExistingTarget) {
+      await rename(targetPath, backupPath);
+    }
+    await rename(temporaryPath, targetPath);
+    committed = true;
+    await rm(backupPath, { recursive: true, force: true });
+    return targetPath;
+  } catch (error) {
+    if (committed) {
+      await rm(targetPath, { recursive: true, force: true }).catch(() => undefined);
+    }
+    if (hadExistingTarget && (await pathExists(backupPath))) {
+      await rename(backupPath, targetPath).catch(() => undefined);
+    }
+    await rm(temporaryPath, { recursive: true, force: true }).catch(
+      () => undefined,
+    );
+    await rm(backupPath, { recursive: true, force: true }).catch(
+      () => undefined,
+    );
     throw error;
   }
 };
