@@ -40,6 +40,11 @@ import {
   loadSceneInstances,
   type LoadedSceneInstances,
 } from "./scene-inputs.js";
+import {
+  loadUiSkins,
+  uiSkinInputPaths,
+  type LoadedUiSkins,
+} from "./ui-inputs.js";
 
 export const CLI_VERSION = "0.1.0";
 
@@ -71,6 +76,7 @@ interface CombinedInputState {
   readonly sceneInstances: LoadedSceneInstances;
   readonly art: LoadedArtInputs;
   readonly bitmapFonts: LoadedBitmapFonts;
+  readonly uiSkins: LoadedUiSkins;
   readonly diagnostics: readonly CliDiagnostic[];
 }
 
@@ -81,6 +87,7 @@ const loadCombinedInputs = async (
   artDirectionPath: string | null,
   artEvidencePath: string | null,
   bitmapFontsPath: string | null,
+  uiSkinsPath: string | null,
 ): Promise<CombinedInputState> => {
   const base = await loadInputs(projectPath, assetManifestPath);
   const sceneInstances = await loadSceneInstances(
@@ -99,16 +106,23 @@ const loadCombinedInputs = async (
     base.project,
     base.assetManifest,
   );
+  const uiSkins = await loadUiSkins(
+    uiSkinsPath,
+    base.project,
+    bitmapFonts.manifest,
+  );
   return {
     base,
     sceneInstances,
     art,
     bitmapFonts,
+    uiSkins,
     diagnostics: sortDiagnostics([
       ...base.diagnostics,
       ...sceneInstances.diagnostics,
       ...art.diagnostics,
       ...bitmapFonts.diagnostics,
+      ...uiSkins.diagnostics,
     ]),
   };
 };
@@ -118,6 +132,7 @@ const allInputPaths = (loaded: CombinedInputState): readonly string[] => [
   ...(loaded.sceneInstances.path ? [loaded.sceneInstances.path] : []),
   ...artInputPaths(loaded.art),
   ...bitmapFontInputPaths(loaded.bitmapFonts),
+  ...uiSkinInputPaths(loaded.uiSkins),
 ];
 
 const runValidate = async (
@@ -131,6 +146,7 @@ const runValidate = async (
     command.artDirectionPath,
     command.artEvidencePath,
     command.bitmapFontsPath,
+    command.uiSkinsPath,
   );
   const valid = !hasErrors(loaded.diagnostics);
   const report = {
@@ -145,6 +161,8 @@ const runValidate = async (
     artEvidencePath: command.artEvidencePath,
     bitmapFontsPath: command.bitmapFontsPath,
     bitmapFontCount: loaded.bitmapFonts.manifest?.fonts.length ?? 0,
+    uiSkinsPath: command.uiSkinsPath,
+    uiSkinCount: loaded.uiSkins.manifest?.skins.length ?? 0,
     diagnostics: loaded.diagnostics,
   };
   const human = valid
@@ -237,6 +255,7 @@ const runCompile = async (
     command.artDirectionPath,
     command.artEvidencePath,
     command.bitmapFontsPath,
+    command.uiSkinsPath,
   );
   const assetManifest = requireCompiledInputs(loaded, "compile");
   assertGeneratedFilesSafe(
@@ -249,6 +268,7 @@ const runCompile = async (
     assetManifest,
     loaded.sceneInstances.manifest,
     loaded.bitmapFonts.manifest ?? undefined,
+    loaded.uiSkins.manifest ?? undefined,
   );
   const report = {
     reportVersion: 1 as const,
@@ -264,6 +284,8 @@ const runCompile = async (
     artProfile: loaded.art.manifest?.profile.preset ?? null,
     bitmapFontsPath: loaded.bitmapFonts.path,
     bitmapFontCount: loaded.bitmapFonts.manifest?.fonts.length ?? 0,
+    uiSkinsPath: loaded.uiSkins.path,
+    uiSkinCount: loaded.uiSkins.manifest?.skins.length ?? 0,
     outputPath: command.outputPath,
     diagnostics: loaded.diagnostics,
   };
@@ -292,6 +314,9 @@ const runCompile = async (
     ...(loaded.bitmapFonts.manifest
       ? [`Bitmap fonts: ${loaded.bitmapFonts.manifest.fonts.length}`]
       : []),
+    ...(loaded.uiSkins.manifest
+      ? [`Interface skins: ${loaded.uiSkins.manifest.skins.length}`]
+      : []),
     ...(command.reportPath ? [`Report: ${resolve(command.reportPath)}`] : []),
   ].join("\n");
   writeResult(environment, command.format, report, human);
@@ -309,6 +334,7 @@ const runPackage = async (
     command.artDirectionPath,
     command.artEvidencePath,
     command.bitmapFontsPath,
+    command.uiSkinsPath,
   );
   const assetManifest = requireCompiledInputs(loaded, "package");
   if (!loaded.base.manifestPath) {
@@ -321,6 +347,7 @@ const runPackage = async (
     assetManifest,
     loaded.sceneInstances.manifest,
     loaded.bitmapFonts.manifest ?? undefined,
+    loaded.uiSkins.manifest ?? undefined,
   );
   const artifacts = await readVerifiedRuntimeOutputs(
     loaded.base.manifestPath,
@@ -347,6 +374,8 @@ const runPackage = async (
     artProfile: loaded.art.manifest?.profile.preset ?? null,
     bitmapFontsPath: loaded.bitmapFonts.path,
     bitmapFontCount: loaded.bitmapFonts.manifest?.fonts.length ?? 0,
+    uiSkinsPath: loaded.uiSkins.path,
+    uiSkinCount: loaded.uiSkins.manifest?.skins.length ?? 0,
     fileCount: release.files.length,
     diagnostics: loaded.diagnostics,
   };
@@ -361,6 +390,9 @@ const runPackage = async (
       : []),
     ...(loaded.bitmapFonts.manifest
       ? [`Bitmap fonts: ${loaded.bitmapFonts.manifest.fonts.length}`]
+      : []),
+    ...(loaded.uiSkins.manifest
+      ? [`Interface skins: ${loaded.uiSkins.manifest.skins.length}`]
       : []),
   ].join("\n");
   writeResult(environment, command.format, report, human);
