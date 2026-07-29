@@ -20,6 +20,7 @@
   },
   "dependencies": {
     "@evavo/adventure-asset-contract": "workspace:*",
+    "@evavo/adventure-bitmap-font": "workspace:*",
     "@evavo/adventure-project-schema": "workspace:*",
     "@evavo/adventure-render-contract": "workspace:*",
     "@evavo/adventure-scene": "workspace:*",
