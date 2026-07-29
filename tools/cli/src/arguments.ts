@@ -8,37 +8,31 @@ export interface VersionCommand {
   readonly kind: "version";
 }
 
-export interface ValidateCommand {
-  readonly kind: "validate";
+interface ProjectCommandInputs {
   readonly projectPath: string;
   readonly assetManifestPath: string | null;
   readonly sceneInstancesPath: string | null;
   readonly artDirectionPath: string | null;
   readonly artEvidencePath: string | null;
+  readonly bitmapFontsPath: string | null;
   readonly format: OutputFormat;
 }
 
-export interface CompileCommand {
+export interface ValidateCommand extends ProjectCommandInputs {
+  readonly kind: "validate";
+}
+
+export interface CompileCommand extends ProjectCommandInputs {
   readonly kind: "compile";
-  readonly projectPath: string;
   readonly assetManifestPath: string;
-  readonly sceneInstancesPath: string | null;
-  readonly artDirectionPath: string | null;
-  readonly artEvidencePath: string | null;
   readonly outputPath: string;
   readonly reportPath: string | null;
-  readonly format: OutputFormat;
 }
 
-export interface PackageCommand {
+export interface PackageCommand extends ProjectCommandInputs {
   readonly kind: "package";
-  readonly projectPath: string;
   readonly assetManifestPath: string;
-  readonly sceneInstancesPath: string | null;
-  readonly artDirectionPath: string | null;
-  readonly artEvidencePath: string | null;
   readonly outputDirectory: string;
-  readonly format: OutputFormat;
 }
 
 export type CliCommand =
@@ -66,6 +60,7 @@ const VALUE_OPTIONS = new Set([
   "--scene-instances",
   "--art-direction",
   "--art-evidence",
+  "--bitmap-fonts",
   "--out",
   "--output",
   "--report",
@@ -149,14 +144,12 @@ const PROJECT_INPUT_OPTIONS = [
   "--scene-instances",
   "--art-direction",
   "--art-evidence",
+  "--bitmap-fonts",
 ] as const;
 
-const artPaths = (
+const sharedInputs = (
   options: ParsedOptions,
-): {
-  readonly artDirectionPath: string | null;
-  readonly artEvidencePath: string | null;
-} => {
+): Omit<ProjectCommandInputs, "projectPath" | "assetManifestPath" | "format"> => {
   const artDirectionPath = optionalValue(options, "--art-direction");
   const artEvidencePath = optionalValue(options, "--art-evidence");
   if (artEvidencePath && !artDirectionPath) {
@@ -169,7 +162,12 @@ const artPaths = (
       "Option '--art-evidence' requires '--asset-manifest'.",
     );
   }
-  return { artDirectionPath, artEvidencePath };
+  return {
+    sceneInstancesPath: optionalValue(options, "--scene-instances"),
+    artDirectionPath,
+    artEvidencePath,
+    bitmapFontsPath: optionalValue(options, "--bitmap-fonts"),
+  };
 };
 
 export const parseCliArguments = (argv: readonly string[]): CliCommand => {
@@ -186,19 +184,16 @@ export const parseCliArguments = (argv: readonly string[]): CliCommand => {
 
   const options = parseOptions(tokens);
   switch (command) {
-    case "validate": {
+    case "validate":
       assertAllowedOptions(options, new Set(PROJECT_INPUT_OPTIONS), JSON_FLAG);
-      const art = artPaths(options);
       return {
         kind: "validate",
         projectPath: requiredValue(options, "--project"),
         assetManifestPath: optionalValue(options, "--asset-manifest"),
-        sceneInstancesPath: optionalValue(options, "--scene-instances"),
-        ...art,
+        ...sharedInputs(options),
         format: outputFormat(options),
       };
-    }
-    case "compile": {
+    case "compile":
       assertAllowedOptions(
         options,
         new Set([
@@ -209,35 +204,29 @@ export const parseCliArguments = (argv: readonly string[]): CliCommand => {
         ]),
         JSON_FLAG,
       );
-      const art = artPaths(options);
       return {
         kind: "compile",
         projectPath: requiredValue(options, "--project"),
         assetManifestPath: requiredValue(options, "--asset-manifest"),
-        sceneInstancesPath: optionalValue(options, "--scene-instances"),
-        ...art,
+        ...sharedInputs(options),
         outputPath: outputValue(options),
         reportPath: optionalValue(options, "--report"),
         format: outputFormat(options),
       };
-    }
-    case "package": {
+    case "package":
       assertAllowedOptions(
         options,
         new Set([...PROJECT_INPUT_OPTIONS, "--out", "--output"]),
         JSON_FLAG,
       );
-      const art = artPaths(options);
       return {
         kind: "package",
         projectPath: requiredValue(options, "--project"),
         assetManifestPath: requiredValue(options, "--asset-manifest"),
-        sceneInstancesPath: optionalValue(options, "--scene-instances"),
-        ...art,
+        ...sharedInputs(options),
         outputDirectory: outputValue(options),
         format: outputFormat(options),
       };
-    }
     default:
       throw new CliUsageError(`Unknown command '${command}'.`);
   }
@@ -246,14 +235,14 @@ export const parseCliArguments = (argv: readonly string[]): CliCommand => {
 export const CLI_HELP = `EVAVO Adventure Studio CLI
 
 Usage:
-  evavo-adventure validate --project <project.json> [--asset-manifest <assets.json>] [--scene-instances <scene-instances.json>] [--art-direction <art-direction.json>] [--art-evidence <art-evidence.json>] [--json]
-  evavo-adventure compile --project <project.json> --asset-manifest <assets.json> [--scene-instances <scene-instances.json>] [--art-direction <art-direction.json>] [--art-evidence <art-evidence.json>] --out <game.bundle.json> [--report <report.json>] [--json]
-  evavo-adventure package --project <project.json> --asset-manifest <assets.json> [--scene-instances <scene-instances.json>] [--art-direction <art-direction.json>] [--art-evidence <art-evidence.json>] --out <release-directory> [--json]
+  evavo-adventure validate --project <project.json> [--asset-manifest <assets.json>] [--scene-instances <scene-instances.json>] [--art-direction <art-direction.json>] [--art-evidence <art-evidence.json>] [--bitmap-fonts <bitmap-fonts.json>] [--json]
+  evavo-adventure compile --project <project.json> --asset-manifest <assets.json> [--scene-instances <scene-instances.json>] [--art-direction <art-direction.json>] [--art-evidence <art-evidence.json>] [--bitmap-fonts <bitmap-fonts.json>] --out <game.bundle.json> [--report <report.json>] [--json]
+  evavo-adventure package --project <project.json> --asset-manifest <assets.json> [--scene-instances <scene-instances.json>] [--art-direction <art-direction.json>] [--art-evidence <art-evidence.json>] [--bitmap-fonts <bitmap-fonts.json>] --out <release-directory> [--json]
   evavo-adventure version
 
 Exit codes:
   0  success
-  1  project, asset, scene composition or art evidence validation failed
+  1  project, asset, scene composition, art or bitmap-font validation failed
   2  invalid command-line usage
   3  unexpected internal failure
 `;
