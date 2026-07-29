@@ -8,6 +8,9 @@ export interface CliDiagnostic {
     | "asset-manifest-file"
     | "asset-manifest-schema"
     | "asset-manifest-semantics"
+    | "scene-instances-file"
+    | "scene-instances-schema"
+    | "scene-instances-semantics"
     | "asset-evidence";
   readonly code: string;
   readonly path: string;
