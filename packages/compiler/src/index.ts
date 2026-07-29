@@ -13,6 +13,15 @@ import {
   type PortableRuntimePathIssue,
 } from "@evavo/adventure-asset-contract/portable-path";
 import type { RuntimeAssetRecord } from "@evavo/adventure-asset-contract/runtime-asset";
+import {
+  validateBitmapFontManifest,
+  type BitmapFontIssue,
+  type BitmapFontManifest,
+} from "@evavo/adventure-bitmap-font";
+import {
+  validateCompiledBitmapFontMappings,
+  type BitmapFontCompiledIssue,
+} from "@evavo/adventure-bitmap-font/compiled-mapping";
 import type {
   Actor,
   AdventureProject,
@@ -40,7 +49,9 @@ export type CompilationIssue =
   | ValidationIssue
   | AssetManifestIssue
   | PortableRuntimePathIssue
-  | FrameAssetMappingIssue;
+  | FrameAssetMappingIssue
+  | BitmapFontIssue
+  | BitmapFontCompiledIssue;
 
 export interface CompiledProject {
   readonly bundle: RuntimeBundle;
@@ -119,6 +130,29 @@ const compileSequence = (sequence: Sequence): CompiledSequence => ({
   ...sequence,
   tracks: sortById(sequence.tracks),
   cueCount: sequence.tracks.reduce((total, track) => total + track.cues.length, 0),
+});
+
+const compileBitmapFonts = (
+  manifest: BitmapFontManifest,
+): BitmapFontManifest => ({
+  ...manifest,
+  fonts: [...manifest.fonts]
+    .sort((left, right) => left.id.localeCompare(right.id))
+    .map((font) => ({
+      ...font,
+      glyphs: [...font.glyphs].sort((left, right) => {
+        const codePointDifference = left.codePoint - right.codePoint;
+        return codePointDifference !== 0
+          ? codePointDifference
+          : left.id.localeCompare(right.id);
+      }),
+      kernings: [...font.kernings].sort((left, right) => {
+        const leftDifference = left.leftCodePoint - right.leftCodePoint;
+        return leftDifference !== 0
+          ? leftDifference
+          : left.rightCodePoint - right.rightCodePoint;
+      }),
+    })),
 });
 
 const canonicalRuntimeAsset = (asset: RuntimeAssetRecord): RuntimeAssetRecord => {
@@ -202,22 +236,33 @@ const fnv1a64 = (value: string): string => {
 export const compileProject = (
   project: AdventureProject,
   assetManifest: AssetBuildManifest,
+  bitmapFonts?: BitmapFontManifest,
 ): CompiledProject => {
   const projectIssues = validateProjectSemantics(project);
   const assetIssues = validateAssetBuildManifest(project, assetManifest);
   const pathIssues = validatePortableRuntimePaths(assetManifest);
   const frameIssues = validateCompiledFrameMappings(project, assetManifest);
+  const bitmapFontIssues = bitmapFonts
+    ? validateBitmapFontManifest(project, bitmapFonts)
+    : [];
+  const bitmapFontMappingIssues = bitmapFonts
+    ? validateCompiledBitmapFontMappings(bitmapFonts, assetManifest)
+    : [];
   const issues: CompilationIssue[] = [
     ...projectIssues,
     ...assetIssues,
     ...pathIssues,
     ...frameIssues,
+    ...bitmapFontIssues,
+    ...bitmapFontMappingIssues,
   ];
   if (
     hasValidationErrors(projectIssues) ||
     assetIssues.length > 0 ||
     pathIssues.length > 0 ||
-    frameIssues.length > 0
+    frameIssues.length > 0 ||
+    bitmapFontIssues.length > 0 ||
+    bitmapFontMappingIssues.length > 0
   ) {
     throw new ProjectCompilationError(issues);
   }
@@ -238,6 +283,9 @@ export const compileProject = (
     scenes: sortById(project.scenes).map(compileScene),
     dialogues: sortById(project.dialogues).map(compileDialogue),
     sequences: sortById(project.sequences).map(compileSequence),
+    ...(bitmapFonts
+      ? { bitmapFonts: compileBitmapFonts(bitmapFonts) }
+      : {}),
   });
   const canonicalJson = canonicalStringify(bundle);
 
@@ -256,9 +304,13 @@ export type CompilationResult =
 export const tryCompileProject = (
   project: AdventureProject,
   assetManifest: AssetBuildManifest,
+  bitmapFonts?: BitmapFontManifest,
 ): CompilationResult => {
   try {
-    return { kind: "compiled", project: compileProject(project, assetManifest) };
+    return {
+      kind: "compiled",
+      project: compileProject(project, assetManifest, bitmapFonts),
+    };
   } catch (error) {
     if (error instanceof ProjectCompilationError) {
       return { kind: "invalid", issues: error.issues };
