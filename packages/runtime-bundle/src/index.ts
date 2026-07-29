@@ -11,6 +11,10 @@ import {
   sceneSchema,
   sequenceSchema,
 } from "@evavo/adventure-project-schema";
+import {
+  RuntimeBundleValidationError,
+  validateRuntimeBundleSemantics,
+} from "./validation.js";
 
 export const compiledHotspotSchema = hotspotSchema.extend({
   interactionIndex: z.record(
@@ -59,5 +63,13 @@ export const runtimeBundleSchema = z
   .strict();
 export type RuntimeBundle = z.infer<typeof runtimeBundleSchema>;
 
-export const parseRuntimeBundle = (input: unknown): RuntimeBundle =>
-  runtimeBundleSchema.parse(input);
+export const parseRuntimeBundle = (input: unknown): RuntimeBundle => {
+  const bundle = runtimeBundleSchema.parse(input);
+  const issues = validateRuntimeBundleSemantics(bundle);
+  if (issues.length > 0) {
+    throw new RuntimeBundleValidationError(issues);
+  }
+  return bundle;
+};
+
+export * from "./validation.js";
