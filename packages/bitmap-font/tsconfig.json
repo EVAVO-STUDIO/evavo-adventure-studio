@@ -7,6 +7,7 @@
   "include": ["src/**/*.ts", "tests/**/*.ts"],
   "references": [
     { "path": "../project-schema" },
-    { "path": "../asset-contract" }
+    { "path": "../asset-contract" },
+    { "path": "../render-contract" }
   ]
 }
