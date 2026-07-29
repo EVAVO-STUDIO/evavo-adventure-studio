@@ -239,16 +239,28 @@ describe("compiled visual evidence evaluation", () => {
     );
   });
 
-  it("blocks missing atlas page evidence", () => {
+  it("blocks missing and unexpected atlas page evidence", () => {
     const issues = evaluateArtDirectionWithVisualEvidence(
       project,
       art,
       compiled,
-      evidence({ atlasPages: [] }),
+      evidence({
+        atlasPages: [
+          {
+            outputRole: "page-001",
+            palette: true,
+            colourCount: 48,
+            alphaMode: "binary",
+          },
+        ],
+      }),
     );
 
-    expect(issues.map((entry) => entry.code)).toContain(
-      "visual-evidence-page-missing",
+    expect(issues.map((entry) => entry.code)).toEqual(
+      expect.arrayContaining([
+        "visual-evidence-page-missing",
+        "visual-evidence-page-unexpected",
+      ]),
     );
   });
 });
