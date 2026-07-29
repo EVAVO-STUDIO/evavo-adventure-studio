@@ -1,18 +1,10 @@
 {
-  "compilerOptions": {
-    "target": "ES2022",
-    "module": "NodeNext",
-    "moduleResolution": "NodeNext",
-    "strict": true,
-    "noUncheckedIndexedAccess": true,
-    "exactOptionalPropertyTypes": true,
-    "noImplicitOverride": true,
-    "noFallthroughCasesInSwitch": true,
-    "noEmitOnError": true,
-    "declaration": true,
-    "outDir": "dist",
-    "rootDir": ".",
-    "skipLibCheck": true
-  },
-  "include": ["src/**/*.ts", "tests/**/*.ts"]
+  "files": [],
+  "references": [
+    { "path": "packages/project-schema" },
+    { "path": "packages/core" },
+    { "path": "packages/scene" },
+    { "path": "packages/render-contract" },
+    { "path": "packages/validation" }
+  ]
 }
