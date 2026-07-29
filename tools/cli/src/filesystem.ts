@@ -9,11 +9,14 @@ import {
 import {
   basename,
   dirname,
-  isAbsolute,
   join,
   parse,
   resolve,
 } from "node:path";
+import {
+  portablePathKey,
+  portableRelativePathError,
+} from "@evavo/adventure-asset-contract/portable-path";
 
 export interface AtomicFileWrite {
   readonly path: string;
@@ -48,7 +51,7 @@ export const pathExists = async (path: string): Promise<boolean> => {
   }
 };
 
-const duplicateKey = (path: string): string =>
+const duplicateAbsolutePathKey = (path: string): string =>
   process.platform === "win32" ? path.toLocaleLowerCase("en-US") : path;
 
 const writeFlushedFile = async (
@@ -110,7 +113,7 @@ export const writeFilesAtomically = async (
   }));
   const seen = new Set<string>();
   for (const file of resolvedFiles) {
-    const key = duplicateKey(file.path);
+    const key = duplicateAbsolutePathKey(file.path);
     if (seen.has(key)) {
       throw new RangeError(`Atomic write target '${file.path}' is duplicated.`);
     }
@@ -149,19 +152,10 @@ export const writeFilesAtomically = async (
 };
 
 export const assertSafeRelativePath = (relativePath: string): string => {
-  if (!relativePath || isAbsolute(relativePath) || relativePath.includes("\\")) {
+  const pathError = portableRelativePathError(relativePath);
+  if (pathError) {
     throw new RangeError(
-      `Release path '${relativePath}' must be a non-empty relative path using forward slashes.`,
-    );
-  }
-  const segments = relativePath.split("/");
-  if (
-    segments.some(
-      (segment) => segment.length === 0 || segment === "." || segment === "..",
-    )
-  ) {
-    throw new RangeError(
-      `Release path '${relativePath}' contains an unsafe path segment.`,
+      `Release path '${relativePath}' is not portable: ${pathError}`,
     );
   }
   return relativePath;
@@ -179,9 +173,11 @@ export const replaceDirectoryAtomically = async (
   const seen = new Set<string>();
   const normalizedFiles = files.map((file) => {
     const relativePath = assertSafeRelativePath(file.relativePath);
-    const key = duplicateKey(relativePath);
+    const key = portablePathKey(relativePath);
     if (seen.has(key)) {
-      throw new RangeError(`Release path '${relativePath}' is duplicated.`);
+      throw new RangeError(
+        `Release path '${relativePath}' collides with another release file.`,
+      );
     }
     seen.add(key);
     return { relativePath, data: file.data };
