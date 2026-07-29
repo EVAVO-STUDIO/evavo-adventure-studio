@@ -101,11 +101,29 @@ export const sceneObjectInstanceSchema = z
   .strict();
 export type SceneObjectInstance = z.infer<typeof sceneObjectInstanceSchema>;
 
+export const sceneNavigationPortalSchema = z
+  .object({
+    id: idSchema("navigation-portal"),
+    fromAreaId: idSchema("navigation-area"),
+    toAreaId: idSchema("navigation-area"),
+    fromPoint: pointSchema,
+    toPoint: pointSchema,
+    bidirectional: z.boolean().default(true),
+    traversalCost: z.number().finite().nonnegative().default(0),
+    enabledWhen: conditionSchema.optional(),
+    traversalAnimationState: z.string().min(1).optional(),
+  })
+  .strict();
+export type SceneNavigationPortal = z.infer<
+  typeof sceneNavigationPortalSchema
+>;
+
 export const sceneCompositionSchema = z
   .object({
     sceneId: idSchema("scene"),
     actorInstances: z.array(sceneActorInstanceSchema).default([]),
     objectInstances: z.array(sceneObjectInstanceSchema).default([]),
+    navigationPortals: z.array(sceneNavigationPortalSchema).default([]),
   })
   .strict();
 export type SceneComposition = z.infer<typeof sceneCompositionSchema>;
@@ -170,6 +188,8 @@ export type SceneInstanceIssueCode =
   | "missing-object-visual-asset"
   | "invalid-object-visual-asset-kind"
   | "degenerate-object-interaction-shape"
+  | "missing-navigation-portal-area"
+  | "invalid-navigation-portal-point"
   | "missing-interaction-actor"
   | "missing-interaction-item"
   | "missing-interaction-scene"
@@ -582,6 +602,50 @@ export const validateSceneInstanceManifest = (
           "missing-object-state",
           `${instancePath}.initialStateId`,
           `Object instance '${instance.id}' references missing state '${stateId}'.`,
+        );
+      }
+    });
+
+    composition.navigationPortals.forEach((portal, portalIndex) => {
+      const portalPath = `${compositionPath}.navigationPortals[${portalIndex}]`;
+      registerId(ids, issues, portal.id, `${portalPath}.id`);
+      if (!scene) {
+        return;
+      }
+      const fromArea = scene.navigationAreas.find(
+        (area) => area.id === portal.fromAreaId,
+      );
+      const toArea = scene.navigationAreas.find(
+        (area) => area.id === portal.toAreaId,
+      );
+      if (!fromArea) {
+        addIssue(
+          issues,
+          "missing-navigation-portal-area",
+          `${portalPath}.fromAreaId`,
+          `Navigation portal '${portal.id}' references missing area '${portal.fromAreaId}'.`,
+        );
+      } else if (!pointInPolygon(portal.fromPoint, fromArea.shape)) {
+        addIssue(
+          issues,
+          "invalid-navigation-portal-point",
+          `${portalPath}.fromPoint`,
+          `Navigation portal '${portal.id}' start point is outside area '${fromArea.id}'.`,
+        );
+      }
+      if (!toArea) {
+        addIssue(
+          issues,
+          "missing-navigation-portal-area",
+          `${portalPath}.toAreaId`,
+          `Navigation portal '${portal.id}' references missing area '${portal.toAreaId}'.`,
+        );
+      } else if (!pointInPolygon(portal.toPoint, toArea.shape)) {
+        addIssue(
+          issues,
+          "invalid-navigation-portal-point",
+          `${portalPath}.toPoint`,
+          `Navigation portal '${portal.id}' end point is outside area '${toArea.id}'.`,
         );
       }
     });
