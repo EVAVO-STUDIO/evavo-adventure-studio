@@ -35,7 +35,8 @@ export type DialogueRejectionReason =
   | "unknown-choice"
   | "choice-hidden"
   | "choice-disabled"
-  | "choice-exhausted";
+  | "choice-exhausted"
+  | "choices-pending";
 
 export type DialogueOperation =
   | {
@@ -129,6 +130,39 @@ const enterNode = (
   };
 };
 
+const activeNode = (
+  state: RuntimeState,
+  graph: DialogueGraph,
+): DialogueNode | DialogueRejectionReason => {
+  if (!state.activeDialogue) {
+    return "dialogue-not-active";
+  }
+  if (state.activeDialogue.dialogueId !== graph.id) {
+    return "wrong-dialogue";
+  }
+  return findNode(graph, state.activeDialogue.nodeId) ?? "unknown-node";
+};
+
+const finishDialogue = (
+  state: RuntimeState,
+  graph: DialogueGraph,
+  node: DialogueNode,
+  previousEvents: readonly RuntimeEvent[] = [],
+): DialogueOperation => {
+  const exited = applyActions(state, node.exitActions);
+  return {
+    kind: "ended",
+    transition: {
+      state: { ...exited.state, activeDialogue: null },
+      events: [
+        ...previousEvents,
+        ...exited.events,
+        { kind: "dialogue-ended", dialogueId: graph.id },
+      ],
+    },
+  };
+};
+
 export const beginDialogue = (
   state: RuntimeState,
   graph: DialogueGraph,
@@ -145,20 +179,40 @@ export const endDialogue = (
   state: RuntimeState,
   graph: DialogueGraph,
 ): DialogueOperation => {
-  if (!state.activeDialogue) {
-    return { kind: "rejected", reason: "dialogue-not-active", state };
-  }
-  if (state.activeDialogue.dialogueId !== graph.id) {
-    return { kind: "rejected", reason: "wrong-dialogue", state };
+  const node = activeNode(state, graph);
+  return typeof node === "string"
+    ? { kind: "rejected", reason: node, state }
+    : finishDialogue(state, graph, node);
+};
+
+export const continueDialogue = (
+  state: RuntimeState,
+  graph: DialogueGraph,
+): DialogueOperation => {
+  const node = activeNode(state, graph);
+  if (typeof node === "string") {
+    return { kind: "rejected", reason: node, state };
   }
 
-  return {
-    kind: "ended",
-    transition: {
-      state: { ...state, activeDialogue: null },
-      events: [{ kind: "dialogue-ended", dialogueId: graph.id }],
-    },
-  };
+  const view = resolveDialogueView(state, graph, node.id);
+  if (!view) {
+    return { kind: "rejected", reason: "unknown-node", state };
+  }
+  if (view.choices.some((choice) => choice.visible && choice.enabled)) {
+    return { kind: "rejected", reason: "choices-pending", state };
+  }
+
+  if (!node.autoNextNodeId) {
+    return finishDialogue(state, graph, node);
+  }
+
+  const nextNode = findNode(graph, node.autoNextNodeId);
+  if (!nextNode) {
+    return { kind: "rejected", reason: "unknown-node", state };
+  }
+
+  const exited = applyActions(state, node.exitActions);
+  return enterNode(exited.state, graph, nextNode, exited.events);
 };
 
 export const chooseDialogueOption = (
@@ -166,17 +220,9 @@ export const chooseDialogueOption = (
   graph: DialogueGraph,
   choiceId: Id<"dialogue-choice">,
 ): DialogueOperation => {
-  const active = state.activeDialogue;
-  if (!active) {
-    return { kind: "rejected", reason: "dialogue-not-active", state };
-  }
-  if (active.dialogueId !== graph.id) {
-    return { kind: "rejected", reason: "wrong-dialogue", state };
-  }
-
-  const currentNode = findNode(graph, active.nodeId);
-  if (!currentNode) {
-    return { kind: "rejected", reason: "unknown-node", state };
+  const currentNode = activeNode(state, graph);
+  if (typeof currentNode === "string") {
+    return { kind: "rejected", reason: currentNode, state };
   }
 
   const choice = currentNode.choices.find((candidate) => candidate.id === choiceId);
@@ -208,25 +254,25 @@ export const chooseDialogueOption = (
       }
     : state;
   const choiceTransition = applyActions(choiceState, choice.actions);
-  const exitTransition = applyActions(
-    choiceTransition.state,
-    currentNode.exitActions,
-  );
   const events: RuntimeEvent[] = [
     ...choiceTransition.events,
-    ...exitTransition.events,
     { kind: "dialogue-choice-completed", choiceId: choice.id },
   ];
 
   if (choice.closeDialogue || !nextNode) {
-    return {
-      kind: "ended",
-      transition: {
-        state: { ...exitTransition.state, activeDialogue: null },
-        events: [...events, { kind: "dialogue-ended", dialogueId: graph.id }],
-      },
-    };
+    return finishDialogue(
+      choiceTransition.state,
+      graph,
+      currentNode,
+      events,
+    );
   }
 
-  return enterNode(exitTransition.state, graph, nextNode, events);
+  const exited = applyActions(choiceTransition.state, currentNode.exitActions);
+  return enterNode(
+    exited.state,
+    graph,
+    nextNode,
+    [...events, ...exited.events],
+  );
 };
