@@ -1,5 +1,5 @@
 import { isAbsolute, relative, resolve } from "node:path";
-import { compileProjectWithInstances } from "@evavo/adventure-compiler/with-instances";
+import { compileProjectWithInstances } from "@evavo/adventure-compiler/scene-instances";
 import {
   CLI_HELP,
   CliUsageError,
@@ -7,6 +7,11 @@ import {
   type CliCommand,
   type OutputFormat,
 } from "./arguments.js";
+import {
+  artInputPaths,
+  loadArtInputs,
+  type LoadedArtInputs,
+} from "./art-inputs.js";
 import {
   CliDataError,
   formatDiagnostic,
@@ -56,41 +61,81 @@ const writeResult = (
   );
 };
 
-const combinedDiagnostics = (
-  loaded: LoadedInputs,
-  sceneInstances: LoadedSceneInstances,
-): readonly CliDiagnostic[] =>
-  sortDiagnostics([...loaded.diagnostics, ...sceneInstances.diagnostics]);
+interface CombinedInputState {
+  readonly base: LoadedInputs;
+  readonly sceneInstances: LoadedSceneInstances;
+  readonly art: LoadedArtInputs;
+  readonly diagnostics: readonly CliDiagnostic[];
+}
+
+const loadCombinedInputs = async (
+  projectPath: string,
+  assetManifestPath: string | null,
+  sceneInstancesPath: string | null,
+  artDirectionPath: string | null,
+  artEvidencePath: string | null,
+): Promise<CombinedInputState> => {
+  const base = await loadInputs(projectPath, assetManifestPath);
+  const sceneInstances = await loadSceneInstances(
+    sceneInstancesPath,
+    base.project,
+    base.assetManifest,
+  );
+  const art = await loadArtInputs(
+    artDirectionPath,
+    artEvidencePath,
+    base.project,
+    base.assetManifest,
+  );
+  return {
+    base,
+    sceneInstances,
+    art,
+    diagnostics: sortDiagnostics([
+      ...base.diagnostics,
+      ...sceneInstances.diagnostics,
+      ...art.diagnostics,
+    ]),
+  };
+};
+
+const allInputPaths = (loaded: CombinedInputState): readonly string[] => [
+  ...inputPaths(loaded.base),
+  ...(loaded.sceneInstances.path ? [loaded.sceneInstances.path] : []),
+  ...artInputPaths(loaded.art),
+];
 
 const runValidate = async (
   command: Extract<CliCommand, { readonly kind: "validate" }>,
   environment: CliEnvironment,
 ): Promise<number> => {
-  const loaded = await loadInputs(
+  const loaded = await loadCombinedInputs(
     command.projectPath,
     command.assetManifestPath,
-  );
-  const sceneInstances = await loadSceneInstances(
     command.sceneInstancesPath,
-    loaded.project,
-    loaded.assetManifest,
+    command.artDirectionPath,
+    command.artEvidencePath,
   );
-  const diagnostics = combinedDiagnostics(loaded, sceneInstances);
+  const valid = !hasErrors(loaded.diagnostics);
   const report = {
     reportVersion: 1 as const,
     command: "validate" as const,
-    valid: !hasErrors(diagnostics),
-    projectId: loaded.project.id,
+    valid,
+    projectId: loaded.base.project.id,
     projectPath: command.projectPath,
     assetManifestPath: command.assetManifestPath,
     sceneInstancesPath: command.sceneInstancesPath,
-    diagnostics,
+    artDirectionPath: command.artDirectionPath,
+    artEvidencePath: command.artEvidencePath,
+    diagnostics: loaded.diagnostics,
   };
-  const human = report.valid
-    ? `Valid project '${loaded.project.id}' with ${diagnostics.length} warning(s).`
-    : diagnostics.map(formatDiagnostic).join("\n");
+  const human = valid
+    ? `Valid project '${loaded.base.project.id}' with ${
+        loaded.diagnostics.filter((entry) => entry.severity === "warning").length
+      } warning(s).`
+    : loaded.diagnostics.map(formatDiagnostic).join("\n");
   writeResult(environment, command.format, report, human);
-  return report.valid ? 0 : 1;
+  return valid ? 0 : 1;
 };
 
 const normalizedPath = (value: string): string => {
@@ -114,20 +159,11 @@ const isPathWithin = (candidatePath: string, directoryPath: string): boolean => 
   );
 };
 
-const allInputPaths = (
-  loaded: LoadedInputs,
-  sceneInstances: LoadedSceneInstances,
-): readonly string[] => [
-  ...inputPaths(loaded),
-  ...(sceneInstances.path ? [sceneInstances.path] : []),
-];
-
 const assertGeneratedFilesSafe = (
-  loaded: LoadedInputs,
-  sceneInstances: LoadedSceneInstances,
+  loaded: CombinedInputState,
   generatedPaths: readonly string[],
 ): void => {
-  const inputs = allInputPaths(loaded, sceneInstances).map(normalizedPath);
+  const inputs = allInputPaths(loaded).map(normalizedPath);
   for (const generatedPath of generatedPaths) {
     if (inputs.includes(normalizedPath(generatedPath))) {
       throw new CliUsageError(
@@ -138,11 +174,10 @@ const assertGeneratedFilesSafe = (
 };
 
 const assertReleaseDirectorySafe = (
-  loaded: LoadedInputs,
-  sceneInstances: LoadedSceneInstances,
+  loaded: CombinedInputState,
   outputDirectory: string,
 ): void => {
-  for (const inputPath of allInputPaths(loaded, sceneInstances)) {
+  for (const inputPath of allInputPaths(loaded)) {
     if (isPathWithin(inputPath, outputDirectory)) {
       throw new CliUsageError(
         `Release directory '${outputDirectory}' contains input or evidence file '${inputPath}'.`,
@@ -152,20 +187,18 @@ const assertReleaseDirectorySafe = (
 };
 
 const requireCompiledInputs = (
-  loaded: LoadedInputs,
-  sceneInstances: LoadedSceneInstances,
+  loaded: CombinedInputState,
   commandName: "compile" | "package",
 ): NonNullable<LoadedInputs["assetManifest"]> => {
-  if (!loaded.assetManifest) {
+  if (!loaded.base.assetManifest) {
     throw new Error(
       `${commandName} command did not load its required asset manifest.`,
     );
   }
-  const diagnostics = combinedDiagnostics(loaded, sceneInstances);
-  if (hasErrors(diagnostics)) {
-    throw new CliDataError(diagnostics);
+  if (hasErrors(loaded.diagnostics)) {
+    throw new CliDataError(loaded.diagnostics);
   }
-  return loaded.assetManifest;
+  return loaded.base.assetManifest;
 };
 
 const runCompile = async (
@@ -179,43 +212,38 @@ const runCompile = async (
     throw new CliUsageError("Bundle output and report paths must be different.");
   }
 
-  const loaded = await loadInputs(
+  const loaded = await loadCombinedInputs(
     command.projectPath,
     command.assetManifestPath,
-  );
-  const sceneInstances = await loadSceneInstances(
     command.sceneInstancesPath,
-    loaded.project,
-    loaded.assetManifest,
+    command.artDirectionPath,
+    command.artEvidencePath,
   );
-  const assetManifest = requireCompiledInputs(
-    loaded,
-    sceneInstances,
-    "compile",
-  );
+  const assetManifest = requireCompiledInputs(loaded, "compile");
   assertGeneratedFilesSafe(
     loaded,
-    sceneInstances,
     [command.outputPath, ...(command.reportPath ? [command.reportPath] : [])],
   );
 
   const compiled = compileProjectWithInstances(
-    loaded.project,
+    loaded.base.project,
     assetManifest,
-    sceneInstances.manifest,
+    loaded.sceneInstances.manifest,
   );
-  const diagnostics = combinedDiagnostics(loaded, sceneInstances);
   const report = {
     reportVersion: 1 as const,
     command: "compile" as const,
     valid: true,
-    projectId: loaded.project.id,
+    projectId: loaded.base.project.id,
     bundleFingerprint: compiled.fingerprint,
     assetManifestFingerprint: assetManifest.fingerprint,
     assetCompilerVersion: assetManifest.compilerVersion,
-    sceneInstancesPath: sceneInstances.path,
+    sceneInstancesPath: loaded.sceneInstances.path,
+    artDirectionPath: loaded.art.artDirectionPath,
+    artEvidencePath: loaded.art.artEvidencePath,
+    artProfile: loaded.art.manifest?.profile.preset ?? null,
     outputPath: command.outputPath,
-    diagnostics,
+    diagnostics: loaded.diagnostics,
   };
   await writeFilesAtomically([
     {
@@ -233,11 +261,11 @@ const runCompile = async (
   ]);
 
   const human = [
-    `Compiled project '${loaded.project.id}'.`,
+    `Compiled project '${loaded.base.project.id}'.`,
     `Bundle: ${resolve(command.outputPath)}`,
     `Fingerprint: ${compiled.fingerprint}`,
-    ...(sceneInstances.path
-      ? [`Scene composition: ${sceneInstances.path}`]
+    ...(loaded.art.manifest
+      ? [`Art profile: ${loaded.art.manifest.profile.preset}`]
       : []),
     ...(command.reportPath ? [`Report: ${resolve(command.reportPath)}`] : []),
   ].join("\n");
@@ -249,32 +277,26 @@ const runPackage = async (
   command: Extract<CliCommand, { readonly kind: "package" }>,
   environment: CliEnvironment,
 ): Promise<number> => {
-  const loaded = await loadInputs(
+  const loaded = await loadCombinedInputs(
     command.projectPath,
     command.assetManifestPath,
-  );
-  const sceneInstances = await loadSceneInstances(
     command.sceneInstancesPath,
-    loaded.project,
-    loaded.assetManifest,
+    command.artDirectionPath,
+    command.artEvidencePath,
   );
-  const assetManifest = requireCompiledInputs(
-    loaded,
-    sceneInstances,
-    "package",
-  );
-  if (!loaded.manifestPath) {
+  const assetManifest = requireCompiledInputs(loaded, "package");
+  if (!loaded.base.manifestPath) {
     throw new Error("Package command did not resolve its asset manifest path.");
   }
-  assertReleaseDirectorySafe(loaded, sceneInstances, command.outputDirectory);
+  assertReleaseDirectorySafe(loaded, command.outputDirectory);
 
   const compiled = compileProjectWithInstances(
-    loaded.project,
+    loaded.base.project,
     assetManifest,
-    sceneInstances.manifest,
+    loaded.sceneInstances.manifest,
   );
   const artifacts = await readVerifiedRuntimeOutputs(
-    loaded.manifestPath,
+    loaded.base.manifestPath,
     assetManifest,
   );
   const release = buildRelease(compiled, assetManifest, artifacts);
@@ -282,27 +304,32 @@ const runPackage = async (
     command.outputDirectory,
     release.files,
   );
-  const diagnostics = combinedDiagnostics(loaded, sceneInstances);
 
   const report = {
     reportVersion: 1 as const,
     command: "package" as const,
     valid: true,
-    projectId: loaded.project.id,
+    projectId: loaded.base.project.id,
     outputDirectory,
     bundleFingerprint: compiled.fingerprint,
     releaseFingerprint: release.fingerprint,
     assetManifestFingerprint: assetManifest.fingerprint,
-    sceneInstancesPath: sceneInstances.path,
+    sceneInstancesPath: loaded.sceneInstances.path,
+    artDirectionPath: loaded.art.artDirectionPath,
+    artEvidencePath: loaded.art.artEvidencePath,
+    artProfile: loaded.art.manifest?.profile.preset ?? null,
     fileCount: release.files.length,
-    diagnostics,
+    diagnostics: loaded.diagnostics,
   };
   const human = [
-    `Packaged project '${loaded.project.id}'.`,
+    `Packaged project '${loaded.base.project.id}'.`,
     `Release: ${outputDirectory}`,
     `Files: ${release.files.length}`,
     `Bundle fingerprint: ${compiled.fingerprint}`,
     `Release fingerprint: ${release.fingerprint}`,
+    ...(loaded.art.manifest
+      ? [`Art profile: ${loaded.art.manifest.profile.preset}`]
+      : []),
   ].join("\n");
   writeResult(environment, command.format, report, human);
   return 0;
