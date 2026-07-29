@@ -11,6 +11,10 @@
     "./command-schema": {
       "types": "./dist/src/command-schema.d.ts",
       "import": "./dist/src/command-schema.js"
+    },
+    "./project-integration": {
+      "types": "./dist/src/project-integration.d.ts",
+      "import": "./dist/src/project-integration.js"
     }
   },
   "files": ["dist"],
