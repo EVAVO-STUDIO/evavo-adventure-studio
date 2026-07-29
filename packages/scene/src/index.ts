@@ -10,6 +10,11 @@ import type {
 
 const EPSILON = 1e-7;
 
+const sortCopy = <T>(
+  values: readonly T[],
+  compare: (left: T, right: T) => number,
+): T[] => [...values].sort(compare);
+
 const squaredDistance = (left: Point, right: Point): number => {
   const x = left.x - right.x;
   const y = left.y - right.y;
@@ -31,15 +36,18 @@ export const pointOnSegment = (point: Point, start: Point, end: Point): boolean 
     return false;
   }
 
-  const lengthSquared = squaredDistance(start, end);
-  return dot <= lengthSquared + EPSILON;
+  return dot <= squaredDistance(start, end) + EPSILON;
 };
 
 export const pointInPolygon = (point: Point, polygon: Polygon): boolean => {
   const points = polygon.points;
   let inside = false;
 
-  for (let index = 0, previous = points.length - 1; index < points.length; previous = index++) {
+  for (
+    let index = 0, previous = points.length - 1;
+    index < points.length;
+    previous = index++
+  ) {
     const currentPoint = points[index];
     const previousPoint = points[previous];
     if (!currentPoint || !previousPoint) {
@@ -69,14 +77,15 @@ export const findNavigationAreasAtPoint = (
   point: Point,
   areas: readonly NavigationArea[],
 ): readonly NavigationArea[] =>
-  areas
-    .filter((area) => pointInPolygon(point, area.shape))
-    .toSorted((left, right) => {
+  sortCopy(
+    areas.filter((area) => pointInPolygon(point, area.shape)),
+    (left, right) => {
       if (left.elevation !== right.elevation) {
         return right.elevation - left.elevation;
       }
       return left.id.localeCompare(right.id);
-    });
+    },
+  );
 
 const clamp01 = (value: number): number => Math.min(1, Math.max(0, value));
 
@@ -104,7 +113,7 @@ export const resolveScaleAtY = (
   bands: readonly DepthBand[],
   y: number,
 ): ScaleSolution | null => {
-  const selected = bands.toSorted((left, right) => {
+  const selected = sortCopy(bands, (left, right) => {
     const distanceDifference = distanceToBand(left, y) - distanceToBand(right, y);
     if (Math.abs(distanceDifference) > EPSILON) {
       return distanceDifference;
@@ -124,8 +133,11 @@ export const resolveScaleAtY = (
 
   const denominator = selected.nearY - selected.farY;
   const progress =
-    Math.abs(denominator) <= EPSILON ? 0 : clamp01((y - selected.farY) / denominator);
-  const scale = selected.farScale + (selected.nearScale - selected.farScale) * progress;
+    Math.abs(denominator) <= EPSILON
+      ? 0
+      : clamp01((y - selected.farY) / denominator);
+  const scale =
+    selected.farScale + (selected.nearScale - selected.farScale) * progress;
 
   return {
     bandId: selected.id,
@@ -161,7 +173,10 @@ export const compareDepthKeys = (left: DepthKey, right: DepthKey): number => {
 export const sortByDepth = <T>(
   values: readonly T[],
   getDepthKey: (value: T) => DepthKey,
-): readonly T[] => values.toSorted((left, right) => compareDepthKeys(getDepthKey(left), getDepthKey(right)));
+): readonly T[] =>
+  sortCopy(values, (left, right) =>
+    compareDepthKeys(getDepthKey(left), getDepthKey(right)),
+  );
 
 export const isActorBehindBaseline = (
   actorFootY: number,
@@ -194,7 +209,8 @@ export const quantizeNativePoint = (
 ): Point => {
   const shouldQuantize =
     policy === "strict" ||
-    (policy === "camera-strict" && (subject === "camera" || subject === "ui" || subject === "cursor"));
+    (policy === "camera-strict" &&
+      (subject === "camera" || subject === "ui" || subject === "cursor"));
 
   return shouldQuantize
     ? { x: Math.round(point.x), y: Math.round(point.y) }
