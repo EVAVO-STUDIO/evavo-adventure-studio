@@ -127,11 +127,7 @@ const compiledManifest = (
         assetId: "asset.background.office",
         kind: "image",
         sourceFiles: [
-          {
-            path: "art/office.png",
-            sha256: hash,
-            byteLength: 100,
-          },
+          { path: "art/office.png", sha256: hash, byteLength: 100 },
         ],
         outputFiles: [
           {
@@ -195,11 +191,7 @@ const compiledManifest = (
         assetId: "asset.audio.rain",
         kind: "audio",
         sourceFiles: [
-          {
-            path: "audio/rain.ogg",
-            sha256: hash,
-            byteLength: 200,
-          },
+          { path: "audio/rain.ogg", sha256: hash, byteLength: 200 },
         ],
         outputFiles: [
           {
@@ -256,7 +248,7 @@ describe("art direction inference", () => {
     );
   });
 
-  it("reports presentation and rule contract drift", () => {
+  it("reports presentation and background-rule drift", () => {
     const manifest = createArtDirectionManifest(project, "vga-256-320x200");
     const brokenProject = {
       ...project,
@@ -268,16 +260,15 @@ describe("art direction inference", () => {
     };
     const brokenManifest = {
       ...manifest,
-      assets: manifest.assets.map((rule) =>
-        rule.assetId === "asset.background.office"
-          ? {
-              ...rule,
-              role: "other" as const,
-              sizePolicy: "any" as const,
-              expectedSize: undefined,
-            }
-          : rule,
-      ),
+      assets: manifest.assets.map((rule) => {
+        if (rule.assetId !== "asset.background.office") return rule;
+        const { expectedSize: _expectedSize, ...withoutExpectedSize } = rule;
+        return {
+          ...withoutExpectedSize,
+          role: "other" as const,
+          sizePolicy: "any" as const,
+        };
+      }),
     };
 
     expect(
@@ -296,7 +287,7 @@ describe("art direction inference", () => {
 });
 
 describe("compiled art evidence", () => {
-  it("accepts compliant image evidence and warns when atlas palettes are not measurable", () => {
+  it("accepts compliant image evidence and flags unmeasured atlas palettes", () => {
     const art = createArtDirectionManifest(project, "vga-256-320x200");
     const issues = evaluateCompiledArtDirection(project, art, compiledManifest());
 
@@ -379,10 +370,7 @@ describe("art direction command schema", () => {
       parseArtDirectionEditorCommand({
         kind: "batch",
         commands: [
-          {
-            kind: "replace-profile",
-            profile: manifest.profile,
-          },
+          { kind: "replace-profile", profile: manifest.profile },
           {
             kind: "replace-asset-rule",
             assetId: manifest.assets[0]!.assetId,
