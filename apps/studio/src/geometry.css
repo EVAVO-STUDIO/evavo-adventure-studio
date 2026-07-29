@@ -1,0 +1,186 @@
+.geometry-toolbar {
+  padding-left: 274px;
+}
+
+.geometry-grid {
+  grid-template-columns: 264px minmax(650px, 1fr) 286px;
+}
+
+.geometry-scene-sidebar {
+  grid-template-rows: auto minmax(0, 1fr) auto auto;
+}
+
+.geometry-help {
+  padding: 14px;
+  border-top: 1px solid var(--line);
+  color: #777b87;
+  font-size: 9px;
+  line-height: 1.55;
+}
+
+.geometry-help p {
+  margin: 8px 0 0;
+}
+
+.geometry-viewport-scroll {
+  position: relative;
+  min-width: 0;
+  min-height: 0;
+  overflow: auto;
+  background:
+    linear-gradient(45deg, #101117 25%, transparent 25%),
+    linear-gradient(-45deg, #101117 25%, transparent 25%),
+    linear-gradient(45deg, transparent 75%, #101117 75%),
+    linear-gradient(-45deg, transparent 75%, #101117 75%),
+    #0d0e13;
+  background-position:
+    0 0,
+    0 6px,
+    6px -6px,
+    -6px 0;
+  background-size: 12px 12px;
+}
+
+.geometry-viewport-stage {
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  min-width: 320px;
+  min-height: 200px;
+  transform: translate(-50%, -50%);
+  box-shadow:
+    0 0 0 1px #000,
+    0 0 0 2px #343742,
+    0 24px 80px rgb(0 0 0 / 65%);
+}
+
+.geometry-viewport {
+  display: block;
+  width: 100%;
+  height: 100%;
+  cursor: crosshair;
+  image-rendering: pixelated;
+  touch-action: none;
+  user-select: none;
+}
+
+.geometry-art {
+  pointer-events: none;
+}
+
+.walkmesh-editor-layer polygon {
+  cursor: pointer;
+  fill: rgb(69 195 140 / 18%);
+  stroke: #45c38c;
+  stroke-width: 0.9;
+  vector-effect: non-scaling-stroke;
+}
+
+.walkmesh-editor-layer g.is-selected polygon {
+  fill: rgb(255 36 78 / 18%);
+  stroke: #ff244e;
+}
+
+.walkmesh-editor-layer circle,
+.hotspot-editor-layer circle {
+  cursor: grab;
+  fill: #090a0f;
+  stroke: #f4f5f8;
+  stroke-width: 1.1;
+  vector-effect: non-scaling-stroke;
+}
+
+.walkmesh-editor-layer circle:active,
+.hotspot-editor-layer circle:active,
+.entrance-editor-layer circle:active {
+  cursor: grabbing;
+}
+
+.hotspot-editor-layer polygon {
+  cursor: pointer;
+  fill: rgb(208 170 114 / 18%);
+  stroke: #d0aa72;
+  stroke-width: 0.9;
+  stroke-dasharray: 3 2;
+  vector-effect: non-scaling-stroke;
+}
+
+.hotspot-editor-layer g.is-selected polygon {
+  fill: rgb(255 36 78 / 18%);
+  stroke: #ff244e;
+  stroke-dasharray: none;
+}
+
+.depth-editor-layer g {
+  cursor: pointer;
+}
+
+.depth-editor-layer rect {
+  fill: rgb(121 185 209 / 8%);
+}
+
+.depth-editor-layer line {
+  stroke: #79b9d1;
+  stroke-width: 1;
+  stroke-dasharray: 5 3;
+  vector-effect: non-scaling-stroke;
+}
+
+.depth-editor-layer text {
+  fill: #9fd0e1;
+  font-family: "Courier New", monospace;
+  font-size: 6px;
+  pointer-events: none;
+}
+
+.depth-editor-layer g.is-selected rect {
+  fill: rgb(255 36 78 / 10%);
+}
+
+.depth-editor-layer g.is-selected line {
+  stroke: #ff244e;
+}
+
+.entrance-editor-layer circle {
+  cursor: grab;
+  fill: rgb(208 170 114 / 25%);
+  stroke: #d0aa72;
+  stroke-width: 1;
+  vector-effect: non-scaling-stroke;
+}
+
+.entrance-editor-layer line {
+  pointer-events: none;
+  stroke: #d0aa72;
+  stroke-width: 1;
+  vector-effect: non-scaling-stroke;
+}
+
+.entrance-editor-layer g.is-selected circle {
+  fill: rgb(255 36 78 / 30%);
+  stroke: #ff244e;
+}
+
+.entrance-editor-layer g.is-selected line {
+  stroke: #ff244e;
+}
+
+.geometry-inspector .geometry-stat-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 8px 0;
+  border-top: 1px solid var(--line-soft);
+  color: #777b87;
+  font-size: 8px;
+}
+
+.geometry-stat-row strong {
+  color: #d5d7de;
+  font-family: "Courier New", monospace;
+  font-size: 9px;
+}
+
+.topbar-actions .button[href] {
+  text-decoration: none;
+}
