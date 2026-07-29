@@ -88,22 +88,23 @@ export const validateRuntimeSceneInstances = (
 
   sceneInstances.objectDefinitions.forEach((definition, definitionIndex) => {
     definition.states.forEach((state, stateIndex) => {
-      if (!state.visual) {
+      const visual = state.visual;
+      if (!visual) {
         return;
       }
       const path = `sceneInstances.objectDefinitions[${definitionIndex}].states[${stateIndex}].visual`;
-      const asset = assetsById.get(state.visual.assetId);
+      const asset = assetsById.get(visual.assetId);
       if (!asset) {
         addIssue(
           issues,
           "runtime-object-visual-asset-missing",
           `${path}.assetId`,
-          `Object state '${state.id}' references missing runtime asset '${state.visual.assetId}'.`,
+          `Object state '${state.id}' references missing runtime asset '${visual.assetId}'.`,
         );
         return;
       }
 
-      if (state.visual.kind === "image") {
+      if (visual.kind === "image") {
         if (asset.kind !== "image") {
           addIssue(
             issues,
@@ -126,28 +127,28 @@ export const validateRuntimeSceneInstances = (
       }
 
       const compiledFrame = asset.metadata.frames.find(
-        (frame) => frame.frameId === state.visual?.frameId,
+        (frame) => frame.frameId === visual.frameId,
       );
       if (!compiledFrame) {
         addIssue(
           issues,
           "runtime-object-frame-missing",
           `${path}.frameId`,
-          `Object frame '${state.visual.frameId}' is missing from runtime asset '${asset.assetId}'.`,
+          `Object frame '${visual.frameId}' is missing from runtime asset '${asset.assetId}'.`,
         );
         return;
       }
 
       if (
-        !sameRectangle(compiledFrame.sourceRect, state.visual.sourceRect) ||
-        !sameSize(compiledFrame.originalSize, state.visual.sourceSize) ||
-        !samePoint(compiledFrame.trimOffset, state.visual.trimOffset)
+        !sameRectangle(compiledFrame.sourceRect, visual.sourceRect) ||
+        !sameSize(compiledFrame.originalSize, visual.sourceSize) ||
+        !samePoint(compiledFrame.trimOffset, visual.trimOffset)
       ) {
         addIssue(
           issues,
           "runtime-object-frame-geometry-mismatch",
           path,
-          `Object frame '${state.visual.frameId}' does not match runtime atlas geometry.`,
+          `Object frame '${visual.frameId}' does not match runtime atlas geometry.`,
         );
       }
     });
