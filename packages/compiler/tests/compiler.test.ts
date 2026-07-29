@@ -1,10 +1,19 @@
 import { describe, expect, it } from "vitest";
-import { parseAdventureProject } from "@evavo/adventure-project-schema";
+import {
+  assetBuildManifestSchema,
+  type AssetBuildManifest,
+} from "@evavo/adventure-asset-contract";
+import {
+  parseAdventureProject,
+  type AdventureProject,
+} from "@evavo/adventure-project-schema";
 import {
   compileProject,
   interactionIndexKey,
   tryCompileProject,
 } from "../src/index.js";
+
+const hash = "0".repeat(64);
 
 const createProject = () =>
   parseAdventureProject({
@@ -85,34 +94,91 @@ const createProject = () =>
       },
     ],
     actors: [],
+    dialogues: [],
+    sequences: [],
     assets: [
-      { id: "asset.z-unused", path: "z.png", kind: "image" },
-      { id: "asset.background", path: "office.png", kind: "image" },
+      {
+        id: "asset.z-unused",
+        path: "authoring/z.png",
+        kind: "image",
+      },
+      {
+        id: "asset.background",
+        path: "authoring/office.png",
+        kind: "image",
+      },
     ],
     inventoryItems: [],
   });
 
+const createManifest = (
+  project: AdventureProject,
+  reverse = false,
+): AssetBuildManifest => {
+  const records = project.assets.map((asset) => ({
+    assetId: asset.id,
+    kind: "image" as const,
+    sourceFiles: [
+      {
+        path: asset.path,
+        sha256: hash,
+        byteLength: 10,
+      },
+    ],
+    outputFiles: [
+      {
+        role: "primary",
+        runtimePath: `assets/${asset.id}.png`,
+        mediaType: "image/png",
+        sha256: hash,
+        byteLength: 8,
+      },
+    ],
+    metadata: {
+      kind: "image" as const,
+      width: 16,
+      height: 16,
+      palette: false,
+      colourCount: 2,
+    },
+  }));
+
+  return assetBuildManifestSchema.parse({
+    manifestVersion: 1,
+    projectId: project.id,
+    compilerVersion: "0.1.0-test",
+    fingerprint: hash,
+    assets: reverse ? records.reverse() : records,
+  });
+};
+
 describe("project compiler", () => {
-  it("produces stable output when non-semantic asset order changes", () => {
+  it("produces stable source-free output when non-semantic order changes", () => {
     const project = createProject();
     const reordered = {
       ...project,
       assets: [...project.assets].reverse(),
     };
 
-    const left = compileProject(project);
-    const right = compileProject(reordered);
+    const left = compileProject(project, createManifest(project));
+    const right = compileProject(
+      reordered,
+      createManifest(reordered, true),
+    );
 
     expect(left.canonicalJson).toBe(right.canonicalJson);
     expect(left.fingerprint).toBe(right.fingerprint);
-    expect(left.bundle.assets.map((asset) => asset.id)).toEqual([
+    expect(left.bundle.assets.map((asset) => asset.assetId)).toEqual([
       "asset.background",
       "asset.z-unused",
     ]);
+    expect(left.bundle.assetManifestFingerprint).toBe(hash);
+    expect(left.canonicalJson).not.toContain("authoring/");
   });
 
   it("preserves authored interaction precedence in its lookup index", () => {
-    const compiled = compileProject(createProject());
+    const project = createProject();
+    const compiled = compileProject(project, createManifest(project));
     const hotspot = compiled.bundle.scenes[0]?.hotspots[0];
     const key = interactionIndexKey("look", null);
 
@@ -122,7 +188,7 @@ describe("project compiler", () => {
     ]);
   });
 
-  it("refuses to compile semantic reference errors", () => {
+  it("refuses semantic project reference errors", () => {
     const project = createProject();
     const broken = {
       ...project,
@@ -132,7 +198,23 @@ describe("project compiler", () => {
       })),
     };
 
-    const result = tryCompileProject(broken);
+    const result = tryCompileProject(broken, createManifest(project));
+
+    expect(result.kind).toBe("invalid");
+    if (result.kind === "invalid") {
+      expect(result.issues.map((issue) => issue.code)).toContain("missing-asset");
+    }
+  });
+
+  it("refuses incomplete compiled asset evidence", () => {
+    const project = createProject();
+    const complete = createManifest(project);
+    const incomplete = assetBuildManifestSchema.parse({
+      ...complete,
+      assets: complete.assets.slice(0, 1),
+    });
+
+    const result = tryCompileProject(project, incomplete);
 
     expect(result.kind).toBe("invalid");
     if (result.kind === "invalid") {
