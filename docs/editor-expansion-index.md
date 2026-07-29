@@ -10,6 +10,7 @@ This index maps the current authoring surfaces to their canonical data and comma
 | Sprite & Animation | `/?workspace=animation` | focused actor definition | `@evavo/adventure-animation-editor-core` |
 | Art Direction | `/?workspace=art` | art policy plus compiled pixel evidence | `@evavo/adventure-art-direction` |
 | Bitmap Fonts | `/?workspace=fonts` | project bitmap-font sidecar | `@evavo/adventure-bitmap-font-editor-core` |
+| Interface Skins | `/?workspace=interface` | project UI-skin sidecar | `@evavo/adventure-ui-skin-editor-core` |
 | Dialogue | `/?workspace=dialogue` | focused dialogue graph | `@evavo/adventure-dialogue-editor-core` |
 | Validation | `/?workspace=validation` | source project plus scene composition | canonical validators |
 | Cinematic Timeline Lab | port `5175` | focused sequence | `@evavo/adventure-sequence-editor-core` |
@@ -39,6 +40,8 @@ Art direction is a project-scoped sidecar rather than a focused replacement docu
 
 Bitmap fonts are also a project-scoped sidecar. They compile into the runtime bundle only after project-atlas and compiled-glyph validation. The player renders glyph sprites from validated runtime assets and never substitutes CSS or vector text.
 
+Interface skins are project-scoped sidecars. They bind the canonical interaction mode to native regions, verbs, bitmap-font roles, inventory, parser, score, dialogue choices and verb coins. They compile only after source validation and compiled icon-frame validation, then drive the same renderer-neutral composer in Studio and packaged gameplay.
+
 ## Verification
 
 The primary repository workflow remains `.github/workflows/ci.yml`.
@@ -49,6 +52,7 @@ The editor expansion also has `.github/workflows/editor-expansion-ci.yml`, which
 - editor command and workspace tests;
 - art-direction policy and evidence tests;
 - bitmap-font layout, authoring, compilation and runtime tests;
+- interface-skin schema, editor, compiler, runtime, hit-testing and player tests;
 - browser player, Studio, Timeline Lab and CLI builds;
 - Windows and Linux behavior.
 
@@ -67,6 +71,8 @@ pnpm exec vitest run `
   packages/art-direction/tests `
   packages/bitmap-font/tests `
   packages/bitmap-font-editor-core/tests `
+  packages/ui-skin/tests `
+  packages/ui-skin-editor-core/tests `
   packages/renderer-pixi/tests `
   apps/player/tests `
   apps/studio/tests `
