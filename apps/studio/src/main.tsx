@@ -3,6 +3,7 @@ import { createRoot } from "react-dom/client";
 import { App } from "./App.js";
 import { StudioErrorBoundary } from "./ErrorBoundary.js";
 import { GeometryApp } from "./GeometryApp.js";
+import { ObjectApp } from "./ObjectApp.js";
 import "./style.css";
 import "./switcher.css";
 
@@ -12,19 +13,35 @@ if (!root) {
 }
 
 const workspace = new URLSearchParams(window.location.search).get("workspace");
-const geometryActive = workspace === "geometry";
-const application: ReactNode = geometryActive ? <GeometryApp /> : <App />;
+const application: ReactNode =
+  workspace === "geometry" ? (
+    <GeometryApp />
+  ) : workspace === "objects" ? (
+    <ObjectApp />
+  ) : (
+    <App />
+  );
 
-const switcher = document.createElement("a");
+const switcher = document.createElement("nav");
 switcher.className = "workspace-switcher";
-switcher.href = geometryActive ? "/" : "/?workspace=geometry";
-switcher.textContent = geometryActive ? "Scene Composer" : "Project Geometry";
-switcher.setAttribute(
-  "aria-label",
-  geometryActive
-    ? "Open the scene composition workspace"
-    : "Open the project geometry workspace",
-);
+switcher.setAttribute("aria-label", "Adventure Studio workspaces");
+const workspaces = [
+  { id: "composer", href: "/", label: "Composer" },
+  { id: "geometry", href: "/?workspace=geometry", label: "Geometry" },
+  { id: "objects", href: "/?workspace=objects", label: "Objects" },
+] as const;
+const activeWorkspace =
+  workspace === "geometry" || workspace === "objects" ? workspace : "composer";
+for (const item of workspaces) {
+  const link = document.createElement("a");
+  link.href = item.href;
+  link.textContent = item.label;
+  if (item.id === activeWorkspace) {
+    link.className = "is-active";
+    link.setAttribute("aria-current", "page");
+  }
+  switcher.appendChild(link);
+}
 document.body.appendChild(switcher);
 
 createRoot(root).render(
