@@ -9,11 +9,18 @@ on:
       - "packages/narrative-library-editor-core/**"
       - "packages/animation-editor-core/**"
       - "packages/art-direction/**"
+      - "packages/bitmap-font/**"
       - "packages/asset-pipeline/**"
       - "packages/project-editor-core/**"
       - "packages/editor-core/**"
+      - "packages/render-contract/**"
+      - "packages/renderer-pixi/**"
+      - "packages/runtime-bundle/**"
+      - "packages/compiler/**"
+      - "apps/player/**"
       - "apps/studio/**"
       - "apps/timeline-lab/**"
+      - "tools/cli/**"
       - "tsconfig.editor-expansion.json"
       - ".github/workflows/editor-expansion-ci.yml"
   pull_request:
@@ -23,11 +30,18 @@ on:
       - "packages/narrative-library-editor-core/**"
       - "packages/animation-editor-core/**"
       - "packages/art-direction/**"
+      - "packages/bitmap-font/**"
       - "packages/asset-pipeline/**"
       - "packages/project-editor-core/**"
       - "packages/editor-core/**"
+      - "packages/render-contract/**"
+      - "packages/renderer-pixi/**"
+      - "packages/runtime-bundle/**"
+      - "packages/compiler/**"
+      - "apps/player/**"
       - "apps/studio/**"
       - "apps/timeline-lab/**"
+      - "tools/cli/**"
       - "tsconfig.editor-expansion.json"
       - ".github/workflows/editor-expansion-ci.yml"
   workflow_dispatch:
@@ -78,12 +92,25 @@ jobs:
           packages/narrative-library-editor-core/tests
           packages/animation-editor-core/tests
           packages/art-direction/tests
+          packages/bitmap-font/tests
           packages/asset-pipeline/tests/art-evidence.test.ts
+          packages/compiler/tests/bitmap-font-compilation.test.ts
+          packages/runtime-bundle/tests/bitmap-font-runtime.test.ts
+          packages/renderer-pixi/tests
+          apps/player/tests/runtime-renderer.test.ts
           apps/studio/tests
           apps/timeline-lab/tests
+          tools/cli/tests/arguments.test.ts
+          tools/cli/tests/font-inputs.test.ts
+
+      - name: Build browser player
+        run: pnpm --filter @evavo/adventure-player build
 
       - name: Build main visual studio
         run: pnpm --filter @evavo/adventure-studio-app build
 
       - name: Build cinematic timeline lab
         run: pnpm --filter @evavo/adventure-timeline-lab build
+
+      - name: Build command-line tools
+        run: pnpm --filter @evavo/adventure-cli build
