@@ -12,9 +12,11 @@ import { PixiWebGLRenderer } from "@evavo/adventure-renderer-pixi";
 import { PixiAssetTextureStore } from "@evavo/adventure-renderer-pixi/texture-store";
 import type { RuntimeBundle } from "@evavo/adventure-runtime-bundle";
 import {
-  createRuntimeStartFrame,
-  loadRuntimeBundle,
-} from "./runtime-loader.js";
+  advanceRuntimeWorld,
+  createInitialRuntimeWorldState,
+  resolveRuntimeSceneFrame,
+} from "@evavo/adventure-scene-runtime";
+import { loadRuntimeBundle } from "./runtime-loader.js";
 import "./style.css";
 
 const id = <T extends string>(value: string) => value as Id<T>;
@@ -229,12 +231,24 @@ const packagedPlayer = async (
   });
   await textures.loadRuntimeAssets(bundle.assets, bundleUrl);
   const renderer = new PixiWebGLRenderer({ textures });
+  let world = createInitialRuntimeWorldState(bundle);
+  let renderedTick = 0;
 
   return {
     renderer,
     disposeAdditional: () => textures.dispose(),
     ticksPerSecond: bundle.presentation.logicalTicksPerSecond,
-    createFrame: (tick) => createRuntimeStartFrame(bundle, tick),
+    createFrame: (tick) => {
+      if (tick < renderedTick) {
+        throw new RangeError("Packaged player logical time cannot move backwards.");
+      }
+      const delta = tick - renderedTick;
+      if (delta > 0) {
+        world = advanceRuntimeWorld(bundle, world, delta).state;
+        renderedTick = tick;
+      }
+      return resolveRuntimeSceneFrame(bundle, world);
+    },
   };
 };
 
