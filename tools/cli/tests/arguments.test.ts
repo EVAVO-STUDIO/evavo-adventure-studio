@@ -29,6 +29,27 @@ describe("cli arguments", () => {
     });
   });
 
+  it("parses clean release package commands", () => {
+    expect(
+      parseCliArguments([
+        "package",
+        "--project",
+        "game/project.json",
+        "--asset-manifest",
+        "build/assets.json",
+        "--output",
+        "release/windows",
+        "--json",
+      ]),
+    ).toEqual({
+      kind: "package",
+      projectPath: "game/project.json",
+      assetManifestPath: "build/assets.json",
+      outputDirectory: "release/windows",
+      format: "json",
+    });
+  });
+
   it("allows project-only validation", () => {
     expect(
       parseCliArguments(["validate", "--project", "project.json"]),
@@ -40,7 +61,7 @@ describe("cli arguments", () => {
     });
   });
 
-  it("rejects missing values, duplicate aliases and unknown options", () => {
+  it("rejects missing values, duplicate aliases and command-specific options", () => {
     expect(() => parseCliArguments(["compile", "--project"])).toThrow(
       CliUsageError,
     );
@@ -55,6 +76,15 @@ describe("cli arguments", () => {
         "one.json",
         "--output",
         "two.json",
+      ]),
+    ).toThrow(CliUsageError);
+    expect(() =>
+      parseCliArguments([
+        "validate",
+        "--project",
+        "project.json",
+        "--out",
+        "invalid.json",
       ]),
     ).toThrow(CliUsageError);
     expect(() =>
