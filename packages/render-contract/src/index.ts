@@ -59,6 +59,7 @@ interface BaseRenderNode {
 export interface SpriteRenderNode extends BaseRenderNode {
   readonly kind: "sprite";
   readonly assetId: Id<"asset">;
+  readonly frameId?: Id<"sprite-frame">;
   readonly sourceRect: Rectangle;
   readonly originalSize: Size;
   readonly trimOffset: Point;
@@ -196,7 +197,11 @@ export const validateResolvedFrame = (
       nodesById.set(node.id, node);
     }
 
-    if (!Number.isFinite(node.opacity) || node.opacity < 0 || node.opacity > 1) {
+    if (
+      !Number.isFinite(node.opacity) ||
+      node.opacity < 0 ||
+      node.opacity > 1
+    ) {
       issues.push({
         severity: "error",
         code: "invalid-opacity",
@@ -221,7 +226,9 @@ export const validateResolvedFrame = (
 
     if (
       node.kind === "dither-fade" &&
-      (!Number.isFinite(node.progress) || node.progress < 0 || node.progress > 1)
+      (!Number.isFinite(node.progress) ||
+        node.progress < 0 ||
+        node.progress > 1)
     ) {
       issues.push({
         severity: "error",
@@ -256,8 +263,12 @@ export const validateResolvedFrame = (
   return issues;
 };
 
-export const compareRenderOrder = (left: RenderOrder, right: RenderOrder): number => {
-  const layerDifference = renderLayerOrder[left.layer] - renderLayerOrder[right.layer];
+export const compareRenderOrder = (
+  left: RenderOrder,
+  right: RenderOrder,
+): number => {
+  const layerDifference =
+    renderLayerOrder[left.layer] - renderLayerOrder[right.layer];
   if (layerDifference !== 0) {
     return layerDifference;
   }
@@ -273,7 +284,9 @@ export const compareRenderOrder = (left: RenderOrder, right: RenderOrder): numbe
   return left.stableId.localeCompare(right.stableId);
 };
 
-export const orderRenderNodes = (nodes: readonly RenderNode[]): readonly RenderNode[] =>
+export const orderRenderNodes = (
+  nodes: readonly RenderNode[],
+): readonly RenderNode[] =>
   [...nodes].sort((left, right) => compareRenderOrder(left.order, right.order));
 
 export interface RendererHost {
