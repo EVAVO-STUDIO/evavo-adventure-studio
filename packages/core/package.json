@@ -7,6 +7,10 @@
     ".": {
       "types": "./dist/src/index.d.ts",
       "import": "./dist/src/index.js"
+    },
+    "./fixed-step": {
+      "types": "./dist/src/fixed-step.d.ts",
+      "import": "./dist/src/fixed-step.js"
     }
   },
   "files": ["dist"],
