@@ -1,0 +1,29 @@
+{
+  "name": "@evavo/adventure-cli",
+  "version": "0.1.0",
+  "private": true,
+  "type": "module",
+  "bin": {
+    "evavo-adventure": "./dist/src/index.js"
+  },
+  "exports": {
+    ".": {
+      "types": "./dist/src/runner.d.ts",
+      "import": "./dist/src/runner.js"
+    }
+  },
+  "files": ["dist"],
+  "scripts": {
+    "build": "tsc -b",
+    "typecheck": "tsc -b --pretty false"
+  },
+  "dependencies": {
+    "@evavo/adventure-asset-contract": "workspace:*",
+    "@evavo/adventure-compiler": "workspace:*",
+    "@evavo/adventure-project-schema": "workspace:*",
+    "@evavo/adventure-validation": "workspace:*"
+  },
+  "devDependencies": {
+    "@types/node": "catalog:"
+  }
+}
