@@ -45,19 +45,42 @@ const createFixture = async () => {
   const root = await mkdtemp(join(tmpdir(), "evavo-adventure-runner-"));
   temporaryDirectories.push(root);
   const projectPath = join(root, "project.json");
-  const sourcePath = join(root, "art", "office-master.png");
+  const sceneInstancesPath = join(root, "scene-instances.json");
+  const officeSourcePath = join(root, "art", "office-master.png");
+  const detectiveSourcePath = join(root, "art", "detective.aseprite");
   const manifestPath = join(root, "build", "assets.manifest.json");
-  const runtimePath = join(root, "build", "assets", "office.png");
+  const officeRuntimePath = join(root, "build", "assets", "office.png");
+  const detectiveAtlasPath = join(
+    root,
+    "build",
+    "assets",
+    "detective",
+    "atlas.json",
+  );
+  const detectivePagePath = join(
+    root,
+    "build",
+    "assets",
+    "detective",
+    "page-000.png",
+  );
   const outputPath = join(root, "dist", "game.bundle.json");
   const reportPath = join(root, "dist", "compile-report.json");
   const releasePath = join(root, "release");
 
-  const source = new TextEncoder().encode("authored-office-source");
-  const output = new Uint8Array([137, 80, 78, 71, 13, 10, 26, 10]);
-  await mkdir(dirname(sourcePath), { recursive: true });
-  await mkdir(dirname(runtimePath), { recursive: true });
-  await writeFile(sourcePath, source);
-  await writeFile(runtimePath, output);
+  const officeSource = new TextEncoder().encode("authored-office-source");
+  const detectiveSource = new TextEncoder().encode("authored-detective-source");
+  const officeOutput = new Uint8Array([137, 80, 78, 71, 13, 10, 26, 10]);
+  const atlasOutput = new TextEncoder().encode("{}\n");
+  const pageOutput = new Uint8Array([137, 80, 78, 71, 1, 2, 3, 4]);
+  await mkdir(dirname(officeSourcePath), { recursive: true });
+  await mkdir(dirname(officeRuntimePath), { recursive: true });
+  await mkdir(dirname(detectiveAtlasPath), { recursive: true });
+  await writeFile(officeSourcePath, officeSource);
+  await writeFile(detectiveSourcePath, detectiveSource);
+  await writeFile(officeRuntimePath, officeOutput);
+  await writeFile(detectiveAtlasPath, atlasOutput);
+  await writeFile(detectivePagePath, pageOutput);
 
   const project = {
     schemaVersion: 1,
@@ -83,7 +106,20 @@ const createFixture = async () => {
         width: 320,
         height: 200,
         backgroundAssetId: "asset.office",
-        navigationAreas: [],
+        navigationAreas: [
+          {
+            id: "navigation.office",
+            shape: {
+              points: [
+                { x: 0, y: 100 },
+                { x: 320, y: 100 },
+                { x: 320, y: 200 },
+                { x: 0, y: 200 },
+              ],
+            },
+            elevation: 0,
+          },
+        ],
         depthBands: [],
         occluders: [],
         hotspots: [],
@@ -97,7 +133,35 @@ const createFixture = async () => {
         fallbackText: "Nothing happens.",
       },
     ],
-    actors: [],
+    actors: [
+      {
+        id: "actor.detective",
+        name: "Detective",
+        frames: [
+          {
+            id: "frame.detective.idle",
+            assetId: "asset.detective",
+            sourceRect: { x: 1, y: 1, width: 12, height: 20 },
+            sourceSize: { width: 18, height: 24 },
+            trimOffset: { x: 3, y: 4 },
+            pivot: { x: 9, y: 23 },
+            footPoint: { x: 9, y: 23 },
+            durationTicks: 8,
+            mirrorEligible: true,
+          },
+        ],
+        animations: [
+          {
+            id: "animation.detective.idle-east",
+            state: "idle",
+            facing: "east",
+            frameIds: ["frame.detective.idle"],
+            loop: true,
+            interruptible: true,
+          },
+        ],
+      },
+    ],
     dialogues: [],
     sequences: [],
     assets: [
@@ -106,10 +170,37 @@ const createFixture = async () => {
         path: "art/office-master.png",
         kind: "image",
       },
+      {
+        id: "asset.detective",
+        path: "art/detective.aseprite",
+        kind: "spritesheet",
+      },
     ],
     inventoryItems: [],
   };
   await writeJson(projectPath, project);
+
+  const sceneInstances = {
+    manifestVersion: 1,
+    projectId: project.id,
+    objectDefinitions: [],
+    scenes: [
+      {
+        sceneId: "scene.office",
+        actorInstances: [
+          {
+            id: "actor-instance.office.detective",
+            actorId: "actor.detective",
+            position: { x: 50, y: 160 },
+            facing: "east",
+            animationState: "idle",
+          },
+        ],
+        objectInstances: [],
+      },
+    ],
+  };
+  await writeJson(sceneInstancesPath, sceneInstances);
 
   const manifestPayload = {
     manifestVersion: 1,
@@ -122,8 +213,8 @@ const createFixture = async () => {
         sourceFiles: [
           {
             path: "art/office-master.png",
-            sha256: sha256(source),
-            byteLength: source.byteLength,
+            sha256: sha256(officeSource),
+            byteLength: officeSource.byteLength,
           },
         ],
         outputFiles: [
@@ -131,8 +222,8 @@ const createFixture = async () => {
             role: "primary",
             runtimePath: "assets/office.png",
             mediaType: "image/png",
-            sha256: sha256(output),
-            byteLength: output.byteLength,
+            sha256: sha256(officeOutput),
+            byteLength: officeOutput.byteLength,
           },
         ],
         metadata: {
@@ -143,6 +234,47 @@ const createFixture = async () => {
           colourCount: 16,
         },
       },
+      {
+        assetId: "asset.detective",
+        kind: "spritesheet",
+        sourceFiles: [
+          {
+            path: "art/detective.aseprite",
+            sha256: sha256(detectiveSource),
+            byteLength: detectiveSource.byteLength,
+          },
+        ],
+        outputFiles: [
+          {
+            role: "atlas-manifest",
+            runtimePath: "assets/detective/atlas.json",
+            mediaType: "application/json",
+            sha256: sha256(atlasOutput),
+            byteLength: atlasOutput.byteLength,
+          },
+          {
+            role: "page-000",
+            runtimePath: "assets/detective/page-000.png",
+            mediaType: "image/png",
+            sha256: sha256(pageOutput),
+            byteLength: pageOutput.byteLength,
+          },
+        ],
+        metadata: {
+          kind: "spritesheet",
+          pages: [{ outputRole: "page-000", width: 64, height: 64 }],
+          frames: [
+            {
+              frameId: "frame.detective.idle",
+              pageOutputRole: "page-000",
+              sourceRect: { x: 1, y: 1, width: 12, height: 20 },
+              originalSize: { width: 18, height: 24 },
+              trimOffset: { x: 3, y: 4 },
+              padding: 1,
+            },
+          ],
+        },
+      },
     ],
   };
   const fingerprint = sha256(JSON.stringify(canonicalize(manifestPayload)));
@@ -151,9 +283,10 @@ const createFixture = async () => {
   return {
     root,
     projectPath,
+    sceneInstancesPath,
     manifestPath,
-    runtimePath,
-    runtimeBytes: output,
+    officeRuntimePath,
+    officeRuntimeBytes: officeOutput,
     outputPath,
     reportPath,
     releasePath,
@@ -169,7 +302,7 @@ afterEach(async () => {
 });
 
 describe("cli runner", () => {
-  it("compiles verified evidence into a source-free runtime bundle", async () => {
+  it("compiles verified evidence and placements into a source-free runtime bundle", async () => {
     const fixture = await createFixture();
     let stdout = "";
     let stderr = "";
@@ -181,6 +314,8 @@ describe("cli runner", () => {
         fixture.projectPath,
         "--asset-manifest",
         fixture.manifestPath,
+        "--scene-instances",
+        fixture.sceneInstancesPath,
         "--out",
         fixture.outputPath,
         "--report",
@@ -203,6 +338,7 @@ describe("cli runner", () => {
       command: "compile",
       valid: true,
       projectId: "project.cli-fixture",
+      sceneInstancesPath: fixture.sceneInstancesPath,
     });
 
     const bundleText = await readFile(fixture.outputPath, "utf8");
@@ -211,16 +347,27 @@ describe("cli runner", () => {
         readonly assetId: string;
         readonly sourceFiles?: unknown;
       }[];
+      readonly sceneInstances?: {
+        readonly scenes: readonly {
+          readonly actorInstances: readonly { readonly id: string }[];
+        }[];
+      };
     };
-    expect(bundle.assets[0]?.assetId).toBe("asset.office");
+    expect(bundle.assets.map((asset) => asset.assetId)).toEqual([
+      "asset.detective",
+      "asset.office",
+    ]);
     expect(bundle.assets[0]?.sourceFiles).toBeUndefined();
+    expect(bundle.sceneInstances?.scenes[0]?.actorInstances[0]?.id).toBe(
+      "actor-instance.office.detective",
+    );
     expect(bundleText).not.toContain("office-master.png");
     expect(await readFile(fixture.reportPath, "utf8")).toContain(
       "bundleFingerprint",
     );
   });
 
-  it("packages a clean release and removes stale target files", async () => {
+  it("packages a clean composed release and removes stale target files", async () => {
     const fixture = await createFixture();
     await mkdir(fixture.releasePath, { recursive: true });
     await writeFile(join(fixture.releasePath, "stale.txt"), "stale");
@@ -233,6 +380,8 @@ describe("cli runner", () => {
         fixture.projectPath,
         "--asset-manifest",
         fixture.manifestPath,
+        "--scene-instances",
+        fixture.sceneInstancesPath,
         "--out",
         fixture.releasePath,
         "--json",
@@ -253,18 +402,19 @@ describe("cli runner", () => {
     };
     expect(report.command).toBe("package");
     expect(report.releaseFingerprint).toHaveLength(64);
-    expect(report.fileCount).toBe(3);
+    expect(report.fileCount).toBe(5);
 
     expect(
       new Uint8Array(
         await readFile(join(fixture.releasePath, "assets", "office.png")),
       ),
-    ).toEqual(fixture.runtimeBytes);
+    ).toEqual(fixture.officeRuntimeBytes);
     const bundleText = await readFile(
       join(fixture.releasePath, "game.bundle.json"),
       "utf8",
     );
     expect(bundleText).not.toContain("office-master.png");
+    expect(bundleText).toContain("actor-instance.office.detective");
     const releaseManifest = JSON.parse(
       await readFile(
         join(fixture.releasePath, "release.manifest.json"),
@@ -280,11 +430,60 @@ describe("cli runner", () => {
       sha256(new TextEncoder().encode(bundleText)),
     );
     expect(releaseManifest.files.map((file) => file.path)).toEqual([
+      "assets/detective/atlas.json",
+      "assets/detective/page-000.png",
       "assets/office.png",
     ]);
     await expect(
       readFile(join(fixture.releasePath, "stale.txt")),
     ).rejects.toMatchObject({ code: "ENOENT" });
+  });
+
+  it("returns scene-specific diagnostics for invalid placements", async () => {
+    const fixture = await createFixture();
+    const invalid = JSON.parse(
+      await readFile(fixture.sceneInstancesPath, "utf8"),
+    ) as {
+      scenes: { actorInstances: { facing: string }[] }[];
+    };
+    invalid.scenes[0]!.actorInstances[0]!.facing = "west";
+    await writeJson(fixture.sceneInstancesPath, invalid);
+    let stdout = "";
+
+    const exitCode = await runCli(
+      [
+        "validate",
+        "--project",
+        fixture.projectPath,
+        "--asset-manifest",
+        fixture.manifestPath,
+        "--scene-instances",
+        fixture.sceneInstancesPath,
+        "--json",
+      ],
+      {
+        stdout: (text) => {
+          stdout += text;
+        },
+        stderr: () => undefined,
+      },
+    );
+
+    expect(exitCode).toBe(1);
+    const report = JSON.parse(stdout) as {
+      readonly diagnostics: readonly {
+        readonly source: string;
+        readonly code: string;
+      }[];
+    };
+    expect(report.diagnostics).toEqual(
+      expect.arrayContaining([
+        expect.objectContaining({
+          source: "scene-instances-semantics",
+          code: "missing-instance-animation",
+        }),
+      ]),
+    );
   });
 
   it("refuses release directories that contain build inputs", async () => {
@@ -298,6 +497,8 @@ describe("cli runner", () => {
         fixture.projectPath,
         "--asset-manifest",
         fixture.manifestPath,
+        "--scene-instances",
+        fixture.sceneInstancesPath,
         "--out",
         fixture.root,
       ],
@@ -315,7 +516,7 @@ describe("cli runner", () => {
 
   it("refuses changed runtime evidence", async () => {
     const fixture = await createFixture();
-    await writeFile(fixture.runtimePath, new Uint8Array([1, 2, 3]));
+    await writeFile(fixture.officeRuntimePath, new Uint8Array([1, 2, 3]));
     let stdout = "";
 
     const exitCode = await runCli(
