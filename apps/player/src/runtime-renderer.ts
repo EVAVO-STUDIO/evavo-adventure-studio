@@ -7,7 +7,7 @@ import type { PixiAssetTextureStore } from "@evavo/adventure-renderer-pixi/textu
 import type { RuntimeBundle } from "@evavo/adventure-runtime-bundle";
 
 export const createPackagedRendererOptions = (
-  bundle: RuntimeBundle,
+  bundle: Pick<RuntimeBundle, "bitmapFonts">,
   textures: PixiAssetTextureStore,
 ): PixiRendererOptions => ({
   textures,
