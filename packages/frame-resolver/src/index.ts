@@ -41,21 +41,20 @@ export interface ActorSpriteInput {
 export const resolveActorSprite = (
   input: ActorSpriteInput,
 ): SpriteRenderNode => {
+  const position = quantizeNativePoint(
+    input.footPosition,
+    input.presentation.pixelMotionPolicy,
+    "entity",
+  );
   const scaleSolution = resolveScaleAtY(
     input.depthBands,
-    input.footPosition.y,
+    position.y,
   );
   const perspectiveScale = scaleSolution?.scale ?? 1;
   const scale = perspectiveScale * (input.scaleMultiplier ?? 1);
   if (!Number.isFinite(scale) || scale <= 0) {
     throw new RangeError("Resolved actor scale must be a positive finite number.");
   }
-
-  const position = quantizeNativePoint(
-    input.footPosition,
-    input.presentation.pixelMotionPolicy,
-    "entity",
-  );
 
   return {
     kind: "sprite",
