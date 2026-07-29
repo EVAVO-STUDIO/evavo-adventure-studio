@@ -45,6 +45,10 @@ import {
   type UiSkinManifest,
 } from "@evavo/adventure-ui-skin";
 import {
+  validateCompiledUiSkinMappings,
+  type UiSkinCompiledIssue,
+} from "@evavo/adventure-ui-skin/compiled-mapping";
+import {
   hasValidationErrors,
   validateProjectSemantics,
   type ValidationIssue,
@@ -57,7 +61,8 @@ export type CompilationIssue =
   | FrameAssetMappingIssue
   | BitmapFontIssue
   | BitmapFontCompiledIssue
-  | UiSkinIssue;
+  | UiSkinIssue
+  | UiSkinCompiledIssue;
 
 export interface CompiledProject {
   readonly bundle: RuntimeBundle;
@@ -86,21 +91,13 @@ export const interactionIndexKey = (
 
 const compileHotspot = (hotspot: Hotspot): CompiledHotspot => {
   const mutableIndex: Record<string, Id<"interaction">[]> = {};
-
   for (const interaction of hotspot.interactions) {
     const key = interactionIndexKey(interaction.verb, interaction.itemId ?? null);
     const existing = mutableIndex[key];
-    if (existing) {
-      existing.push(interaction.id);
-    } else {
-      mutableIndex[key] = [interaction.id];
-    }
+    if (existing) existing.push(interaction.id);
+    else mutableIndex[key] = [interaction.id];
   }
-
-  return {
-    ...hotspot,
-    interactionIndex: mutableIndex,
-  };
+  return { ...hotspot, interactionIndex: mutableIndex };
 };
 
 const compileScene = (scene: Scene): CompiledScene => ({
@@ -124,12 +121,7 @@ const compileDialogue = (dialogue: DialogueGraph): CompiledDialogue => {
   nodes.forEach((node, index) => {
     nodeIndex[node.id] = index;
   });
-
-  return {
-    ...dialogue,
-    nodes,
-    nodeIndex,
-  };
+  return { ...dialogue, nodes, nodeIndex };
 };
 
 const compileSequence = (sequence: Sequence): CompiledSequence => ({
@@ -175,7 +167,6 @@ const canonicalRuntimeAsset = (asset: RuntimeAssetRecord): RuntimeAssetRecord =>
       ? roleDifference
       : left.runtimePath.localeCompare(right.runtimePath);
   });
-
   if (asset.kind === "spritesheet") {
     return {
       ...asset,
@@ -191,7 +182,6 @@ const canonicalRuntimeAsset = (asset: RuntimeAssetRecord): RuntimeAssetRecord =>
       },
     };
   }
-
   return { ...asset, outputFiles };
 };
 
@@ -204,24 +194,16 @@ const compileRuntimeAssets = (
     .sort((left, right) => left.assetId.localeCompare(right.assetId));
 
 const canonicalize = (value: unknown): unknown => {
-  if (Array.isArray(value)) {
-    return value.map(canonicalize);
-  }
-
+  if (Array.isArray(value)) return value.map(canonicalize);
   if (value && typeof value === "object") {
     const source = value as Readonly<Record<string, unknown>>;
     const result: Record<string, unknown> = {};
-
     for (const key of Object.keys(source).sort((left, right) => left.localeCompare(right))) {
       const child = source[key];
-      if (child !== undefined) {
-        result[key] = canonicalize(child);
-      }
+      if (child !== undefined) result[key] = canonicalize(child);
     }
-
     return result;
   }
-
   return value;
 };
 
@@ -237,12 +219,10 @@ const fnv1a64 = (value: string): string => {
   const bytes = new TextEncoder().encode(value);
   let hash = 0xcbf29ce484222325n;
   const prime = 0x100000001b3n;
-
   for (const byte of bytes) {
     hash ^= BigInt(byte);
     hash = BigInt.asUintN(64, hash * prime);
   }
-
   return hash.toString(16).padStart(16, "0");
 };
 
@@ -265,6 +245,9 @@ export const compileProject = (
   const uiSkinIssues = uiSkins
     ? validateUiSkinManifest(project, bitmapFonts ?? null, uiSkins)
     : [];
+  const uiSkinMappingIssues = uiSkins
+    ? validateCompiledUiSkinMappings(uiSkins, assetManifest)
+    : [];
   const issues: CompilationIssue[] = [
     ...projectIssues,
     ...assetIssues,
@@ -273,6 +256,7 @@ export const compileProject = (
     ...bitmapFontIssues,
     ...bitmapFontMappingIssues,
     ...uiSkinIssues,
+    ...uiSkinMappingIssues,
   ];
   if (
     hasValidationErrors(projectIssues) ||
@@ -281,7 +265,8 @@ export const compileProject = (
     frameIssues.length > 0 ||
     bitmapFontIssues.length > 0 ||
     bitmapFontMappingIssues.length > 0 ||
-    uiSkinIssues.some((issue) => issue.severity === "error")
+    uiSkinIssues.some((issue) => issue.severity === "error") ||
+    uiSkinMappingIssues.length > 0
   ) {
     throw new ProjectCompilationError(issues);
   }
@@ -302,13 +287,10 @@ export const compileProject = (
     scenes: sortById(project.scenes).map(compileScene),
     dialogues: sortById(project.dialogues).map(compileDialogue),
     sequences: sortById(project.sequences).map(compileSequence),
-    ...(bitmapFonts
-      ? { bitmapFonts: compileBitmapFonts(bitmapFonts) }
-      : {}),
+    ...(bitmapFonts ? { bitmapFonts: compileBitmapFonts(bitmapFonts) } : {}),
     ...(uiSkins ? { uiSkins: compileUiSkins(uiSkins) } : {}),
   });
   const canonicalJson = canonicalStringify(bundle);
-
   return {
     bundle,
     canonicalJson,
