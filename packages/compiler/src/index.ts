@@ -22,12 +22,13 @@ import type {
   Scene,
   Sequence,
 } from "@evavo/adventure-project-schema";
-import type {
-  CompiledDialogue,
-  CompiledHotspot,
-  CompiledScene,
-  CompiledSequence,
-  RuntimeBundle,
+import {
+  parseRuntimeBundle,
+  type CompiledDialogue,
+  type CompiledHotspot,
+  type CompiledScene,
+  type CompiledSequence,
+  type RuntimeBundle,
 } from "@evavo/adventure-runtime-bundle";
 import {
   hasValidationErrors,
@@ -221,7 +222,7 @@ export const compileProject = (
     throw new ProjectCompilationError(issues);
   }
 
-  const bundle: RuntimeBundle = {
+  const bundle = parseRuntimeBundle({
     bundleVersion: 1,
     sourceSchemaVersion: project.schemaVersion,
     projectId: project.id,
@@ -237,7 +238,7 @@ export const compileProject = (
     scenes: sortById(project.scenes).map(compileScene),
     dialogues: sortById(project.dialogues).map(compileDialogue),
     sequences: sortById(project.sequences).map(compileSequence),
-  };
+  });
   const canonicalJson = canonicalStringify(bundle);
 
   return {
