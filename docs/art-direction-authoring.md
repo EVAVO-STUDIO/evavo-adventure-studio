@@ -10,7 +10,7 @@ Open it from Studio or directly:
 http://localhost:5174/?workspace=art
 ```
 
-The canonical sidecar is `ArtDirectionManifest` from `@evavo/adventure-art-direction`.
+The canonical policy sidecar is `ArtDirectionManifest` from `@evavo/adventure-art-direction`.
 
 ## Era profiles
 
@@ -52,23 +52,50 @@ Every project asset receives one explicit rule containing:
 
 Background rules are inferred from scene dimensions and require exact output sizes. Actor assets are inferred from actor frame references. The Studio fixture additionally classifies stateful object atlases from the scene-composition sidecar.
 
-## Compiled evidence
+## Two compiled evidence layers
 
-The Art workspace evaluates the policy against `AssetBuildManifest`, not against filenames or editor previews.
+The policy is evaluated against two separate build documents.
 
-Current verified checks include:
+### Asset build manifest
 
-- every source asset has compiled evidence;
-- project and asset kinds match;
-- native image dimensions satisfy their role policy;
-- indexed or RGBA image output matches the selected policy;
-- image colour counts remain within budget;
-- palette entry counts remain within budget;
+`AssetBuildManifest` proves:
+
+- each source asset has a compiled record;
+- project and compiled kinds match;
+- output roles and runtime paths are unique;
+- native image dimensions and image colour counts;
+- image indexed or RGBA output mode;
+- atlas page dimensions, frame placement and extrusion padding;
+- source and output byte lengths and SHA-256 identities.
+
+### Visual pixel evidence
+
+`ArtVisualEvidenceManifest` proves properties measured directly from the encoded PNG bytes:
+
+- indexed or RGBA encoding for each image and atlas page;
+- actual unique RGBA colour count after encoding;
+- opaque, binary-alpha or full-alpha classification;
+- exact atlas page role correspondence.
+
+The asset pipeline derives this sidecar using `analysePngEvidence`. It does not rely on the requested recipe or on author-entered claims.
+
+Keeping visual evidence separate preserves backward compatibility for runtime asset manifests while allowing strict art-direction gates to advance independently.
+
+## Verified quality gates
+
+The combined evaluator verifies:
+
+- every visual asset has pixel evidence;
+- every compiled atlas page has corresponding evidence;
+- unexpected or duplicate page evidence is rejected;
+- native image dimensions satisfy role policy;
+- indexed or RGBA output matches the selected profile;
+- image and atlas-page colours stay within budget;
+- alpha classification satisfies opaque, binary or full-alpha policy;
 - atlas frames meet minimum padding requirements;
 - backgrounds remain exact native-size images;
+- palette entry counts remain within budget;
 - vector font sources are flagged where bitmap runtime fonts are required.
-
-The current spritesheet metadata does not yet expose page palette counts or alpha classification, so indexed atlas compliance is reported as unverified rather than assumed. Extending the compiled atlas metadata is the next evidence improvement.
 
 ## Command history
 
