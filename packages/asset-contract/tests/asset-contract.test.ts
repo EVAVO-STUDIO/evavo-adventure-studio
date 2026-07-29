@@ -4,6 +4,7 @@ import {
   assetBuildManifestSchema,
   validateAssetBuildManifest,
   type AssetBuildManifest,
+  type CompiledAssetRecord,
 } from "../src/index.js";
 
 const hash = "0".repeat(64);
@@ -133,23 +134,45 @@ const manifest = assetBuildManifestSchema.parse({
   ],
 });
 
+const imageAsset = (): Extract<CompiledAssetRecord, { readonly kind: "image" }> => {
+  const asset = manifest.assets.find((candidate) => candidate.kind === "image");
+  if (!asset || asset.kind !== "image") {
+    throw new Error("Image fixture is missing.");
+  }
+  return asset;
+};
+
+const spritesheetAsset = (): Extract<
+  CompiledAssetRecord,
+  { readonly kind: "spritesheet" }
+> => {
+  const asset = manifest.assets.find(
+    (candidate) => candidate.kind === "spritesheet",
+  );
+  if (!asset || asset.kind !== "spritesheet") {
+    throw new Error("Spritesheet fixture is missing.");
+  }
+  return asset;
+};
+
 describe("compiled asset manifest", () => {
   it("accepts complete project-scoped runtime assets", () => {
     expect(validateAssetBuildManifest(project, manifest)).toEqual([]);
   });
 
   it("rejects parent traversal and Windows separators in runtime paths", () => {
-    const primary = manifest.assets[0]!.outputFiles[0]!;
+    const image = imageAsset();
+    const primary = image.outputFiles[0]!;
 
     expect(() =>
       assetBuildManifestSchema.parse({
         ...manifest,
         assets: [
           {
-            ...manifest.assets[0],
+            ...image,
             outputFiles: [{ ...primary, runtimePath: "../office.png" }],
           },
-          manifest.assets[1],
+          spritesheetAsset(),
         ],
       }),
     ).toThrow();
@@ -158,49 +181,48 @@ describe("compiled asset manifest", () => {
         ...manifest,
         assets: [
           {
-            ...manifest.assets[0],
-            outputFiles: [{ ...primary, runtimePath: "assets\\office.png" }],
+            ...image,
+            outputFiles: [
+              { ...primary, runtimePath: "assets\\office.png" },
+            ],
           },
-          manifest.assets[1],
+          spritesheetAsset(),
         ],
       }),
     ).toThrow();
   });
 
-  it("reports missing project assets, duplicate paths, and unknown atlas page roles", () => {
+  it("reports missing assets, duplicate paths and unknown atlas pages", () => {
+    const spritesheet = spritesheetAsset();
+    const brokenSpritesheet: typeof spritesheet = {
+      ...spritesheet,
+      outputFiles: spritesheet.outputFiles.map((output) =>
+        output.role === "page-000"
+          ? { ...output, runtimePath: "assets/shared.png" }
+          : output,
+      ),
+      metadata: {
+        ...spritesheet.metadata,
+        frames: spritesheet.metadata.frames.map((frame) => ({
+          ...frame,
+          pageOutputRole: "page-missing",
+        })),
+      },
+    };
+    const unexpected: typeof spritesheet = {
+      ...spritesheet,
+      assetId: "asset.unexpected" as typeof spritesheet.assetId,
+      outputFiles: spritesheet.outputFiles.map((output) => ({
+        ...output,
+        runtimePath:
+          output.role === "page-000"
+            ? "assets/shared.png"
+            : "assets/unexpected.atlas.json",
+      })),
+    };
     const broken: AssetBuildManifest = {
       ...manifest,
-      assets: [
-        {
-          ...manifest.assets[1]!,
-          outputFiles: manifest.assets[1]!.outputFiles.map((output) =>
-            output.role === "page-000"
-              ? { ...output, runtimePath: "assets/shared.png" }
-              : output,
-          ),
-          metadata: {
-            ...manifest.assets[1]!.metadata,
-            kind: "spritesheet",
-            frames: manifest.assets[1]!.metadata.kind === "spritesheet"
-              ? manifest.assets[1]!.metadata.frames.map((frame) => ({
-                  ...frame,
-                  pageOutputRole: "page-missing",
-                }))
-              : [],
-          },
-        },
-        {
-          ...manifest.assets[1]!,
-          assetId: "asset.unexpected",
-          outputFiles: manifest.assets[1]!.outputFiles.map((output) => ({
-            ...output,
-            runtimePath:
-              output.role === "page-000"
-                ? "assets/shared.png"
-                : "assets/unexpected.atlas.json",
-          })),
-        },
-      ],
+      assets: [brokenSpritesheet, unexpected],
     };
 
     const codes = validateAssetBuildManifest(project, broken).map(
