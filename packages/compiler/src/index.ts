@@ -1,7 +1,13 @@
+import {
+  toRuntimeAssetRecord,
+  validateAssetBuildManifest,
+  type AssetBuildManifest,
+  type AssetManifestIssue,
+  type RuntimeAssetRecord,
+} from "@evavo/adventure-asset-contract";
 import type {
   Actor,
   AdventureProject,
-  Asset,
   DialogueGraph,
   Hotspot,
   Id,
@@ -22,11 +28,7 @@ export interface CompiledHotspot extends Hotspot {
 export interface CompiledScene
   extends Omit<
     Scene,
-    | "navigationAreas"
-    | "depthBands"
-    | "occluders"
-    | "hotspots"
-    | "entrances"
+    "navigationAreas" | "depthBands" | "occluders" | "hotspots" | "entrances"
   > {
   readonly navigationAreas: Scene["navigationAreas"];
   readonly depthBands: Scene["depthBands"];
@@ -51,13 +53,17 @@ export interface RuntimeBundle {
   readonly presentation: AdventureProject["presentation"];
   readonly startSceneId: Id<"scene">;
   readonly startEntranceId: Id<"entrance">;
-  readonly assets: readonly Asset[];
+  readonly assetManifestFingerprint: string;
+  readonly assetCompilerVersion: string;
+  readonly assets: readonly RuntimeAssetRecord[];
   readonly inventoryItems: readonly InventoryItem[];
   readonly actors: readonly Actor[];
   readonly scenes: readonly CompiledScene[];
   readonly dialogues: readonly CompiledDialogue[];
   readonly sequences: readonly CompiledSequence[];
 }
+
+export type CompilationIssue = ValidationIssue | AssetManifestIssue;
 
 export interface CompiledProject {
   readonly bundle: RuntimeBundle;
@@ -67,9 +73,9 @@ export interface CompiledProject {
 }
 
 export class ProjectCompilationError extends Error {
-  readonly issues: readonly ValidationIssue[];
+  readonly issues: readonly CompilationIssue[];
 
-  constructor(issues: readonly ValidationIssue[]) {
+  constructor(issues: readonly CompilationIssue[]) {
     super(`Project compilation failed with ${issues.length} validation issue(s).`);
     this.name = "ProjectCompilationError";
     this.issues = issues;
@@ -138,6 +144,41 @@ const compileSequence = (sequence: Sequence): CompiledSequence => ({
   cueCount: sequence.tracks.reduce((total, track) => total + track.cues.length, 0),
 });
 
+const canonicalRuntimeAsset = (asset: RuntimeAssetRecord): RuntimeAssetRecord => {
+  const outputFiles = [...asset.outputFiles].sort((left, right) => {
+    const roleDifference = left.role.localeCompare(right.role);
+    return roleDifference !== 0
+      ? roleDifference
+      : left.runtimePath.localeCompare(right.runtimePath);
+  });
+
+  if (asset.kind === "spritesheet") {
+    return {
+      ...asset,
+      outputFiles,
+      metadata: {
+        ...asset.metadata,
+        pages: [...asset.metadata.pages].sort((left, right) =>
+          left.outputRole.localeCompare(right.outputRole),
+        ),
+        frames: [...asset.metadata.frames].sort((left, right) =>
+          left.frameId.localeCompare(right.frameId),
+        ),
+      },
+    };
+  }
+
+  return { ...asset, outputFiles };
+};
+
+const compileRuntimeAssets = (
+  manifest: AssetBuildManifest,
+): readonly RuntimeAssetRecord[] =>
+  manifest.assets
+    .map(toRuntimeAssetRecord)
+    .map(canonicalRuntimeAsset)
+    .sort((left, right) => left.assetId.localeCompare(right.assetId));
+
 const canonicalize = (value: unknown): unknown => {
   if (Array.isArray(value)) {
     return value.map(canonicalize);
@@ -181,9 +222,14 @@ const fnv1a64 = (value: string): string => {
   return hash.toString(16).padStart(16, "0");
 };
 
-export const compileProject = (project: AdventureProject): CompiledProject => {
-  const issues = validateProjectSemantics(project);
-  if (hasValidationErrors(issues)) {
+export const compileProject = (
+  project: AdventureProject,
+  assetManifest: AssetBuildManifest,
+): CompiledProject => {
+  const projectIssues = validateProjectSemantics(project);
+  const assetIssues = validateAssetBuildManifest(project, assetManifest);
+  const issues: CompilationIssue[] = [...projectIssues, ...assetIssues];
+  if (hasValidationErrors(projectIssues) || assetIssues.length > 0) {
     throw new ProjectCompilationError(issues);
   }
 
@@ -195,7 +241,9 @@ export const compileProject = (project: AdventureProject): CompiledProject => {
     presentation: project.presentation,
     startSceneId: project.startSceneId,
     startEntranceId: project.startEntranceId,
-    assets: sortById(project.assets),
+    assetManifestFingerprint: assetManifest.fingerprint,
+    assetCompilerVersion: assetManifest.compilerVersion,
+    assets: compileRuntimeAssets(assetManifest),
     inventoryItems: sortById(project.inventoryItems),
     actors: sortById(project.actors).map(compileActor),
     scenes: sortById(project.scenes).map(compileScene),
@@ -208,17 +256,20 @@ export const compileProject = (project: AdventureProject): CompiledProject => {
     bundle,
     canonicalJson,
     fingerprint: `fnv1a64:${fnv1a64(canonicalJson)}`,
-    warnings: issues.filter((issue) => issue.severity === "warning"),
+    warnings: projectIssues.filter((issue) => issue.severity === "warning"),
   };
 };
 
 export type CompilationResult =
   | { readonly kind: "compiled"; readonly project: CompiledProject }
-  | { readonly kind: "invalid"; readonly issues: readonly ValidationIssue[] };
+  | { readonly kind: "invalid"; readonly issues: readonly CompilationIssue[] };
 
-export const tryCompileProject = (project: AdventureProject): CompilationResult => {
+export const tryCompileProject = (
+  project: AdventureProject,
+  assetManifest: AssetBuildManifest,
+): CompilationResult => {
   try {
-    return { kind: "compiled", project: compileProject(project) };
+    return { kind: "compiled", project: compileProject(project, assetManifest) };
   } catch (error) {
     if (error instanceof ProjectCompilationError) {
       return { kind: "invalid", issues: error.issues };
