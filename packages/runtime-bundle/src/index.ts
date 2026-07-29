@@ -1,6 +1,7 @@
 import { z } from "zod";
 import { sha256Schema } from "@evavo/adventure-asset-contract";
 import { runtimeAssetRecordSchema } from "@evavo/adventure-asset-contract/runtime-asset";
+import { bitmapFontManifestSchema } from "@evavo/adventure-bitmap-font";
 import {
   actorSchema,
   dialogueGraphSchema,
@@ -12,6 +13,10 @@ import {
   sequenceSchema,
 } from "@evavo/adventure-project-schema";
 import { sceneInstanceManifestSchema } from "@evavo/adventure-scene-instances";
+import {
+  RuntimeBitmapFontValidationError,
+  validateRuntimeBitmapFonts,
+} from "./font-validation.js";
 import {
   RuntimeSceneInstanceValidationError,
   validateRuntimeSceneInstances,
@@ -65,6 +70,7 @@ export const runtimeBundleSchema = z
     dialogues: z.array(compiledDialogueSchema),
     sequences: z.array(compiledSequenceSchema),
     sceneInstances: sceneInstanceManifestSchema.optional(),
+    bitmapFonts: bitmapFontManifestSchema.optional(),
   })
   .strict();
 export type RuntimeBundle = z.infer<typeof runtimeBundleSchema>;
@@ -79,8 +85,13 @@ export const parseRuntimeBundle = (input: unknown): RuntimeBundle => {
   if (sceneInstanceIssues.length > 0) {
     throw new RuntimeSceneInstanceValidationError(sceneInstanceIssues);
   }
+  const bitmapFontIssues = validateRuntimeBitmapFonts(bundle);
+  if (bitmapFontIssues.length > 0) {
+    throw new RuntimeBitmapFontValidationError(bitmapFontIssues);
+  }
   return bundle;
 };
 
+export * from "./font-validation.js";
 export * from "./instance-validation.js";
 export * from "./validation.js";
