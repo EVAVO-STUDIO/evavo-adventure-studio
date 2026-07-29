@@ -306,8 +306,13 @@ describe("scene instance manifests", () => {
             {
               ...manifest.objectDefinitions[0]!.states[0],
               visual: {
-                ...manifest.objectDefinitions[0]!.states[0]!.visual,
+                kind: "sprite-frame",
+                assetId: "asset.lamp",
+                frameId: "frame.lamp.on",
                 sourceRect: { x: 1, y: 1, width: 9, height: 16 },
+                sourceSize: { width: 14, height: 18 },
+                trimOffset: { x: 2, y: 1 },
+                pivot: { x: 7, y: 17 },
               },
             },
             manifest.objectDefinitions[0]!.states[1],
