@@ -22,14 +22,15 @@ export class PixiAssetKindError extends Error {
 export class PixiAssetLoadError extends Error {
   readonly assetId: Id<"asset">;
   readonly path: string;
-  readonly cause: unknown;
 
   constructor(asset: Asset, cause: unknown) {
-    super(`PixiJS could not load image asset '${asset.id}' from '${asset.path}'.`);
+    super(
+      `PixiJS could not load image asset '${asset.id}' from '${asset.path}'.`,
+      { cause },
+    );
     this.name = "PixiAssetLoadError";
     this.assetId = asset.id;
     this.path = asset.path;
-    this.cause = cause;
   }
 }
 
