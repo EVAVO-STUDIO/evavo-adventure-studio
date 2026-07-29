@@ -4,6 +4,7 @@ import { App } from "./App.js";
 import { StudioErrorBoundary } from "./ErrorBoundary.js";
 import { GeometryApp } from "./GeometryApp.js";
 import { ObjectApp } from "./ObjectApp.js";
+import { ValidationApp } from "./ValidationApp.js";
 import "./style.css";
 import "./switcher.css";
 
@@ -18,6 +19,8 @@ const application: ReactNode =
     <GeometryApp />
   ) : workspace === "objects" ? (
     <ObjectApp />
+  ) : workspace === "validation" ? (
+    <ValidationApp />
   ) : (
     <App />
   );
@@ -29,9 +32,14 @@ const workspaces = [
   { id: "composer", href: "/", label: "Composer" },
   { id: "geometry", href: "/?workspace=geometry", label: "Geometry" },
   { id: "objects", href: "/?workspace=objects", label: "Objects" },
+  { id: "validation", href: "/?workspace=validation", label: "Validate" },
 ] as const;
 const activeWorkspace =
-  workspace === "geometry" || workspace === "objects" ? workspace : "composer";
+  workspace === "geometry" ||
+  workspace === "objects" ||
+  workspace === "validation"
+    ? workspace
+    : "composer";
 for (const item of workspaces) {
   const link = document.createElement("a");
   link.href = item.href;
