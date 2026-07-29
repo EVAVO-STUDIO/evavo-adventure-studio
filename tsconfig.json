@@ -21,6 +21,7 @@
     { "path": "packages/compiler" },
     { "path": "packages/testkit" },
     { "path": "apps/player" },
+    { "path": "apps/studio" },
     { "path": "tools/cli" }
   ]
 }
