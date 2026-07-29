@@ -80,6 +80,9 @@ export const compileProjectWithInstances = (
       scenes: project.scenes,
       actors: project.actors,
       assets: project.assets,
+      inventoryItems: project.inventoryItems,
+      dialogues: project.dialogues,
+      sequences: project.sequences,
     },
     sceneInstances,
   );
