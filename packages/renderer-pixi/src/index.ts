@@ -1,12 +1,14 @@
 import type { Id } from "@evavo/adventure-project-schema";
-import type {
-  NativeCanvas,
-  RenderNode,
-  RendererAdapter,
-  RendererHost,
-  ResolvedFrame,
-  SolidRectangleRenderNode,
-  SpriteRenderNode,
+import {
+  validateResolvedFrame,
+  type NativeCanvas,
+  type RenderFrameIssue,
+  type RenderNode,
+  type RendererAdapter,
+  type RendererHost,
+  type ResolvedFrame,
+  type SolidRectangleRenderNode,
+  type SpriteRenderNode,
 } from "@evavo/adventure-render-contract";
 import { createIntegerPresentationTransform } from "@evavo/adventure-scene";
 import {
@@ -52,6 +54,30 @@ export class PixiTextureResolutionError extends Error {
     super(`No loaded PixiJS texture is available for asset '${assetId}'.`);
     this.name = "PixiTextureResolutionError";
     this.assetId = assetId;
+  }
+}
+
+export class PixiFrameValidationError extends Error {
+  readonly issues: readonly RenderFrameIssue[];
+
+  constructor(issues: readonly RenderFrameIssue[]) {
+    super(`Resolved frame contains ${issues.length} renderer contract issue(s).`);
+    this.name = "PixiFrameValidationError";
+    this.issues = issues;
+  }
+}
+
+export class PixiMaskTopologyError extends Error {
+  readonly nodeId: Id<"render-node">;
+  readonly maskNodeId: Id<"render-node">;
+
+  constructor(nodeId: Id<"render-node">, maskNodeId: Id<"render-node">) {
+    super(
+      `Mask '${maskNodeId}' cannot cross the world and screen render-group boundary for node '${nodeId}'.`,
+    );
+    this.name = "PixiMaskTopologyError";
+    this.nodeId = nodeId;
+    this.maskNodeId = maskNodeId;
   }
 }
 
@@ -155,7 +181,6 @@ export class PixiWebGLRenderer implements RendererAdapter {
       );
     }
 
-    const clear = toPixiFill(canvas.clearColor);
     const application = new Application();
     await application.init({
       preference: "webgl",
@@ -165,15 +190,15 @@ export class PixiWebGLRenderer implements RendererAdapter {
       antialias: false,
       autoDensity: false,
       autoStart: false,
-      backgroundColor: clear.color,
-      backgroundAlpha: clear.alpha,
+      backgroundColor: 0x000000,
+      backgroundAlpha: 0,
       ...(suppliedCanvas ? { canvas: suppliedCanvas } : {}),
     });
     application.ticker.stop();
 
     const renderedCanvas = application.canvas;
     if (!isHtmlCanvasElement(renderedCanvas)) {
-      application.destroy(true, true);
+      application.destroy({ removeView: true }, true);
       throw new TypeError(
         "PixiJS WebGL renderer did not create an HTMLCanvasElement.",
       );
@@ -207,6 +232,11 @@ export class PixiWebGLRenderer implements RendererAdapter {
   }
 
   render(frame: ResolvedFrame): void {
+    const issues = validateResolvedFrame(frame);
+    if (issues.length > 0) {
+      throw new PixiFrameValidationError(issues);
+    }
+
     const application = this.requireApplication();
     const clearRoot = this.requireRoot(this.clearRoot, "clear");
     const worldRoot = this.requireRoot(this.worldRoot, "world");
@@ -225,11 +255,13 @@ export class PixiWebGLRenderer implements RendererAdapter {
     );
 
     const objectsById = new Map<string, Container>();
+    const nodesById = new Map<string, RenderNode>();
     for (const node of frame.nodes) {
       const object = this.createNode(node);
       this.applyNodeTransform(object, node);
       (isWorldNode(node) ? worldRoot : screenRoot).addChild(object);
       objectsById.set(node.id, object);
+      nodesById.set(node.id, node);
     }
 
     for (const node of frame.nodes) {
@@ -238,10 +270,14 @@ export class PixiWebGLRenderer implements RendererAdapter {
       }
       const object = objectsById.get(node.id);
       const mask = objectsById.get(node.maskNodeId);
-      if (!object || !mask) {
+      const maskNode = nodesById.get(node.maskNodeId);
+      if (!object || !mask || !maskNode) {
         throw new Error(
           `Resolved frame mask relationship '${node.id}' -> '${node.maskNodeId}' is incomplete.`,
         );
+      }
+      if (isWorldNode(node) !== isWorldNode(maskNode)) {
+        throw new PixiMaskTopologyError(node.id, node.maskNodeId);
       }
       object.mask = mask;
     }
@@ -308,7 +344,7 @@ export class PixiWebGLRenderer implements RendererAdapter {
     const application = this.requireApplication();
     if (
       this.nativeCanvas?.width !== canvas.width ||
-      this.nativeCanvas.height !== canvas.height
+      this.nativeCanvas?.height !== canvas.height
     ) {
       application.renderer.resize(canvas.width, canvas.height);
     }
