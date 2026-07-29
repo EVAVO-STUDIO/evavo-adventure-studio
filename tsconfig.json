@@ -12,6 +12,7 @@
     { "path": "packages/frame-resolver" },
     { "path": "packages/renderer-pixi" },
     { "path": "packages/validation" },
-    { "path": "packages/compiler" }
+    { "path": "packages/compiler" },
+    { "path": "apps/player" }
   ]
 }
