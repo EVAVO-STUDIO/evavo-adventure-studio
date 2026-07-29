@@ -5,6 +5,10 @@ import {
   type AssetManifestIssue,
   type RuntimeAssetRecord,
 } from "@evavo/adventure-asset-contract";
+import {
+  validatePortableRuntimePaths,
+  type PortableRuntimePathIssue,
+} from "@evavo/adventure-asset-contract/portable-path";
 import type {
   Actor,
   AdventureProject,
@@ -63,7 +67,10 @@ export interface RuntimeBundle {
   readonly sequences: readonly CompiledSequence[];
 }
 
-export type CompilationIssue = ValidationIssue | AssetManifestIssue;
+export type CompilationIssue =
+  | ValidationIssue
+  | AssetManifestIssue
+  | PortableRuntimePathIssue;
 
 export interface CompiledProject {
   readonly bundle: RuntimeBundle;
@@ -228,8 +235,17 @@ export const compileProject = (
 ): CompiledProject => {
   const projectIssues = validateProjectSemantics(project);
   const assetIssues = validateAssetBuildManifest(project, assetManifest);
-  const issues: CompilationIssue[] = [...projectIssues, ...assetIssues];
-  if (hasValidationErrors(projectIssues) || assetIssues.length > 0) {
+  const pathIssues = validatePortableRuntimePaths(assetManifest);
+  const issues: CompilationIssue[] = [
+    ...projectIssues,
+    ...assetIssues,
+    ...pathIssues,
+  ];
+  if (
+    hasValidationErrors(projectIssues) ||
+    assetIssues.length > 0 ||
+    pathIssues.length > 0
+  ) {
     throw new ProjectCompilationError(issues);
   }
 
