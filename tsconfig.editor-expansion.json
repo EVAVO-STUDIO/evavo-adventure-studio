@@ -9,6 +9,7 @@
     { "path": "packages/sequence-editor-core" },
     { "path": "packages/narrative-library-editor-core" },
     { "path": "packages/animation-editor-core" },
+    { "path": "packages/art-direction" },
     { "path": "apps/studio" },
     { "path": "apps/timeline-lab" }
   ]
