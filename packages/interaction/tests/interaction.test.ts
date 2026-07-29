@@ -21,6 +21,8 @@ const state = (): RuntimeState => ({
   inventory: [id<"item">("item.brass-key")],
   awardedScoreIds: [],
   consumedInteractionIds: [],
+  consumedDialogueChoiceIds: [],
+  activeDialogue: null,
   objectStates: {},
   randomStreams: { main: 1 },
   score: 0,
