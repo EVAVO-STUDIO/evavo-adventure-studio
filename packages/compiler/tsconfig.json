@@ -8,6 +8,7 @@
   "references": [
     { "path": "../asset-contract" },
     { "path": "../project-schema" },
+    { "path": "../runtime-bundle" },
     { "path": "../validation" }
   ]
 }
