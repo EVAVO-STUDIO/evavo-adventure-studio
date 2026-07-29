@@ -12,6 +12,7 @@ import {
   validateCompiledObjectVisualMappings,
   type CompiledObjectVisualIssue,
 } from "@evavo/adventure-scene-instances/compiled-mapping";
+import type { UiSkinManifest } from "@evavo/adventure-ui-skin";
 import {
   canonicalStringify,
   compileProject,
@@ -78,6 +79,7 @@ export const compileProjectWithInstances = (
   assetManifest: AssetBuildManifest,
   sceneInstances: SceneInstanceManifest = emptySceneInstanceManifest(project.id),
   bitmapFonts?: BitmapFontManifest,
+  uiSkins?: UiSkinManifest,
 ): CompiledProject => {
   const instanceIssues = validateSceneInstanceManifest(
     {
@@ -103,7 +105,12 @@ export const compileProjectWithInstances = (
     throw new SceneInstanceCompilationError(issues);
   }
 
-  const base = compileProject(project, assetManifest, bitmapFonts);
+  const base = compileProject(
+    project,
+    assetManifest,
+    bitmapFonts,
+    uiSkins,
+  );
   const bundle = parseRuntimeBundle({
     ...base.bundle,
     sceneInstances: canonicalSceneInstances(sceneInstances),
@@ -130,6 +137,7 @@ export const tryCompileProjectWithInstances = (
   assetManifest: AssetBuildManifest,
   sceneInstances?: SceneInstanceManifest,
   bitmapFonts?: BitmapFontManifest,
+  uiSkins?: UiSkinManifest,
 ): SceneInstanceCompilationResult => {
   try {
     return {
@@ -139,6 +147,7 @@ export const tryCompileProjectWithInstances = (
         assetManifest,
         sceneInstances,
         bitmapFonts,
+        uiSkins,
       ),
     };
   } catch (error) {
