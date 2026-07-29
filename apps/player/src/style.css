@@ -47,6 +47,22 @@ body {
     0 18px 70px rgb(0 0 0 / 55%);
 }
 
+.player-host[data-mode="runtime-bundle"] {
+  cursor: none;
+  touch-action: none;
+  user-select: none;
+}
+
+.player-host[data-mode="error"] {
+  display: grid;
+  place-items: center;
+  padding: 24px;
+  color: #ff8ca4;
+  font-size: 12px;
+  line-height: 1.5;
+  text-align: center;
+}
+
 .player-host canvas {
   image-rendering: pixelated;
   image-rendering: crisp-edges;
