@@ -3,6 +3,10 @@
   "references": [
     { "path": "packages/project-schema" },
     { "path": "packages/project-editor-core" },
+    { "path": "packages/dialogue-editor-core" },
+    { "path": "packages/sequence-editor-core" },
+    { "path": "packages/narrative-library-editor-core" },
+    { "path": "packages/animation-editor-core" },
     { "path": "packages/asset-contract" },
     { "path": "packages/core" },
     { "path": "packages/scene" },
@@ -23,6 +27,7 @@
     { "path": "packages/testkit" },
     { "path": "apps/player" },
     { "path": "apps/studio" },
+    { "path": "apps/timeline-lab" },
     { "path": "tools/cli" }
   ]
 }
