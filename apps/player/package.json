@@ -1,0 +1,20 @@
+{
+  "name": "@evavo/adventure-player",
+  "version": "0.1.0",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "dev": "vite",
+    "build": "vite build",
+    "preview": "vite preview",
+    "typecheck": "tsc -b --pretty false"
+  },
+  "dependencies": {
+    "@evavo/adventure-project-schema": "workspace:*",
+    "@evavo/adventure-render-contract": "workspace:*",
+    "@evavo/adventure-renderer-pixi": "workspace:*"
+  },
+  "devDependencies": {
+    "vite": "catalog:"
+  }
+}
