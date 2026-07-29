@@ -1,0 +1,63 @@
+import { z } from "zod";
+import { sha256Schema } from "@evavo/adventure-asset-contract";
+import { runtimeAssetRecordSchema } from "@evavo/adventure-asset-contract/runtime-asset";
+import {
+  actorSchema,
+  dialogueGraphSchema,
+  hotspotSchema,
+  idSchema,
+  inventoryItemSchema,
+  presentationProfileSchema,
+  sceneSchema,
+  sequenceSchema,
+} from "@evavo/adventure-project-schema";
+
+export const compiledHotspotSchema = hotspotSchema.extend({
+  interactionIndex: z.record(
+    z.string().min(1),
+    z.array(idSchema("interaction")),
+  ),
+});
+export type CompiledHotspot = z.infer<typeof compiledHotspotSchema>;
+
+export const compiledSceneSchema = sceneSchema.extend({
+  hotspots: z.array(compiledHotspotSchema),
+});
+export type CompiledScene = z.infer<typeof compiledSceneSchema>;
+
+export const compiledDialogueSchema = dialogueGraphSchema.extend({
+  nodeIndex: z.record(
+    z.string().min(1),
+    z.number().int().nonnegative(),
+  ),
+});
+export type CompiledDialogue = z.infer<typeof compiledDialogueSchema>;
+
+export const compiledSequenceSchema = sequenceSchema.extend({
+  cueCount: z.number().int().nonnegative(),
+});
+export type CompiledSequence = z.infer<typeof compiledSequenceSchema>;
+
+export const runtimeBundleSchema = z
+  .object({
+    bundleVersion: z.literal(1),
+    sourceSchemaVersion: z.literal(1),
+    projectId: idSchema("project"),
+    title: z.string().min(1),
+    presentation: presentationProfileSchema,
+    startSceneId: idSchema("scene"),
+    startEntranceId: idSchema("entrance"),
+    assetManifestFingerprint: sha256Schema,
+    assetCompilerVersion: z.string().min(1),
+    assets: z.array(runtimeAssetRecordSchema),
+    inventoryItems: z.array(inventoryItemSchema),
+    actors: z.array(actorSchema),
+    scenes: z.array(compiledSceneSchema).min(1),
+    dialogues: z.array(compiledDialogueSchema),
+    sequences: z.array(compiledSequenceSchema),
+  })
+  .strict();
+export type RuntimeBundle = z.infer<typeof runtimeBundleSchema>;
+
+export const parseRuntimeBundle = (input: unknown): RuntimeBundle =>
+  runtimeBundleSchema.parse(input);
