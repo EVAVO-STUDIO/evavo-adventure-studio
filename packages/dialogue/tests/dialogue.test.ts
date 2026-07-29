@@ -25,6 +25,7 @@ const createState = (): RuntimeState => ({
   consumedInteractionIds: [],
   consumedDialogueChoiceIds: [],
   activeDialogue: null,
+  activeSequences: [],
   objectStates: {},
   randomStreams: { main: 1 },
   score: 0,
