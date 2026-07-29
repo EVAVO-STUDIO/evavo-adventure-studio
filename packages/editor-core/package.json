@@ -15,6 +15,10 @@
     "./command-schema": {
       "types": "./dist/src/command-schema.d.ts",
       "import": "./dist/src/command-schema.js"
+    },
+    "./operation-log": {
+      "types": "./dist/src/operation-log.d.ts",
+      "import": "./dist/src/operation-log.js"
     }
   },
   "files": ["dist"],
