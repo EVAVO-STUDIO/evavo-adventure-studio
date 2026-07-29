@@ -11,7 +11,20 @@ if (!root) {
 }
 
 const workspace = new URLSearchParams(window.location.search).get("workspace");
-const application: ReactNode = workspace === "geometry" ? <GeometryApp /> : <App />;
+const geometryActive = workspace === "geometry";
+const application: ReactNode = geometryActive ? <GeometryApp /> : <App />;
+
+const switcher = document.createElement("a");
+switcher.className = "workspace-switcher";
+switcher.href = geometryActive ? "/" : "/?workspace=geometry";
+switcher.textContent = geometryActive ? "Scene Composer" : "Project Geometry";
+switcher.setAttribute(
+  "aria-label",
+  geometryActive
+    ? "Open the scene composition workspace"
+    : "Open the project geometry workspace",
+);
+document.body.appendChild(switcher);
 
 createRoot(root).render(
   <StrictMode>
