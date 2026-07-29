@@ -6,6 +6,7 @@
   },
   "include": ["src/**/*.ts", "tests/**/*.ts"],
   "references": [
+    { "path": "../art-direction" },
     { "path": "../asset-contract" },
     { "path": "../project-schema" }
   ]
