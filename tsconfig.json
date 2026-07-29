@@ -2,6 +2,7 @@
   "files": [],
   "references": [
     { "path": "packages/project-schema" },
+    { "path": "packages/asset-contract" },
     { "path": "packages/core" },
     { "path": "packages/scene" },
     { "path": "packages/animation" },
@@ -12,7 +13,10 @@
     { "path": "packages/frame-resolver" },
     { "path": "packages/renderer-pixi" },
     { "path": "packages/validation" },
+    { "path": "packages/asset-pipeline" },
     { "path": "packages/compiler" },
-    { "path": "apps/player" }
+    { "path": "packages/testkit" },
+    { "path": "apps/player" },
+    { "path": "tools/cli" }
   ]
 }
