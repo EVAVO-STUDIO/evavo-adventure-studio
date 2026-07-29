@@ -1,4 +1,4 @@
-import type { Id } from "@evavo/adventure-project-schema";
+import type { Id, Point } from "@evavo/adventure-project-schema";
 import type { ResolvedFrame } from "@evavo/adventure-render-contract";
 import type { RuntimeBundle } from "@evavo/adventure-runtime-bundle";
 import type { InteractiveRuntimeWorldState } from "@evavo/adventure-scene-runtime/commands";
@@ -13,6 +13,13 @@ import type { SoftwareCursorState } from "./input.js";
 import { appendNativeStatusPanel } from "./native-status.js";
 
 type RuntimeAsset = RuntimeBundle["assets"][number];
+
+export interface RuntimeUiInteractionState {
+  readonly activeVerbId?: Id<"ui-verb">;
+  readonly hoveredVerbId?: Id<"ui-verb">;
+  readonly selectedItemId?: Id<"item">;
+  readonly verbCoinPosition?: Point;
+}
 
 const runtimeAssetsById = (
   bundle: Pick<RuntimeBundle, "assets">,
@@ -79,7 +86,7 @@ const runtimeInventory = (
   });
 };
 
-const activeVerbId = (
+const cursorVerbId = (
   skin: UiSkin,
   cursorId: string,
 ): Id<"ui-verb"> | undefined =>
@@ -93,18 +100,25 @@ export const runtimeUiState = (
   skin: UiSkin,
   statusText: string,
   cursor: SoftwareCursorState,
+  interaction: RuntimeUiInteractionState = {},
 ): UiRuntimeState => {
-  const verbId = activeVerbId(skin, cursor.cursorId);
+  const activeVerbId = interaction.activeVerbId ?? cursorVerbId(skin, cursor.cursorId);
   return {
     statusText,
-    ...(verbId ? { activeVerbId: verbId } : {}),
+    ...(activeVerbId ? { activeVerbId } : {}),
+    ...(interaction.hoveredVerbId
+      ? { hoveredVerbId: interaction.hoveredVerbId }
+      : {}),
     inventory: runtimeInventory(bundle, world),
+    ...(interaction.selectedItemId
+      ? { selectedItemId: interaction.selectedItemId }
+      : {}),
     score: world.story.score,
     ...(skin.interactionMode === "parser-assisted"
       ? { parserText: "", parserCursorVisible: true }
       : {}),
-    ...(skin.interactionMode === "verb-coin" && cursor.pressed && cursor.position
-      ? { verbCoinPosition: cursor.position }
+    ...(interaction.verbCoinPosition
+      ? { verbCoinPosition: interaction.verbCoinPosition }
       : {}),
   };
 };
@@ -115,6 +129,7 @@ export const appendRuntimeInterface = (
   world: InteractiveRuntimeWorldState,
   statusText: string,
   cursor: SoftwareCursorState,
+  interaction: RuntimeUiInteractionState = {},
 ): ResolvedFrame => {
   if (!bundle.uiSkins || !bundle.bitmapFonts) {
     return appendNativeStatusPanel(frame, bundle, statusText);
@@ -124,7 +139,7 @@ export const appendRuntimeInterface = (
     frame,
     skin,
     bundle.bitmapFonts,
-    runtimeUiState(bundle, world, skin, statusText, cursor),
+    runtimeUiState(bundle, world, skin, statusText, cursor, interaction),
     {
       assets: createRuntimeUiGeometryResolver(bundle),
       nodePrefix: "runtime.ui",
