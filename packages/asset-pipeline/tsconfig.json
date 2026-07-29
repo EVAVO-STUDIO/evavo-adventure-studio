@@ -5,5 +5,8 @@
     "outDir": "dist"
   },
   "include": ["src/**/*.ts", "tests/**/*.ts"],
-  "references": [{ "path": "../project-schema" }]
+  "references": [
+    { "path": "../asset-contract" },
+    { "path": "../project-schema" }
+  ]
 }
