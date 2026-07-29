@@ -3,6 +3,7 @@ import {
   type ErrorInfo,
   type ReactNode,
 } from "react";
+import "./failure.css";
 
 export interface StudioErrorBoundaryProps {
   readonly children: ReactNode;
@@ -46,7 +47,11 @@ export class StudioErrorBoundary extends Component<
             then reopen the last valid scene composition file.
           </p>
           <pre>{this.state.error.message}</pre>
-          <button type="button" className="button primary-button" onClick={this.reload}>
+          <button
+            type="button"
+            className="button primary-button"
+            onClick={this.reload}
+          >
             Reload workspace
           </button>
         </div>
