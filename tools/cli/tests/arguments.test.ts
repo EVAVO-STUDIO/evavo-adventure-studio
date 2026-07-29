@@ -5,7 +5,7 @@ import {
 } from "../src/arguments.js";
 
 describe("cli arguments", () => {
-  it("parses complete compile commands", () => {
+  it("parses complete compile commands with art evidence", () => {
     expect(
       parseCliArguments([
         "compile",
@@ -15,6 +15,10 @@ describe("cli arguments", () => {
         "build/assets.json",
         "--scene-instances",
         "game/scene-instances.json",
+        "--art-direction",
+        "game/art-direction.json",
+        "--art-evidence",
+        "build/art-evidence.json",
         "--out",
         "build/game.bundle.json",
         "--report",
@@ -26,6 +30,8 @@ describe("cli arguments", () => {
       projectPath: "game/project.json",
       assetManifestPath: "build/assets.json",
       sceneInstancesPath: "game/scene-instances.json",
+      artDirectionPath: "game/art-direction.json",
+      artEvidencePath: "build/art-evidence.json",
       outputPath: "build/game.bundle.json",
       reportPath: "build/report.json",
       format: "json",
@@ -49,6 +55,8 @@ describe("cli arguments", () => {
       projectPath: "game/project.json",
       assetManifestPath: "build/assets.json",
       sceneInstancesPath: null,
+      artDirectionPath: null,
+      artEvidencePath: null,
       outputDirectory: "release/windows",
       format: "json",
     });
@@ -62,8 +70,50 @@ describe("cli arguments", () => {
       projectPath: "project.json",
       assetManifestPath: null,
       sceneInstancesPath: null,
+      artDirectionPath: null,
+      artEvidencePath: null,
       format: "human",
     });
+  });
+
+  it("allows policy validation before compiled evidence exists", () => {
+    expect(
+      parseCliArguments([
+        "validate",
+        "--project",
+        "project.json",
+        "--art-direction",
+        "art-direction.json",
+      ]),
+    ).toMatchObject({
+      kind: "validate",
+      artDirectionPath: "art-direction.json",
+      artEvidencePath: null,
+    });
+  });
+
+  it("requires policy and asset manifests for visual evidence", () => {
+    expect(() =>
+      parseCliArguments([
+        "validate",
+        "--project",
+        "project.json",
+        "--art-evidence",
+        "art-evidence.json",
+      ]),
+    ).toThrowError(CliUsageError);
+
+    expect(() =>
+      parseCliArguments([
+        "validate",
+        "--project",
+        "project.json",
+        "--art-direction",
+        "art-direction.json",
+        "--art-evidence",
+        "art-evidence.json",
+      ]),
+    ).toThrowError(CliUsageError);
   });
 
   it("rejects missing values, duplicate aliases and command-specific options", () => {
