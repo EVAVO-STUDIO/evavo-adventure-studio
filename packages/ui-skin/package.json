@@ -1,0 +1,27 @@
+{
+  "name": "@evavo/adventure-ui-skin",
+  "version": "0.1.0",
+  "private": true,
+  "type": "module",
+  "exports": {
+    ".": {
+      "types": "./dist/src/index.d.ts",
+      "import": "./dist/src/index.js"
+    },
+    "./compose": {
+      "types": "./dist/src/compose.d.ts",
+      "import": "./dist/src/compose.js"
+    }
+  },
+  "files": ["dist"],
+  "scripts": {
+    "build": "tsc -b",
+    "typecheck": "tsc -b --pretty false"
+  },
+  "dependencies": {
+    "@evavo/adventure-bitmap-font": "workspace:*",
+    "@evavo/adventure-project-schema": "workspace:*",
+    "@evavo/adventure-render-contract": "workspace:*",
+    "zod": "catalog:"
+  }
+}
