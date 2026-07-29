@@ -5,7 +5,7 @@ import {
 } from "../src/arguments.js";
 
 describe("cli arguments", () => {
-  it("parses complete compile commands with art evidence", () => {
+  it("parses complete compile commands with visual and font evidence", () => {
     expect(
       parseCliArguments([
         "compile",
@@ -19,6 +19,8 @@ describe("cli arguments", () => {
         "game/art-direction.json",
         "--art-evidence",
         "build/art-evidence.json",
+        "--bitmap-fonts",
+        "game/bitmap-fonts.json",
         "--out",
         "build/game.bundle.json",
         "--report",
@@ -32,6 +34,7 @@ describe("cli arguments", () => {
       sceneInstancesPath: "game/scene-instances.json",
       artDirectionPath: "game/art-direction.json",
       artEvidencePath: "build/art-evidence.json",
+      bitmapFontsPath: "game/bitmap-fonts.json",
       outputPath: "build/game.bundle.json",
       reportPath: "build/report.json",
       format: "json",
@@ -57,6 +60,7 @@ describe("cli arguments", () => {
       sceneInstancesPath: null,
       artDirectionPath: null,
       artEvidencePath: null,
+      bitmapFontsPath: null,
       outputDirectory: "release/windows",
       format: "json",
     });
@@ -72,7 +76,24 @@ describe("cli arguments", () => {
       sceneInstancesPath: null,
       artDirectionPath: null,
       artEvidencePath: null,
+      bitmapFontsPath: null,
       format: "human",
+    });
+  });
+
+  it("allows focused font validation without compiled assets", () => {
+    expect(
+      parseCliArguments([
+        "validate",
+        "--project",
+        "project.json",
+        "--bitmap-fonts",
+        "bitmap-fonts.json",
+      ]),
+    ).toMatchObject({
+      kind: "validate",
+      bitmapFontsPath: "bitmap-fonts.json",
+      assetManifestPath: null,
     });
   });
 
