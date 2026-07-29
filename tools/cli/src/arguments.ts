@@ -15,6 +15,7 @@ interface ProjectCommandInputs {
   readonly artDirectionPath: string | null;
   readonly artEvidencePath: string | null;
   readonly bitmapFontsPath: string | null;
+  readonly uiSkinsPath: string | null;
   readonly format: OutputFormat;
 }
 
@@ -61,6 +62,7 @@ const VALUE_OPTIONS = new Set([
   "--art-direction",
   "--art-evidence",
   "--bitmap-fonts",
+  "--ui-skins",
   "--out",
   "--output",
   "--report",
@@ -145,6 +147,7 @@ const PROJECT_INPUT_OPTIONS = [
   "--art-direction",
   "--art-evidence",
   "--bitmap-fonts",
+  "--ui-skins",
 ] as const;
 
 const sharedInputs = (
@@ -167,6 +170,7 @@ const sharedInputs = (
     artDirectionPath,
     artEvidencePath,
     bitmapFontsPath: optionalValue(options, "--bitmap-fonts"),
+    uiSkinsPath: optionalValue(options, "--ui-skins"),
   };
 };
 
@@ -235,14 +239,14 @@ export const parseCliArguments = (argv: readonly string[]): CliCommand => {
 export const CLI_HELP = `EVAVO Adventure Studio CLI
 
 Usage:
-  evavo-adventure validate --project <project.json> [--asset-manifest <assets.json>] [--scene-instances <scene-instances.json>] [--art-direction <art-direction.json>] [--art-evidence <art-evidence.json>] [--bitmap-fonts <bitmap-fonts.json>] [--json]
-  evavo-adventure compile --project <project.json> --asset-manifest <assets.json> [--scene-instances <scene-instances.json>] [--art-direction <art-direction.json>] [--art-evidence <art-evidence.json>] [--bitmap-fonts <bitmap-fonts.json>] --out <game.bundle.json> [--report <report.json>] [--json]
-  evavo-adventure package --project <project.json> --asset-manifest <assets.json> [--scene-instances <scene-instances.json>] [--art-direction <art-direction.json>] [--art-evidence <art-evidence.json>] [--bitmap-fonts <bitmap-fonts.json>] --out <release-directory> [--json]
+  evavo-adventure validate --project <project.json> [--asset-manifest <assets.json>] [--scene-instances <scene-instances.json>] [--art-direction <art-direction.json>] [--art-evidence <art-evidence.json>] [--bitmap-fonts <bitmap-fonts.json>] [--ui-skins <ui-skins.json>] [--json]
+  evavo-adventure compile --project <project.json> --asset-manifest <assets.json> [--scene-instances <scene-instances.json>] [--art-direction <art-direction.json>] [--art-evidence <art-evidence.json>] [--bitmap-fonts <bitmap-fonts.json>] [--ui-skins <ui-skins.json>] --out <game.bundle.json> [--report <report.json>] [--json]
+  evavo-adventure package --project <project.json> --asset-manifest <assets.json> [--scene-instances <scene-instances.json>] [--art-direction <art-direction.json>] [--art-evidence <art-evidence.json>] [--bitmap-fonts <bitmap-fonts.json>] [--ui-skins <ui-skins.json>] --out <release-directory> [--json]
   evavo-adventure version
 
 Exit codes:
   0  success
-  1  project, asset, scene composition, art or bitmap-font validation failed
+  1  project, asset, scene composition, art, bitmap-font or interface-skin validation failed
   2  invalid command-line usage
   3  unexpected internal failure
 `;
