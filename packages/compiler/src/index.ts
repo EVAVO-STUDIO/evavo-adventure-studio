@@ -64,7 +64,7 @@ export class ProjectCompilationError extends Error {
   }
 }
 
-const sortById = <T extends { readonly id: string }>(values: readonly T[]): readonly T[] =>
+const sortById = <T extends { readonly id: string }>(values: readonly T[]): T[] =>
   [...values].sort((left, right) => left.id.localeCompare(right.id));
 
 export const interactionIndexKey = (
