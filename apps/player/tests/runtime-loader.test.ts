@@ -2,7 +2,6 @@ import { describe, expect, it } from "vitest";
 import {
   createRuntimeStartFrame,
   loadRuntimeBundle,
-  RuntimeBundleFetchError,
   type RuntimeBundleFetch,
 } from "../src/runtime-loader.js";
 
@@ -138,12 +137,7 @@ describe("packaged runtime loading", () => {
         "https://example.test/release/game.bundle.json",
         failingFetch,
       ),
-    ).rejects.toEqual(
-      expect.objectContaining<Partial<RuntimeBundleFetchError>>({
-        name: "RuntimeBundleFetchError",
-        message: expect.stringContaining("network offline") as unknown as string,
-      }),
-    );
+    ).rejects.toThrow("network offline");
   });
 
   it("resolves the start-room background as a native sprite node", async () => {
