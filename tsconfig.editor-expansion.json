@@ -1,0 +1,14 @@
+{
+  "files": [],
+  "references": [
+    { "path": "packages/project-schema" },
+    { "path": "packages/scene-instances" },
+    { "path": "packages/editor-core" },
+    { "path": "packages/project-editor-core" },
+    { "path": "packages/dialogue-editor-core" },
+    { "path": "packages/sequence-editor-core" },
+    { "path": "packages/narrative-library-editor-core" },
+    { "path": "apps/studio" },
+    { "path": "apps/timeline-lab" }
+  ]
+}
