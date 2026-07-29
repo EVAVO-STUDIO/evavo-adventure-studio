@@ -1,0 +1,80 @@
+name: Editor Expansion CI
+
+on:
+  push:
+    branches: [main]
+    paths:
+      - "packages/dialogue-editor-core/**"
+      - "packages/sequence-editor-core/**"
+      - "packages/narrative-library-editor-core/**"
+      - "packages/project-editor-core/**"
+      - "packages/editor-core/**"
+      - "apps/studio/**"
+      - "apps/timeline-lab/**"
+      - "tsconfig.editor-expansion.json"
+      - ".github/workflows/editor-expansion-ci.yml"
+  pull_request:
+    paths:
+      - "packages/dialogue-editor-core/**"
+      - "packages/sequence-editor-core/**"
+      - "packages/narrative-library-editor-core/**"
+      - "packages/project-editor-core/**"
+      - "packages/editor-core/**"
+      - "apps/studio/**"
+      - "apps/timeline-lab/**"
+      - "tsconfig.editor-expansion.json"
+      - ".github/workflows/editor-expansion-ci.yml"
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: editor-expansion-${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  verify:
+    name: Verify editor expansion (${{ matrix.os }})
+    runs-on: ${{ matrix.os }}
+    timeout-minutes: 25
+    strategy:
+      fail-fast: false
+      matrix:
+        os: [ubuntu-latest, windows-latest]
+
+    steps:
+      - name: Check out repository
+        uses: actions/checkout@v6
+
+      - name: Install pnpm
+        uses: pnpm/action-setup@v6
+
+      - name: Install Node.js
+        uses: actions/setup-node@v6
+        with:
+          node-version-file: .nvmrc
+          package-manager-cache: false
+
+      - name: Install dependencies
+        run: pnpm install --no-frozen-lockfile
+
+      - name: Type-check editor expansion graph
+        run: pnpm exec tsc -b tsconfig.editor-expansion.json --pretty false
+
+      - name: Run editor expansion tests
+        run: >-
+          pnpm exec vitest run
+          packages/editor-core/tests
+          packages/project-editor-core/tests
+          packages/dialogue-editor-core/tests
+          packages/sequence-editor-core/tests
+          packages/narrative-library-editor-core/tests
+          apps/studio/tests
+          apps/timeline-lab/tests
+
+      - name: Build main visual studio
+        run: pnpm --filter @evavo/adventure-studio-app build
+
+      - name: Build cinematic timeline lab
+        run: pnpm --filter @evavo/adventure-timeline-lab build
