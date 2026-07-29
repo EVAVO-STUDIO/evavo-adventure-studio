@@ -1,3 +1,5 @@
+import type { BitmapFontResolver } from "@evavo/adventure-bitmap-font/render";
+import { expandBitmapTextFrame } from "@evavo/adventure-bitmap-font/render";
 import type { Id } from "@evavo/adventure-project-schema";
 import {
   validateResolvedFrame,
@@ -29,6 +31,7 @@ export interface PixiTextureResolver {
 
 export interface PixiRendererOptions {
   readonly textures: PixiTextureResolver;
+  readonly bitmapFonts?: BitmapFontResolver;
 }
 
 export type UnsupportedPixiNodeKind = Exclude<
@@ -167,6 +170,7 @@ const isWorldNode = (node: RenderNode): boolean =>
 
 export class PixiWebGLRenderer implements RendererAdapter {
   private readonly textures: PixiTextureResolver;
+  private readonly bitmapFonts: BitmapFontResolver | null;
   private readonly textureViews = new Map<string, Texture>();
   private application: Application | null = null;
   private clearRoot: Container | null = null;
@@ -180,6 +184,7 @@ export class PixiWebGLRenderer implements RendererAdapter {
 
   constructor(options: PixiRendererOptions) {
     this.textures = options.textures;
+    this.bitmapFonts = options.bitmapFonts ?? null;
   }
 
   async initialize(host: RendererHost, canvas: NativeCanvas): Promise<void> {
@@ -249,7 +254,10 @@ export class PixiWebGLRenderer implements RendererAdapter {
   }
 
   render(frame: ResolvedFrame): void {
-    const issues = validateResolvedFrame(frame);
+    const resolvedFrame = this.bitmapFonts
+      ? expandBitmapTextFrame(frame, this.bitmapFonts)
+      : frame;
+    const issues = validateResolvedFrame(resolvedFrame);
     if (issues.length > 0) {
       throw new PixiFrameValidationError(issues);
     }
@@ -259,21 +267,21 @@ export class PixiWebGLRenderer implements RendererAdapter {
     const worldRoot = this.requireRoot(this.worldRoot, "world");
     const screenRoot = this.requireRoot(this.screenRoot, "screen");
 
-    this.ensureNativeCanvas(frame.canvas);
+    this.ensureNativeCanvas(resolvedFrame.canvas);
     this.destroyChildren(clearRoot);
     this.destroyChildren(worldRoot);
     this.destroyChildren(screenRoot);
 
-    const clear = toPixiFill(frame.canvas.clearColor);
+    const clear = toPixiFill(resolvedFrame.canvas.clearColor);
     clearRoot.addChild(
       new Graphics()
-        .rect(0, 0, frame.canvas.width, frame.canvas.height)
+        .rect(0, 0, resolvedFrame.canvas.width, resolvedFrame.canvas.height)
         .fill({ color: clear.color, alpha: clear.alpha }),
     );
 
     const objectsById = new Map<string, Container>();
     const nodesById = new Map<string, RenderNode>();
-    for (const node of frame.nodes) {
+    for (const node of resolvedFrame.nodes) {
       const object = this.createNode(node);
       this.applyNodeTransform(object, node);
       (isWorldNode(node) ? worldRoot : screenRoot).addChild(object);
@@ -281,7 +289,7 @@ export class PixiWebGLRenderer implements RendererAdapter {
       nodesById.set(node.id, node);
     }
 
-    for (const node of frame.nodes) {
+    for (const node of resolvedFrame.nodes) {
       if (!node.maskNodeId) {
         continue;
       }
@@ -300,8 +308,8 @@ export class PixiWebGLRenderer implements RendererAdapter {
     }
 
     worldRoot.position.set(
-      -frame.camera.position.x + frame.camera.shakeOffset.x,
-      -frame.camera.position.y + frame.camera.shakeOffset.y,
+      -resolvedFrame.camera.position.x + resolvedFrame.camera.shakeOffset.x,
+      -resolvedFrame.camera.position.y + resolvedFrame.camera.shakeOffset.y,
     );
     screenRoot.position.set(0, 0);
     application.renderer.render(application.stage);
@@ -423,7 +431,11 @@ export class PixiWebGLRenderer implements RendererAdapter {
         .fill({ color: fill.color, alpha: fill.alpha });
     }
 
-    return new Sprite(this.textureView(node));
+    const sprite = new Sprite(this.textureView(node));
+    if (node.tintRgba) {
+      sprite.tint = toPixiFill(node.tintRgba).color;
+    }
+    return sprite;
   }
 
   private textureView(node: SpriteRenderNode): Texture {
@@ -476,7 +488,11 @@ export class PixiWebGLRenderer implements RendererAdapter {
     object.pivot.set(node.transform.pivot.x, node.transform.pivot.y);
     object.scale.set(node.transform.scale.x, node.transform.scale.y);
     object.rotation = node.transform.rotationRadians;
-    object.alpha = node.opacity;
+    const tintAlpha =
+      node.kind === "sprite" && node.tintRgba
+        ? toPixiFill(node.tintRgba).alpha
+        : 1;
+    object.alpha = node.opacity * tintAlpha;
     object.visible = node.visible;
   }
 }
