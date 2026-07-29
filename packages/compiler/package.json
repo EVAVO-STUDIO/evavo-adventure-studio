@@ -11,6 +11,10 @@
     "./with-instances": {
       "types": "./dist/src/with-instances.d.ts",
       "import": "./dist/src/with-instances.js"
+    },
+    "./scene-instances": {
+      "types": "./dist/src/with-instances.d.ts",
+      "import": "./dist/src/with-instances.js"
     }
   },
   "files": ["dist"],
