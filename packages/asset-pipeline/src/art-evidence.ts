@@ -1,3 +1,7 @@
+import type {
+  AssetBuildManifest,
+  CompiledOutputFile,
+} from "@evavo/adventure-asset-contract";
 import {
   artImageVisualEvidenceSchema,
   artSpritesheetVisualEvidenceSchema,
@@ -56,4 +60,80 @@ export const createArtVisualEvidenceManifest = (
       left.assetId.localeCompare(right.assetId),
     ),
   });
+};
+
+export type CompiledArtOutputReader = (
+  assetId: Id<"asset">,
+  output: CompiledOutputFile,
+) => Promise<Uint8Array>;
+
+const outputByRole = (
+  outputs: readonly CompiledOutputFile[],
+  role: string,
+  assetId: Id<"asset">,
+): CompiledOutputFile => {
+  const output = outputs.find((candidate) => candidate.role === role);
+  if (!output) {
+    throw new Error(`Compiled asset '${assetId}' has no output role '${role}'.`);
+  }
+  return output;
+};
+
+export const createArtVisualEvidenceFromAssetManifest = async (
+  manifest: AssetBuildManifest,
+  readOutput: CompiledArtOutputReader,
+  compilerVersion = manifest.compilerVersion,
+): Promise<ArtVisualEvidenceManifest> => {
+  const records: ArtVisualEvidenceRecord[] = [];
+
+  for (const asset of [...manifest.assets].sort((left, right) =>
+    left.assetId.localeCompare(right.assetId),
+  )) {
+    if (asset.kind === "image") {
+      const output = outputByRole(asset.outputFiles, "primary", asset.assetId);
+      const evidence = await analysePngEvidence(
+        await readOutput(asset.assetId, output),
+      );
+      records.push(
+        artImageVisualEvidenceSchema.parse({
+          assetId: asset.assetId,
+          kind: "image",
+          ...evidence,
+        }),
+      );
+      continue;
+    }
+
+    if (asset.kind === "spritesheet") {
+      const pages = [];
+      for (const page of [...asset.metadata.pages].sort((left, right) =>
+        left.outputRole.localeCompare(right.outputRole),
+      )) {
+        const output = outputByRole(
+          asset.outputFiles,
+          page.outputRole,
+          asset.assetId,
+        );
+        pages.push({
+          outputRole: page.outputRole,
+          ...(await analysePngEvidence(
+            await readOutput(asset.assetId, output),
+          )),
+        });
+      }
+      records.push(
+        artSpritesheetVisualEvidenceSchema.parse({
+          assetId: asset.assetId,
+          kind: "spritesheet",
+          pages,
+        }),
+      );
+    }
+  }
+
+  return createArtVisualEvidenceManifest(
+    manifest.projectId,
+    records,
+    compilerVersion,
+  );
 };
