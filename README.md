@@ -8,8 +8,8 @@ The project is designed around the production grammar of classic Sierra, LucasAr
 
 - **Authentic presentation:** integer-scaled low-resolution rendering, palette-aware art, bitmap typography, deliberate animation timing, scene transitions, cursor language and era-appropriate UI layouts.
 - **Complete adventure runtime:** navigation, hotspots, verbs, inventory, dialogue, conditions, flags, scoring, cutscenes, audio and save-state persistence.
-- **Visual production studio:** scene composition, walkmesh editing, depth maps, occluders, hotspot authoring, character animation, art-direction policy, bitmap fonts, dialogue graphs, timeline sequencing and project validation.
-- **Flexible game identity:** supports parser-like, icon-bar, verb-coin, two-button and context-sensitive interaction models without copying any one commercial game.
+- **Visual production studio:** scene composition, walkmesh editing, depth maps, occluders, hotspot authoring, character animation, art-direction policy, bitmap fonts, interaction skins, dialogue graphs, timeline sequencing and project validation.
+- **Flexible game identity:** supports parser-like, icon-bar, verb-list, verb-coin, two-button and context-sensitive interaction models without copying any one commercial game.
 - **Deterministic projects:** human-readable project files, stable IDs, schema validation, reproducible builds and revision-safe exports.
 
 ## Repository direction
@@ -31,6 +31,7 @@ Source projects compile into deterministic runtime bundles. The editor, renderer
 - [Sprite and animation authoring](docs/animation-authoring.md)
 - [Art direction and compiled pixel evidence](docs/art-direction.md)
 - [Native bitmap fonts](docs/bitmap-fonts.md)
+- [Interface skins and interaction layouts](docs/interface-skins.md)
 - [Implementation roadmap](docs/foundation-roadmap.md)
 
 ## First playable milestone
@@ -41,7 +42,7 @@ The first milestone is a small five-room mystery vignette that proves:
 2. deterministic runtime commands, saves and replays;
 3. navigation, depth, scale and partial occlusion;
 4. authentic native-resolution rendering, palettes, sprite timing and bitmap text;
-5. verbs, cursors, dialogue, inventory and score policies;
+5. verbs, cursors, dialogue, inventory, score and alternate interface policies;
 6. skippable in-scene cinematics with equivalent completion state;
 7. validation fixtures, rendering laboratories and compiled exports;
 8. browser and Windows development players.
@@ -80,6 +81,7 @@ Studio routes currently include:
 /?workspace=animation
 /?workspace=art
 /?workspace=fonts
+/?workspace=interface
 /?workspace=dialogue
 /?workspace=validation
 ```
