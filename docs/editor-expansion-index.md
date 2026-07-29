@@ -8,6 +8,7 @@ This index maps the current authoring surfaces to their canonical data and comma
 | Project Geometry | `/?workspace=geometry` | source `project.json` scenes | `@evavo/adventure-project-editor-core` |
 | Object States | `/?workspace=objects` | scene composition object definitions | `@evavo/adventure-editor-core` |
 | Sprite & Animation | `/?workspace=animation` | focused actor definition | `@evavo/adventure-animation-editor-core` |
+| Art Direction | `/?workspace=art` | art policy plus compiled pixel evidence | `@evavo/adventure-art-direction` |
 | Dialogue | `/?workspace=dialogue` | focused dialogue graph | `@evavo/adventure-dialogue-editor-core` |
 | Validation | `/?workspace=validation` | source project plus scene composition | canonical validators |
 | Cinematic Timeline Lab | port `5175` | focused sequence | `@evavo/adventure-sequence-editor-core` |
@@ -33,6 +34,8 @@ The Narrative Project Library performs protected dialogue and sequence replaceme
 
 The animation project-integration contract performs protected actor replacement. It rejects global ID collisions and missing performance states or facings requested by dialogue and cinematic cues.
 
+Art direction is a project-scoped sidecar rather than a focused replacement document. It is evaluated against both `AssetBuildManifest` and `ArtVisualEvidenceManifest`, whose pixel data is measured from encoded PNG outputs.
+
 ## Verification
 
 The primary repository workflow remains `.github/workflows/ci.yml`.
@@ -41,6 +44,7 @@ The editor expansion also has `.github/workflows/editor-expansion-ci.yml`, which
 
 - the dedicated TypeScript expansion graph;
 - editor command and workspace tests;
+- art-direction policy and evidence tests;
 - the main Studio build;
 - the Cinematic Timeline Lab build;
 - Windows and Linux behavior.
@@ -57,6 +61,7 @@ pnpm exec vitest run `
   packages/sequence-editor-core/tests `
   packages/narrative-library-editor-core/tests `
   packages/animation-editor-core/tests `
+  packages/art-direction/tests `
   apps/studio/tests `
   apps/timeline-lab/tests
 pnpm --filter @evavo/adventure-studio-app build
