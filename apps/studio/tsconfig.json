@@ -11,6 +11,7 @@
     { "path": "../../packages/project-schema" },
     { "path": "../../packages/project-editor-core" },
     { "path": "../../packages/dialogue-editor-core" },
+    { "path": "../../packages/animation-editor-core" },
     { "path": "../../packages/scene-instances" },
     { "path": "../../packages/editor-core" }
   ]
