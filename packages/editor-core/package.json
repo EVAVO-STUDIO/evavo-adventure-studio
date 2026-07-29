@@ -11,6 +11,10 @@
     "./validated-history": {
       "types": "./dist/src/validated-history.d.ts",
       "import": "./dist/src/validated-history.js"
+    },
+    "./command-schema": {
+      "types": "./dist/src/command-schema.d.ts",
+      "import": "./dist/src/command-schema.js"
     }
   },
   "files": ["dist"],
@@ -20,6 +24,7 @@
   },
   "dependencies": {
     "@evavo/adventure-project-schema": "workspace:*",
-    "@evavo/adventure-scene-instances": "workspace:*"
+    "@evavo/adventure-scene-instances": "workspace:*",
+    "zod": "catalog:"
   }
 }
