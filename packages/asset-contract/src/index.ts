@@ -1,7 +1,6 @@
 import { z } from "zod";
 import {
   idSchema,
-  pointSchema,
   rectangleSchema,
   sizeSchema,
   type AdventureProject,
@@ -12,7 +11,7 @@ export const sha256Schema = z
   .string()
   .regex(/^[0-9a-f]{64}$/, "Expected a lowercase SHA-256 hexadecimal digest.");
 
-const relativeRuntimePathSchema = z
+export const relativeRuntimePathSchema = z
   .string()
   .min(1)
   .refine((value) => !value.startsWith("/") && !value.startsWith("\\"), {
@@ -73,7 +72,12 @@ export const atlasFrameMetadataSchema = z
     pageOutputRole: z.string().min(1),
     sourceRect: rectangleSchema,
     originalSize: sizeSchema,
-    trimOffset: pointSchema,
+    trimOffset: z
+      .object({
+        x: z.number().int().nonnegative(),
+        y: z.number().int().nonnegative(),
+      })
+      .strict(),
     padding: z.number().int().nonnegative(),
   })
   .strict();
@@ -130,24 +134,56 @@ export const compiledAssetMetadataSchema = z.discriminatedUnion("kind", [
 ]);
 export type CompiledAssetMetadata = z.infer<typeof compiledAssetMetadataSchema>;
 
-export const compiledAssetRecordSchema = z
-  .object({
-    assetId: idSchema("asset"),
-    kind: z.enum(["image", "spritesheet", "audio", "font", "video", "palette"]),
-    sourceFiles: z.array(compiledSourceFileSchema).min(1),
-    outputFiles: z.array(compiledOutputFileSchema).min(1),
-    metadata: compiledAssetMetadataSchema,
-  })
-  .strict()
-  .superRefine((value, context) => {
-    if (value.kind !== value.metadata.kind) {
-      context.addIssue({
-        code: "custom",
-        path: ["metadata", "kind"],
-        message: `Metadata kind '${value.metadata.kind}' does not match asset kind '${value.kind}'.`,
-      });
-    }
-  });
+const compiledAssetFields = {
+  assetId: idSchema("asset"),
+  sourceFiles: z.array(compiledSourceFileSchema).min(1),
+  outputFiles: z.array(compiledOutputFileSchema).min(1),
+} as const;
+
+export const compiledAssetRecordSchema = z.discriminatedUnion("kind", [
+  z
+    .object({
+      ...compiledAssetFields,
+      kind: z.literal("image"),
+      metadata: imageAssetMetadataSchema,
+    })
+    .strict(),
+  z
+    .object({
+      ...compiledAssetFields,
+      kind: z.literal("spritesheet"),
+      metadata: spritesheetAssetMetadataSchema,
+    })
+    .strict(),
+  z
+    .object({
+      ...compiledAssetFields,
+      kind: z.literal("audio"),
+      metadata: audioAssetMetadataSchema,
+    })
+    .strict(),
+  z
+    .object({
+      ...compiledAssetFields,
+      kind: z.literal("font"),
+      metadata: fontAssetMetadataSchema,
+    })
+    .strict(),
+  z
+    .object({
+      ...compiledAssetFields,
+      kind: z.literal("video"),
+      metadata: videoAssetMetadataSchema,
+    })
+    .strict(),
+  z
+    .object({
+      ...compiledAssetFields,
+      kind: z.literal("palette"),
+      metadata: paletteAssetMetadataSchema,
+    })
+    .strict(),
+]);
 export type CompiledAssetRecord = z.infer<typeof compiledAssetRecordSchema>;
 
 export const assetBuildManifestSchema = z
@@ -164,21 +200,16 @@ export type AssetBuildManifest = z.infer<typeof assetBuildManifestSchema>;
 export const parseAssetBuildManifest = (input: unknown): AssetBuildManifest =>
   assetBuildManifestSchema.parse(input);
 
-export interface RuntimeAssetRecord {
-  readonly assetId: Id<"asset">;
-  readonly kind: CompiledAssetRecord["kind"];
-  readonly outputFiles: readonly CompiledOutputFile[];
-  readonly metadata: CompiledAssetMetadata;
-}
+export type RuntimeAssetRecord = CompiledAssetRecord extends infer T
+  ? T extends CompiledAssetRecord
+    ? Omit<T, "sourceFiles">
+    : never
+  : never;
 
-export const toRuntimeAssetRecord = (
-  asset: CompiledAssetRecord,
-): RuntimeAssetRecord => ({
-  assetId: asset.assetId,
-  kind: asset.kind,
-  outputFiles: asset.outputFiles,
-  metadata: asset.metadata,
-});
+export const toRuntimeAssetRecord = (asset: CompiledAssetRecord): RuntimeAssetRecord => {
+  const { sourceFiles: _sourceFiles, ...runtime } = asset;
+  return runtime as RuntimeAssetRecord;
+};
 
 export type AssetManifestIssueCode =
   | "project-mismatch"
@@ -191,7 +222,9 @@ export type AssetManifestIssueCode =
   | "duplicate-runtime-path"
   | "missing-output-role"
   | "unknown-page-role"
-  | "duplicate-frame";
+  | "duplicate-page-role"
+  | "duplicate-frame"
+  | "frame-out-of-bounds";
 
 export interface AssetManifestIssue {
   readonly severity: "error";
@@ -200,7 +233,7 @@ export interface AssetManifestIssue {
   readonly message: string;
 }
 
-const issue = (
+const addIssue = (
   issues: AssetManifestIssue[],
   code: AssetManifestIssueCode,
   path: string,
@@ -215,26 +248,26 @@ const validateOutputRoles = (
   issues: AssetManifestIssue[],
   runtimePaths: Map<string, string>,
 ): void => {
-  const roles = new Set<string>();
+  const outputRoles = new Set<string>();
   for (let index = 0; index < asset.outputFiles.length; index += 1) {
     const output = asset.outputFiles[index];
     if (!output) {
       continue;
     }
     const outputPath = `${assetPath}.outputFiles[${index}]`;
-    if (roles.has(output.role)) {
-      issue(
+    if (outputRoles.has(output.role)) {
+      addIssue(
         issues,
         "duplicate-output-role",
         `${outputPath}.role`,
         `Output role '${output.role}' is duplicated for asset '${asset.assetId}'.`,
       );
     }
-    roles.add(output.role);
+    outputRoles.add(output.role);
 
     const existing = runtimePaths.get(output.runtimePath);
     if (existing) {
-      issue(
+      addIssue(
         issues,
         "duplicate-runtime-path",
         `${outputPath}.runtimePath`,
@@ -245,61 +278,87 @@ const validateOutputRoles = (
     }
   }
 
-  if (asset.kind === "spritesheet") {
-    if (!roles.has("atlas-manifest")) {
-      issue(
+  if (asset.kind !== "spritesheet") {
+    if (!outputRoles.has("primary")) {
+      addIssue(
         issues,
         "missing-output-role",
         `${assetPath}.outputFiles`,
-        `Spritesheet '${asset.assetId}' requires an 'atlas-manifest' output.`,
+        `Asset '${asset.assetId}' requires a 'primary' runtime output.`,
       );
-    }
-    const frameIds = new Set<string>();
-    for (let index = 0; index < asset.metadata.frames.length; index += 1) {
-      const frame = asset.metadata.frames[index];
-      if (!frame) {
-        continue;
-      }
-      if (!roles.has(frame.pageOutputRole)) {
-        issue(
-          issues,
-          "unknown-page-role",
-          `${assetPath}.metadata.frames[${index}].pageOutputRole`,
-          `Frame '${frame.frameId}' references missing output role '${frame.pageOutputRole}'.`,
-        );
-      }
-      if (frameIds.has(frame.frameId)) {
-        issue(
-          issues,
-          "duplicate-frame",
-          `${assetPath}.metadata.frames[${index}].frameId`,
-          `Frame '${frame.frameId}' is duplicated in spritesheet '${asset.assetId}'.`,
-        );
-      }
-      frameIds.add(frame.frameId);
-    }
-    for (let index = 0; index < asset.metadata.pages.length; index += 1) {
-      const page = asset.metadata.pages[index];
-      if (page && !roles.has(page.outputRole)) {
-        issue(
-          issues,
-          "unknown-page-role",
-          `${assetPath}.metadata.pages[${index}].outputRole`,
-          `Atlas page references missing output role '${page.outputRole}'.`,
-        );
-      }
     }
     return;
   }
 
-  if (!roles.has("primary")) {
-    issue(
+  if (!outputRoles.has("atlas-manifest")) {
+    addIssue(
       issues,
       "missing-output-role",
       `${assetPath}.outputFiles`,
-      `Asset '${asset.assetId}' requires a 'primary' runtime output.`,
+      `Spritesheet '${asset.assetId}' requires an 'atlas-manifest' output.`,
     );
   }
+
+  const pageRoles = new Set<string>();
+  const pageByRole = new Map(
+    asset.metadata.pages.map((page) => [page.outputRole, page] as const),
+  );
+  asset.metadata.pages.forEach((page, pageIndex) => {
+    if (pageRoles.has(page.outputRole)) {
+      addIssue(
+        issues,
+        "duplicate-page-role",
+        `${assetPath}.metadata.pages[${pageIndex}].outputRole`,
+        `Atlas page role '${page.outputRole}' is duplicated.`,
+      );
+    }
+    pageRoles.add(page.outputRole);
+    if (!outputRoles.has(page.outputRole)) {
+      addIssue(
+        issues,
+        "unknown-page-role",
+        `${assetPath}.metadata.pages[${pageIndex}].outputRole`,
+        `Atlas page references missing output role '${page.outputRole}'.`,
+      );
+    }
+  });
+
+  const frameIds = new Set<string>();
+  asset.metadata.frames.forEach((frame, frameIndex) => {
+    const framePath = `${assetPath}.metadata.frames[${frameIndex}]`;
+    if (frameIds.has(frame.frameId)) {
+      addIssue(
+        issues,
+        "duplicate-frame",
+        `${framePath}.frameId`,
+        `Frame '${frame.frameId}' is duplicated in spritesheet '${asset.assetId}'.`,
+      );
+    }
+    frameIds.add(frame.frameId);
+
+    if (!outputRoles.has(frame.pageOutputRole)) {
+      addIssue(
+        issues,
+        "unknown-page-role",
+        `${framePath}.pageOutputRole`,
+        `Frame '${frame.frameId}' references missing output role '${frame.pageOutputRole}'.`,
+      );
+    }
+
+    const page = pageByRole.get(frame.pageOutputRole);
+    if (
+      page &&
+      (frame.sourceRect.x + frame.sourceRect.width > page.width ||
+        frame.sourceRect.y + frame.sourceRect.height > page.height)
+    ) {
+      addIssue(
+        issues,
+        "frame-out-of-bounds",
+        `${framePath}.sourceRect`,
+        `Frame '${frame.frameId}' exceeds atlas page '${frame.pageOutputRole}'.`,
+      );
+    }
+  });
 };
 
 export const validateAssetBuildManifest = (
@@ -308,7 +367,7 @@ export const validateAssetBuildManifest = (
 ): readonly AssetManifestIssue[] => {
   const issues: AssetManifestIssue[] = [];
   if (manifest.projectId !== project.id) {
-    issue(
+    addIssue(
       issues,
       "project-mismatch",
       "projectId",
@@ -317,7 +376,7 @@ export const validateAssetBuildManifest = (
   }
 
   const authoredById = new Map(
-    project.assets.map((asset) => [asset.id as string, asset]),
+    project.assets.map((asset) => [asset.id as string, asset] as const),
   );
   const compiledById = new Map<string, CompiledAssetRecord>();
   const runtimePaths = new Map<string, string>();
@@ -325,7 +384,7 @@ export const validateAssetBuildManifest = (
   manifest.assets.forEach((asset, index) => {
     const assetPath = `assets[${index}]`;
     if (compiledById.has(asset.assetId)) {
-      issue(
+      addIssue(
         issues,
         "duplicate-asset",
         `${assetPath}.assetId`,
@@ -337,7 +396,7 @@ export const validateAssetBuildManifest = (
 
     const authored = authoredById.get(asset.assetId);
     if (!authored) {
-      issue(
+      addIssue(
         issues,
         "unexpected-asset",
         `${assetPath}.assetId`,
@@ -345,7 +404,7 @@ export const validateAssetBuildManifest = (
       );
     } else {
       if (authored.kind !== asset.kind) {
-        issue(
+        addIssue(
           issues,
           "asset-kind-mismatch",
           `${assetPath}.kind`,
@@ -353,7 +412,7 @@ export const validateAssetBuildManifest = (
         );
       }
       if (!asset.sourceFiles.some((source) => source.path === authored.path)) {
-        issue(
+        addIssue(
           issues,
           "source-path-missing",
           `${assetPath}.sourceFiles`,
@@ -367,7 +426,7 @@ export const validateAssetBuildManifest = (
 
   project.assets.forEach((asset, index) => {
     if (!compiledById.has(asset.id)) {
-      issue(
+      addIssue(
         issues,
         "missing-asset",
         `project.assets[${index}]`,
