@@ -25,6 +25,14 @@ const selectDefaultBitmapFont = (
   );
 };
 
+const normalizeStatusText = (value: string): string =>
+  value
+    .trim()
+    .replaceAll("•", "-")
+    .replace(/[“”]/gu, '"')
+    .replace(/[‘’]/gu, "'")
+    .replaceAll("…", "...");
+
 const railRectangle = (
   id: string,
   x: number,
@@ -61,15 +69,23 @@ export const appendNativeStatusPanel = (
   text: string,
 ): ResolvedFrame => {
   const font = selectDefaultBitmapFont(bundle);
-  const normalizedText = text.trim();
+  const normalizedText = normalizeStatusText(text);
   if (!font || !normalizedText) {
     return frame;
   }
 
-  const horizontalPadding = 8;
+  const horizontalPadding = Math.min(8, Math.max(1, frame.canvas.width - 1));
   const verticalPadding = 4;
-  const panelHeight = Math.max(18, font.lineHeight + verticalPadding * 2);
-  const panelY = Math.max(0, frame.canvas.height - panelHeight);
+  const requestedHeight = Math.max(
+    18,
+    font.lineHeight + verticalPadding * 2,
+  );
+  const panelHeight = Math.min(frame.canvas.height, requestedHeight);
+  const panelY = frame.canvas.height - panelHeight;
+  const textY = Math.min(
+    frame.canvas.height - Math.min(font.lineHeight, frame.canvas.height),
+    panelY + verticalPadding,
+  );
   const textNode: BitmapTextRenderNode = {
     kind: "bitmap-text",
     id: renderNodeId("runtime.status.text"),
@@ -81,7 +97,7 @@ export const appendNativeStatusPanel = (
       stableId: "runtime.status.text",
     },
     transform: {
-      position: { x: horizontalPadding, y: panelY + verticalPadding },
+      position: { x: horizontalPadding, y: Math.max(0, textY) },
       pivot: { x: 0, y: 0 },
       scale: { x: 1, y: 1 },
       rotationRadians: 0,
@@ -92,7 +108,7 @@ export const appendNativeStatusPanel = (
     fontId: font.id,
     text: normalizedText,
     maximumWidth: Math.max(1, frame.canvas.width - horizontalPadding * 2),
-    lineHeight: font.lineHeight,
+    lineHeight: Math.min(font.lineHeight, frame.canvas.height),
     align: "left",
     color: 0xf4f5f7,
     outlineColor: 0x05060a,
