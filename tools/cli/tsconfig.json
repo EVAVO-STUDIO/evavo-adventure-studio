@@ -7,6 +7,7 @@
   },
   "include": ["src/**/*.ts", "tests/**/*.ts"],
   "references": [
+    { "path": "../../packages/art-direction" },
     { "path": "../../packages/asset-contract" },
     { "path": "../../packages/compiler" },
     { "path": "../../packages/project-schema" },
