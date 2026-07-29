@@ -11,6 +11,10 @@
     "./font-validation": {
       "types": "./dist/src/font-validation.d.ts",
       "import": "./dist/src/font-validation.js"
+    },
+    "./ui-validation": {
+      "types": "./dist/src/ui-validation.d.ts",
+      "import": "./dist/src/ui-validation.js"
     }
   },
   "files": ["dist"],
@@ -23,6 +27,7 @@
     "@evavo/adventure-bitmap-font": "workspace:*",
     "@evavo/adventure-project-schema": "workspace:*",
     "@evavo/adventure-scene-instances": "workspace:*",
+    "@evavo/adventure-ui-skin": "workspace:*",
     "zod": "catalog:"
   }
 }
