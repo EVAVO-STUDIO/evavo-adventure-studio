@@ -19,6 +19,7 @@
     "typecheck": "tsc -b --pretty false"
   },
   "dependencies": {
+    "@evavo/adventure-asset-contract": "workspace:*",
     "@evavo/adventure-project-schema": "workspace:*",
     "@evavo/adventure-render-contract": "workspace:*",
     "@evavo/adventure-scene": "workspace:*",
