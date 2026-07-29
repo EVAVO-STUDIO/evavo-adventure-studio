@@ -3,6 +3,7 @@ import {
   artDirectionManifestSchema,
   createArtDirectionManifest,
 } from "@evavo/adventure-art-direction";
+import { artVisualEvidenceManifestSchema } from "@evavo/adventure-art-direction/evidence";
 import type {
   Id,
   Rectangle,
@@ -74,6 +75,21 @@ const framesForAsset = (assetId: Id<"asset">): readonly CompiledFrameFixture[] =
 
 const safeName = (assetId: string): string =>
   assetId.replace(/^asset\./, "").replace(/[^a-zA-Z0-9_-]+/g, "-");
+
+const atlasColourCount = (assetId: Id<"asset">): number => {
+  switch (assetId) {
+    case "asset.actor.detective":
+      return 96;
+    case "asset.actor.clerk":
+      return 72;
+    case "asset.object.lamp":
+      return 32;
+    case "asset.object.door":
+      return 48;
+    default:
+      return 64;
+  }
+};
 
 export const studioCompiledArtEvidence = assetBuildManifestSchema.parse({
   manifestVersion: 1,
@@ -149,5 +165,39 @@ export const studioCompiledArtEvidence = assetBuildManifestSchema.parse({
     }
 
     throw new Error(`Unexpected Studio fixture asset kind '${asset.kind}'.`);
+  }),
+});
+
+export const studioArtVisualEvidence = artVisualEvidenceManifestSchema.parse({
+  manifestVersion: 1,
+  projectId: studioProject.id,
+  compilerVersion: "0.1.0-studio-fixture",
+  assets: studioCompiledArtEvidence.assets.flatMap((asset) => {
+    if (asset.kind === "image") {
+      return [
+        {
+          assetId: asset.assetId,
+          kind: "image",
+          palette: asset.metadata.palette,
+          colourCount: asset.metadata.colourCount,
+          alphaMode: "opaque",
+        },
+      ];
+    }
+    if (asset.kind === "spritesheet") {
+      return [
+        {
+          assetId: asset.assetId,
+          kind: "spritesheet",
+          pages: asset.metadata.pages.map((page) => ({
+            outputRole: page.outputRole,
+            palette: true,
+            colourCount: atlasColourCount(asset.assetId),
+            alphaMode: "binary",
+          })),
+        },
+      ];
+    }
+    return [];
   }),
 });
