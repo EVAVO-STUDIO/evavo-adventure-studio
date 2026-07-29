@@ -4,6 +4,7 @@
     { "path": "packages/project-schema" },
     { "path": "packages/core" },
     { "path": "packages/scene" },
+    { "path": "packages/animation" },
     { "path": "packages/interaction" },
     { "path": "packages/dialogue" },
     { "path": "packages/sequence" },
