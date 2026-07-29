@@ -25,6 +25,8 @@ Source projects compile into deterministic runtime bundles. The editor, renderer
 - [Authentic pixel rendering](docs/pixel-rendering.md)
 - [Project format and compilation](docs/project-format.md)
 - [Command-line build workflow](docs/cli.md)
+- [Scene composition and runtime](docs/scene-composition.md)
+- [Visual studio workspace](docs/studio-workspace.md)
 - [Implementation roadmap](docs/foundation-roadmap.md)
 
 ## First playable milestone
@@ -56,6 +58,14 @@ Run the native-resolution browser rendering laboratory:
 ```powershell
 pnpm dev:player
 ```
+
+Run the visual scene-composition workspace:
+
+```powershell
+pnpm dev:studio
+```
+
+The player uses port `5173`; the studio uses port `5174`.
 
 After `pnpm run build:types`, inspect the CLI or validate a project:
 
