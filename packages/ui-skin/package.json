@@ -15,6 +15,10 @@
     "./compiled-mapping": {
       "types": "./dist/src/compiled-mapping.d.ts",
       "import": "./dist/src/compiled-mapping.js"
+    },
+    "./hit-testing": {
+      "types": "./dist/src/hit-testing.d.ts",
+      "import": "./dist/src/hit-testing.js"
     }
   },
   "files": ["dist"],
