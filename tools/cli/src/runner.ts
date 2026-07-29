@@ -25,6 +25,11 @@ import {
   writeFilesAtomically,
 } from "./filesystem.js";
 import {
+  bitmapFontInputPaths,
+  loadBitmapFonts,
+  type LoadedBitmapFonts,
+} from "./font-inputs.js";
+import {
   inputPaths,
   loadInputs,
   readVerifiedRuntimeOutputs,
@@ -65,6 +70,7 @@ interface CombinedInputState {
   readonly base: LoadedInputs;
   readonly sceneInstances: LoadedSceneInstances;
   readonly art: LoadedArtInputs;
+  readonly bitmapFonts: LoadedBitmapFonts;
   readonly diagnostics: readonly CliDiagnostic[];
 }
 
@@ -74,6 +80,7 @@ const loadCombinedInputs = async (
   sceneInstancesPath: string | null,
   artDirectionPath: string | null,
   artEvidencePath: string | null,
+  bitmapFontsPath: string | null,
 ): Promise<CombinedInputState> => {
   const base = await loadInputs(projectPath, assetManifestPath);
   const sceneInstances = await loadSceneInstances(
@@ -87,14 +94,21 @@ const loadCombinedInputs = async (
     base.project,
     base.assetManifest,
   );
+  const bitmapFonts = await loadBitmapFonts(
+    bitmapFontsPath,
+    base.project,
+    base.assetManifest,
+  );
   return {
     base,
     sceneInstances,
     art,
+    bitmapFonts,
     diagnostics: sortDiagnostics([
       ...base.diagnostics,
       ...sceneInstances.diagnostics,
       ...art.diagnostics,
+      ...bitmapFonts.diagnostics,
     ]),
   };
 };
@@ -103,6 +117,7 @@ const allInputPaths = (loaded: CombinedInputState): readonly string[] => [
   ...inputPaths(loaded.base),
   ...(loaded.sceneInstances.path ? [loaded.sceneInstances.path] : []),
   ...artInputPaths(loaded.art),
+  ...bitmapFontInputPaths(loaded.bitmapFonts),
 ];
 
 const runValidate = async (
@@ -115,6 +130,7 @@ const runValidate = async (
     command.sceneInstancesPath,
     command.artDirectionPath,
     command.artEvidencePath,
+    command.bitmapFontsPath,
   );
   const valid = !hasErrors(loaded.diagnostics);
   const report = {
@@ -127,6 +143,8 @@ const runValidate = async (
     sceneInstancesPath: command.sceneInstancesPath,
     artDirectionPath: command.artDirectionPath,
     artEvidencePath: command.artEvidencePath,
+    bitmapFontsPath: command.bitmapFontsPath,
+    bitmapFontCount: loaded.bitmapFonts.manifest?.fonts.length ?? 0,
     diagnostics: loaded.diagnostics,
   };
   const human = valid
@@ -218,6 +236,7 @@ const runCompile = async (
     command.sceneInstancesPath,
     command.artDirectionPath,
     command.artEvidencePath,
+    command.bitmapFontsPath,
   );
   const assetManifest = requireCompiledInputs(loaded, "compile");
   assertGeneratedFilesSafe(
@@ -229,6 +248,7 @@ const runCompile = async (
     loaded.base.project,
     assetManifest,
     loaded.sceneInstances.manifest,
+    loaded.bitmapFonts.manifest ?? undefined,
   );
   const report = {
     reportVersion: 1 as const,
@@ -242,6 +262,8 @@ const runCompile = async (
     artDirectionPath: loaded.art.artDirectionPath,
     artEvidencePath: loaded.art.artEvidencePath,
     artProfile: loaded.art.manifest?.profile.preset ?? null,
+    bitmapFontsPath: loaded.bitmapFonts.path,
+    bitmapFontCount: loaded.bitmapFonts.manifest?.fonts.length ?? 0,
     outputPath: command.outputPath,
     diagnostics: loaded.diagnostics,
   };
@@ -267,6 +289,9 @@ const runCompile = async (
     ...(loaded.art.manifest
       ? [`Art profile: ${loaded.art.manifest.profile.preset}`]
       : []),
+    ...(loaded.bitmapFonts.manifest
+      ? [`Bitmap fonts: ${loaded.bitmapFonts.manifest.fonts.length}`]
+      : []),
     ...(command.reportPath ? [`Report: ${resolve(command.reportPath)}`] : []),
   ].join("\n");
   writeResult(environment, command.format, report, human);
@@ -283,6 +308,7 @@ const runPackage = async (
     command.sceneInstancesPath,
     command.artDirectionPath,
     command.artEvidencePath,
+    command.bitmapFontsPath,
   );
   const assetManifest = requireCompiledInputs(loaded, "package");
   if (!loaded.base.manifestPath) {
@@ -294,6 +320,7 @@ const runPackage = async (
     loaded.base.project,
     assetManifest,
     loaded.sceneInstances.manifest,
+    loaded.bitmapFonts.manifest ?? undefined,
   );
   const artifacts = await readVerifiedRuntimeOutputs(
     loaded.base.manifestPath,
@@ -318,6 +345,8 @@ const runPackage = async (
     artDirectionPath: loaded.art.artDirectionPath,
     artEvidencePath: loaded.art.artEvidencePath,
     artProfile: loaded.art.manifest?.profile.preset ?? null,
+    bitmapFontsPath: loaded.bitmapFonts.path,
+    bitmapFontCount: loaded.bitmapFonts.manifest?.fonts.length ?? 0,
     fileCount: release.files.length,
     diagnostics: loaded.diagnostics,
   };
@@ -329,6 +358,9 @@ const runPackage = async (
     `Release fingerprint: ${release.fingerprint}`,
     ...(loaded.art.manifest
       ? [`Art profile: ${loaded.art.manifest.profile.preset}`]
+      : []),
+    ...(loaded.bitmapFonts.manifest
+      ? [`Bitmap fonts: ${loaded.bitmapFonts.manifest.fonts.length}`]
       : []),
   ].join("\n");
   writeResult(environment, command.format, report, human);
