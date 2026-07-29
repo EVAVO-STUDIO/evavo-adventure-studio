@@ -5,10 +5,7 @@ import {
   type CompiledAssetRecord,
   type CompiledSourceFile,
 } from "@evavo/adventure-asset-contract";
-import type {
-  Asset,
-  Id,
-} from "@evavo/adventure-project-schema";
+import type { Asset, Id } from "@evavo/adventure-project-schema";
 import type { CompiledAtlas } from "./atlas-compiler.js";
 import {
   canonicalStringify,
@@ -19,7 +16,7 @@ import {
 const assertAssetKind = <T extends Asset["kind"]>(
   asset: Asset,
   kind: T,
-): void => {
+): asserts asset is Asset & { readonly kind: T } => {
   if (asset.kind !== kind) {
     throw new TypeError(
       `Asset '${asset.id}' has kind '${asset.kind}', expected '${kind}'.`,
@@ -31,7 +28,7 @@ export const createImageAssetRecord = (
   asset: Asset,
   compiled: CompiledImage,
   runtimePath: string,
-): CompiledAssetRecord => {
+): Extract<CompiledAssetRecord, { readonly kind: "image" }> => {
   assertAssetKind(asset, "image");
   if (compiled.manifest.assetId !== asset.id) {
     throw new Error(
@@ -65,7 +62,7 @@ export const createImageAssetRecord = (
       palette: compiled.manifest.output.palette,
       colourCount: compiled.manifest.output.colourCount,
     },
-  });
+  }) as Extract<CompiledAssetRecord, { readonly kind: "image" }>;
 };
 
 export interface SpritesheetAssetRecordOptions {
@@ -86,7 +83,7 @@ export const createSpritesheetAssetRecord = (
   asset: Asset,
   compiled: CompiledAtlas,
   options: SpritesheetAssetRecordOptions,
-): CompiledAssetRecord => {
+): Extract<CompiledAssetRecord, { readonly kind: "spritesheet" }> => {
   assertAssetKind(asset, "spritesheet");
   const manifestFileName =
     options.manifestFileName ?? `${asset.id}.atlas.json`;
@@ -131,30 +128,47 @@ export const createSpritesheetAssetRecord = (
         padding: frame.padding,
       })),
     },
-  });
+  }) as Extract<CompiledAssetRecord, { readonly kind: "spritesheet" }>;
 };
 
-const canonicalAssetRecord = (asset: CompiledAssetRecord): CompiledAssetRecord => ({
-  ...asset,
-  sourceFiles: [...asset.sourceFiles].sort((left, right) =>
-    left.path.localeCompare(right.path),
-  ),
-  outputFiles: [...asset.outputFiles].sort((left, right) =>
-    left.role.localeCompare(right.role),
-  ),
-  metadata:
-    asset.metadata.kind === "spritesheet"
-      ? {
-          ...asset.metadata,
-          pages: [...asset.metadata.pages].sort((left, right) =>
-            left.outputRole.localeCompare(right.outputRole),
-          ),
-          frames: [...asset.metadata.frames].sort((left, right) =>
-            left.frameId.localeCompare(right.frameId),
-          ),
-        }
-      : asset.metadata,
-});
+const sortSourceFiles = (
+  files: readonly CompiledSourceFile[],
+): readonly CompiledSourceFile[] =>
+  [...files].sort((left, right) => left.path.localeCompare(right.path));
+
+const sortOutputFiles = (
+  files: CompiledAssetRecord["outputFiles"],
+): CompiledAssetRecord["outputFiles"] =>
+  [...files].sort((left, right) => {
+    const roleDifference = left.role.localeCompare(right.role);
+    return roleDifference !== 0
+      ? roleDifference
+      : left.runtimePath.localeCompare(right.runtimePath);
+  });
+
+const canonicalAssetRecord = (asset: CompiledAssetRecord): CompiledAssetRecord => {
+  const sourceFiles = sortSourceFiles(asset.sourceFiles);
+  const outputFiles = sortOutputFiles(asset.outputFiles);
+
+  if (asset.kind === "spritesheet") {
+    return {
+      ...asset,
+      sourceFiles,
+      outputFiles,
+      metadata: {
+        ...asset.metadata,
+        pages: [...asset.metadata.pages].sort((left, right) =>
+          left.outputRole.localeCompare(right.outputRole),
+        ),
+        frames: [...asset.metadata.frames].sort((left, right) =>
+          left.frameId.localeCompare(right.frameId),
+        ),
+      },
+    };
+  }
+
+  return { ...asset, sourceFiles, outputFiles };
+};
 
 export const createAssetBuildManifest = async (
   projectId: Id<"project">,
