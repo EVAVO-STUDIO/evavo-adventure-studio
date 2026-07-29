@@ -7,6 +7,7 @@ on:
       - "packages/dialogue-editor-core/**"
       - "packages/sequence-editor-core/**"
       - "packages/narrative-library-editor-core/**"
+      - "packages/animation-editor-core/**"
       - "packages/project-editor-core/**"
       - "packages/editor-core/**"
       - "apps/studio/**"
@@ -18,6 +19,7 @@ on:
       - "packages/dialogue-editor-core/**"
       - "packages/sequence-editor-core/**"
       - "packages/narrative-library-editor-core/**"
+      - "packages/animation-editor-core/**"
       - "packages/project-editor-core/**"
       - "packages/editor-core/**"
       - "apps/studio/**"
@@ -70,6 +72,7 @@ jobs:
           packages/dialogue-editor-core/tests
           packages/sequence-editor-core/tests
           packages/narrative-library-editor-core/tests
+          packages/animation-editor-core/tests
           apps/studio/tests
           apps/timeline-lab/tests
 
