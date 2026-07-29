@@ -14,6 +14,7 @@ import {
   sequenceSchema,
 } from "@evavo/adventure-project-schema";
 import { sceneInstanceManifestSchema } from "@evavo/adventure-scene-instances";
+import { uiSkinManifestSchema } from "@evavo/adventure-ui-skin";
 import {
   RuntimeBitmapFontValidationError,
   validateRuntimeBitmapFonts,
@@ -22,6 +23,10 @@ import {
   RuntimeSceneInstanceValidationError,
   validateRuntimeSceneInstances,
 } from "./instance-validation.js";
+import {
+  RuntimeUiSkinValidationError,
+  validateRuntimeUiSkins,
+} from "./ui-validation.js";
 import {
   RuntimeBundleValidationError,
   validateRuntimeBundleSemantics,
@@ -72,6 +77,7 @@ export const runtimeBundleSchema = z
     sequences: z.array(compiledSequenceSchema),
     sceneInstances: sceneInstanceManifestSchema.optional(),
     bitmapFonts: bitmapFontManifestSchema.optional(),
+    uiSkins: uiSkinManifestSchema.optional(),
   })
   .strict();
 export type RuntimeBundle = z.infer<typeof runtimeBundleSchema>;
@@ -90,6 +96,12 @@ export const parseRuntimeBundle = (input: unknown): RuntimeBundle => {
   if (bitmapFontIssues.length > 0) {
     throw new RuntimeBitmapFontValidationError(bitmapFontIssues);
   }
+  const uiSkinIssues = validateRuntimeUiSkins(bundle).filter(
+    (issue) => issue.severity === "error",
+  );
+  if (uiSkinIssues.length > 0) {
+    throw new RuntimeUiSkinValidationError(uiSkinIssues);
+  }
   if (bundle.bitmapFonts) {
     registerBitmapFontsForAssetCollection(bundle.assets, bundle.bitmapFonts);
   }
@@ -98,4 +110,5 @@ export const parseRuntimeBundle = (input: unknown): RuntimeBundle => {
 
 export * from "./font-validation.js";
 export * from "./instance-validation.js";
+export * from "./ui-validation.js";
 export * from "./validation.js";
