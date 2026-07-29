@@ -11,6 +11,10 @@
     "./command-schema": {
       "types": "./dist/src/command-schema.d.ts",
       "import": "./dist/src/command-schema.js"
+    },
+    "./evidence": {
+      "types": "./dist/src/evidence.d.ts",
+      "import": "./dist/src/evidence.js"
     }
   },
   "files": ["dist"],
