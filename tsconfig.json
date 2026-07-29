@@ -4,6 +4,7 @@
     { "path": "packages/project-schema" },
     { "path": "packages/core" },
     { "path": "packages/scene" },
+    { "path": "packages/interaction" },
     { "path": "packages/render-contract" },
     { "path": "packages/validation" }
   ]
