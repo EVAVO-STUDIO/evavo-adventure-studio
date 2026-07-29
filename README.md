@@ -14,26 +14,40 @@ The project is designed around the production grammar of classic Sierra, LucasAr
 
 ## Repository direction
 
-The initial foundation is a TypeScript monorepo with a renderer-independent domain engine. A web-based editor and preview runtime will sit on top of the same project model. Platform adapters can later target desktop, web and packaged game builds without changing authored content.
+The foundation is a TypeScript monorepo with a renderer-independent domain engine. A React and Vite authoring studio, browser player, PixiJS WebGL renderer and optional Tauri desktop shell sit on top of the same compiled project and runtime contracts.
 
-## First milestone
+Source projects compile into deterministic runtime bundles. The editor, renderer and platform shell are replaceable clients of the canonical schemas and services rather than owners of game data.
 
-The first milestone establishes:
+## Foundation specifications
 
-1. canonical project and scene schemas;
-2. deterministic runtime state and commands;
-3. depth, scale and occlusion rules;
-4. cursor and verb resolution;
-5. dialogue, inventory and score contracts;
-6. validation fixtures and an example scene;
-7. editor and renderer adapter boundaries.
+- [Architecture](docs/architecture.md)
+- [Technology stack](docs/technology-stack.md)
+- [Authentic pixel rendering](docs/pixel-rendering.md)
+- [Project format and compilation](docs/project-format.md)
+- [Implementation roadmap](docs/foundation-roadmap.md)
+
+## First playable milestone
+
+The first milestone is a small five-room mystery vignette that proves:
+
+1. canonical project schemas and migrations;
+2. deterministic runtime commands, saves and replays;
+3. navigation, depth, scale and partial occlusion;
+4. authentic native-resolution rendering and sprite timing;
+5. verbs, cursors, dialogue, inventory and score policies;
+6. skippable in-scene cinematics with equivalent completion state;
+7. validation fixtures, a rendering laboratory and compiled exports;
+8. browser and Windows development players.
 
 ## Development
 
+The repository pins Node.js 24 LTS and pnpm 11.
+
 ```powershell
-npm install
-npm run typecheck
-npm test
+corepack enable
+corepack prepare pnpm@11.17.0 --activate
+pnpm install
+pnpm check
 ```
 
-The repository is in active development.
+The repository is in active development. Builds and tests must only be reported after they have been executed against a checked-out workspace.
