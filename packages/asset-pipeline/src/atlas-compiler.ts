@@ -69,6 +69,8 @@ export interface AtlasManifest {
 export interface CompiledAtlas {
   readonly pages: readonly AtlasPageArtifact[];
   readonly manifest: AtlasManifest;
+  readonly manifestData: Uint8Array;
+  readonly manifestSha256: string;
 }
 
 const canonicalize = (value: unknown): unknown => {
@@ -91,7 +93,7 @@ const canonicalize = (value: unknown): unknown => {
   return value;
 };
 
-const canonicalStringify = (value: unknown): string => {
+export const canonicalAtlasStringify = (value: unknown): string => {
   const output = JSON.stringify(canonicalize(value));
   if (output === undefined) {
     throw new TypeError("Atlas manifest cannot be represented as canonical JSON.");
@@ -286,12 +288,21 @@ export const compileAtlas = async (
     })),
     frames: framesManifest,
   };
-  const sha256 = await sha256Hex(
-    new TextEncoder().encode(canonicalStringify(manifestWithoutHash)),
+  const semanticSha256 = await sha256Hex(
+    new TextEncoder().encode(canonicalAtlasStringify(manifestWithoutHash)),
+  );
+  const manifest: AtlasManifest = {
+    ...manifestWithoutHash,
+    sha256: semanticSha256,
+  };
+  const manifestData = new TextEncoder().encode(
+    `${canonicalAtlasStringify(manifest)}\n`,
   );
 
   return {
     pages,
-    manifest: { ...manifestWithoutHash, sha256 },
+    manifest,
+    manifestData,
+    manifestSha256: await sha256Hex(manifestData),
   };
 };
