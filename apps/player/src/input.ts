@@ -49,9 +49,6 @@ export interface SoftwareCursorState {
 const renderNodeId = (value: string): Id<"render-node"> =>
   value as Id<"render-node">;
 
-const actorInstanceId = (value: string): Id<"actor-instance"> =>
-  value as Id<"actor-instance">;
-
 export const selectControlledActorInstance = (
   bundle: Pick<RuntimeBundle, "startSceneId" | "sceneInstances">,
   requestedActorInstanceId: string | null,
@@ -211,8 +208,24 @@ export const createSoftwareCursorNodes = (
 
   if (state.cursorId === "walk") {
     return [
-      cursorRectangle("cursor.walk.outline.horizontal", x - 5, y - 1, 11, 3, outline, 0),
-      cursorRectangle("cursor.walk.outline.vertical", x - 1, y - 5, 3, 11, outline, 1),
+      cursorRectangle(
+        "cursor.walk.outline.horizontal",
+        x - 5,
+        y - 1,
+        11,
+        3,
+        outline,
+        0,
+      ),
+      cursorRectangle(
+        "cursor.walk.outline.vertical",
+        x - 1,
+        y - 5,
+        3,
+        11,
+        outline,
+        1,
+      ),
       cursorRectangle("cursor.walk.horizontal", x - 4, y, 9, 1, color, 2),
       cursorRectangle("cursor.walk.vertical", x, y - 4, 1, 9, color, 3),
       cursorRectangle("cursor.walk.center", x, y, 1, 1, 0xff244e, 4),
@@ -220,8 +233,24 @@ export const createSoftwareCursorNodes = (
   }
 
   return [
-    cursorRectangle("cursor.action.outline.shaft", x - 1, y - 1, 3, 10, outline, 0),
-    cursorRectangle("cursor.action.outline.head", x - 1, y - 1, 8, 3, outline, 1),
+    cursorRectangle(
+      "cursor.action.outline.shaft",
+      x - 1,
+      y - 1,
+      3,
+      10,
+      outline,
+      0,
+    ),
+    cursorRectangle(
+      "cursor.action.outline.head",
+      x - 1,
+      y - 1,
+      8,
+      3,
+      outline,
+      1,
+    ),
     cursorRectangle("cursor.action.shaft", x, y, 1, 8, color, 2),
     cursorRectangle("cursor.action.head.horizontal", x, y, 6, 1, color, 3),
     cursorRectangle("cursor.action.head.vertical", x, y, 1, 6, color, 4),
@@ -244,5 +273,3 @@ export const walkDestinationForTarget = (
   target: ResolvedSceneObjectHotspot | null,
   worldPoint: Point,
 ): Point | null => (target ? target.hotspot.walkTo ?? null : worldPoint);
-
-export const castActorInstanceId = actorInstanceId;
