@@ -11,6 +11,10 @@
     "./compose": {
       "types": "./dist/src/compose.d.ts",
       "import": "./dist/src/compose.js"
+    },
+    "./compiled-mapping": {
+      "types": "./dist/src/compiled-mapping.d.ts",
+      "import": "./dist/src/compiled-mapping.js"
     }
   },
   "files": ["dist"],
@@ -19,6 +23,7 @@
     "typecheck": "tsc -b --pretty false"
   },
   "dependencies": {
+    "@evavo/adventure-asset-contract": "workspace:*",
     "@evavo/adventure-bitmap-font": "workspace:*",
     "@evavo/adventure-project-schema": "workspace:*",
     "@evavo/adventure-render-contract": "workspace:*",
