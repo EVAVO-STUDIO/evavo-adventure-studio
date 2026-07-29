@@ -1,0 +1,21 @@
+packages:
+  - "apps/*"
+  - "packages/*"
+  - "tools/*"
+
+catalog:
+  "@biomejs/biome": 2.5.5
+  "@xyflow/react": 12.11.2
+  ajv: 8.20.0
+  pixi.js: 8.19.0
+  react: 19.2.8
+  react-dom: 19.2.8
+  typescript: 7.0.2
+  vite: 8.1.5
+  vitest: 4.1.10
+  zod: 4.4.3
+
+linkWorkspacePackages: false
+saveWorkspaceProtocol: rolling
+sharedWorkspaceLockfile: true
+disallowWorkspaceCycles: true
