@@ -9,20 +9,22 @@
     "pnpm": ">=11.17.0 <12"
   },
   "scripts": {
-    "build": "pnpm run build:types && pnpm run build:player",
+    "build": "pnpm run build:types && pnpm run build:player && pnpm run build:studio",
     "build:types": "tsc -b",
     "build:player": "pnpm --filter @evavo/adventure-player build",
+    "build:studio": "pnpm --filter @evavo/adventure-studio-app build",
     "build:cli": "pnpm --filter @evavo/adventure-cli build",
     "clean": "tsc -b --clean",
     "dev:player": "pnpm --filter @evavo/adventure-player dev",
+    "dev:studio": "pnpm --filter @evavo/adventure-studio-app dev",
     "cli": "node tools/cli/dist/src/index.js",
     "typecheck": "tsc -b --pretty false",
     "test": "vitest run",
     "test:watch": "vitest",
     "lint": "biome lint .",
     "format": "biome format --write .",
-    "check": "biome check . && tsc -b --pretty false && vitest run && pnpm run build:player",
-    "check:ci": "biome ci . && tsc -b --pretty false && vitest run && pnpm run build:player"
+    "check": "biome check . && tsc -b --pretty false && vitest run && pnpm run build:player && pnpm run build:studio",
+    "check:ci": "biome ci . && tsc -b --pretty false && vitest run && pnpm run build:player && pnpm run build:studio"
   },
   "devDependencies": {
     "@biomejs/biome": "2.5.5",
