@@ -63,22 +63,23 @@ export const validateCompiledObjectVisualMappings = (
 
   sceneInstances.objectDefinitions.forEach((definition, definitionIndex) => {
     definition.states.forEach((state, stateIndex) => {
-      if (!state.visual) {
+      const visual = state.visual;
+      if (!visual) {
         return;
       }
       const path = `objectDefinitions[${definitionIndex}].states[${stateIndex}].visual`;
-      const asset = assetsById.get(state.visual.assetId);
+      const asset = assetsById.get(visual.assetId);
       if (!asset) {
         issue(
           issues,
           "missing-compiled-object-asset",
           `${path}.assetId`,
-          `Object state '${state.id}' has no compiled asset '${state.visual.assetId}'.`,
+          `Object state '${state.id}' has no compiled asset '${visual.assetId}'.`,
         );
         return;
       }
 
-      if (state.visual.kind === "image") {
+      if (visual.kind === "image") {
         if (asset.kind !== "image") {
           issue(
             issues,
@@ -101,22 +102,22 @@ export const validateCompiledObjectVisualMappings = (
       }
 
       const compiledFrame = asset.metadata.frames.find(
-        (frame) => frame.frameId === state.visual?.frameId,
+        (frame) => frame.frameId === visual.frameId,
       );
       if (!compiledFrame) {
         issue(
           issues,
           "missing-compiled-object-frame",
           `${path}.frameId`,
-          `Object state '${state.id}' frame '${state.visual.frameId}' is missing from '${asset.assetId}'.`,
+          `Object state '${state.id}' frame '${visual.frameId}' is missing from '${asset.assetId}'.`,
         );
         return;
       }
 
       if (
-        !sameRectangle(compiledFrame.sourceRect, state.visual.sourceRect) ||
-        !sameSize(compiledFrame.originalSize, state.visual.sourceSize) ||
-        !samePoint(compiledFrame.trimOffset, state.visual.trimOffset)
+        !sameRectangle(compiledFrame.sourceRect, visual.sourceRect) ||
+        !sameSize(compiledFrame.originalSize, visual.sourceSize) ||
+        !samePoint(compiledFrame.trimOffset, visual.trimOffset)
       ) {
         issue(
           issues,
