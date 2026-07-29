@@ -27,6 +27,7 @@ export interface PixiTextureResolver {
     assetId: Id<"asset">,
     frameId?: Id<"sprite-frame"> | null,
   ): Texture | null;
+  getBitmapFontResolver?(): BitmapFontResolver | null;
 }
 
 export interface PixiRendererOptions {
@@ -184,7 +185,10 @@ export class PixiWebGLRenderer implements RendererAdapter {
 
   constructor(options: PixiRendererOptions) {
     this.textures = options.textures;
-    this.bitmapFonts = options.bitmapFonts ?? null;
+    this.bitmapFonts =
+      options.bitmapFonts ??
+      options.textures.getBitmapFontResolver?.() ??
+      null;
   }
 
   async initialize(host: RendererHost, canvas: NativeCanvas): Promise<void> {
