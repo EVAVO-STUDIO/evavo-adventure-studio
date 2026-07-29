@@ -7,6 +7,10 @@
     ".": {
       "types": "./dist/src/index.d.ts",
       "import": "./dist/src/index.js"
+    },
+    "./navigation": {
+      "types": "./dist/src/navigation.d.ts",
+      "import": "./dist/src/navigation.js"
     }
   },
   "files": ["dist"],
