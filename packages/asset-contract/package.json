@@ -11,6 +11,10 @@
     "./portable-path": {
       "types": "./dist/src/portable-path.d.ts",
       "import": "./dist/src/portable-path.js"
+    },
+    "./frame-mapping": {
+      "types": "./dist/src/frame-mapping.d.ts",
+      "import": "./dist/src/frame-mapping.js"
     }
   },
   "files": ["dist"],
