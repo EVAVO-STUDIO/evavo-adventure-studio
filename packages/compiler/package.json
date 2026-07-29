@@ -24,6 +24,7 @@
   },
   "dependencies": {
     "@evavo/adventure-asset-contract": "workspace:*",
+    "@evavo/adventure-bitmap-font": "workspace:*",
     "@evavo/adventure-project-schema": "workspace:*",
     "@evavo/adventure-runtime-bundle": "workspace:*",
     "@evavo/adventure-scene-instances": "workspace:*",
