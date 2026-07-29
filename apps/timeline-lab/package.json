@@ -1,0 +1,24 @@
+{
+  "name": "@evavo/adventure-timeline-lab",
+  "version": "0.1.0",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "dev": "vite --port 5175",
+    "build": "vite build",
+    "preview": "vite preview --port 5175",
+    "typecheck": "tsc -b --pretty false"
+  },
+  "dependencies": {
+    "@evavo/adventure-project-schema": "workspace:*",
+    "@evavo/adventure-sequence-editor-core": "workspace:*",
+    "react": "catalog:",
+    "react-dom": "catalog:"
+  },
+  "devDependencies": {
+    "@types/react": "catalog:",
+    "@types/react-dom": "catalog:",
+    "vite": "catalog:",
+    "vitest": "catalog:"
+  }
+}
