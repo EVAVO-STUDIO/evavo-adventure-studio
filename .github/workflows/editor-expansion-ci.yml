@@ -100,11 +100,10 @@ jobs:
           packages/compiler/tests/bitmap-font-compilation.test.ts
           packages/runtime-bundle/tests/bitmap-font-runtime.test.ts
           packages/renderer-pixi/tests
-          apps/player/tests/runtime-renderer.test.ts
+          apps/player/tests
           apps/studio/tests
           apps/timeline-lab/tests
-          tools/cli/tests/arguments.test.ts
-          tools/cli/tests/font-inputs.test.ts
+          tools/cli/tests
 
       - name: Build browser player
         run: pnpm --filter @evavo/adventure-player build
