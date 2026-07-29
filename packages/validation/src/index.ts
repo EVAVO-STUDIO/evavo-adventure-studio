@@ -1,9 +1,14 @@
 import type {
   Action,
+  Actor,
   AdventureProject,
+  Condition,
+  DialogueGraph,
   Id,
   Polygon,
   Scene,
+  Sequence,
+  SequenceCue,
 } from "@evavo/adventure-project-schema";
 import { pointInPolygon } from "@evavo/adventure-scene";
 
@@ -19,13 +24,24 @@ export type ValidationCode =
   | "missing-entrance"
   | "missing-actor"
   | "missing-frame"
+  | "missing-interaction"
+  | "missing-dialogue-choice"
+  | "missing-dialogue"
+  | "missing-dialogue-node"
+  | "missing-sequence"
   | "invalid-walk-target"
   | "degenerate-polygon"
   | "invalid-depth-band"
   | "overlapping-depth-bands"
   | "invalid-sprite-trim"
+  | "invalid-animation-state"
   | "conflicting-score-award"
+  | "conflicting-dialogue-transition"
   | "unreachable-scene"
+  | "unreachable-dialogue-node"
+  | "invalid-sequence-timing"
+  | "invalid-skip-boundary"
+  | "invalid-palette-range"
   | "linear-pixel-sampling"
   | "fractional-presentation-scale";
 
@@ -117,7 +133,12 @@ interface ValidationContext {
   readonly assetIds: ReadonlySet<string>;
   readonly itemIds: ReadonlySet<string>;
   readonly actorIds: ReadonlySet<string>;
+  readonly actorsById: ReadonlyMap<string, Actor>;
+  readonly interactionIds: ReadonlySet<string>;
+  readonly dialogueChoiceIds: ReadonlySet<string>;
   readonly scenesById: ReadonlyMap<string, Scene>;
+  readonly dialoguesById: ReadonlyMap<string, DialogueGraph>;
+  readonly sequencesById: ReadonlyMap<string, Sequence>;
   readonly adjacency: Map<string, Set<string>>;
   readonly scoreAwards: Map<string, { readonly points: number; readonly path: string }>;
 }
@@ -138,10 +159,64 @@ const requireAsset = (
   }
 };
 
+const validateConditionReferences = (
+  condition: Condition,
+  path: string,
+  context: ValidationContext,
+): void => {
+  switch (condition.kind) {
+    case "always":
+    case "flag":
+    case "variable":
+      return;
+    case "has-item":
+      if (!context.itemIds.has(condition.itemId)) {
+        addIssue(
+          context.issues,
+          "error",
+          "missing-item",
+          path,
+          `Inventory item '${condition.itemId}' is not declared.`,
+        );
+      }
+      return;
+    case "interaction-used":
+      if (!context.interactionIds.has(condition.interactionId)) {
+        addIssue(
+          context.issues,
+          "error",
+          "missing-interaction",
+          path,
+          `Interaction '${condition.interactionId}' is not declared.`,
+        );
+      }
+      return;
+    case "dialogue-choice-used":
+      if (!context.dialogueChoiceIds.has(condition.choiceId)) {
+        addIssue(
+          context.issues,
+          "error",
+          "missing-dialogue-choice",
+          path,
+          `Dialogue choice '${condition.choiceId}' is not declared.`,
+        );
+      }
+      return;
+    case "all":
+    case "any":
+      condition.conditions.forEach((child, index) =>
+        validateConditionReferences(child, `${path}.conditions[${index}]`, context),
+      );
+      return;
+    case "not":
+      validateConditionReferences(condition.condition, `${path}.condition`, context);
+  }
+};
+
 const validateAction = (
   action: Action,
   path: string,
-  sourceSceneId: Id<"scene">,
+  sourceSceneId: Id<"scene"> | null,
   context: ValidationContext,
 ): void => {
   switch (action.kind) {
@@ -191,9 +266,11 @@ const validateAction = (
         );
       }
 
-      const destinations = context.adjacency.get(sourceSceneId) ?? new Set<string>();
-      destinations.add(action.sceneId);
-      context.adjacency.set(sourceSceneId, destinations);
+      if (sourceSceneId) {
+        const destinations = context.adjacency.get(sourceSceneId) ?? new Set<string>();
+        destinations.add(action.sceneId);
+        context.adjacency.set(sourceSceneId, destinations);
+      }
       return;
     }
     case "award-score": {
@@ -211,9 +288,42 @@ const validateAction = (
       }
       return;
     }
+    case "play-sequence":
+      if (!context.sequencesById.has(action.sequenceId)) {
+        addIssue(
+          context.issues,
+          "error",
+          "missing-sequence",
+          path,
+          `Sequence '${action.sequenceId}' is not declared.`,
+        );
+      }
+      return;
+    case "start-dialogue": {
+      const graph = context.dialoguesById.get(action.dialogueId);
+      if (!graph) {
+        addIssue(
+          context.issues,
+          "error",
+          "missing-dialogue",
+          path,
+          `Dialogue '${action.dialogueId}' is not declared.`,
+        );
+        return;
+      }
+      if (action.nodeId && !graph.nodes.some((node) => node.id === action.nodeId)) {
+        addIssue(
+          context.issues,
+          "error",
+          "missing-dialogue-node",
+          path,
+          `Dialogue node '${action.nodeId}' is not declared in '${action.dialogueId}'.`,
+        );
+      }
+      return;
+    }
     case "set-flag":
     case "set-variable":
-    case "play-sequence":
     case "set-object-state":
       return;
   }
@@ -241,6 +351,9 @@ const validateScene = (
     const areaPath = `${scenePath}.navigationAreas[${areaIndex}]`;
     registerId(context.ids, context.issues, area.id, `${areaPath}.id`);
     validatePolygon(area.shape, `${areaPath}.shape`, context.issues);
+    if (area.enabledWhen) {
+      validateConditionReferences(area.enabledWhen, `${areaPath}.enabledWhen`, context);
+    }
   });
 
   scene.depthBands.forEach((band, bandIndex) => {
@@ -326,6 +439,13 @@ const validateScene = (
           `Inventory item '${interaction.itemId}' is not declared.`,
         );
       }
+      if (interaction.when) {
+        validateConditionReferences(
+          interaction.when,
+          `${interactionPath}.when`,
+          context,
+        );
+      }
 
       interaction.actions.forEach((action, actionIndex) =>
         validateAction(
@@ -336,6 +456,284 @@ const validateScene = (
         ),
       );
     });
+  });
+};
+
+const validateDialogue = (
+  graph: DialogueGraph,
+  graphIndex: number,
+  context: ValidationContext,
+): void => {
+  const graphPath = `dialogues[${graphIndex}]`;
+  registerId(context.ids, context.issues, graph.id, `${graphPath}.id`);
+  const nodesById = new Map(graph.nodes.map((node) => [node.id as string, node]));
+
+  if (!nodesById.has(graph.startNodeId)) {
+    addIssue(
+      context.issues,
+      "error",
+      "missing-dialogue-node",
+      `${graphPath}.startNodeId`,
+      `Start node '${graph.startNodeId}' is not declared in dialogue '${graph.id}'.`,
+    );
+  }
+
+  graph.nodes.forEach((node, nodeIndex) => {
+    const nodePath = `${graphPath}.nodes[${nodeIndex}]`;
+    registerId(context.ids, context.issues, node.id, `${nodePath}.id`);
+
+    node.enterActions.forEach((action, actionIndex) =>
+      validateAction(action, `${nodePath}.enterActions[${actionIndex}]`, null, context),
+    );
+    node.exitActions.forEach((action, actionIndex) =>
+      validateAction(action, `${nodePath}.exitActions[${actionIndex}]`, null, context),
+    );
+
+    node.lines.forEach((line, lineIndex) => {
+      const linePath = `${nodePath}.lines[${lineIndex}]`;
+      registerId(context.ids, context.issues, line.id, `${linePath}.id`);
+      if (line.speakerId && !context.actorIds.has(line.speakerId)) {
+        addIssue(
+          context.issues,
+          "error",
+          "missing-actor",
+          `${linePath}.speakerId`,
+          `Dialogue speaker '${line.speakerId}' is not declared.`,
+        );
+      }
+    });
+
+    if (node.autoNextNodeId && !nodesById.has(node.autoNextNodeId)) {
+      addIssue(
+        context.issues,
+        "error",
+        "missing-dialogue-node",
+        `${nodePath}.autoNextNodeId`,
+        `Automatic next node '${node.autoNextNodeId}' is not declared in dialogue '${graph.id}'.`,
+      );
+    }
+
+    node.choices.forEach((choice, choiceIndex) => {
+      const choicePath = `${nodePath}.choices[${choiceIndex}]`;
+      registerId(context.ids, context.issues, choice.id, `${choicePath}.id`);
+
+      if (choice.visibleWhen) {
+        validateConditionReferences(
+          choice.visibleWhen,
+          `${choicePath}.visibleWhen`,
+          context,
+        );
+      }
+      if (choice.enabledWhen) {
+        validateConditionReferences(
+          choice.enabledWhen,
+          `${choicePath}.enabledWhen`,
+          context,
+        );
+      }
+      choice.actions.forEach((action, actionIndex) =>
+        validateAction(action, `${choicePath}.actions[${actionIndex}]`, null, context),
+      );
+
+      if (choice.nextNodeId && !nodesById.has(choice.nextNodeId)) {
+        addIssue(
+          context.issues,
+          "error",
+          "missing-dialogue-node",
+          `${choicePath}.nextNodeId`,
+          `Choice target '${choice.nextNodeId}' is not declared in dialogue '${graph.id}'.`,
+        );
+      }
+      if (choice.closeDialogue && choice.nextNodeId) {
+        addIssue(
+          context.issues,
+          "warning",
+          "conflicting-dialogue-transition",
+          choicePath,
+          `Choice '${choice.id}' closes the dialogue and also declares a next node; closure takes precedence.`,
+        );
+      }
+    });
+  });
+
+  if (!nodesById.has(graph.startNodeId)) {
+    return;
+  }
+
+  const reachable = new Set<string>();
+  const pending = [graph.startNodeId as string];
+  while (pending.length > 0) {
+    const nodeId = pending.shift();
+    if (!nodeId || reachable.has(nodeId)) {
+      continue;
+    }
+    reachable.add(nodeId);
+    const node = nodesById.get(nodeId);
+    if (!node) {
+      continue;
+    }
+    if (node.autoNextNodeId) {
+      pending.push(node.autoNextNodeId);
+    }
+    node.choices.forEach((choice) => {
+      if (!choice.closeDialogue && choice.nextNodeId) {
+        pending.push(choice.nextNodeId);
+      }
+    });
+  }
+
+  graph.nodes.forEach((node, nodeIndex) => {
+    if (!reachable.has(node.id)) {
+      addIssue(
+        context.issues,
+        "warning",
+        "unreachable-dialogue-node",
+        `${graphPath}.nodes[${nodeIndex}]`,
+        `Dialogue node '${node.id}' is unreachable from '${graph.startNodeId}'.`,
+      );
+    }
+  });
+};
+
+const cueEndTick = (cue: SequenceCue): number => {
+  switch (cue.kind) {
+    case "actor-move":
+    case "camera-shot":
+      return cue.atTick + cue.durationTicks;
+    case "speech":
+      return cue.atTick + (cue.durationTicks ?? 0);
+    case "story-action":
+    case "actor-animation":
+    case "sound":
+    case "stop-audio":
+    case "layer-visibility":
+    case "palette-cycle":
+      return cue.atTick;
+  }
+};
+
+const validateSequenceCue = (
+  cue: SequenceCue,
+  path: string,
+  sequence: Sequence,
+  context: ValidationContext,
+): void => {
+  if (cueEndTick(cue) > sequence.durationTicks) {
+    addIssue(
+      context.issues,
+      "error",
+      "invalid-sequence-timing",
+      path,
+      `Cue ends at tick ${cueEndTick(cue)}, after sequence '${sequence.id}' ends at ${sequence.durationTicks}.`,
+    );
+  }
+
+  switch (cue.kind) {
+    case "story-action":
+      validateAction(cue.action, `${path}.action`, null, context);
+      return;
+    case "speech":
+      if (cue.speakerId && !context.actorIds.has(cue.speakerId)) {
+        addIssue(
+          context.issues,
+          "error",
+          "missing-actor",
+          `${path}.speakerId`,
+          `Sequence speaker '${cue.speakerId}' is not declared.`,
+        );
+      }
+      return;
+    case "actor-move":
+      if (!context.actorIds.has(cue.actorId)) {
+        addIssue(
+          context.issues,
+          "error",
+          "missing-actor",
+          `${path}.actorId`,
+          `Sequence actor '${cue.actorId}' is not declared.`,
+        );
+      }
+      return;
+    case "actor-animation": {
+      const actor = context.actorsById.get(cue.actorId);
+      if (!actor) {
+        addIssue(
+          context.issues,
+          "error",
+          "missing-actor",
+          `${path}.actorId`,
+          `Sequence actor '${cue.actorId}' is not declared.`,
+        );
+      } else if (!actor.animations.some((animation) => animation.state === cue.animationState)) {
+        addIssue(
+          context.issues,
+          "error",
+          "invalid-animation-state",
+          `${path}.animationState`,
+          `Actor '${cue.actorId}' has no animation state '${cue.animationState}'.`,
+        );
+      }
+      return;
+    }
+    case "sound":
+      requireAsset(context, cue.assetId, `${path}.assetId`);
+      return;
+    case "palette-cycle":
+      requireAsset(context, cue.paletteAssetId, `${path}.paletteAssetId`);
+      if (cue.rangeEnd < cue.rangeStart) {
+        addIssue(
+          context.issues,
+          "error",
+          "invalid-palette-range",
+          path,
+          `Palette range ${cue.rangeStart} to ${cue.rangeEnd} is reversed.`,
+        );
+      }
+      return;
+    case "camera-shot":
+    case "stop-audio":
+    case "layer-visibility":
+      return;
+  }
+};
+
+const validateSequence = (
+  sequence: Sequence,
+  sequenceIndex: number,
+  context: ValidationContext,
+): void => {
+  const sequencePath = `sequences[${sequenceIndex}]`;
+  registerId(context.ids, context.issues, sequence.id, `${sequencePath}.id`);
+
+  if (sequence.skip.safeAfterTick > sequence.durationTicks) {
+    addIssue(
+      context.issues,
+      "error",
+      "invalid-skip-boundary",
+      `${sequencePath}.skip.safeAfterTick`,
+      `Skip boundary ${sequence.skip.safeAfterTick} exceeds sequence duration ${sequence.durationTicks}.`,
+    );
+  }
+  sequence.skip.completionActions.forEach((action, actionIndex) =>
+    validateAction(
+      action,
+      `${sequencePath}.skip.completionActions[${actionIndex}]`,
+      null,
+      context,
+    ),
+  );
+
+  sequence.tracks.forEach((track, trackIndex) => {
+    const trackPath = `${sequencePath}.tracks[${trackIndex}]`;
+    registerId(context.ids, context.issues, track.id, `${trackPath}.id`);
+    track.cues.forEach((cue, cueIndex) =>
+      validateSequenceCue(
+        cue,
+        `${trackPath}.cues[${cueIndex}]`,
+        sequence,
+        context,
+      ),
+    );
   });
 };
 
@@ -368,7 +766,7 @@ const validateReachability = (context: ValidationContext): void => {
         "warning",
         "unreachable-scene",
         `scenes[${sceneIndex}]`,
-        `Scene '${scene.id}' is not reachable from start scene '${context.project.startSceneId}' through authored scene-change actions.`,
+        `Scene '${scene.id}' is not directly reachable from start scene '${context.project.startSceneId}' through authored scene-change actions.`,
       );
     }
   });
@@ -382,7 +780,28 @@ export const validateProjectSemantics = (
   const assetIds = new Set(project.assets.map((asset) => asset.id as string));
   const itemIds = new Set(project.inventoryItems.map((item) => item.id as string));
   const actorIds = new Set(project.actors.map((actor) => actor.id as string));
+  const actorsById = new Map(project.actors.map((actor) => [actor.id as string, actor]));
+  const interactionIds = new Set(
+    project.scenes.flatMap((scene) =>
+      scene.hotspots.flatMap((hotspot) =>
+        hotspot.interactions.map((interaction) => interaction.id as string),
+      ),
+    ),
+  );
+  const dialogueChoiceIds = new Set(
+    project.dialogues.flatMap((dialogue) =>
+      dialogue.nodes.flatMap((node) =>
+        node.choices.map((choice) => choice.id as string),
+      ),
+    ),
+  );
   const scenesById = new Map(project.scenes.map((scene) => [scene.id as string, scene]));
+  const dialoguesById = new Map(
+    project.dialogues.map((dialogue) => [dialogue.id as string, dialogue]),
+  );
+  const sequencesById = new Map(
+    project.sequences.map((sequence) => [sequence.id as string, sequence]),
+  );
 
   const context: ValidationContext = {
     project,
@@ -391,7 +810,12 @@ export const validateProjectSemantics = (
     assetIds,
     itemIds,
     actorIds,
+    actorsById,
+    interactionIds,
+    dialogueChoiceIds,
     scenesById,
+    dialoguesById,
+    sequencesById,
     adjacency: new Map(),
     scoreAwards: new Map(),
   };
@@ -453,6 +877,12 @@ export const validateProjectSemantics = (
 
   project.scenes.forEach((scene, sceneIndex) =>
     validateScene(scene, sceneIndex, context),
+  );
+  project.dialogues.forEach((dialogue, dialogueIndex) =>
+    validateDialogue(dialogue, dialogueIndex, context),
+  );
+  project.sequences.forEach((sequence, sequenceIndex) =>
+    validateSequence(sequence, sequenceIndex, context),
   );
 
   const startScene = scenesById.get(project.startSceneId);
