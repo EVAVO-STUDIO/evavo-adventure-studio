@@ -20,7 +20,9 @@ const canonicalize = (value: unknown): unknown => {
   if (value && typeof value === "object") {
     const source = value as Readonly<Record<string, unknown>>;
     const output: Record<string, unknown> = {};
-    for (const key of Object.keys(source).sort((left, right) => left.localeCompare(right))) {
+    for (const key of Object.keys(source).sort((left, right) =>
+      left.localeCompare(right),
+    )) {
       const child = source[key];
       if (child !== undefined) {
         output[key] = canonicalize(child);
@@ -48,6 +50,7 @@ const createFixture = async () => {
   const runtimePath = join(root, "build", "assets", "office.png");
   const outputPath = join(root, "dist", "game.bundle.json");
   const reportPath = join(root, "dist", "compile-report.json");
+  const releasePath = join(root, "release");
 
   const source = new TextEncoder().encode("authored-office-source");
   const output = new Uint8Array([137, 80, 78, 71, 13, 10, 26, 10]);
@@ -146,11 +149,14 @@ const createFixture = async () => {
   await writeJson(manifestPath, { ...manifestPayload, fingerprint });
 
   return {
+    root,
     projectPath,
     manifestPath,
     runtimePath,
+    runtimeBytes: output,
     outputPath,
     reportPath,
+    releasePath,
   };
 };
 
@@ -214,6 +220,99 @@ describe("cli runner", () => {
     );
   });
 
+  it("packages a clean release and removes stale target files", async () => {
+    const fixture = await createFixture();
+    await mkdir(fixture.releasePath, { recursive: true });
+    await writeFile(join(fixture.releasePath, "stale.txt"), "stale");
+    let stdout = "";
+
+    const exitCode = await runCli(
+      [
+        "package",
+        "--project",
+        fixture.projectPath,
+        "--asset-manifest",
+        fixture.manifestPath,
+        "--out",
+        fixture.releasePath,
+        "--json",
+      ],
+      {
+        stdout: (text) => {
+          stdout += text;
+        },
+        stderr: () => undefined,
+      },
+    );
+
+    expect(exitCode).toBe(0);
+    const report = JSON.parse(stdout) as {
+      readonly command: string;
+      readonly releaseFingerprint: string;
+      readonly fileCount: number;
+    };
+    expect(report.command).toBe("package");
+    expect(report.releaseFingerprint).toHaveLength(64);
+    expect(report.fileCount).toBe(3);
+
+    expect(
+      new Uint8Array(
+        await readFile(join(fixture.releasePath, "assets", "office.png")),
+      ),
+    ).toEqual(fixture.runtimeBytes);
+    const bundleText = await readFile(
+      join(fixture.releasePath, "game.bundle.json"),
+      "utf8",
+    );
+    expect(bundleText).not.toContain("office-master.png");
+    const releaseManifest = JSON.parse(
+      await readFile(
+        join(fixture.releasePath, "release.manifest.json"),
+        "utf8",
+      ),
+    ) as {
+      readonly fingerprint: string;
+      readonly bundle: { readonly sha256: string };
+      readonly files: readonly { readonly path: string }[];
+    };
+    expect(releaseManifest.fingerprint).toBe(report.releaseFingerprint);
+    expect(releaseManifest.bundle.sha256).toBe(
+      sha256(new TextEncoder().encode(bundleText)),
+    );
+    expect(releaseManifest.files.map((file) => file.path)).toEqual([
+      "assets/office.png",
+    ]);
+    await expect(
+      readFile(join(fixture.releasePath, "stale.txt")),
+    ).rejects.toMatchObject({ code: "ENOENT" });
+  });
+
+  it("refuses release directories that contain build inputs", async () => {
+    const fixture = await createFixture();
+    let stderr = "";
+
+    const exitCode = await runCli(
+      [
+        "package",
+        "--project",
+        fixture.projectPath,
+        "--asset-manifest",
+        fixture.manifestPath,
+        "--out",
+        fixture.root,
+      ],
+      {
+        stdout: () => undefined,
+        stderr: (text) => {
+          stderr += text;
+        },
+      },
+    );
+
+    expect(exitCode).toBe(2);
+    expect(stderr).toContain("contains input or evidence file");
+  });
+
   it("refuses changed runtime evidence", async () => {
     const fixture = await createFixture();
     await writeFile(fixture.runtimePath, new Uint8Array([1, 2, 3]));
@@ -243,5 +342,29 @@ describe("cli runner", () => {
     expect(report.diagnostics.map((diagnostic) => diagnostic.code)).toEqual(
       expect.arrayContaining(["byte-length-mismatch", "sha256-mismatch"]),
     );
+  });
+
+  it("returns machine-readable schema failures when requested", async () => {
+    const fixture = await createFixture();
+    await writeFile(fixture.projectPath, "{ not json");
+    let stdout = "";
+
+    const exitCode = await runCli(
+      ["validate", "--project", fixture.projectPath, "--json"],
+      {
+        stdout: (text) => {
+          stdout += text;
+        },
+        stderr: () => undefined,
+      },
+    );
+
+    expect(exitCode).toBe(1);
+    expect(JSON.parse(stdout)).toMatchObject({
+      command: "validate",
+      valid: false,
+      exitCode: 1,
+      diagnostics: [expect.objectContaining({ code: "invalid-json" })],
+    });
   });
 });
