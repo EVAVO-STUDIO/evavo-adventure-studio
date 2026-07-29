@@ -9,6 +9,7 @@
     { "path": "packages/dialogue" },
     { "path": "packages/sequence" },
     { "path": "packages/render-contract" },
+    { "path": "packages/frame-resolver" },
     { "path": "packages/validation" },
     { "path": "packages/compiler" }
   ]
