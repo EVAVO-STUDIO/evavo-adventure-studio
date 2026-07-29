@@ -1,3 +1,4 @@
+import { evaluateCondition } from "@evavo/adventure-core";
 import type { Actor, Id, Point } from "@evavo/adventure-project-schema";
 import type { RuntimeBundle } from "@evavo/adventure-runtime-bundle";
 import {
@@ -75,7 +76,10 @@ export type BeginActorMovementResult =
       readonly kind: "started";
       readonly state: NavigableRuntimeWorldState;
       readonly route: NavigationRoute;
-      readonly event: Extract<ActorMovementEvent, { readonly kind: "movement-started" }>;
+      readonly event: Extract<
+        ActorMovementEvent,
+        { readonly kind: "movement-started" }
+      >;
     }
   | {
       readonly kind: "already-there";
@@ -89,7 +93,10 @@ export type BeginActorMovementResult =
     }
   | {
       readonly kind: "unreachable";
-      readonly routeResult: Exclude<NavigationRouteResult, { readonly kind: "route" }>;
+      readonly routeResult: Exclude<
+        NavigationRouteResult,
+        { readonly kind: "route" }
+      >;
       readonly state: NavigableRuntimeWorldState;
     };
 
@@ -185,7 +192,9 @@ const resolveAnimationFacing = (
   if (available.has(currentFacing)) {
     return currentFacing;
   }
-  const first = [...available].sort((left, right) => left.localeCompare(right))[0];
+  const first = [...available].sort((left, right) =>
+    left.localeCompare(right),
+  )[0];
   if (!first) {
     throw new Error(
       `Actor '${actor.id}' has no '${animationState}' animation for movement.`,
@@ -195,11 +204,11 @@ const resolveAnimationFacing = (
 };
 
 const portalForSegment = (
-  compositionPortals: readonly SceneNavigationPortal[],
+  portals: readonly SceneNavigationPortal[],
   segment: NavigationRouteSegment,
 ): SceneNavigationPortal | null =>
   segment.portalId
-    ? compositionPortals.find((portal) => portal.id === segment.portalId) ?? null
+    ? portals.find((portal) => portal.id === segment.portalId) ?? null
     : null;
 
 const animationStateForSegment = (
@@ -264,9 +273,7 @@ const enabledPortals = (
     .filter(
       (portal) =>
         !portal.enabledWhen ||
-        // The condition evaluator is already used by scene visibility and is
-        // intentionally shared here so route availability is save/replay safe.
-        importConditionEvaluator(portal.enabledWhen, state),
+        evaluateCondition(portal.enabledWhen, state.story),
     )
     .map((portal) => ({
       id: portal.id,
@@ -278,21 +285,6 @@ const enabledPortals = (
       traversalCost: portal.traversalCost,
     }));
 };
-
-const importConditionEvaluator = (
-  condition: NonNullable<SceneNavigationPortal["enabledWhen"]>,
-  state: NavigableRuntimeWorldState,
-): boolean => {
-  // Kept behind a helper to make portal filtering easy to property-test.
-  const { evaluateCondition } = requireCoreConditionEvaluator();
-  return evaluateCondition(condition, state.story);
-};
-
-const requireCoreConditionEvaluator = (): typeof import("@evavo/adventure-core") =>
-  // This indirection is replaced by the static import during TypeScript output.
-  // It exists only to keep this helper's intent explicit.
-  // eslint-disable-next-line @typescript-eslint/no-require-imports
-  require("@evavo/adventure-core") as typeof import("@evavo/adventure-core");
 
 export const createInitialNavigableRuntimeWorldState = (
   bundle: RuntimeBundle,
@@ -329,7 +321,8 @@ export const beginActorMovement = (
     throw new Error(`Runtime scene '${authored.composition.sceneId}' is missing.`);
   }
   const areas = scene.navigationAreas.filter(
-    (area) => !area.enabledWhen || importConditionEvaluator(area.enabledWhen, state),
+    (area) =>
+      !area.enabledWhen || evaluateCondition(area.enabledWhen, state.story),
   );
   const routeResult = findNavigationRoute(
     runtime.position,
@@ -381,16 +374,39 @@ export const beginActorMovement = (
 };
 
 export const cancelActorMovement = (
+  bundle: RuntimeBundle,
   state: NavigableRuntimeWorldState,
   actorInstanceId: Id<"actor-instance">,
+  arrivalAnimationState = "idle",
 ): NavigableRuntimeWorldTransition => {
   if (!state.movements[actorInstanceId]) {
     return { state, animationEvents: [], movementEvents: [] };
   }
+  const actorRuntime = state.actorInstances[actorInstanceId];
+  if (!actorRuntime) {
+    throw new Error(`Actor instance '${actorInstanceId}' does not exist.`);
+  }
+  const actor = actorsById(bundle).get(actorRuntime.actorId);
+  if (!actor) {
+    throw new Error(`Actor '${actorRuntime.actorId}' does not exist.`);
+  }
+  const arrivalFacing = resolveAnimationFacing(
+    actor,
+    arrivalAnimationState,
+    actorRuntime.facing,
+    actorRuntime.facing,
+  );
+  const animated = setActorInstanceAnimation(
+    bundle,
+    state,
+    actorInstanceId,
+    arrivalAnimationState,
+    arrivalFacing,
+  );
   const movements = { ...state.movements };
   delete movements[actorInstanceId];
   return {
-    state: { ...state, movements },
+    state: { ...animated, movements },
     animationEvents: [],
     movementEvents: [{ kind: "movement-cancelled", actorInstanceId }],
   };
@@ -447,7 +463,8 @@ const advanceMovementOneTick = (
       };
       nextMovement = {
         ...nextMovement,
-        distanceAlongSegment: nextMovement.distanceAlongSegment + availableDistance,
+        distanceAlongSegment:
+          nextMovement.distanceAlongSegment + availableDistance,
       };
       availableDistance = 0;
       break;
@@ -477,13 +494,23 @@ const advanceMovementOneTick = (
           `Actor instance '${movement.actorInstanceId}' runtime state is missing.`,
         );
       }
+      const actor = actorsById(bundle).get(actorRuntime.actorId);
+      if (!actor) {
+        throw new Error(`Actor '${actorRuntime.actorId}' does not exist.`);
+      }
+      const arrivalFacing = resolveAnimationFacing(
+        actor,
+        movement.arrivalAnimationState,
+        actorRuntime.facing,
+        actorRuntime.facing,
+      );
       nextState = {
         ...setActorInstanceAnimation(
           bundle,
           nextState,
           movement.actorInstanceId,
           movement.arrivalAnimationState,
-          actorRuntime.facing,
+          arrivalFacing,
         ),
         movements: nextState.movements,
       };
