@@ -1,0 +1,28 @@
+{
+  "name": "@evavo/adventure-scene-runtime",
+  "version": "0.1.0",
+  "private": true,
+  "type": "module",
+  "exports": {
+    ".": {
+      "types": "./dist/src/index.d.ts",
+      "import": "./dist/src/index.js"
+    }
+  },
+  "files": ["dist"],
+  "scripts": {
+    "build": "tsc -b",
+    "typecheck": "tsc -b --pretty false"
+  },
+  "dependencies": {
+    "@evavo/adventure-animation": "workspace:*",
+    "@evavo/adventure-asset-contract": "workspace:*",
+    "@evavo/adventure-core": "workspace:*",
+    "@evavo/adventure-frame-resolver": "workspace:*",
+    "@evavo/adventure-project-schema": "workspace:*",
+    "@evavo/adventure-render-contract": "workspace:*",
+    "@evavo/adventure-runtime-bundle": "workspace:*",
+    "@evavo/adventure-scene": "workspace:*",
+    "@evavo/adventure-scene-instances": "workspace:*"
+  }
+}
