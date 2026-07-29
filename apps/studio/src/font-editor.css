@@ -1,0 +1,290 @@
+.font-app {
+  --font-accent: #64d8cb;
+  --font-accent-soft: rgb(100 216 203 / 14%);
+}
+
+.font-workspace-grid {
+  grid-template-columns: 230px minmax(480px, 1fr) 290px;
+}
+
+.font-toolbar-title {
+  display: flex;
+  min-width: 0;
+  flex: 1;
+  flex-direction: column;
+  padding: 0 14px;
+}
+
+.font-toolbar-title strong {
+  overflow: hidden;
+  color: #dfe3e7;
+  font-size: 11px;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.font-glyph-sidebar {
+  display: grid;
+  min-height: 0;
+  grid-template-rows: auto minmax(0, 1fr) auto;
+}
+
+.font-glyph-grid {
+  display: grid;
+  align-content: start;
+  grid-template-columns: repeat(5, minmax(0, 1fr));
+  gap: 5px;
+  overflow: auto;
+  padding: 10px;
+}
+
+.font-glyph-grid button {
+  display: grid;
+  min-width: 0;
+  aspect-ratio: 1;
+  place-items: center;
+  border: 1px solid #282c34;
+  border-radius: 3px;
+  background: #11131a;
+  color: #d5d8df;
+  cursor: pointer;
+}
+
+.font-glyph-grid button:hover,
+.font-glyph-grid button:focus-visible {
+  border-color: rgb(100 216 203 / 48%);
+  background: #171c22;
+  outline: none;
+}
+
+.font-glyph-grid button.is-active {
+  border-color: var(--font-accent);
+  background: var(--font-accent-soft);
+  box-shadow: inset 0 0 0 1px rgb(100 216 203 / 25%);
+  color: #f4ffff;
+}
+
+.font-glyph-grid strong {
+  font-family: "Courier New", monospace;
+  font-size: 17px;
+  line-height: 1;
+}
+
+.font-glyph-grid small {
+  color: #727984;
+  font-size: 8px;
+}
+
+.font-canvas-column {
+  display: grid;
+  min-height: 0;
+  align-content: start;
+  gap: 10px;
+  overflow: auto;
+  padding: 12px;
+  background:
+    linear-gradient(rgb(255 255 255 / 2%) 1px, transparent 1px),
+    linear-gradient(90deg, rgb(255 255 255 / 2%) 1px, transparent 1px),
+    #090b10;
+  background-size: 16px 16px;
+}
+
+.font-metrics-card,
+.font-preview-card,
+.font-kerning-panel {
+  border: 1px solid #252a32;
+  border-radius: 5px;
+  background: rgb(15 17 23 / 96%);
+  box-shadow: 0 12px 30px rgb(0 0 0 / 20%);
+}
+
+.font-section-heading {
+  display: flex;
+  min-height: 54px;
+  align-items: center;
+  justify-content: space-between;
+  gap: 16px;
+  padding: 10px 12px;
+  border-bottom: 1px solid #242831;
+}
+
+.font-section-heading h3 {
+  margin: 3px 0 0;
+  color: #e3e6eb;
+  font-size: 13px;
+}
+
+.font-section-heading code,
+.font-section-heading > span {
+  overflow: hidden;
+  max-width: 48%;
+  color: #747b87;
+  font-size: 9px;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.font-metric-grid {
+  display: grid;
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+  gap: 8px;
+  padding: 12px;
+}
+
+.font-preview-controls {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) 150px;
+  gap: 10px;
+  padding: 10px 12px;
+  border-bottom: 1px solid #20242c;
+}
+
+.font-preview-controls input[type="text"],
+.font-preview-controls input:not([type]) {
+  min-width: 0;
+}
+
+.font-preview-scroll {
+  min-height: 170px;
+  overflow: auto;
+  padding: 28px;
+  background:
+    linear-gradient(45deg, #11141a 25%, transparent 25%),
+    linear-gradient(-45deg, #11141a 25%, transparent 25%),
+    linear-gradient(45deg, transparent 75%, #11141a 75%),
+    linear-gradient(-45deg, transparent 75%, #11141a 75%),
+    #0b0d12;
+  background-position: 0 0, 0 4px, 4px -4px, -4px 0;
+  background-size: 8px 8px;
+}
+
+.font-native-surface {
+  position: relative;
+  min-width: 32px;
+  min-height: 10px;
+  transform: scale(2);
+  transform-origin: left top;
+  border: 1px solid rgb(100 216 203 / 45%);
+  background: #05070a;
+  box-shadow:
+    0 0 0 1px #000,
+    0 12px 28px rgb(0 0 0 / 55%);
+  image-rendering: pixelated;
+}
+
+.font-preview-placement {
+  position: absolute;
+  display: grid;
+  place-items: center;
+  overflow: hidden;
+  color: #e6f7f4;
+  font-family: "Courier New", monospace;
+  font-size: 6px;
+  line-height: 1;
+  outline: 1px solid rgb(100 216 203 / 12%);
+  text-align: center;
+}
+
+.font-preview-baseline {
+  position: absolute;
+  right: 0;
+  left: 0;
+  height: 1px;
+  background: rgb(255 36 78 / 46%);
+  pointer-events: none;
+}
+
+.font-fallback-warning {
+  margin: 0;
+  padding: 9px 12px;
+  border-top: 1px solid #332630;
+  color: #ff8ca3;
+  font-size: 9px;
+}
+
+.font-glyph-stage {
+  display: grid;
+  min-height: 150px;
+  place-items: center;
+  gap: 8px;
+  padding: 18px;
+  border-bottom: 1px solid #242831;
+  background:
+    linear-gradient(rgb(255 255 255 / 3%) 1px, transparent 1px),
+    linear-gradient(90deg, rgb(255 255 255 / 3%) 1px, transparent 1px),
+    #0b0d12;
+  background-size: 8px 8px;
+}
+
+.font-glyph-silhouette {
+  display: grid;
+  max-width: 160px;
+  max-height: 160px;
+  place-items: center;
+  border: 1px solid var(--font-accent);
+  background: var(--font-accent-soft);
+  color: #effffd;
+  font-family: "Courier New", monospace;
+  font-size: 42px;
+  image-rendering: pixelated;
+}
+
+.font-glyph-stage > span {
+  color: #666e79;
+  font-size: 8px;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+}
+
+.font-inspector .button {
+  width: 100%;
+}
+
+.font-kerning-list {
+  display: grid;
+  gap: 6px;
+  padding: 10px 12px 12px;
+}
+
+.font-kerning-list > p {
+  margin: 6px 0;
+  color: #737a85;
+  font-size: 10px;
+}
+
+.font-kerning-row {
+  display: grid;
+  grid-template-columns: 1fr 80px 28px;
+  align-items: center;
+  gap: 8px;
+  padding: 7px 8px;
+  border: 1px solid #252a32;
+  border-radius: 3px;
+  background: #11141a;
+}
+
+.font-kerning-row strong {
+  color: #e4f6f4;
+  font-family: "Courier New", monospace;
+  font-size: 18px;
+  letter-spacing: 0.1em;
+}
+
+.font-kerning-row button {
+  height: 28px;
+  border: 1px solid #332a30;
+  border-radius: 3px;
+  background: #171217;
+  color: #c17484;
+  cursor: pointer;
+}
+
+@media (max-width: 1180px) {
+  .font-workspace-grid {
+    grid-template-columns: 190px minmax(420px, 1fr) 260px;
+  }
+
+  .font-metric-grid {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+}
