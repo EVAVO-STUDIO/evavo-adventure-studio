@@ -1,15 +1,16 @@
 {
   "extends": "../../tsconfig.package.json",
   "compilerOptions": {
-    "rootDir": "src",
+    "rootDir": ".",
     "outDir": "dist-types",
     "types": ["vite/client"]
   },
-  "include": ["src/**/*.ts"],
+  "include": ["src/**/*.ts", "tests/**/*.ts"],
   "references": [
     { "path": "../../packages/core" },
     { "path": "../../packages/project-schema" },
     { "path": "../../packages/render-contract" },
-    { "path": "../../packages/renderer-pixi" }
+    { "path": "../../packages/renderer-pixi" },
+    { "path": "../../packages/runtime-bundle" }
   ]
 }
