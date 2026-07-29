@@ -11,6 +11,7 @@
     { "path": "../project-schema" },
     { "path": "../runtime-bundle" },
     { "path": "../scene-instances" },
+    { "path": "../ui-skin" },
     { "path": "../validation" }
   ]
 }
