@@ -181,7 +181,6 @@ export const layoutBitmapText = (
 
   const finishLine = (): void => {
     currentLine.placementEnd = placements.length;
-    currentLine.width = Math.max(currentLine.width, penX);
     lines.push(currentLine);
     lineIndex += 1;
     penX = 0;
