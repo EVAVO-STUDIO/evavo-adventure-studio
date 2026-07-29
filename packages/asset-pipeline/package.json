@@ -15,6 +15,14 @@
     "./atlas": {
       "types": "./dist/src/atlas.d.ts",
       "import": "./dist/src/atlas.js"
+    },
+    "./atlas-compiler": {
+      "types": "./dist/src/atlas-compiler.d.ts",
+      "import": "./dist/src/atlas-compiler.js"
+    },
+    "./manifest-builders": {
+      "types": "./dist/src/manifest-builders.d.ts",
+      "import": "./dist/src/manifest-builders.js"
     }
   },
   "files": ["dist"],
@@ -23,6 +31,7 @@
     "typecheck": "tsc -b --pretty false"
   },
   "dependencies": {
+    "@evavo/adventure-asset-contract": "workspace:*",
     "@evavo/adventure-project-schema": "workspace:*",
     "sharp": "catalog:"
   }
