@@ -12,6 +12,7 @@ export interface ValidateCommand {
   readonly kind: "validate";
   readonly projectPath: string;
   readonly assetManifestPath: string | null;
+  readonly sceneInstancesPath: string | null;
   readonly format: OutputFormat;
 }
 
@@ -19,6 +20,7 @@ export interface CompileCommand {
   readonly kind: "compile";
   readonly projectPath: string;
   readonly assetManifestPath: string;
+  readonly sceneInstancesPath: string | null;
   readonly outputPath: string;
   readonly reportPath: string | null;
   readonly format: OutputFormat;
@@ -28,6 +30,7 @@ export interface PackageCommand {
   readonly kind: "package";
   readonly projectPath: string;
   readonly assetManifestPath: string;
+  readonly sceneInstancesPath: string | null;
   readonly outputDirectory: string;
   readonly format: OutputFormat;
 }
@@ -54,6 +57,7 @@ interface ParsedOptions {
 const VALUE_OPTIONS = new Set([
   "--project",
   "--asset-manifest",
+  "--scene-instances",
   "--out",
   "--output",
   "--report",
@@ -136,6 +140,11 @@ const outputFormat = (options: ParsedOptions): OutputFormat =>
   options.flags.has("--json") ? "json" : "human";
 
 const JSON_FLAG = new Set(["--json"]);
+const PROJECT_INPUT_OPTIONS = [
+  "--project",
+  "--asset-manifest",
+  "--scene-instances",
+] as const;
 
 export const parseCliArguments = (argv: readonly string[]): CliCommand => {
   const [command, ...tokens] = argv;
@@ -152,23 +161,19 @@ export const parseCliArguments = (argv: readonly string[]): CliCommand => {
   const options = parseOptions(tokens);
   switch (command) {
     case "validate":
-      assertAllowedOptions(
-        options,
-        new Set(["--project", "--asset-manifest"]),
-        JSON_FLAG,
-      );
+      assertAllowedOptions(options, new Set(PROJECT_INPUT_OPTIONS), JSON_FLAG);
       return {
         kind: "validate",
         projectPath: requiredValue(options, "--project"),
         assetManifestPath: optionalValue(options, "--asset-manifest"),
+        sceneInstancesPath: optionalValue(options, "--scene-instances"),
         format: outputFormat(options),
       };
     case "compile":
       assertAllowedOptions(
         options,
         new Set([
-          "--project",
-          "--asset-manifest",
+          ...PROJECT_INPUT_OPTIONS,
           "--out",
           "--output",
           "--report",
@@ -179,6 +184,7 @@ export const parseCliArguments = (argv: readonly string[]): CliCommand => {
         kind: "compile",
         projectPath: requiredValue(options, "--project"),
         assetManifestPath: requiredValue(options, "--asset-manifest"),
+        sceneInstancesPath: optionalValue(options, "--scene-instances"),
         outputPath: outputValue(options),
         reportPath: optionalValue(options, "--report"),
         format: outputFormat(options),
@@ -186,13 +192,14 @@ export const parseCliArguments = (argv: readonly string[]): CliCommand => {
     case "package":
       assertAllowedOptions(
         options,
-        new Set(["--project", "--asset-manifest", "--out", "--output"]),
+        new Set([...PROJECT_INPUT_OPTIONS, "--out", "--output"]),
         JSON_FLAG,
       );
       return {
         kind: "package",
         projectPath: requiredValue(options, "--project"),
         assetManifestPath: requiredValue(options, "--asset-manifest"),
+        sceneInstancesPath: optionalValue(options, "--scene-instances"),
         outputDirectory: outputValue(options),
         format: outputFormat(options),
       };
@@ -204,14 +211,14 @@ export const parseCliArguments = (argv: readonly string[]): CliCommand => {
 export const CLI_HELP = `EVAVO Adventure Studio CLI
 
 Usage:
-  evavo-adventure validate --project <project.json> [--asset-manifest <assets.json>] [--json]
-  evavo-adventure compile --project <project.json> --asset-manifest <assets.json> --out <game.bundle.json> [--report <report.json>] [--json]
-  evavo-adventure package --project <project.json> --asset-manifest <assets.json> --out <release-directory> [--json]
+  evavo-adventure validate --project <project.json> [--asset-manifest <assets.json>] [--scene-instances <scene-instances.json>] [--json]
+  evavo-adventure compile --project <project.json> --asset-manifest <assets.json> [--scene-instances <scene-instances.json>] --out <game.bundle.json> [--report <report.json>] [--json]
+  evavo-adventure package --project <project.json> --asset-manifest <assets.json> [--scene-instances <scene-instances.json>] --out <release-directory> [--json]
   evavo-adventure version
 
 Exit codes:
   0  success
-  1  project or asset validation failed
+  1  project, asset or scene composition validation failed
   2  invalid command-line usage
   3  unexpected internal failure
 `;
