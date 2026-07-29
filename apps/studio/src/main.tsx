@@ -4,6 +4,7 @@ import { App } from "./App.js";
 import { StudioErrorBoundary } from "./ErrorBoundary.js";
 import { GeometryApp } from "./GeometryApp.js";
 import "./style.css";
+import "./switcher.css";
 
 const root = document.querySelector<HTMLElement>("#root");
 if (!root) {
