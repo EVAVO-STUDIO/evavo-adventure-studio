@@ -21,7 +21,10 @@ import {
 } from "pixi.js";
 
 export interface PixiTextureResolver {
-  getTexture(assetId: Id<"asset">): Texture | null;
+  getTexture(
+    assetId: Id<"asset">,
+    frameId?: Id<"sprite-frame"> | null,
+  ): Texture | null;
 }
 
 export interface PixiRendererOptions {
@@ -37,7 +40,9 @@ export class PixiRendererCapabilityError extends Error {
   readonly nodeId: Id<"render-node">;
   readonly nodeKind: UnsupportedPixiNodeKind;
 
-  constructor(node: Exclude<RenderNode, SpriteRenderNode | SolidRectangleRenderNode>) {
+  constructor(
+    node: Exclude<RenderNode, SpriteRenderNode | SolidRectangleRenderNode>,
+  ) {
     super(
       `PixiJS renderer capability '${node.kind}' is not implemented for node '${node.id}'.`,
     );
@@ -49,11 +54,20 @@ export class PixiRendererCapabilityError extends Error {
 
 export class PixiTextureResolutionError extends Error {
   readonly assetId: Id<"asset">;
+  readonly frameId: Id<"sprite-frame"> | null;
 
-  constructor(assetId: Id<"asset">) {
-    super(`No loaded PixiJS texture is available for asset '${assetId}'.`);
+  constructor(
+    assetId: Id<"asset">,
+    frameId: Id<"sprite-frame"> | null = null,
+  ) {
+    super(
+      frameId
+        ? `No loaded PixiJS texture is available for asset '${assetId}' frame '${frameId}'.`
+        : `No loaded PixiJS texture is available for asset '${assetId}'.`,
+    );
     this.name = "PixiTextureResolutionError";
     this.assetId = assetId;
+    this.frameId = frameId;
   }
 }
 
@@ -98,7 +112,9 @@ export const toPixiFill = (
 ): PixiFill => {
   if (typeof value === "number") {
     if (!Number.isInteger(value) || value < 0 || value > 0xffffff) {
-      throw new RangeError("Packed colours must be integers from 0x000000 to 0xFFFFFF.");
+      throw new RangeError(
+        "Packed colours must be integers from 0x000000 to 0xFFFFFF.",
+      );
     }
     return { color: value, alpha: 1 };
   }
@@ -128,6 +144,7 @@ const isHtmlElement = (value: unknown): value is HTMLElement =>
 const textureViewKey = (node: SpriteRenderNode): string =>
   [
     node.assetId,
+    node.frameId ?? "",
     node.sourceRect.x,
     node.sourceRect.y,
     node.sourceRect.width,
@@ -297,7 +314,9 @@ export class PixiWebGLRenderer implements RendererAdapter {
       hostWidth <= 0 ||
       hostHeight <= 0
     ) {
-      throw new RangeError("Renderer host dimensions must be positive finite numbers.");
+      throw new RangeError(
+        "Renderer host dimensions must be positive finite numbers.",
+      );
     }
 
     this.hostWidth = Math.floor(hostWidth);
@@ -312,7 +331,10 @@ export class PixiWebGLRenderer implements RendererAdapter {
     this.textureViews.clear();
 
     if (this.application) {
-      this.application.destroy({ removeView: this.hostElement !== null }, true);
+      this.application.destroy(
+        { removeView: this.hostElement !== null },
+        true,
+      );
     }
 
     this.application = null;
@@ -411,9 +433,12 @@ export class PixiWebGLRenderer implements RendererAdapter {
       return existing;
     }
 
-    const base = this.textures.getTexture(node.assetId);
+    const base = this.textures.getTexture(node.assetId, node.frameId ?? null);
     if (!base) {
-      throw new PixiTextureResolutionError(node.assetId);
+      throw new PixiTextureResolutionError(
+        node.assetId,
+        node.frameId ?? null,
+      );
     }
     base.source.scaleMode = node.sampling;
 
