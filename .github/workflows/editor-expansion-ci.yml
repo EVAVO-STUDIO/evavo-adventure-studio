@@ -9,6 +9,7 @@ on:
       - "packages/narrative-library-editor-core/**"
       - "packages/animation-editor-core/**"
       - "packages/art-direction/**"
+      - "packages/asset-pipeline/**"
       - "packages/project-editor-core/**"
       - "packages/editor-core/**"
       - "apps/studio/**"
@@ -22,6 +23,7 @@ on:
       - "packages/narrative-library-editor-core/**"
       - "packages/animation-editor-core/**"
       - "packages/art-direction/**"
+      - "packages/asset-pipeline/**"
       - "packages/project-editor-core/**"
       - "packages/editor-core/**"
       - "apps/studio/**"
@@ -76,6 +78,7 @@ jobs:
           packages/narrative-library-editor-core/tests
           packages/animation-editor-core/tests
           packages/art-direction/tests
+          packages/asset-pipeline/tests/art-evidence.test.ts
           apps/studio/tests
           apps/timeline-lab/tests
 
