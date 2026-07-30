@@ -22,6 +22,7 @@ export const reportPlaytestArtifactReadFailure = (
       beforeInspection: null,
       afterInspection: null,
       diff: null,
+      canonicalDiff: null,
       replayInspection: null,
       errors: { ...state.errors, bundle: message },
     };
@@ -35,6 +36,7 @@ export const reportPlaytestArtifactReadFailure = (
           beforeSaveName: name,
           beforeInspection: null,
           diff: null,
+          canonicalDiff: null,
           errors: { ...state.errors, beforeSave: message },
         }
       : kind === "after-save"
@@ -43,6 +45,7 @@ export const reportPlaytestArtifactReadFailure = (
             afterSaveName: name,
             afterInspection: null,
             diff: null,
+            canonicalDiff: null,
             errors: { ...state.errors, afterSave: message },
           }
         : {
