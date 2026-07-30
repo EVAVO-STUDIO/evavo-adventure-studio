@@ -4,6 +4,7 @@ import type {
   SaveGameInspection,
 } from "@evavo/adventure-playtest-inspector";
 import type { CanonicalSaveDiff } from "@evavo/adventure-playtest-inspector/canonical-diff";
+import { ReplayCheckpointPanel } from "./ReplayCheckpointPanel.js";
 import { reportPlaytestArtifactReadFailure } from "./playtest-file-controller.js";
 import {
   clearPlaytestArtifact,
@@ -200,10 +201,7 @@ const CanonicalAudit = ({
       />
     </div>
     {diff.changed ? (
-      <details
-        className="playtest-canonical-details"
-        open={!semanticChanged}
-      >
+      <details className="playtest-canonical-details" open={!semanticChanged}>
         <summary>Review exact deterministic paths</summary>
         <div className="playtest-table-wrap">
           <table>
@@ -442,7 +440,13 @@ export const PlaytestApp = () => {
       ) : null}
 
       {state.replayInspection ? (
-        <ReplayTimeline inspection={state.replayInspection} />
+        <>
+          <ReplayCheckpointPanel
+            replay={state.replayInspection}
+            afterSave={state.afterInspection}
+          />
+          <ReplayTimeline inspection={state.replayInspection} />
+        </>
       ) : null}
     </main>
   );
