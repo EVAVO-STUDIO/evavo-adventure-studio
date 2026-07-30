@@ -79,6 +79,7 @@ export const createPlayerReplayRecorder = (
       nextSequence = 0;
     },
     recordActivation: (tick, position) => {
+      if (!initialSave) return;
       append({
         kind: "activate",
         tick,
@@ -87,6 +88,7 @@ export const createPlayerReplayRecorder = (
       });
     },
     recordParserInput: (tick, input) => {
+      if (!initialSave) return;
       append({
         kind: "parser-key",
         tick,
