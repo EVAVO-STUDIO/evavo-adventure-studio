@@ -1,6 +1,11 @@
 import { readFile } from "node:fs/promises";
 import { resolve } from "node:path";
-import { executeInspectedReplay } from "@evavo/adventure-playtest-inspector/replay-execution";
+import {
+  executeInspectedReplay,
+  ReplayExecutionLimitError,
+  resolveReplayExecutionLimits,
+  type ReplayExecutionLimits,
+} from "@evavo/adventure-playtest-inspector/replay-execution";
 import {
   ReplayCompatibilityError,
   ReplayDivergenceError,
@@ -28,13 +33,15 @@ export const defaultReplayExecuteCliEnvironment: ReplayExecuteCliEnvironment = {
 export const REPLAY_EXECUTE_HELP = `Replay execution
 
 Usage:
-  evavo-adventure replay-execute --bundle <game.bundle.json> --replay <replay.json> [--output-save <final.save.json>] [--json]
+  evavo-adventure replay-execute --bundle <game.bundle.json> --replay <replay.json> [--output-save <final.save.json>] [--max-events <count>] [--max-duration-ticks <ticks>] [--json]
 `;
 
 interface ReplayExecuteCommand {
   readonly bundlePath: string;
   readonly replayPath: string;
   readonly outputSavePath: string | null;
+  readonly maxEvents: number | undefined;
+  readonly maxDurationTicks: number | undefined;
   readonly json: boolean;
 }
 
@@ -63,12 +70,33 @@ class ReplayExecuteInputError extends Error {
   }
 }
 
+const positiveIntegerOption = (
+  values: ReadonlyMap<string, string>,
+  option: string,
+): number | undefined => {
+  const value = values.get(option);
+  if (value === undefined) return undefined;
+  const parsed = Number(value);
+  if (!Number.isSafeInteger(parsed) || parsed <= 0) {
+    throw new ReplayExecuteUsageError(
+      `Option '${option}' must be a positive safe integer.`,
+    );
+  }
+  return parsed;
+};
+
 const parseCommand = (argv: readonly string[]): ReplayExecuteCommand | null => {
   const [command, ...tokens] = argv;
   if (command !== "replay-execute") return null;
 
   const values = new Map<string, string>();
-  const allowed = new Set(["--bundle", "--replay", "--output-save"]);
+  const allowed = new Set([
+    "--bundle",
+    "--replay",
+    "--output-save",
+    "--max-events",
+    "--max-duration-ticks",
+  ]);
   let json = false;
 
   for (let index = 0; index < tokens.length; index += 1) {
@@ -114,6 +142,11 @@ const parseCommand = (argv: readonly string[]): ReplayExecuteCommand | null => {
     bundlePath,
     replayPath,
     outputSavePath: values.get("--output-save") ?? null,
+    maxEvents: positiveIntegerOption(values, "--max-events"),
+    maxDurationTicks: positiveIntegerOption(
+      values,
+      "--max-duration-ticks",
+    ),
     json,
   };
 };
@@ -208,6 +241,16 @@ const executionError = (error: unknown): ReplayExecuteDiagnostic => {
       message: error.message,
     };
   }
+  if (error instanceof ReplayExecutionLimitError) {
+    return {
+      code: "replay-limit-exceeded",
+      path:
+        error.code === "event-count-exceeded"
+          ? "events"
+          : "finalTick",
+      message: error.message,
+    };
+  }
   if (error instanceof ReplayIntegrityError) {
     return { code: "replay-integrity", path: "$", message: error.message };
   }
@@ -284,6 +327,17 @@ const writeFailure = (
   }
 };
 
+const commandLimits = (
+  command: ReplayExecuteCommand,
+): ReplayExecutionLimits => ({
+  ...(command.maxEvents !== undefined
+    ? { maxEvents: command.maxEvents }
+    : {}),
+  ...(command.maxDurationTicks !== undefined
+    ? { maxDurationTicks: command.maxDurationTicks }
+    : {}),
+});
+
 export const runReplayExecuteCli = async (
   argv: readonly string[],
   environment: ReplayExecuteCliEnvironment = defaultReplayExecuteCliEnvironment,
@@ -298,6 +352,8 @@ export const runReplayExecuteCli = async (
       bundlePath: "",
       replayPath: "",
       outputSavePath: null,
+      maxEvents: undefined,
+      maxDurationTicks: undefined,
       json,
     };
     writeFailure(recognized, environment, 2, {
@@ -323,9 +379,12 @@ export const runReplayExecuteCli = async (
     const bundle = parseRuntimeBundle(
       await readJson(bundlePath, "runtime bundle"),
     );
+    const limits = commandLimits(command);
+    const resolvedLimits = resolveReplayExecutionLimits(bundle, limits);
     const execution = executeInspectedReplay(
       bundle,
       await readJson(replayPath, "replay"),
+      limits,
     );
     if (outputSavePath) {
       await writeReplayOutputSave(outputSavePath, execution.finalSaveDocument);
@@ -339,6 +398,7 @@ export const runReplayExecuteCli = async (
       bundlePath,
       replayPath,
       outputSavePath,
+      executionLimits: resolvedLimits,
       replayFingerprint: execution.replayFingerprint,
       eventCount: execution.eventCount,
       initialTick: execution.initialTick,
