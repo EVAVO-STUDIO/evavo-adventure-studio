@@ -1,6 +1,6 @@
 # Command-line build workflow
 
-The EVAVO Adventure Studio CLI is the non-visual entry point for validation, deterministic runtime compilation and clean release packaging. The editor and automation workers must call the same package services and produce the same bundle bytes as this tool.
+The EVAVO Adventure Studio CLI is the non-visual entry point for validation, deterministic runtime compilation, replay execution and clean release packaging. The editor and automation workers must call the same package services and produce the same bundle and save bytes as this tool.
 
 ## Build the CLI
 
@@ -165,21 +165,56 @@ pnpm cli -- replay-validate `
   --json
 ```
 
-This verifies replay schema and payload integrity, exact bundle identity, initial-save compatibility, event ordering, logical tick bounds, final checkpoint and optional expected final-save fingerprint metadata. It validates the replay document without executing gameplay; deterministic execution remains the replay runner or playtest debugger responsibility.
+This verifies replay schema and payload integrity, exact bundle identity, initial-save compatibility, event ordering, logical tick bounds, final checkpoint and optional expected final-save fingerprint metadata. It validates the replay document without executing gameplay.
 
 A successful JSON report includes initial/final ticks, event count, replay fingerprint and expected final save fingerprint when present.
+
+## Execute a packaged replay
+
+`replay-execute` restores the replay's initial save and applies every event through the shared renderer-neutral runtime controller. It advances the simulation to the explicit final tick and fails when the resulting save fingerprint differs from the recorded checkpoint.
+
+```powershell
+pnpm cli -- replay-execute `
+  --bundle .\game\release\windows\game.bundle.json `
+  --replay .\playtests\office.replay.json `
+  --output-save .\playtests\office.final.save.json `
+  --json
+```
+
+`--output-save` is optional. When supplied, parent directories are created and the canonical final save is written only after replay execution succeeds. A divergence does not produce a misleading output save.
+
+The JSON report includes:
+
+- replay and final-save fingerprints;
+- initial and final ticks;
+- executed event count;
+- expected final-save fingerprint when recorded;
+- checkpoint-match state;
+- the resolved output-save path, or `null` when no file was requested.
+
+Stable execution diagnostics include `replay-integrity`, `replay-compatibility`, `replay-execution`, `replay-divergence`, `controlled-actor-mismatch`, file read codes and `invalid-json`. An unexpected internal or output-write failure is reported as `replay-execute-failed`.
+
+Automation can call the same execution service directly:
+
+```ts
+import { executeInspectedReplay } from "@evavo/adventure-playtest-inspector/replay-execution";
+
+const result = executeInspectedReplay(bundle, replay);
+```
+
+The service returns both the canonical final save document and a human-readable inspected summary.
 
 ## Exit codes
 
 | Code | Meaning |
 | ---: | --- |
-| `0` | Validation, compilation or packaging succeeded. |
-| `1` | Project, scene, asset, art, font, interface, save, replay or file evidence is invalid. |
+| `0` | Validation, compilation, replay execution or packaging succeeded. |
+| `1` | Project, scene, asset, art, font, interface, save, replay or file evidence is invalid, or replay execution diverged. |
 | `2` | Command-line usage is invalid. |
-| `3` | An unexpected internal failure occurred. |
+| `3` | An unexpected internal or output-write failure occurred. |
 
 ## Determinism rules
 
 The CLI does not add timestamps, absolute workstation paths or random identifiers to runtime output. Temporary filenames never appear in bundles, reports or release manifests.
 
-The runtime bundle fingerprint covers canonical JSON including canonically ordered font and skin documents. Authored verb order remains unchanged because it controls visible layout. Save and replay reports expose canonical artifact fingerprints without modifying the artifact. The asset manifest fingerprint covers compiled evidence, and each source/runtime output carries its own SHA-256 digest.
+The runtime bundle fingerprint covers canonical JSON including canonically ordered font and skin documents. Authored verb order remains unchanged because it controls visible layout. Save and replay reports expose canonical artifact fingerprints without modifying the artifact. Replay execution writes the exact canonical final save produced by the shared controller. The asset manifest fingerprint covers compiled evidence, and each source/runtime output carries its own SHA-256 digest.

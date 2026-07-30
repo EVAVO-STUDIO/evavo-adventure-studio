@@ -2,7 +2,7 @@
 
 ## Purpose
 
-The Playtest Inspector reviews packaged runtime artifacts without starting WebGL, audio or browser input. It uses the exact save and replay validators that packaged gameplay and the CLI use.
+The Playtest Inspector reviews packaged runtime artifacts without starting WebGL, audio or browser input. It uses the exact save, replay and shared runtime-controller contracts that packaged gameplay and the CLI use.
 
 Open the workspace at:
 
@@ -103,17 +103,34 @@ When a replay is loaded, the workspace classifies its final-save checkpoint as o
 - **checkpoint match** — Save B exactly matches the recorded final fingerprint;
 - **checkpoint mismatch** — Save B is valid for the bundle but differs from the replay checkpoint.
 
-This is a checkpoint comparison, not replay execution. It prevents a displayed fingerprint from being mistaken for a verified match while still keeping the inspector renderer-free.
+This comparison does not execute the replay. It answers whether an independently loaded Save B matches the checkpoint stored in the replay.
 
-## Replay execution boundary
+## Renderer-free replay execution
 
-`@evavo/adventure-replay` already executes a replay through the `ReplayRuntimeAdapter` contract and fails on final-save divergence. The packaged player controller satisfies that contract, but it currently lives inside `apps/player`.
+The packaged runtime controller now lives in `@evavo/adventure-runtime-controller`. Player consumes it through compatibility re-exports, while inspector and CLI code can use the same controller without importing application internals or starting WebGL.
 
-Studio must not import player-app internals. The next architectural step for renderer-free execution is to extract the packaged controller into a shared runtime-controller package used by both Player and Studio. Until that extraction is complete, replay execution and convergence remain the responsibility of the replay package and packaged-controller regression tests.
+`executeInspectedReplay`:
+
+1. parses and validates the replay;
+2. restores its canonical initial save;
+3. derives the controlled actor from that save;
+4. applies native activation and parser events in sequence order;
+5. advances to the explicit final tick;
+6. creates the canonical final save;
+7. enforces the optional expected final-save fingerprint;
+8. returns both the final save document and inspected summary.
+
+```ts
+import { executeInspectedReplay } from "@evavo/adventure-playtest-inspector/replay-execution";
+
+const execution = executeInspectedReplay(bundle, replay);
+```
+
+The Studio currently displays validation, timeline, cross-save audit and checkpoint closure. Replay execution is exposed through the shared API and CLI first so automation has a deterministic non-visual gate before an interactive step-through debugger is added.
 
 ## Relationship to CLI
 
-Automation can run the same packaged-artifact gates without Studio:
+Automation can validate or execute packaged artifacts without Studio:
 
 ```powershell
 pnpm cli -- save-validate `
@@ -125,6 +142,12 @@ pnpm cli -- replay-validate `
   --bundle .\release\game.bundle.json `
   --replay .\playtests\office.replay.json `
   --json
+
+pnpm cli -- replay-execute `
+  --bundle .\release\game.bundle.json `
+  --replay .\playtests\office.replay.json `
+  --output-save .\playtests\office.final.save.json `
+  --json
 ```
 
-The Studio workspace adds human-readable summaries, canonical cross-save auditing, replay grouping and checkpoint closure. It does not weaken any compatibility or fingerprint rule.
+The Studio workspace adds human-readable summaries, canonical cross-save auditing, replay grouping and checkpoint closure. It does not weaken any compatibility, execution or fingerprint rule.
