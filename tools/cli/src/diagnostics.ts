@@ -23,6 +23,17 @@ export interface CliDiagnostic {
     | "ui-skins-file"
     | "ui-skins-schema"
     | "ui-skins-semantics"
+    | "runtime-bundle-file"
+    | "runtime-bundle-schema"
+    | "runtime-bundle-semantics"
+    | "save-game-file"
+    | "save-game-schema"
+    | "save-game-integrity"
+    | "save-game-compatibility"
+    | "replay-file"
+    | "replay-schema"
+    | "replay-integrity"
+    | "replay-compatibility"
     | "asset-evidence";
   readonly code: string;
   readonly path: string;
