@@ -27,6 +27,7 @@
     { "path": "packages/scene-runtime" },
     { "path": "packages/save-game" },
     { "path": "packages/replay" },
+    { "path": "packages/playtest-inspector" },
     { "path": "packages/renderer-pixi" },
     { "path": "packages/validation" },
     { "path": "packages/asset-pipeline" },
