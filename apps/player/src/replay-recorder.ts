@@ -6,7 +6,7 @@ import {
   type ReplayLog,
 } from "@evavo/adventure-replay";
 import type { RuntimeBundle } from "@evavo/adventure-runtime-bundle";
-import type { SaveGame } from "@evavo/adventure-save-game";
+import { loadSaveGame, type SaveGame } from "@evavo/adventure-save-game";
 import type { ParserKeyInput } from "./parser.js";
 
 export class ReplayRecordingStateError extends Error {
@@ -69,7 +69,7 @@ export const createPlayerReplayRecorder = (
 
   return {
     start: (save) => {
-      initialSave = save;
+      initialSave = loadSaveGame(bundle, save);
       events = [];
       nextSequence = 0;
     },
@@ -96,8 +96,9 @@ export const createPlayerReplayRecorder = (
         input,
       });
     },
-    finish: (finalSave) => {
+    finish: (save) => {
       const initial = ensureRecording();
+      const finalSave = loadSaveGame(bundle, save);
       const replay = createReplayLog(bundle, initial, {
         events,
         finalTick: finalSave.world.story.tick,
