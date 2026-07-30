@@ -3,6 +3,11 @@ import type { DialogueView } from "@evavo/adventure-dialogue";
 import type { Id, Point } from "@evavo/adventure-project-schema";
 import type { ResolvedFrame } from "@evavo/adventure-render-contract";
 import type { RuntimeBundle } from "@evavo/adventure-runtime-bundle";
+import {
+  createSaveGame as createRuntimeSaveGame,
+  loadSaveGame as loadRuntimeSaveGame,
+  type SaveGame,
+} from "@evavo/adventure-save-game";
 import { resolveRuntimeSceneFrame } from "@evavo/adventure-scene-runtime";
 import {
   advanceInteractiveRuntimeWorld,
@@ -52,6 +57,8 @@ export interface PackagedRuntimeController {
   setPressed(pressed: boolean): void;
   activate(position: Point): void;
   handleKey(input: ParserKeyInput): boolean;
+  createSaveGame(): SaveGame;
+  restoreSaveGame(input: unknown): number;
   statusText(): string;
   worldState(): InteractiveRuntimeWorldState;
   parserState(): ParserBufferState;
@@ -60,6 +67,23 @@ export interface PackagedRuntimeController {
 export interface PackagedRuntimeControllerOptions {
   readonly requestedActorInstanceId?: string | null;
   readonly onStatusChange?: (text: string) => void;
+}
+
+export class ControlledActorSaveMismatchError extends Error {
+  readonly controllerActorInstanceId: Id<"actor-instance"> | null;
+  readonly savedActorInstanceId: Id<"actor-instance"> | null;
+
+  constructor(
+    controllerActorInstanceId: Id<"actor-instance"> | null,
+    savedActorInstanceId: Id<"actor-instance"> | null,
+  ) {
+    super(
+      `Save game controlled actor '${savedActorInstanceId ?? "none"}' does not match this player controller '${controllerActorInstanceId ?? "none"}'.`,
+    );
+    this.name = "ControlledActorSaveMismatchError";
+    this.controllerActorInstanceId = controllerActorInstanceId;
+    this.savedActorInstanceId = savedActorInstanceId;
+  }
 }
 
 const selectionStatus = (
@@ -474,6 +498,48 @@ export const createPackagedRuntimeController = (
     return edited.handled;
   };
 
+  const createControllerSave = (): SaveGame =>
+    createRuntimeSaveGame(bundle, world, {
+      controlledActorInstanceId,
+      selectedVerbId,
+      selectedItemId,
+      statusText: status,
+      parser: {
+        text: parser.text,
+        history: parser.history,
+      },
+    });
+
+  const restoreControllerSave = (input: unknown): number => {
+    const save = loadRuntimeSaveGame(bundle, input);
+    if (save.interface.controlledActorInstanceId !== controlledActorInstanceId) {
+      throw new ControlledActorSaveMismatchError(
+        controlledActorInstanceId,
+        save.interface.controlledActorInstanceId,
+      );
+    }
+
+    world = save.world as InteractiveRuntimeWorldState;
+    selectedVerbId = save.interface.selectedVerbId;
+    selectedItemId = save.interface.selectedItemId;
+    status = save.interface.statusText;
+    parser = {
+      text: save.interface.parser.text,
+      history: save.interface.parser.history,
+      historyIndex: null,
+      draftBeforeHistory: "",
+      focused: false,
+    };
+    hoveredVerbId = null;
+    hoveredDialogueChoiceId = null;
+    verbCoinPosition = null;
+    cursor = { position: null, cursorId: "walk", pressed: false };
+    renderedTick = world.story.tick;
+    baseFrame = resolveRuntimeSceneFrame(bundle, world);
+    options.onStatusChange?.(status);
+    return renderedTick;
+  };
+
   return {
     selection,
     controlledActorInstanceId,
@@ -486,6 +552,8 @@ export const createPackagedRuntimeController = (
     },
     activate,
     handleKey,
+    createSaveGame: createControllerSave,
+    restoreSaveGame: restoreControllerSave,
     statusText: () => status,
     worldState: () => world,
     parserState: () => parser,
