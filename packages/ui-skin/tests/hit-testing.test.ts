@@ -90,8 +90,16 @@ const skin = {
     selected: panel,
   },
   fonts: {
-    status: { fontId: id<"bitmap-font">("bitmap-font.ui"), color: 0xffffff, align: "left" },
-    verb: { fontId: id<"bitmap-font">("bitmap-font.ui"), color: 0xffffff, align: "center" },
+    status: {
+      fontId: id<"bitmap-font">("bitmap-font.ui"),
+      color: 0xffffff,
+      align: "left",
+    },
+    verb: {
+      fontId: id<"bitmap-font">("bitmap-font.ui"),
+      color: 0xffffff,
+      align: "center",
+    },
   },
 } as UiSkin;
 
@@ -130,10 +138,10 @@ describe("interface skin hit testing", () => {
   });
 
   it("prioritizes dialogue and coin targets above ordinary regions", () => {
+    const { verbBar: _verbBar, ...skinWithoutBar } = skin;
     const coinSkin = {
-      ...skin,
+      ...skinWithoutBar,
       interactionMode: "verb-coin",
-      verbBar: undefined,
       verbCoin: { radius: 34, itemRadius: 16, panel },
       dialogueChoices: {
         region: {
@@ -171,7 +179,11 @@ describe("interface skin hit testing", () => {
 
     expect(
       hitTestUiSkin(coinSkin, fonts, coinState, { x: 42, y: 42 }),
-    ).toEqual({ kind: "dialogue-choice", choiceId: "choice.one", enabled: true });
+    ).toEqual({
+      kind: "dialogue-choice",
+      choiceId: "choice.one",
+      enabled: true,
+    });
 
     const coinRect = uiVerbCoinRects(coinSkin, coinState)[0]!;
     expect(
