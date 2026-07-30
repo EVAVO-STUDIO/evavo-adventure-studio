@@ -7,6 +7,10 @@ import {
   type SaveGameInspection,
 } from "@evavo/adventure-playtest-inspector";
 import {
+  diffCanonicalSaveGames,
+  type CanonicalSaveDiff,
+} from "@evavo/adventure-playtest-inspector/canonical-diff";
+import {
   parseRuntimeBundle,
   type RuntimeBundle,
 } from "@evavo/adventure-runtime-bundle";
@@ -32,6 +36,7 @@ export interface PlaytestInspectorWorkspaceState {
   readonly beforeInspection: SaveGameInspection | null;
   readonly afterInspection: SaveGameInspection | null;
   readonly diff: SaveGameDiff | null;
+  readonly canonicalDiff: CanonicalSaveDiff | null;
   readonly replayInspection: ReplayInspection | null;
   readonly errors: PlaytestInspectorErrors;
 }
@@ -55,6 +60,7 @@ export const createPlaytestInspectorWorkspace = (): PlaytestInspectorWorkspaceSt
   beforeInspection: null,
   afterInspection: null,
   diff: null,
+  canonicalDiff: null,
   replayInspection: null,
   errors: emptyErrors(),
 });
@@ -94,6 +100,7 @@ const recompute = (
       beforeInspection: null,
       afterInspection: null,
       diff: null,
+      canonicalDiff: null,
       replayInspection: null,
     };
   }
@@ -101,6 +108,7 @@ const recompute = (
   let beforeInspection: SaveGameInspection | null = null;
   let afterInspection: SaveGameInspection | null = null;
   let diff: SaveGameDiff | null = null;
+  let canonicalDiff: CanonicalSaveDiff | null = null;
   let replayInspection: ReplayInspection | null = null;
   let beforeSaveError: string | null =
     state.beforeSaveInput === null ? state.errors.beforeSave : null;
@@ -130,11 +138,19 @@ const recompute = (
     afterSaveError === null
   ) {
     try {
-      diff = diffSaveGames(
+      const nextDiff = diffSaveGames(
         bundle,
         state.beforeSaveInput,
         state.afterSaveInput,
       );
+      const nextCanonicalDiff = diffCanonicalSaveGames(
+        bundle,
+        state.beforeSaveInput,
+        state.afterSaveInput,
+        { maxDifferences: 250 },
+      );
+      diff = nextDiff;
+      canonicalDiff = nextCanonicalDiff;
     } catch (error) {
       afterSaveError = errorMessage(error);
     }
@@ -152,6 +168,7 @@ const recompute = (
     beforeInspection,
     afterInspection,
     diff,
+    canonicalDiff,
     replayInspection,
     errors: {
       bundle: null,
@@ -185,6 +202,7 @@ export const loadPlaytestArtifactText = (
         beforeInspection: null,
         afterInspection: null,
         diff: null,
+        canonicalDiff: null,
         replayInspection: null,
         errors: {
           ...state.errors,
@@ -210,6 +228,7 @@ export const loadPlaytestArtifactText = (
             beforeSaveName: name,
             beforeInspection: null,
             diff: null,
+            canonicalDiff: null,
             errors: { ...state.errors, beforeSave: message },
           }
         : kind === "after-save"
@@ -218,6 +237,7 @@ export const loadPlaytestArtifactText = (
               afterSaveName: name,
               afterInspection: null,
               diff: null,
+              canonicalDiff: null,
               errors: { ...state.errors, afterSave: message },
             }
           : {
