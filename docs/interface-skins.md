@@ -76,11 +76,13 @@ The same mapping checks run during compilation and source-free runtime bundle pa
 - dialogue choices and hovered choice;
 - verb-coin position.
 
-The packaged player currently maps canonical story score and inventory directly from `RuntimeState`. Persistent verb selections drive object commands, selected inventory items are forwarded to interaction resolution, and UI hits are resolved before scene hits so interface clicks never become walk commands.
+The packaged player maps canonical story score and inventory directly from `RuntimeState`. Persistent verb selections drive object commands, selected inventory items are forwarded to interaction resolution, and UI hits are resolved before scene hits so interface clicks never become walk commands.
 
 A verb coin uses a deterministic click-open, click-select flow. Persistent verb bars and inventory slots are directly hit-testable in native coordinates.
 
-Parser field hit detection is implemented, but text entry and command parsing remain a later runtime slice. Dialogue-choice rendering and hit detection are implemented; selecting a choice is not yet connected to dialogue graph advancement.
+Parser-assisted skins now support native keyboard editing, Unicode-safe backspace, command history, verb aliases, `HELP`, `INVENTORY`, room descriptions, authored object-name resolution and `USE item ON object` phrases. Parser object commands enter the same movement, interaction, inventory and dialogue pipeline as pointer actions.
+
+Dialogue-requested runtime events now activate canonical dialogue state. Visible choices are composed from `resolveDialogueView`; disabled choices reject cleanly, enabled choices execute their actions, consume once-only choices, change nodes or close the dialogue through `chooseDialogueOption`.
 
 ## Renderer-neutral composition
 
@@ -110,7 +112,7 @@ The Studio preview calls the same composer with synthetic compiled geometry. It 
 - undo and redo;
 - deterministic dirty-state comparison.
 
-Every command is applied to a cloned document and the complete result is validated against the project and bitmap fonts before history mutation. Authored verb order is preserved because it controls visible button order.
+Every command is applied to a cloned document and the complete result is validated against the project and bitmap fonts before history mutation. Authored verb order is preserved because it controls visible button order. Rejected Studio edits remain inside the workspace, preserve history and surface a local notice instead of triggering the application error boundary.
 
 ## CLI workflow
 
@@ -158,7 +160,7 @@ The focused Windows and Linux workflow covers:
 - compiled icon mappings;
 - editor command history;
 - compiler and runtime bundle integration;
-- player runtime composition;
+- player runtime composition, parser input and dialogue transitions;
 - Studio workspace tests and build;
 - CLI parsing and skin loading.
 
