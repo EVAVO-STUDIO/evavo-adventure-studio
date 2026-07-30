@@ -8,7 +8,7 @@ The project is designed around the production grammar of classic Sierra, LucasAr
 
 - **Authentic presentation:** integer-scaled low-resolution rendering, palette-aware art, bitmap typography, deliberate animation timing, scene transitions, cursor language and era-appropriate UI layouts.
 - **Complete adventure runtime:** navigation, hotspots, verbs, inventory, dialogue, conditions, flags, scoring, cutscenes, audio and save-state persistence.
-- **Visual production studio:** scene composition, walkmesh editing, depth maps, occluders, hotspot authoring, character animation, art-direction policy, bitmap fonts, interaction skins, dialogue graphs, timeline sequencing and project validation.
+- **Visual production studio:** scene composition, walkmesh editing, depth maps, occluders, hotspot authoring, character animation, art-direction policy, bitmap fonts, interaction skins, dialogue graphs, timeline sequencing, playtest artifact inspection and project validation.
 - **Flexible game identity:** supports parser-like, icon-bar, verb-list, verb-coin, two-button and context-sensitive interaction models without copying any one commercial game.
 - **Deterministic projects:** human-readable project files, stable IDs, schema validation, reproducible builds and revision-safe exports.
 
@@ -34,6 +34,7 @@ Source projects compile into deterministic runtime bundles. The editor, renderer
 - [Interface skins and interaction layouts](docs/interface-skins.md)
 - [Deterministic save games](docs/save-games.md)
 - [Deterministic replays](docs/deterministic-replays.md)
+- [Playtest inspector](docs/playtest-inspector.md)
 - [Implementation roadmap](docs/foundation-roadmap.md)
 
 ## First playable milestone
@@ -94,6 +95,7 @@ Studio routes currently include:
 /?workspace=fonts
 /?workspace=interface
 /?workspace=dialogue
+/?workspace=playtest
 /?workspace=validation
 ```
 
