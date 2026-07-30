@@ -33,6 +33,12 @@ interface ReplayExecuteCommand {
   readonly json: boolean;
 }
 
+interface ReplayExecuteDiagnostic {
+  readonly code: string;
+  readonly path: string;
+  readonly message: string;
+}
+
 class ReplayExecuteUsageError extends Error {
   constructor(message: string) {
     super(message);
@@ -65,16 +71,22 @@ const parseCommand = (argv: readonly string[]): ReplayExecuteCommand | null => {
     if (!token) continue;
     if (token === "--json") {
       if (json) {
-        throw new ReplayExecuteUsageError("Option '--json' was supplied more than once.");
+        throw new ReplayExecuteUsageError(
+          "Option '--json' was supplied more than once.",
+        );
       }
       json = true;
       continue;
     }
     if (!allowed.has(token)) {
-      throw new ReplayExecuteUsageError(`Option '${token}' is not valid for 'replay-execute'.`);
+      throw new ReplayExecuteUsageError(
+        `Option '${token}' is not valid for 'replay-execute'.`,
+      );
     }
     if (values.has(token)) {
-      throw new ReplayExecuteUsageError(`Option '${token}' was supplied more than once.`);
+      throw new ReplayExecuteUsageError(
+        `Option '${token}' was supplied more than once.`,
+      );
     }
     const value = tokens[index + 1];
     if (!value || value.startsWith("--")) {
@@ -86,8 +98,12 @@ const parseCommand = (argv: readonly string[]): ReplayExecuteCommand | null => {
 
   const bundlePath = values.get("--bundle");
   const replayPath = values.get("--replay");
-  if (!bundlePath) throw new ReplayExecuteUsageError("Missing required option '--bundle'.");
-  if (!replayPath) throw new ReplayExecuteUsageError("Missing required option '--replay'.");
+  if (!bundlePath) {
+    throw new ReplayExecuteUsageError("Missing required option '--bundle'.");
+  }
+  if (!replayPath) {
+    throw new ReplayExecuteUsageError("Missing required option '--replay'.");
+  }
 
   return {
     bundlePath,
@@ -127,7 +143,49 @@ const readJson = async (path: string, label: string): Promise<unknown> => {
   }
 };
 
-const executionError = (error: unknown): { readonly code: string; readonly path: string; readonly message: string } => {
+const issuePath = (value: unknown): string => {
+  if (!Array.isArray(value)) return String(value ?? "$ ").trim() || "$";
+  let output = "";
+  for (const segment of value) {
+    output +=
+      typeof segment === "number"
+        ? `[${segment}]`
+        : output
+          ? `.${String(segment)}`
+          : String(segment);
+  }
+  return output || "$";
+};
+
+const issueDiagnostic = (error: unknown): ReplayExecuteDiagnostic | null => {
+  if (
+    typeof error !== "object" ||
+    error === null ||
+    !("issues" in error) ||
+    !Array.isArray((error as { readonly issues: unknown }).issues)
+  ) {
+    return null;
+  }
+  const first = (error as { readonly issues: readonly unknown[] }).issues[0] as
+    | {
+        readonly code?: unknown;
+        readonly path?: unknown;
+        readonly message?: unknown;
+      }
+    | undefined;
+  return {
+    code: String(first?.code ?? "runtime-bundle-invalid"),
+    path: issuePath(first?.path),
+    message:
+      first?.message === undefined
+        ? error instanceof Error
+          ? error.message
+          : "Runtime bundle validation failed."
+        : String(first.message),
+  };
+};
+
+const executionError = (error: unknown): ReplayExecuteDiagnostic => {
   if (error instanceof ReplayExecuteInputError) {
     return { code: error.code, path: error.path, message: error.message };
   }
@@ -151,12 +209,21 @@ const executionError = (error: unknown): { readonly code: string; readonly path:
   if (error instanceof ReplayExecutionError) {
     return { code: "replay-execution", path: "$", message: error.message };
   }
-  if (error instanceof Error && error.name === "ControlledActorSaveMismatchError") {
-    return { code: "controlled-actor-mismatch", path: "initialSave.interface.controlledActorInstanceId", message: error.message };
+  if (
+    error instanceof Error &&
+    error.name === "ControlledActorSaveMismatchError"
+  ) {
+    return {
+      code: "controlled-actor-mismatch",
+      path: "initialSave.interface.controlledActorInstanceId",
+      message: error.message,
+    };
   }
   if (error instanceof Error && error.name === "ZodError") {
     return { code: "schema-invalid", path: "$", message: error.message };
   }
+  const issue = issueDiagnostic(error);
+  if (issue) return issue;
   return {
     code: "replay-execute-failed",
     path: "$",
@@ -164,11 +231,15 @@ const executionError = (error: unknown): { readonly code: string; readonly path:
   };
 };
 
+export const replayExecuteExitCodeForDiagnosticCode = (
+  code: string,
+): 1 | 3 => (code === "replay-execute-failed" ? 3 : 1);
+
 const writeFailure = (
   command: ReplayExecuteCommand,
   environment: ReplayExecuteCliEnvironment,
   exitCode: number,
-  error: { readonly code: string; readonly path: string; readonly message: string },
+  error: ReplayExecuteDiagnostic,
 ): void => {
   const report = {
     reportVersion: 1,
@@ -188,7 +259,9 @@ const writeFailure = (
   if (command.json) {
     environment.stdout(`${JSON.stringify(report, null, 2)}\n`);
   } else {
-    environment.stderr(`[ERROR] replay-execution/${error.code} ${error.path}: ${error.message}\n`);
+    environment.stderr(
+      `[ERROR] replay-execution/${error.code} ${error.path}: ${error.message}\n`,
+    );
   }
 };
 
@@ -225,7 +298,9 @@ export const runReplayExecuteCli = async (
     : null;
 
   try {
-    const bundle = parseRuntimeBundle(await readJson(bundlePath, "runtime bundle"));
+    const bundle = parseRuntimeBundle(
+      await readJson(bundlePath, "runtime bundle"),
+    );
     const execution = executeInspectedReplay(
       bundle,
       await readJson(replayPath, "replay"),
@@ -262,7 +337,9 @@ export const runReplayExecuteCli = async (
     );
     return 0;
   } catch (error) {
-    writeFailure(command, environment, 1, executionError(error));
-    return 1;
+    const diagnostic = executionError(error);
+    const exitCode = replayExecuteExitCodeForDiagnosticCode(diagnostic.code);
+    writeFailure(command, environment, exitCode, diagnostic);
+    return exitCode;
   }
 };
