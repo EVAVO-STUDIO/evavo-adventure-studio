@@ -5,6 +5,7 @@ import {
   ReplayCompatibilityError,
   ReplayIntegrityError,
   validateReplayCompatibility,
+  type ReplayLog,
 } from "@evavo/adventure-replay";
 import {
   parseRuntimeBundle,
@@ -14,6 +15,7 @@ import {
   loadSaveGame,
   SaveGameCompatibilityError,
   SaveGameIntegrityError,
+  type SaveGame,
 } from "@evavo/adventure-save-game";
 import {
   formatDiagnostic,
@@ -57,6 +59,16 @@ class RuntimeArtifactUsageError extends Error {
   constructor(message: string) {
     super(message);
     this.name = "RuntimeArtifactUsageError";
+  }
+}
+
+class RuntimeArtifactDiagnosticsError extends Error {
+  readonly diagnostics: readonly CliDiagnostic[];
+
+  constructor(diagnostics: readonly CliDiagnostic[]) {
+    super(diagnostics[0]?.message ?? "Runtime artifact validation failed.");
+    this.name = "RuntimeArtifactDiagnosticsError";
+    this.diagnostics = diagnostics;
   }
 }
 
@@ -182,7 +194,7 @@ const readJson = async (
   try {
     text = await readFile(path, "utf8");
   } catch (error) {
-    throw [
+    throw new RuntimeArtifactDiagnosticsError([
       {
         severity: "error",
         source,
@@ -194,13 +206,13 @@ const readJson = async (
         message: `Unable to read '${path}': ${
           error instanceof Error ? error.message : String(error)
         }`,
-      } satisfies CliDiagnostic,
-    ];
+      },
+    ]);
   }
   try {
     return JSON.parse(text) as unknown;
   } catch (error) {
-    throw [
+    throw new RuntimeArtifactDiagnosticsError([
       {
         severity: "error",
         source,
@@ -209,22 +221,27 @@ const readJson = async (
         message: `Invalid JSON in '${path}': ${
           error instanceof Error ? error.message : String(error)
         }`,
-      } satisfies CliDiagnostic,
-    ];
+      },
+    ]);
   }
 };
+
+const isZodError = (error: unknown): boolean =>
+  error instanceof Error && error.name === "ZodError";
 
 const loadBundle = async (path: string): Promise<RuntimeBundle> => {
   const input = await readJson(path, "runtime-bundle-file");
   try {
     return parseRuntimeBundle(input);
   } catch (error) {
-    throw issueDiagnostics(
-      error,
-      typeof error === "object" && error !== null && "issues" in error
-        ? "runtime-bundle-semantics"
-        : "runtime-bundle-schema",
-      "runtime-bundle-invalid",
+    throw new RuntimeArtifactDiagnosticsError(
+      issueDiagnostics(
+        error,
+        isZodError(error)
+          ? "runtime-bundle-schema"
+          : "runtime-bundle-semantics",
+        "runtime-bundle-invalid",
+      ),
     );
   }
 };
@@ -265,7 +282,7 @@ const validateSave = async (
 ): Promise<number> => {
   const bundle = await loadBundle(resolve(command.bundlePath));
   const input = await readJson(resolve(command.artifactPath), "save-game-file");
-  let save;
+  let save: SaveGame;
   try {
     save = loadSaveGame(bundle, input);
   } catch (error) {
@@ -275,7 +292,9 @@ const validateSave = async (
         : error instanceof SaveGameCompatibilityError
           ? "save-game-compatibility"
           : "save-game-schema";
-    throw issueDiagnostics(error, source, "save-game-invalid");
+    throw new RuntimeArtifactDiagnosticsError(
+      issueDiagnostics(error, source, "save-game-invalid"),
+    );
   }
 
   const report = {
@@ -306,7 +325,7 @@ const validateReplay = async (
 ): Promise<number> => {
   const bundle = await loadBundle(resolve(command.bundlePath));
   const input = await readJson(resolve(command.artifactPath), "replay-file");
-  let replay;
+  let replay: ReplayLog;
   try {
     replay = parseReplayLog(input);
     const issues = validateReplayCompatibility(bundle, replay);
@@ -318,7 +337,9 @@ const validateReplay = async (
         : error instanceof ReplayCompatibilityError
           ? "replay-compatibility"
           : "replay-schema";
-    throw issueDiagnostics(error, source, "replay-invalid");
+    throw new RuntimeArtifactDiagnosticsError(
+      issueDiagnostics(error, source, "replay-invalid"),
+    );
   }
 
   const report = {
@@ -382,8 +403,8 @@ export const runRuntimeArtifactCli = async (
       ? await validateSave(command, environment)
       : await validateReplay(command, environment);
   } catch (error) {
-    if (Array.isArray(error)) {
-      writeFailure(command, environment, 1, error as readonly CliDiagnostic[]);
+    if (error instanceof RuntimeArtifactDiagnosticsError) {
+      writeFailure(command, environment, 1, error.diagnostics);
       return 1;
     }
     const diagnostics = issueDiagnostics(
