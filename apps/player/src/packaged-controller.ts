@@ -1,3 +1,5 @@
+import type { RuntimeEvent } from "@evavo/adventure-core";
+import type { DialogueView } from "@evavo/adventure-dialogue";
 import type { Id, Point } from "@evavo/adventure-project-schema";
 import type { ResolvedFrame } from "@evavo/adventure-render-contract";
 import type { RuntimeBundle } from "@evavo/adventure-runtime-bundle";
@@ -9,6 +11,10 @@ import {
   type InteractiveRuntimeWorldState,
   type SceneCommandEvent,
 } from "@evavo/adventure-scene-runtime/commands";
+import {
+  chooseActiveRuntimeDialogueOption,
+  resolveActiveRuntimeDialogue,
+} from "@evavo/adventure-scene-runtime/dialogue";
 import { hitTestSceneObject } from "@evavo/adventure-scene-runtime/interactions";
 import { beginActorMovement } from "@evavo/adventure-scene-runtime/movement";
 import { uiSkinById, type UiSkin } from "@evavo/adventure-ui-skin";
@@ -77,6 +83,23 @@ const movementFailureStatus = (reason: string): string => {
   }
 };
 
+const speechFromEvents = (events: readonly RuntimeEvent[]): string | null => {
+  const speech = [...events]
+    .reverse()
+    .find((event) => event.kind === "speech-requested");
+  return speech?.kind === "speech-requested" ? speech.text : null;
+};
+
+const dialogueViewStatus = (
+  view: DialogueView,
+  events: readonly RuntimeEvent[] = [],
+): string =>
+  speechFromEvents(events) ??
+  view.lines.at(-1)?.text ??
+  (view.choices.some((choice) => choice.visible && choice.enabled)
+    ? "CHOOSE A RESPONSE"
+    : "DIALOGUE CONTINUES");
+
 const statusFromCommandEvent = (event: SceneCommandEvent): string => {
   switch (event.kind) {
     case "object-command-queued":
@@ -89,14 +112,11 @@ const statusFromCommandEvent = (event: SceneCommandEvent): string => {
       return event.reason === "movement-cancelled"
         ? "ACTION CANCELLED"
         : "TARGET IS NO LONGER AVAILABLE";
-    case "object-command-executed": {
-      const speech = [...event.runtimeEvents]
-        .reverse()
-        .find((runtimeEvent) => runtimeEvent.kind === "speech-requested");
-      return speech?.kind === "speech-requested"
-        ? speech.text
-        : `${event.verb.toUpperCase()} COMPLETE`;
-    }
+    case "object-command-executed":
+      return (
+        speechFromEvents(event.runtimeEvents) ??
+        `${event.verb.toUpperCase()} COMPLETE`
+      );
   }
 };
 
@@ -128,6 +148,7 @@ export const createPackagedRuntimeController = (
   let hoveredVerbId: Id<"ui-verb"> | null = null;
   let selectedItemId: Id<"item"> | null = null;
   let verbCoinPosition: Point | null = null;
+  let hoveredDialogueChoiceId: Id<"dialogue-choice"> | null = null;
   let world = createInitialInteractiveRuntimeWorldState(bundle);
   let renderedTick = 0;
   let baseFrame = resolveRuntimeSceneFrame(bundle, world);
@@ -143,12 +164,22 @@ export const createPackagedRuntimeController = (
     ...(hoveredVerbId ? { hoveredVerbId } : {}),
     ...(selectedItemId ? { selectedItemId } : {}),
     ...(verbCoinPosition ? { verbCoinPosition } : {}),
+    ...(hoveredDialogueChoiceId ? { hoveredDialogueChoiceId } : {}),
   });
 
   const setStatus = (text: string): void => {
     if (status === text) return;
     status = text;
     options.onStatusChange?.(text);
+  };
+
+  const setActiveDialogueStatus = (
+    events: readonly RuntimeEvent[] = [],
+  ): boolean => {
+    const view = resolveActiveRuntimeDialogue(bundle, world);
+    if (!view) return false;
+    setStatus(dialogueViewStatus(view, events));
+    return true;
   };
 
   const currentUiTarget = (position: Point): UiHitTarget | null => {
@@ -180,6 +211,7 @@ export const createPackagedRuntimeController = (
   const refreshCursor = (): void => {
     if (!cursor.position) {
       hoveredVerbId = null;
+      hoveredDialogueChoiceId = null;
       return;
     }
     const uiTarget = currentUiTarget(cursor.position);
@@ -188,6 +220,8 @@ export const createPackagedRuntimeController = (
         uiTarget.kind === "verb" || uiTarget.kind === "verb-coin"
           ? uiTarget.verb.id
           : null;
+      hoveredDialogueChoiceId =
+        uiTarget.kind === "dialogue-choice" ? uiTarget.choiceId : null;
       const cursorId =
         uiTarget.kind === "verb" || uiTarget.kind === "verb-coin"
           ? uiTarget.verb.cursorId
@@ -198,6 +232,7 @@ export const createPackagedRuntimeController = (
       return;
     }
     hoveredVerbId = null;
+    hoveredDialogueChoiceId = null;
     cursor = {
       ...cursor,
       cursorId: cursorIdForObjectTarget(pointerTarget()),
@@ -209,6 +244,31 @@ export const createPackagedRuntimeController = (
 
   const itemName = (itemId: Id<"item">): string =>
     bundle.inventoryItems.find((item) => item.id === itemId)?.name ?? itemId;
+
+  const chooseDialogue = (
+    target: Extract<UiHitTarget, { readonly kind: "dialogue-choice" }>,
+  ): void => {
+    if (!target.enabled) {
+      setStatus("THAT DIALOGUE CHOICE IS DISABLED");
+      return;
+    }
+    const chosen = chooseActiveRuntimeDialogueOption(
+      bundle,
+      world,
+      target.choiceId,
+    );
+    if (chosen.kind === "rejected") {
+      setStatus(`DIALOGUE REJECTED • ${chosen.detail}`);
+      return;
+    }
+    world = chosen.state;
+    hoveredDialogueChoiceId = null;
+    if (chosen.kind === "active") {
+      setStatus(dialogueViewStatus(chosen.view, chosen.events));
+      return;
+    }
+    setStatus(speechFromEvents(chosen.events) ?? "DIALOGUE ENDED");
+  };
 
   const handleUiActivation = (position: Point): boolean => {
     if (!runtimeSkin || !bundle.bitmapFonts) return false;
@@ -233,11 +293,7 @@ export const createPackagedRuntimeController = (
           setStatus("PARSER INPUT READY");
           return true;
         case "dialogue-choice":
-          setStatus(
-            target.enabled
-              ? `DIALOGUE CHOICE ${target.choiceId}`
-              : "THAT DIALOGUE CHOICE IS DISABLED",
-          );
+          chooseDialogue(target);
           return true;
       }
     }
@@ -258,10 +314,21 @@ export const createPackagedRuntimeController = (
     return { ...state, pendingObjectCommands };
   };
 
+  const applyCommandStatus = (event: SceneCommandEvent): void => {
+    setStatus(statusFromCommandEvent(event));
+    if (event.kind === "object-command-executed") {
+      setActiveDialogueStatus(event.runtimeEvents);
+    }
+  };
+
   const activate = (position: Point): void => {
     cursor = { ...cursor, position };
     refreshCursor();
     if (handleUiActivation(position)) return;
+    if (world.story.activeDialogue) {
+      setStatus("CHOOSE A DIALOGUE RESPONSE");
+      return;
+    }
     if (!controlledActorInstanceId) return;
 
     const worldPoint = nativeScreenPointToWorld(position, baseFrame.camera);
@@ -281,7 +348,7 @@ export const createPackagedRuntimeController = (
           case "queued":
           case "resolved":
             world = queued.state;
-            setStatus(statusFromCommandEvent(queued.event));
+            applyCommandStatus(queued.event);
             return;
           case "missing-target":
             setStatus("TARGET IS NO LONGER AVAILABLE");
@@ -358,7 +425,7 @@ export const createPackagedRuntimeController = (
         world = advanced.state;
         renderedTick = tick;
         for (const event of advanced.commandEvents) {
-          setStatus(statusFromCommandEvent(event));
+          applyCommandStatus(event);
         }
       }
       baseFrame = resolveRuntimeSceneFrame(bundle, world);
