@@ -6,6 +6,7 @@ import {
 } from "@evavo/adventure-replay";
 import type { RuntimeBundle } from "@evavo/adventure-runtime-bundle";
 import { createPackagedRuntimeController } from "@evavo/adventure-runtime-controller";
+import { controlledActorRequestFromSave } from "@evavo/adventure-runtime-controller/input";
 import type { SaveGame } from "@evavo/adventure-save-game";
 import { inspectSaveGame, type SaveGameInspection } from "./index.js";
 
@@ -30,8 +31,9 @@ export const executeInspectedReplay = (
   if (issues.length > 0) throw new ReplayCompatibilityError(issues);
 
   const controller = createPackagedRuntimeController(bundle, {
-    requestedActorInstanceId:
+    requestedActorInstanceId: controlledActorRequestFromSave(
       replay.initialSave.interface.controlledActorInstanceId,
+    ),
   });
   const result = executeReplay(bundle, replay, controller);
   const expected = replay.expectedFinalSaveFingerprint ?? null;
