@@ -13,6 +13,7 @@ on:
       - "packages/bitmap-font-editor-core/**"
       - "packages/ui-skin/**"
       - "packages/ui-skin-editor-core/**"
+      - "packages/save-game/**"
       - "packages/asset-pipeline/**"
       - "packages/project-editor-core/**"
       - "packages/editor-core/**"
@@ -37,6 +38,7 @@ on:
       - "packages/bitmap-font-editor-core/**"
       - "packages/ui-skin/**"
       - "packages/ui-skin-editor-core/**"
+      - "packages/save-game/**"
       - "packages/asset-pipeline/**"
       - "packages/project-editor-core/**"
       - "packages/editor-core/**"
@@ -102,6 +104,7 @@ jobs:
           packages/bitmap-font-editor-core/tests
           packages/ui-skin/tests
           packages/ui-skin-editor-core/tests
+          packages/save-game/tests
           packages/asset-pipeline/tests/art-evidence.test.ts
           packages/compiler/tests/bitmap-font-compilation.test.ts
           packages/compiler/tests/ui-skin-compilation.test.ts
