@@ -40,5 +40,8 @@
     "@evavo/adventure-scene": "workspace:*",
     "@evavo/adventure-scene-runtime": "workspace:*",
     "@evavo/adventure-ui-skin": "workspace:*"
+  },
+  "devDependencies": {
+    "@evavo/adventure-bitmap-font": "workspace:*"
   }
 }
