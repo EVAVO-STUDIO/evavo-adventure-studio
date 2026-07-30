@@ -25,6 +25,7 @@
     { "path": "packages/frame-resolver" },
     { "path": "packages/runtime-bundle" },
     { "path": "packages/scene-runtime" },
+    { "path": "packages/save-game" },
     { "path": "packages/renderer-pixi" },
     { "path": "packages/validation" },
     { "path": "packages/asset-pipeline" },
