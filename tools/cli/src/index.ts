@@ -1,5 +1,9 @@
 #!/usr/bin/env node
 
 import { runCli } from "./runner.js";
+import { runRuntimeArtifactCli } from "./runtime-artifacts.js";
 
-process.exitCode = await runCli(process.argv.slice(2));
+const argv = process.argv.slice(2);
+const runtimeArtifactExitCode = await runRuntimeArtifactCli(argv);
+process.exitCode =
+  runtimeArtifactExitCode === null ? await runCli(argv) : runtimeArtifactExitCode;
