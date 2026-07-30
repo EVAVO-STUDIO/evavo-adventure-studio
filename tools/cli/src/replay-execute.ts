@@ -1,5 +1,5 @@
-import { mkdir, readFile, writeFile } from "node:fs/promises";
-import { dirname, resolve } from "node:path";
+import { readFile } from "node:fs/promises";
+import { resolve } from "node:path";
 import { executeInspectedReplay } from "@evavo/adventure-playtest-inspector/replay-execution";
 import {
   ReplayCompatibilityError,
@@ -8,7 +8,12 @@ import {
   ReplayIntegrityError,
 } from "@evavo/adventure-replay";
 import { parseRuntimeBundle } from "@evavo/adventure-runtime-bundle";
-import { serializeSaveGame } from "@evavo/adventure-save-game";
+import {
+  assertReplayOutputPath,
+  ReplayOutputCollisionError,
+  ReplayOutputExistsError,
+  writeReplayOutputSave,
+} from "./replay-output.js";
 
 export interface ReplayExecuteCliEnvironment {
   readonly stdout: (text: string) => void;
@@ -189,6 +194,20 @@ const executionError = (error: unknown): ReplayExecuteDiagnostic => {
   if (error instanceof ReplayExecuteInputError) {
     return { code: error.code, path: error.path, message: error.message };
   }
+  if (error instanceof ReplayOutputCollisionError) {
+    return {
+      code: "output-collides-with-input",
+      path: "--output-save",
+      message: error.message,
+    };
+  }
+  if (error instanceof ReplayOutputExistsError) {
+    return {
+      code: "output-exists",
+      path: error.outputPath,
+      message: error.message,
+    };
+  }
   if (error instanceof ReplayIntegrityError) {
     return { code: "replay-integrity", path: "$", message: error.message };
   }
@@ -298,6 +317,9 @@ export const runReplayExecuteCli = async (
     : null;
 
   try {
+    if (outputSavePath) {
+      assertReplayOutputPath(outputSavePath, [bundlePath, replayPath]);
+    }
     const bundle = parseRuntimeBundle(
       await readJson(bundlePath, "runtime bundle"),
     );
@@ -306,12 +328,7 @@ export const runReplayExecuteCli = async (
       await readJson(replayPath, "replay"),
     );
     if (outputSavePath) {
-      await mkdir(dirname(outputSavePath), { recursive: true });
-      await writeFile(
-        outputSavePath,
-        serializeSaveGame(execution.finalSaveDocument),
-        "utf8",
-      );
+      await writeReplayOutputSave(outputSavePath, execution.finalSaveDocument);
     }
 
     const report = {
