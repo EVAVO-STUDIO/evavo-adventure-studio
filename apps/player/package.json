@@ -18,6 +18,7 @@
     "@evavo/adventure-renderer-pixi": "workspace:*",
     "@evavo/adventure-replay": "workspace:*",
     "@evavo/adventure-runtime-bundle": "workspace:*",
+    "@evavo/adventure-runtime-controller": "workspace:*",
     "@evavo/adventure-save-game": "workspace:*",
     "@evavo/adventure-scene": "workspace:*",
     "@evavo/adventure-scene-runtime": "workspace:*",

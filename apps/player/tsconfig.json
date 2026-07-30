@@ -15,6 +15,7 @@
     { "path": "../../packages/renderer-pixi" },
     { "path": "../../packages/replay" },
     { "path": "../../packages/runtime-bundle" },
+    { "path": "../../packages/runtime-controller" },
     { "path": "../../packages/save-game" },
     { "path": "../../packages/scene" },
     { "path": "../../packages/scene-runtime" },

@@ -1,0 +1,44 @@
+{
+  "name": "@evavo/adventure-runtime-controller",
+  "version": "0.1.0",
+  "private": true,
+  "type": "module",
+  "exports": {
+    ".": {
+      "types": "./dist/src/index.d.ts",
+      "import": "./dist/src/index.js"
+    },
+    "./input": {
+      "types": "./dist/src/input.d.ts",
+      "import": "./dist/src/input.js"
+    },
+    "./parser": {
+      "types": "./dist/src/parser.d.ts",
+      "import": "./dist/src/parser.js"
+    },
+    "./runtime-ui": {
+      "types": "./dist/src/runtime-ui.d.ts",
+      "import": "./dist/src/runtime-ui.js"
+    },
+    "./native-status": {
+      "types": "./dist/src/native-status.d.ts",
+      "import": "./dist/src/native-status.js"
+    }
+  },
+  "files": ["dist"],
+  "scripts": {
+    "build": "tsc -b",
+    "typecheck": "tsc -b --pretty false"
+  },
+  "dependencies": {
+    "@evavo/adventure-core": "workspace:*",
+    "@evavo/adventure-dialogue": "workspace:*",
+    "@evavo/adventure-project-schema": "workspace:*",
+    "@evavo/adventure-render-contract": "workspace:*",
+    "@evavo/adventure-runtime-bundle": "workspace:*",
+    "@evavo/adventure-save-game": "workspace:*",
+    "@evavo/adventure-scene": "workspace:*",
+    "@evavo/adventure-scene-runtime": "workspace:*",
+    "@evavo/adventure-ui-skin": "workspace:*"
+  }
+}
