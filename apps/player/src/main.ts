@@ -25,6 +25,11 @@ import {
 } from "./parser.js";
 import { createPackagedRuntimeRenderer } from "./runtime-renderer.js";
 import { loadRuntimeBundle } from "./runtime-loader.js";
+import {
+  hasSaveGameSlot,
+  readSaveGameSlot,
+  writeSaveGameSlot,
+} from "./save-storage.js";
 import "./style.css";
 
 const id = <T extends string>(value: string): Id<T> => value as Id<T>;
@@ -164,11 +169,18 @@ interface PlayerInputController {
   handleKey?(input: ParserKeyInput): boolean;
 }
 
+interface PlayerPersistence {
+  saveQuickSlot(): void;
+  loadQuickSlot(): number;
+  hasQuickSlot(): boolean;
+}
+
 interface MountedPlayer {
   readonly renderer: PixiWebGLRenderer;
   readonly ticksPerSecond: number;
   readonly createFrame: (tick: number) => ResolvedFrame;
   readonly input?: PlayerInputController;
+  readonly persistence?: PlayerPersistence;
   readonly statusText?: () => string;
   readonly disposeAdditional?: () => Promise<void>;
 }
@@ -179,6 +191,9 @@ const updateStatus = (text: string): void => {
   );
   if (status) status.textContent = text;
 };
+
+const errorText = (prefix: string, error: unknown): string =>
+  `${prefix} • ${error instanceof Error ? error.message : String(error)}`;
 
 const nativePointer = (
   host: HTMLElement,
@@ -208,6 +223,12 @@ const mountPlayer = async (
     initialFrame.canvas,
   );
   if (player.statusText) updateStatus(player.statusText());
+
+  let clock = createFixedStepClock();
+  let logicalTick = 0;
+  let previousTime = performance.now();
+  let animationFrame = 0;
+  let disposed = false;
 
   const resize = (): void => {
     const bounds = host.getBoundingClientRect();
@@ -242,7 +263,43 @@ const mountPlayer = async (
   const onContextMenu = (event: MouseEvent): void => {
     if (player.input) event.preventDefault();
   };
+
+  const restoreQuickSlot = (): void => {
+    if (!player.persistence) return;
+    try {
+      logicalTick = player.persistence.loadQuickSlot();
+      clock = createFixedStepClock();
+      previousTime = performance.now();
+      player.renderer.render(player.createFrame(logicalTick));
+      updateStatus("GAME RESTORED");
+    } catch (error) {
+      updateStatus(errorText("LOAD FAILED", error));
+    }
+  };
+
+  const saveQuickSlot = (): void => {
+    if (!player.persistence) return;
+    try {
+      player.persistence.saveQuickSlot();
+      updateStatus("GAME SAVED");
+    } catch (error) {
+      updateStatus(errorText("SAVE FAILED", error));
+    }
+  };
+
   const onKeyDown = (event: KeyboardEvent): void => {
+    const commandModifier = event.ctrlKey || event.metaKey;
+    if (commandModifier && event.shiftKey && event.code === "KeyS") {
+      saveQuickSlot();
+      event.preventDefault();
+      return;
+    }
+    if (commandModifier && event.shiftKey && event.code === "KeyL") {
+      restoreQuickSlot();
+      event.preventDefault();
+      return;
+    }
+
     const input = parserKeyInputFromKeyboardEvent(event);
     if (!input || !player.input?.handleKey?.(input)) return;
     if (player.statusText) updateStatus(player.statusText());
@@ -260,12 +317,6 @@ const mountPlayer = async (
     host.addEventListener("contextmenu", onContextMenu);
     window.addEventListener("keydown", onKeyDown);
   }
-
-  let clock = createFixedStepClock();
-  let logicalTick = 0;
-  let previousTime = performance.now();
-  let animationFrame = 0;
-  let disposed = false;
 
   const renderLoop = (now: number): void => {
     if (disposed) return;
@@ -318,11 +369,26 @@ const packagedPlayer = async (
     bundle,
     { requestedActorInstanceId },
   );
+  const persistence: PlayerPersistence = {
+    saveQuickSlot: () =>
+      writeSaveGameSlot(
+        window.localStorage,
+        bundle,
+        controller.createSaveGame(),
+      ),
+    loadQuickSlot: () =>
+      controller.restoreSaveGame(
+        readSaveGameSlot(window.localStorage, bundle),
+      ),
+    hasQuickSlot: () => hasSaveGameSlot(window.localStorage, bundle),
+  };
+
   return {
     renderer: createPackagedRuntimeRenderer(bundle, textures),
     ticksPerSecond: bundle.presentation.logicalTicksPerSecond,
     createFrame: controller.createFrame,
     input: controller,
+    persistence,
     statusText: controller.statusText,
     disposeAdditional: () => textures.dispose(),
   };
