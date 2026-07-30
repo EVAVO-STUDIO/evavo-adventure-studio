@@ -4,13 +4,13 @@ import {
 } from "@evavo/adventure-core/fixed-step";
 import type { Id, Point } from "@evavo/adventure-project-schema";
 import type {
+  NativeCanvas,
   RenderLayer,
   ResolvedFrame,
   SolidRectangleRenderNode,
 } from "@evavo/adventure-render-contract";
 import { PixiWebGLRenderer } from "@evavo/adventure-renderer-pixi";
 import { PixiAssetTextureStore } from "@evavo/adventure-renderer-pixi/texture-store";
-import type { NativeCanvas } from "@evavo/adventure-render-contract";
 import {
   mapClientPointToNative,
   requestedActorFromSearch,
@@ -20,8 +20,10 @@ import {
   type PackagedRuntimeController,
 } from "./packaged-controller.js";
 import {
-  createPackagedRuntimeRenderer,
-} from "./runtime-renderer.js";
+  parserKeyInputFromKeyboardEvent,
+  type ParserKeyInput,
+} from "./parser.js";
+import { createPackagedRuntimeRenderer } from "./runtime-renderer.js";
 import { loadRuntimeBundle } from "./runtime-loader.js";
 import "./style.css";
 
@@ -159,6 +161,7 @@ interface PlayerInputController {
   setPointer(position: Point | null): void;
   setPressed(pressed: boolean): void;
   activate(position: Point): void;
+  handleKey?(input: ParserKeyInput): boolean;
 }
 
 interface MountedPlayer {
@@ -239,15 +242,23 @@ const mountPlayer = async (
   const onContextMenu = (event: MouseEvent): void => {
     if (player.input) event.preventDefault();
   };
+  const onKeyDown = (event: KeyboardEvent): void => {
+    const input = parserKeyInputFromKeyboardEvent(event);
+    if (!input || !player.input?.handleKey?.(input)) return;
+    if (player.statusText) updateStatus(player.statusText());
+    event.preventDefault();
+  };
 
   if (player.input) {
     host.style.cursor = "none";
+    host.tabIndex = 0;
     host.addEventListener("pointermove", onPointerMove);
     host.addEventListener("pointerleave", onPointerLeave);
     host.addEventListener("pointerdown", onPointerDown);
     host.addEventListener("pointerup", onPointerUp);
     host.addEventListener("pointercancel", onPointerCancel);
     host.addEventListener("contextmenu", onContextMenu);
+    window.addEventListener("keydown", onKeyDown);
   }
 
   let clock = createFixedStepClock();
@@ -286,6 +297,7 @@ const mountPlayer = async (
       host.removeEventListener("pointerup", onPointerUp);
       host.removeEventListener("pointercancel", onPointerCancel);
       host.removeEventListener("contextmenu", onContextMenu);
+      window.removeEventListener("keydown", onKeyDown);
       void player.renderer
         .destroy()
         .then(() => player.disposeAdditional?.())
