@@ -21,6 +21,8 @@ export interface RuntimeUiInteractionState {
   readonly selectedItemId?: Id<"item">;
   readonly verbCoinPosition?: Point;
   readonly hoveredDialogueChoiceId?: Id<"dialogue-choice">;
+  readonly parserText?: string;
+  readonly parserCursorVisible?: boolean;
 }
 
 const runtimeAssetsById = (
@@ -132,7 +134,10 @@ export const runtimeUiState = (
       : {}),
     score: world.story.score,
     ...(skin.interactionMode === "parser-assisted"
-      ? { parserText: "", parserCursorVisible: true }
+      ? {
+          parserText: interaction.parserText ?? "",
+          parserCursorVisible: interaction.parserCursorVisible ?? false,
+        }
       : {}),
     ...(interaction.verbCoinPosition
       ? { verbCoinPosition: interaction.verbCoinPosition }
