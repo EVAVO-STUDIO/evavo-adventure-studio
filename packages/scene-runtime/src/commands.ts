@@ -1,10 +1,10 @@
 import type { RuntimeEvent } from "@evavo/adventure-core";
 import type { Id } from "@evavo/adventure-project-schema";
 import type { RuntimeBundle } from "@evavo/adventure-runtime-bundle";
+import { applyDialogueRequestEvents } from "./dialogue.js";
 import {
   executeSceneObjectCommand,
   resolveSceneObjectHotspots,
-  type SceneObjectCommand,
   type SceneObjectCommandExecution,
 } from "./interactions.js";
 import {
@@ -128,22 +128,14 @@ const commandEventFromExecution = (
   pending: PendingSceneObjectCommand,
   execution: Exclude<
     SceneObjectCommandExecution,
-    { readonly kind: "missing-target" }
+    { readonly kind: "missing-target" } | { readonly kind: "executed" }
   >,
-): Exclude<
+): Extract<
   SceneCommandEvent,
-  | { readonly kind: "object-command-queued" }
-  | { readonly kind: "object-command-aborted" }
+  | { readonly kind: "object-command-fallback" }
+  | { readonly kind: "object-command-rejected" }
 > => {
   switch (execution.kind) {
-    case "executed":
-      return {
-        kind: "object-command-executed",
-        actorInstanceId: pending.actorInstanceId,
-        objectInstanceId: pending.objectInstanceId,
-        verb: pending.verb,
-        runtimeEvents: execution.execution.result.transition.events,
-      };
     case "fallback":
       return {
         kind: "object-command-fallback",
@@ -190,8 +182,29 @@ const executePendingCommand = (
       },
     };
   }
+
+  const merged = mergeRuntimeWorld(state, execution.state);
+  if (execution.kind === "executed") {
+    const dialogue = applyDialogueRequestEvents(
+      bundle,
+      merged,
+      execution.execution.result.transition.events,
+    );
+    return {
+      state: dialogue.state,
+      execution,
+      event: {
+        kind: "object-command-executed",
+        actorInstanceId: pending.actorInstanceId,
+        objectInstanceId: pending.objectInstanceId,
+        verb: pending.verb,
+        runtimeEvents: dialogue.events,
+      },
+    };
+  }
+
   return {
-    state: mergeRuntimeWorld(state, execution.state),
+    state: merged,
     execution,
     event: commandEventFromExecution(pending, execution),
   };
@@ -314,9 +327,7 @@ export const advanceInteractiveRuntimeWorld = (
 
   for (const movementEvent of advanced.movementEvents) {
     const command = pending[pendingKey(movementEvent.actorInstanceId)];
-    if (!command) {
-      continue;
-    }
+    if (!command) continue;
     if (movementEvent.kind === "movement-cancelled") {
       delete pending[pendingKey(movementEvent.actorInstanceId)];
       commandEvents.push({
@@ -327,9 +338,7 @@ export const advanceInteractiveRuntimeWorld = (
       });
       continue;
     }
-    if (movementEvent.kind !== "movement-completed") {
-      continue;
-    }
+    if (movementEvent.kind !== "movement-completed") continue;
 
     delete pending[pendingKey(movementEvent.actorInstanceId)];
     const resolved = executePendingCommand(bundle, state, command);
