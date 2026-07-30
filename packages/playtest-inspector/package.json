@@ -7,6 +7,10 @@
     ".": {
       "types": "./dist/src/index.d.ts",
       "import": "./dist/src/index.js"
+    },
+    "./canonical-diff": {
+      "types": "./dist/src/canonical-diff.d.ts",
+      "import": "./dist/src/canonical-diff.js"
     }
   },
   "files": ["dist"],
