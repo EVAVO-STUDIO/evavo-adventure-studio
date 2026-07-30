@@ -47,12 +47,6 @@ export type UiSkinWorkspaceAction =
   | { readonly type: "update-preview"; readonly preview: UiRuntimeState }
   | { readonly type: "clear-notice" };
 
-const firstSkin = (manifest: UiSkinManifest): UiSkin => {
-  const skin = manifest.skins[0];
-  if (!skin) throw new Error("Interface skin manifests require at least one skin.");
-  return skin;
-};
-
 export const DEFAULT_UI_PREVIEW: UiRuntimeState = {
   statusText: "RAIN ON GLASS. LEDGER MISSING.",
   score: 12,
@@ -102,7 +96,7 @@ export const createUiSkinWorkspace = (
   project,
   bitmapFonts,
   history: createUiSkinEditorHistory(project, bitmapFonts, manifest),
-  selectedSkinId: manifest.defaultSkinId ?? firstSkin(manifest).id,
+  selectedSkinId: manifest.defaultSkinId,
   preview: DEFAULT_UI_PREVIEW,
   notice: null,
 });
@@ -202,6 +196,11 @@ export const insertUiVerbCommand = (
   verb,
 });
 
+const rejectedNotice = (error: unknown): string =>
+  error instanceof Error
+    ? `Interface edit rejected: ${error.message}`
+    : "Interface edit was rejected.";
+
 export const uiSkinWorkspaceReducer = (
   state: UiSkinWorkspaceState,
   action: UiSkinWorkspaceAction,
@@ -210,23 +209,27 @@ export const uiSkinWorkspaceReducer = (
     case "select-skin":
       return { ...state, selectedSkinId: action.skinId, notice: null };
     case "execute": {
-      const history = executeUiSkinEditorCommand(
-        state.project,
-        state.bitmapFonts,
-        state.history,
-        action.command,
-      );
-      const selectedExists = history.document.manifest.skins.some(
-        (skin) => skin.id === state.selectedSkinId,
-      );
-      return {
-        ...state,
-        history,
-        selectedSkinId: selectedExists
-          ? state.selectedSkinId
-          : history.document.manifest.defaultSkinId,
-        notice: action.notice ?? null,
-      };
+      try {
+        const history = executeUiSkinEditorCommand(
+          state.project,
+          state.bitmapFonts,
+          state.history,
+          action.command,
+        );
+        const selectedExists = history.document.manifest.skins.some(
+          (skin) => skin.id === state.selectedSkinId,
+        );
+        return {
+          ...state,
+          history,
+          selectedSkinId: selectedExists
+            ? state.selectedSkinId
+            : history.document.manifest.defaultSkinId,
+          notice: action.notice ?? null,
+        };
+      } catch (error) {
+        return { ...state, notice: rejectedNotice(error) };
+      }
     }
     case "undo":
       return {
