@@ -124,6 +124,60 @@ describe("player replay recorder", () => {
     });
   });
 
+  it("ignores player input outside an active recording session", () => {
+    const recorder = createPlayerReplayRecorder(bundle);
+    recorder.recordActivation(0, { x: 1, y: 1 });
+    recorder.recordParserInput(0, { kind: "focus" });
+
+    expect(recorder.status()).toEqual({
+      recording: false,
+      eventCount: 0,
+      initialTick: null,
+      lastEventTick: null,
+      hasCompletedReplay: false,
+    });
+
+    recorder.start(saveAt(2));
+    recorder.recordActivation(3, { x: 2, y: 2 });
+    const completed = recorder.finish(saveAt(4));
+    recorder.recordActivation(5, { x: 3, y: 3 });
+    recorder.recordParserInput(5, { kind: "blur" });
+
+    expect(recorder.latestReplay()).toEqual(completed);
+    expect(recorder.status()).toEqual({
+      recording: false,
+      eventCount: 0,
+      initialTick: null,
+      lastEventTick: null,
+      hasCompletedReplay: true,
+    });
+  });
+
+  it("refuses to replace an active recording session", () => {
+    const recorder = createPlayerReplayRecorder(bundle);
+    recorder.start(saveAt(6));
+    recorder.recordActivation(7, { x: 4, y: 5 });
+
+    expect(() => recorder.start(saveAt(20))).toThrow(
+      new ReplayRecordingStateError("Replay recording has already started."),
+    );
+    expect(recorder.status()).toEqual({
+      recording: true,
+      eventCount: 1,
+      initialTick: 6,
+      lastEventTick: 7,
+      hasCompletedReplay: false,
+    });
+    expect(recorder.finish(saveAt(8)).events).toEqual([
+      {
+        kind: "activate",
+        tick: 7,
+        sequence: 0,
+        position: { x: 4, y: 5 },
+      },
+    ]);
+  });
+
   it("rejects events before the recording start or previous event", () => {
     const recorder = createPlayerReplayRecorder(bundle);
     recorder.start(saveAt(10));

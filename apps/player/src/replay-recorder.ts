@@ -69,6 +69,9 @@ export const createPlayerReplayRecorder = (
 
   return {
     start: (save) => {
+      if (initialSave) {
+        throw new ReplayRecordingStateError("Replay recording has already started.");
+      }
       initialSave = loadSaveGame(bundle, save);
       events = [];
       nextSequence = 0;
