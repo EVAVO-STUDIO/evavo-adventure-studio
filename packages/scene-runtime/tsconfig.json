@@ -10,6 +10,7 @@
     { "path": "../asset-contract" },
     { "path": "../core" },
     { "path": "../animation" },
+    { "path": "../dialogue" },
     { "path": "../scene" },
     { "path": "../interaction" },
     { "path": "../render-contract" },
