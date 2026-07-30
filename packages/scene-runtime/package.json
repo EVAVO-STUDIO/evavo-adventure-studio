@@ -15,6 +15,10 @@
     "./movement": {
       "types": "./dist/src/movement.d.ts",
       "import": "./dist/src/movement.js"
+    },
+    "./dialogue": {
+      "types": "./dist/src/dialogue.d.ts",
+      "import": "./dist/src/dialogue.js"
     }
   },
   "files": ["dist"],
@@ -26,6 +30,7 @@
     "@evavo/adventure-animation": "workspace:*",
     "@evavo/adventure-asset-contract": "workspace:*",
     "@evavo/adventure-core": "workspace:*",
+    "@evavo/adventure-dialogue": "workspace:*",
     "@evavo/adventure-frame-resolver": "workspace:*",
     "@evavo/adventure-interaction": "workspace:*",
     "@evavo/adventure-project-schema": "workspace:*",
