@@ -9,6 +9,7 @@
     { "path": "../project-schema" },
     { "path": "../replay" },
     { "path": "../runtime-bundle" },
+    { "path": "../runtime-controller" },
     { "path": "../save-game" }
   ]
 }

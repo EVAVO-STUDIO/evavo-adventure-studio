@@ -11,6 +11,10 @@
     "./canonical-diff": {
       "types": "./dist/src/canonical-diff.d.ts",
       "import": "./dist/src/canonical-diff.js"
+    },
+    "./replay-execution": {
+      "types": "./dist/src/replay-execution.d.ts",
+      "import": "./dist/src/replay-execution.js"
     }
   },
   "files": ["dist"],
@@ -22,6 +26,7 @@
     "@evavo/adventure-project-schema": "workspace:*",
     "@evavo/adventure-replay": "workspace:*",
     "@evavo/adventure-runtime-bundle": "workspace:*",
+    "@evavo/adventure-runtime-controller": "workspace:*",
     "@evavo/adventure-save-game": "workspace:*"
   }
 }
