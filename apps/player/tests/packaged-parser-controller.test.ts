@@ -189,4 +189,34 @@ describe("packaged parser controller", () => {
     expect(controller.handleKey({ kind: "history-previous" })).toBe(true);
     expect(controller.parserState().text).toBe("help");
   });
+
+  it("restores deliberate interface state and the exact logical tick", () => {
+    const controller = createPackagedRuntimeController(bundle);
+    controller.handleKey({ kind: "focus" });
+    controller.handleKey({ kind: "text", text: "help" });
+    controller.handleKey({ kind: "submit" });
+    controller.createFrame(24);
+
+    const savedStatus = controller.statusText();
+    const save = controller.createSaveGame();
+
+    controller.handleKey({ kind: "text", text: "inventory" });
+    controller.handleKey({ kind: "submit" });
+    controller.createFrame(48);
+    expect(controller.parserState().history).toEqual(["help", "inventory"]);
+
+    const restoredTick = controller.restoreSaveGame(save);
+
+    expect(restoredTick).toBe(24);
+    expect(controller.worldState().story.tick).toBe(24);
+    expect(controller.statusText()).toBe(savedStatus);
+    expect(controller.parserState()).toEqual({
+      text: "",
+      history: ["help"],
+      historyIndex: null,
+      draftBeforeHistory: "",
+      focused: false,
+    });
+    expect(() => controller.createFrame(25)).not.toThrow();
+  });
 });
