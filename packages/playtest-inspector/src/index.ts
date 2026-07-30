@@ -218,7 +218,11 @@ const canonicalValue = (value: unknown): string => {
     }
     return input;
   };
-  return JSON.stringify(normalize(value));
+  const serialized = JSON.stringify(normalize(value));
+  if (serialized === undefined) {
+    throw new TypeError("Playtest inspection value cannot be represented as JSON.");
+  }
+  return serialized;
 };
 
 const addChanged = (
@@ -278,6 +282,13 @@ export const diffSaveGames = (
   addChanged(entries, "interface-selection", "interface.selectedItemId", before.interface.selectedItemId, after.interface.selectedItemId);
   addChanged(entries, "status", "interface.statusText", before.interface.statusText, after.interface.statusText);
   addChanged(entries, "parser", "interface.parser", before.interface.parser, after.interface.parser);
+
+  entries.sort((left, right) => {
+    const pathDifference = compareText(left.path, right.path);
+    return pathDifference !== 0
+      ? pathDifference
+      : compareText(left.code, right.code);
+  });
 
   return {
     beforeFingerprint: before.saveFingerprint,
