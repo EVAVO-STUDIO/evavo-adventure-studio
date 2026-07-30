@@ -16,6 +16,7 @@
     "@evavo/adventure-project-schema": "workspace:*",
     "@evavo/adventure-render-contract": "workspace:*",
     "@evavo/adventure-renderer-pixi": "workspace:*",
+    "@evavo/adventure-replay": "workspace:*",
     "@evavo/adventure-runtime-bundle": "workspace:*",
     "@evavo/adventure-save-game": "workspace:*",
     "@evavo/adventure-scene": "workspace:*",
