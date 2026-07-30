@@ -1,4 +1,5 @@
 import { describe, expect, it } from "vitest";
+import { createReplayLog, executeReplay } from "@evavo/adventure-replay";
 import { parseRuntimeBundle } from "@evavo/adventure-runtime-bundle";
 import { createPackagedRuntimeController } from "../src/packaged-controller.js";
 
@@ -218,5 +219,51 @@ describe("packaged parser controller", () => {
       focused: false,
     });
     expect(() => controller.createFrame(25)).not.toThrow();
+  });
+
+  it("replays the real packaged controller to an identical save fingerprint", () => {
+    const uninterrupted = createPackagedRuntimeController(bundle);
+    const initialSave = uninterrupted.createSaveGame();
+
+    uninterrupted.handleKey({ kind: "focus" });
+    uninterrupted.handleKey({ kind: "text", text: "help" });
+    uninterrupted.createFrame(1);
+    uninterrupted.handleKey({ kind: "submit" });
+    uninterrupted.createFrame(10);
+    const expected = uninterrupted.createSaveGame();
+
+    const replay = createReplayLog(bundle, initialSave, {
+      events: [
+        {
+          kind: "parser-key",
+          tick: 0,
+          sequence: 0,
+          input: { kind: "focus" },
+        },
+        {
+          kind: "parser-key",
+          tick: 0,
+          sequence: 1,
+          input: { kind: "text", text: "help" },
+        },
+        {
+          kind: "parser-key",
+          tick: 1,
+          sequence: 2,
+          input: { kind: "submit" },
+        },
+      ],
+      finalTick: 10,
+      expectedFinalSaveFingerprint: expected.saveFingerprint,
+    });
+
+    const replayed = executeReplay(
+      bundle,
+      replay,
+      createPackagedRuntimeController(bundle),
+    );
+
+    expect(replayed.finalSaveFingerprint).toBe(expected.saveFingerprint);
+    expect(replayed.finalSave).toEqual(expected);
   });
 });
