@@ -1,8 +1,8 @@
 # Adventure Studio editor expansion
 
-This index maps the current authoring surfaces to their canonical data and command packages.
+This index maps the current authoring and inspection surfaces to their canonical data and service packages.
 
-| Workspace | Route or app | Canonical document | Command package |
+| Workspace | Route or app | Canonical document | Command or service package |
 | --- | --- | --- | --- |
 | Scene Composer | `/?workspace=composer` | scene composition manifest | `@evavo/adventure-editor-core` |
 | Project Geometry | `/?workspace=geometry` | source `project.json` scenes | `@evavo/adventure-project-editor-core` |
@@ -12,6 +12,7 @@ This index maps the current authoring surfaces to their canonical data and comma
 | Bitmap Fonts | `/?workspace=fonts` | project bitmap-font sidecar | `@evavo/adventure-bitmap-font-editor-core` |
 | Interface Skins | `/?workspace=interface` | project UI-skin sidecar | `@evavo/adventure-ui-skin-editor-core` |
 | Dialogue | `/?workspace=dialogue` | focused dialogue graph | `@evavo/adventure-dialogue-editor-core` |
+| Playtest Inspector | `/?workspace=playtest` | runtime bundle, saves and replay logs | `@evavo/adventure-playtest-inspector` |
 | Validation | `/?workspace=validation` | source project plus scene composition | canonical validators |
 | Cinematic Timeline Lab | port `5175` | focused sequence | `@evavo/adventure-sequence-editor-core` |
 | Narrative Project Library | service layer | project dialogues and sequences | `@evavo/adventure-narrative-library-editor-core` |
@@ -28,6 +29,8 @@ All command packages use:
 - recursive batch schemas;
 - tests that do not require a browser.
 
+Inspection services use the same principle without mutation: parse canonical artifacts, validate exact bundle identity, produce deterministic summaries and sort semantic differences by stable state path.
+
 ## Focused documents and project integration
 
 Dialogue graphs, cinematic sequences and actors are edited as focused documents for usable tooling. They are not independent shipping formats.
@@ -38,9 +41,11 @@ The animation project-integration contract performs protected actor replacement.
 
 Art direction is a project-scoped sidecar rather than a focused replacement document. It is evaluated against both `AssetBuildManifest` and `ArtVisualEvidenceManifest`, whose pixel data is measured from encoded PNG outputs.
 
-Bitmap fonts are also a project-scoped sidecar. They compile into the runtime bundle only after project-atlas and compiled-glyph validation. The player renders glyph sprites from validated runtime assets and never substitutes CSS or vector text.
+Bitmap fonts compile into the runtime bundle only after project-atlas and compiled-glyph validation. The player renders glyph sprites from validated runtime assets and never substitutes CSS or vector text.
 
-Interface skins are project-scoped sidecars. They bind the canonical interaction mode to native regions, verbs, bitmap-font roles, inventory, parser, score, dialogue choices and verb coins. They compile only after source validation and compiled icon-frame validation, then drive the same renderer-neutral composer in Studio and packaged gameplay.
+Interface skins bind the canonical interaction mode to native regions, verbs, bitmap-font roles, inventory, parser, score, dialogue choices and verb coins. They compile only after source validation and compiled icon-frame validation, then drive the same renderer-neutral composer in Studio and packaged gameplay.
+
+Save games and replay logs are packaged-runtime artifacts. Their payload fingerprints and exact runtime-bundle fingerprints are validated before inspection, loading, replay execution or semantic diffing.
 
 ## Verification
 
@@ -53,6 +58,7 @@ The editor expansion also has `.github/workflows/editor-expansion-ci.yml`, which
 - art-direction policy and evidence tests;
 - bitmap-font layout, authoring, compilation and runtime tests;
 - interface-skin schema, editor, compiler, runtime, hit-testing and player tests;
+- save-game, deterministic replay and playtest-inspector tests;
 - browser player, Studio, Timeline Lab and CLI builds;
 - Windows and Linux behavior.
 
@@ -73,6 +79,9 @@ pnpm exec vitest run `
   packages/bitmap-font-editor-core/tests `
   packages/ui-skin/tests `
   packages/ui-skin-editor-core/tests `
+  packages/save-game/tests `
+  packages/replay/tests `
+  packages/playtest-inspector/tests `
   packages/renderer-pixi/tests `
   apps/player/tests `
   apps/studio/tests `
