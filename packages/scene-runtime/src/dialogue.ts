@@ -9,6 +9,8 @@ import {
 import type { Id } from "@evavo/adventure-project-schema";
 import type { RuntimeBundle } from "@evavo/adventure-runtime-bundle";
 
+export type { DialogueView } from "@evavo/adventure-dialogue";
+
 export interface DialogueRuntimeWorld {
   readonly story: RuntimeState;
 }
