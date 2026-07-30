@@ -8,7 +8,7 @@ describe("replay execute exit codes", () => {
     ).toBe(3);
   });
 
-  it("keeps recognized replay and input failures on exit 1", () => {
+  it("keeps recognized replay, limit, output and input failures on exit 1", () => {
     for (const code of [
       "ENOENT",
       "invalid-json",
@@ -18,7 +18,10 @@ describe("replay execute exit codes", () => {
       "replay-compatibility",
       "replay-execution",
       "replay-divergence",
+      "replay-limit-exceeded",
       "controlled-actor-mismatch",
+      "output-collides-with-input",
+      "output-exists",
     ]) {
       expect(replayExecuteExitCodeForDiagnosticCode(code)).toBe(1);
     }
