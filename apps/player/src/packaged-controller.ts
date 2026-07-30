@@ -32,6 +32,13 @@ import {
   type SoftwareCursorState,
 } from "./input.js";
 import {
+  createParserBufferState,
+  editParserBuffer,
+  resolveParserCommand,
+  type ParserBufferState,
+  type ParserKeyInput,
+} from "./parser.js";
+import {
   appendRuntimeInterface,
   runtimeUiState,
   type RuntimeUiInteractionState,
@@ -44,8 +51,10 @@ export interface PackagedRuntimeController {
   setPointer(position: Point | null): void;
   setPressed(pressed: boolean): void;
   activate(position: Point): void;
+  handleKey(input: ParserKeyInput): boolean;
   statusText(): string;
   worldState(): InteractiveRuntimeWorldState;
+  parserState(): ParserBufferState;
 }
 
 export interface PackagedRuntimeControllerOptions {
@@ -149,6 +158,7 @@ export const createPackagedRuntimeController = (
   let selectedItemId: Id<"item"> | null = null;
   let verbCoinPosition: Point | null = null;
   let hoveredDialogueChoiceId: Id<"dialogue-choice"> | null = null;
+  let parser = createParserBufferState();
   let world = createInitialInteractiveRuntimeWorldState(bundle);
   let renderedTick = 0;
   let baseFrame = resolveRuntimeSceneFrame(bundle, world);
@@ -165,6 +175,13 @@ export const createPackagedRuntimeController = (
     ...(selectedItemId ? { selectedItemId } : {}),
     ...(verbCoinPosition ? { verbCoinPosition } : {}),
     ...(hoveredDialogueChoiceId ? { hoveredDialogueChoiceId } : {}),
+    ...(runtimeSkin?.interactionMode === "parser-assisted"
+      ? {
+          parserText: parser.text,
+          parserCursorVisible:
+            parser.focused && Math.floor(renderedTick / 20) % 2 === 0,
+        }
+      : {}),
   });
 
   const setStatus = (text: string): void => {
@@ -270,6 +287,90 @@ export const createPackagedRuntimeController = (
     setStatus(speechFromEvents(chosen.events) ?? "DIALOGUE ENDED");
   };
 
+  const clearPendingCommand = (
+    state: InteractiveRuntimeWorldState,
+    actorInstanceId: Id<"actor-instance">,
+  ): InteractiveRuntimeWorldState => {
+    const pendingObjectCommands = { ...state.pendingObjectCommands };
+    delete pendingObjectCommands[actorInstanceId];
+    return { ...state, pendingObjectCommands };
+  };
+
+  const applyCommandStatus = (event: SceneCommandEvent): void => {
+    setStatus(statusFromCommandEvent(event));
+    if (event.kind === "object-command-executed") {
+      setActiveDialogueStatus(event.runtimeEvents);
+    }
+  };
+
+  const executeObjectCommand = (
+    objectInstanceId: Id<"object">,
+    verb: string,
+    itemId: Id<"item"> | null,
+  ): void => {
+    if (!controlledActorInstanceId) {
+      setStatus("NO CONTROLLABLE ACTOR");
+      return;
+    }
+    try {
+      const queued = queueSceneObjectCommand(
+        bundle,
+        world,
+        controlledActorInstanceId,
+        objectInstanceId,
+        verb,
+        itemId,
+      );
+      switch (queued.kind) {
+        case "queued":
+        case "resolved":
+          world = queued.state;
+          applyCommandStatus(queued.event);
+          return;
+        case "missing-target":
+          setStatus("TARGET IS NO LONGER AVAILABLE");
+          return;
+        case "movement-rejected":
+          setStatus(
+            movementFailureStatus(
+              queued.movement.kind === "unreachable"
+                ? queued.movement.routeResult.reason
+                : queued.movement.reason,
+            ),
+          );
+          return;
+      }
+    } catch (error) {
+      setStatus(error instanceof Error ? error.message : "ACTION FAILED");
+    }
+  };
+
+  const submitParserCommand = (input: string): void => {
+    if (!runtimeSkin || runtimeSkin.interactionMode !== "parser-assisted") {
+      return;
+    }
+    if (world.story.activeDialogue) {
+      setStatus("FINISH THE DIALOGUE FIRST");
+      return;
+    }
+    const resolved = resolveParserCommand(bundle, world, runtimeSkin, input);
+    switch (resolved.kind) {
+      case "object-command":
+        executeObjectCommand(
+          resolved.objectInstanceId,
+          resolved.verb,
+          resolved.itemId ?? selectedItemId,
+        );
+        return;
+      case "scene-look":
+      case "inventory":
+      case "help":
+      case "rejected":
+        setStatus(resolved.text);
+        return;
+    }
+  };
+
   const handleUiActivation = (position: Point): boolean => {
     if (!runtimeSkin || !bundle.bitmapFonts) return false;
     const target = currentUiTarget(position);
@@ -290,6 +391,7 @@ export const createPackagedRuntimeController = (
           );
           return true;
         case "parser":
+          parser = editParserBuffer(parser, { kind: "focus" }).state;
           setStatus("PARSER INPUT READY");
           return true;
         case "dialogue-choice":
@@ -305,26 +407,13 @@ export const createPackagedRuntimeController = (
     return false;
   };
 
-  const clearPendingCommand = (
-    state: InteractiveRuntimeWorldState,
-    actorInstanceId: Id<"actor-instance">,
-  ): InteractiveRuntimeWorldState => {
-    const pendingObjectCommands = { ...state.pendingObjectCommands };
-    delete pendingObjectCommands[actorInstanceId];
-    return { ...state, pendingObjectCommands };
-  };
-
-  const applyCommandStatus = (event: SceneCommandEvent): void => {
-    setStatus(statusFromCommandEvent(event));
-    if (event.kind === "object-command-executed") {
-      setActiveDialogueStatus(event.runtimeEvents);
-    }
-  };
-
   const activate = (position: Point): void => {
     cursor = { ...cursor, position };
     refreshCursor();
     if (handleUiActivation(position)) return;
+    if (parser.focused) {
+      parser = editParserBuffer(parser, { kind: "blur" }).state;
+    }
     if (world.story.activeDialogue) {
       setStatus("CHOOSE A DIALOGUE RESPONSE");
       return;
@@ -334,39 +423,12 @@ export const createPackagedRuntimeController = (
     const worldPoint = nativeScreenPointToWorld(position, baseFrame.camera);
     const target = pointerTarget();
     if (target) {
-      const verb = selectedVerb()?.verb ?? verbForCursorId(cursorIdForObjectTarget(target));
-      try {
-        const queued = queueSceneObjectCommand(
-          bundle,
-          world,
-          controlledActorInstanceId,
-          target.objectInstanceId,
-          verb,
-          selectedItemId,
-        );
-        switch (queued.kind) {
-          case "queued":
-          case "resolved":
-            world = queued.state;
-            applyCommandStatus(queued.event);
-            return;
-          case "missing-target":
-            setStatus("TARGET IS NO LONGER AVAILABLE");
-            return;
-          case "movement-rejected":
-            setStatus(
-              movementFailureStatus(
-                queued.movement.kind === "unreachable"
-                  ? queued.movement.routeResult.reason
-                  : queued.movement.reason,
-              ),
-            );
-            return;
-        }
-      } catch (error) {
-        setStatus(error instanceof Error ? error.message : "ACTION FAILED");
-        return;
-      }
+      executeObjectCommand(
+        target.objectInstanceId,
+        selectedVerb()?.verb ?? verbForCursorId(cursorIdForObjectTarget(target)),
+        selectedItemId,
+      );
+      return;
     }
 
     try {
@@ -402,6 +464,16 @@ export const createPackagedRuntimeController = (
     }
   };
 
+  const handleKey = (input: ParserKeyInput): boolean => {
+    if (!runtimeSkin || runtimeSkin.interactionMode !== "parser-assisted") {
+      return false;
+    }
+    const edited = editParserBuffer(parser, input);
+    parser = edited.state;
+    if (edited.submitted) submitParserCommand(edited.submitted);
+    return edited.handled;
+  };
+
   return {
     selection,
     controlledActorInstanceId,
@@ -413,8 +485,10 @@ export const createPackagedRuntimeController = (
       cursor = { ...cursor, pressed };
     },
     activate,
+    handleKey,
     statusText: () => status,
     worldState: () => world,
+    parserState: () => parser,
     createFrame: (tick) => {
       if (tick < renderedTick) {
         throw new RangeError("Packaged player logical time cannot move backwards.");
