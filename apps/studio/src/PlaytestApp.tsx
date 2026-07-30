@@ -1,15 +1,18 @@
-import { useState, type ChangeEvent } from "react";
+import { useRef, useState, type ChangeEvent } from "react";
 import type {
   ReplayInspection,
   SaveGameInspection,
 } from "@evavo/adventure-playtest-inspector";
+import { reportPlaytestArtifactReadFailure } from "./playtest-file-controller.js";
 import {
+  clearPlaytestArtifact,
   createPlaytestInspectorWorkspace,
   loadPlaytestArtifactText,
   type PlaytestArtifactKind,
   type PlaytestInspectorWorkspaceState,
 } from "./playtest-workspace.js";
 import "./playtest.css";
+import "./playtest-controls.css";
 
 interface ArtifactPickerProps {
   readonly kind: PlaytestArtifactKind;
@@ -17,6 +20,7 @@ interface ArtifactPickerProps {
   readonly fileName: string | null;
   readonly error: string | null;
   readonly onLoad: (kind: PlaytestArtifactKind, file: File) => Promise<void>;
+  readonly onClear: (kind: PlaytestArtifactKind) => void;
 }
 
 const ArtifactPicker = ({
@@ -25,7 +29,12 @@ const ArtifactPicker = ({
   fileName,
   error,
   onLoad,
+  onClear,
 }: ArtifactPickerProps) => {
+  const inputId = `playtest-artifact-${kind}`;
+  const statusId = `${inputId}-status`;
+  const canClear = fileName !== null || error !== null;
+
   const handleChange = (event: ChangeEvent<HTMLInputElement>): void => {
     const file = event.target.files?.[0];
     if (file) void onLoad(kind, file);
@@ -33,16 +42,42 @@ const ArtifactPicker = ({
   };
 
   return (
-    <label className={`playtest-file-card${error ? " has-error" : ""}`}>
-      <span className="playtest-file-label">{label}</span>
-      <strong>{fileName ?? "Choose JSON file"}</strong>
-      <span>{error ?? "Validated locally against the loaded runtime bundle."}</span>
-      <input type="file" accept="application/json,.json" onChange={handleChange} />
-    </label>
+    <div className={`playtest-file-card${error ? " has-error" : ""}`}>
+      <label className="playtest-file-target" htmlFor={inputId}>
+        <span className="playtest-file-label">{label}</span>
+        <strong>{fileName ?? "Choose JSON file"}</strong>
+        <span id={statusId} role={error ? "alert" : undefined}>
+          {error ?? "Validated locally against the loaded runtime bundle."}
+        </span>
+      </label>
+      <input
+        id={inputId}
+        type="file"
+        accept="application/json,.json"
+        aria-describedby={statusId}
+        onChange={handleChange}
+      />
+      {canClear ? (
+        <button
+          type="button"
+          className="playtest-file-clear"
+          aria-label={`Clear ${label}`}
+          onClick={() => onClear(kind)}
+        >
+          Clear
+        </button>
+      ) : null}
+    </div>
   );
 };
 
-const Metric = ({ label, value }: { readonly label: string; readonly value: string | number }) => (
+const Metric = ({
+  label,
+  value,
+}: {
+  readonly label: string;
+  readonly value: string | number;
+}) => (
   <div className="playtest-metric">
     <span>{label}</span>
     <strong>{value}</strong>
@@ -125,7 +160,11 @@ const formatValue = (value: unknown): string => {
   return encoded === undefined ? String(value) : encoded;
 };
 
-const ReplayTimeline = ({ inspection }: { readonly inspection: ReplayInspection }) => (
+const ReplayTimeline = ({
+  inspection,
+}: {
+  readonly inspection: ReplayInspection;
+}) => (
   <section className="playtest-card playtest-replay">
     <header>
       <div>
@@ -162,19 +201,43 @@ const ReplayTimeline = ({ inspection }: { readonly inspection: ReplayInspection 
   </section>
 );
 
+const initialReadGeneration = (): Record<PlaytestArtifactKind, number> => ({
+  bundle: 0,
+  "before-save": 0,
+  "after-save": 0,
+  replay: 0,
+});
+
 export const PlaytestApp = () => {
   const [state, setState] = useState<PlaytestInspectorWorkspaceState>(() =>
     createPlaytestInspectorWorkspace(),
   );
+  const readGeneration = useRef(initialReadGeneration());
 
   const loadFile = async (
     kind: PlaytestArtifactKind,
     file: File,
   ): Promise<void> => {
-    const text = await file.text();
-    setState((current) =>
-      loadPlaytestArtifactText(current, kind, text, file.name),
-    );
+    const generation = readGeneration.current[kind] + 1;
+    readGeneration.current[kind] = generation;
+
+    try {
+      const text = await file.text();
+      if (readGeneration.current[kind] !== generation) return;
+      setState((current) =>
+        loadPlaytestArtifactText(current, kind, text, file.name),
+      );
+    } catch (error) {
+      if (readGeneration.current[kind] !== generation) return;
+      setState((current) =>
+        reportPlaytestArtifactReadFailure(current, kind, file.name, error),
+      );
+    }
+  };
+
+  const clearFile = (kind: PlaytestArtifactKind): void => {
+    readGeneration.current[kind] += 1;
+    setState((current) => clearPlaytestArtifact(current, kind));
   };
 
   return (
@@ -201,6 +264,7 @@ export const PlaytestApp = () => {
           fileName={state.bundleName}
           error={state.errors.bundle}
           onLoad={loadFile}
+          onClear={clearFile}
         />
         <ArtifactPicker
           kind="before-save"
@@ -208,6 +272,7 @@ export const PlaytestApp = () => {
           fileName={state.beforeSaveName}
           error={state.errors.beforeSave}
           onLoad={loadFile}
+          onClear={clearFile}
         />
         <ArtifactPicker
           kind="after-save"
@@ -215,6 +280,7 @@ export const PlaytestApp = () => {
           fileName={state.afterSaveName}
           error={state.errors.afterSave}
           onLoad={loadFile}
+          onClear={clearFile}
         />
         <ArtifactPicker
           kind="replay"
@@ -222,6 +288,7 @@ export const PlaytestApp = () => {
           fileName={state.replayName}
           error={state.errors.replay}
           onLoad={loadFile}
+          onClear={clearFile}
         />
       </section>
 
@@ -269,8 +336,12 @@ export const PlaytestApp = () => {
               <tbody>
                 {state.diff.entries.map((entry) => (
                   <tr key={`${entry.code}:${entry.path}`}>
-                    <td><span className="playtest-badge">{entry.code}</span></td>
-                    <td><code>{entry.path}</code></td>
+                    <td>
+                      <span className="playtest-badge">{entry.code}</span>
+                    </td>
+                    <td>
+                      <code>{entry.path}</code>
+                    </td>
                     <td>{formatValue(entry.before)}</td>
                     <td>{formatValue(entry.after)}</td>
                   </tr>
