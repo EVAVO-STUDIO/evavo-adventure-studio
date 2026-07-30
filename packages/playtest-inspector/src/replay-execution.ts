@@ -6,6 +6,7 @@ import {
 } from "@evavo/adventure-replay";
 import type { RuntimeBundle } from "@evavo/adventure-runtime-bundle";
 import { createPackagedRuntimeController } from "@evavo/adventure-runtime-controller";
+import type { SaveGame } from "@evavo/adventure-save-game";
 import { inspectSaveGame, type SaveGameInspection } from "./index.js";
 
 export interface InspectedReplayExecution {
@@ -16,6 +17,7 @@ export interface InspectedReplayExecution {
   readonly finalSaveFingerprint: string;
   readonly expectedFinalSaveFingerprint: string | null;
   readonly checkpointMatched: boolean | null;
+  readonly finalSaveDocument: SaveGame;
   readonly finalSave: SaveGameInspection;
 }
 
@@ -43,6 +45,7 @@ export const executeInspectedReplay = (
     expectedFinalSaveFingerprint: expected,
     checkpointMatched:
       expected === null ? null : expected === result.finalSaveFingerprint,
+    finalSaveDocument: result.finalSave,
     finalSave: inspectSaveGame(bundle, result.finalSave),
   };
 };

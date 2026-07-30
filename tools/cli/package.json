@@ -14,6 +14,10 @@
     "./runtime-artifacts": {
       "types": "./dist/src/runtime-artifacts.d.ts",
       "import": "./dist/src/runtime-artifacts.js"
+    },
+    "./replay-execute": {
+      "types": "./dist/src/replay-execute.d.ts",
+      "import": "./dist/src/replay-execute.js"
     }
   },
   "files": ["dist"],
@@ -26,6 +30,7 @@
     "@evavo/adventure-asset-contract": "workspace:*",
     "@evavo/adventure-bitmap-font": "workspace:*",
     "@evavo/adventure-compiler": "workspace:*",
+    "@evavo/adventure-playtest-inspector": "workspace:*",
     "@evavo/adventure-project-schema": "workspace:*",
     "@evavo/adventure-replay": "workspace:*",
     "@evavo/adventure-runtime-bundle": "workspace:*",
