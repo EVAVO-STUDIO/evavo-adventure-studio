@@ -72,6 +72,18 @@ const parseJson = (text: string, label: string): unknown => {
   }
 };
 
+const artifactErrorCleared = (
+  errors: PlaytestInspectorErrors,
+  kind: Exclude<PlaytestArtifactKind, "bundle">,
+): PlaytestInspectorErrors => ({
+  ...errors,
+  ...(kind === "before-save"
+    ? { beforeSave: null }
+    : kind === "after-save"
+      ? { afterSave: null }
+      : { replay: null }),
+});
+
 const recompute = (
   state: PlaytestInspectorWorkspaceState,
 ): PlaytestInspectorWorkspaceState => {
@@ -90,9 +102,12 @@ const recompute = (
   let afterInspection: SaveGameInspection | null = null;
   let diff: SaveGameDiff | null = null;
   let replayInspection: ReplayInspection | null = null;
-  let beforeSaveError: string | null = null;
-  let afterSaveError: string | null = null;
-  let replayError: string | null = null;
+  let beforeSaveError: string | null =
+    state.beforeSaveInput === null ? state.errors.beforeSave : null;
+  let afterSaveError: string | null =
+    state.afterSaveInput === null ? state.errors.afterSave : null;
+  let replayError: string | null =
+    state.replayInput === null ? state.errors.replay : null;
 
   if (state.beforeSaveInput !== null) {
     try {
@@ -221,6 +236,7 @@ export const loadPlaytestArtifactText = (
       : kind === "after-save"
         ? { afterSaveInput: input, afterSaveName: name }
         : { replayInput: input, replayName: name }),
+    errors: artifactErrorCleared(state.errors, kind),
   });
 };
 
@@ -236,5 +252,6 @@ export const clearPlaytestArtifact = (
       : kind === "after-save"
         ? { afterSaveInput: null, afterSaveName: null }
         : { replayInput: null, replayName: null }),
+    errors: artifactErrorCleared(state.errors, kind),
   });
 };
