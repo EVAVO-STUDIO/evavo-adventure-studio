@@ -15,6 +15,7 @@ on:
       - "packages/ui-skin-editor-core/**"
       - "packages/save-game/**"
       - "packages/replay/**"
+      - "packages/runtime-controller/**"
       - "packages/playtest-inspector/**"
       - "packages/asset-pipeline/**"
       - "packages/project-editor-core/**"
@@ -27,6 +28,11 @@ on:
       - "apps/studio/**"
       - "apps/timeline-lab/**"
       - "tools/cli/**"
+      - "scripts/verify-toolchain-version.mjs"
+      - "package.json"
+      - "pnpm-workspace.yaml"
+      - ".node-version"
+      - ".nvmrc"
       - "tsconfig.editor-expansion.json"
       - ".github/workflows/editor-expansion-ci.yml"
   pull_request:
@@ -42,6 +48,7 @@ on:
       - "packages/ui-skin-editor-core/**"
       - "packages/save-game/**"
       - "packages/replay/**"
+      - "packages/runtime-controller/**"
       - "packages/playtest-inspector/**"
       - "packages/asset-pipeline/**"
       - "packages/project-editor-core/**"
@@ -54,6 +61,11 @@ on:
       - "apps/studio/**"
       - "apps/timeline-lab/**"
       - "tools/cli/**"
+      - "scripts/verify-toolchain-version.mjs"
+      - "package.json"
+      - "pnpm-workspace.yaml"
+      - ".node-version"
+      - ".nvmrc"
       - "tsconfig.editor-expansion.json"
       - ".github/workflows/editor-expansion-ci.yml"
   workflow_dispatch:
@@ -91,6 +103,9 @@ jobs:
       - name: Install dependencies
         run: pnpm install --no-frozen-lockfile
 
+      - name: Verify Node toolchain contract
+        run: pnpm run check:toolchain
+
       - name: Type-check editor expansion graph
         run: pnpm exec tsc -b tsconfig.editor-expansion.json --pretty false
 
@@ -110,6 +125,7 @@ jobs:
           packages/ui-skin-editor-core/tests
           packages/save-game/tests
           packages/replay/tests
+          packages/runtime-controller/tests
           packages/playtest-inspector/tests
           packages/asset-pipeline/tests/art-evidence.test.ts
           packages/compiler/tests/bitmap-font-compilation.test.ts
