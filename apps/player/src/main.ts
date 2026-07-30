@@ -11,6 +11,7 @@ import type {
 } from "@evavo/adventure-render-contract";
 import { PixiWebGLRenderer } from "@evavo/adventure-renderer-pixi";
 import { PixiAssetTextureStore } from "@evavo/adventure-renderer-pixi/texture-store";
+import type { ReplayEvent, ReplayLog } from "@evavo/adventure-replay";
 import {
   mapClientPointToNative,
   requestedActorFromSearch,
@@ -23,6 +24,10 @@ import {
   parserKeyInputFromKeyboardEvent,
   type ParserKeyInput,
 } from "./parser.js";
+import {
+  createPlayerReplayRecorder,
+  type ReplayRecordingStatus,
+} from "./replay-recorder.js";
 import { createPackagedRuntimeRenderer } from "./runtime-renderer.js";
 import { loadRuntimeBundle } from "./runtime-loader.js";
 import {
@@ -175,12 +180,24 @@ interface PlayerPersistence {
   hasQuickSlot(): boolean;
 }
 
+interface PlayerReplayControls {
+  start(): void;
+  cancel(): void;
+  finish(): ReplayLog;
+  latestReplayJson(): string | null;
+  status(): ReplayRecordingStatus;
+  recordActivation(tick: number, position: Point): void;
+  recordParserInput(tick: number, input: ParserKeyInput): void;
+  readonly fileName: string;
+}
+
 interface MountedPlayer {
   readonly renderer: PixiWebGLRenderer;
   readonly ticksPerSecond: number;
   readonly createFrame: (tick: number) => ResolvedFrame;
   readonly input?: PlayerInputController;
   readonly persistence?: PlayerPersistence;
+  readonly replay?: PlayerReplayControls;
   readonly statusText?: () => string;
   readonly disposeAdditional?: () => Promise<void>;
 }
@@ -194,6 +211,20 @@ const updateStatus = (text: string): void => {
 
 const errorText = (prefix: string, error: unknown): string =>
   `${prefix} • ${error instanceof Error ? error.message : String(error)}`;
+
+const downloadText = (fileName: string, text: string): void => {
+  const url = URL.createObjectURL(
+    new Blob([text], { type: "application/json;charset=utf-8" }),
+  );
+  const link = document.createElement("a");
+  link.href = url;
+  link.download = fileName;
+  link.style.display = "none";
+  document.body.appendChild(link);
+  link.click();
+  link.remove();
+  URL.revokeObjectURL(url);
+};
 
 const nativePointer = (
   host: HTMLElement,
@@ -252,7 +283,10 @@ const mountPlayer = async (
     const point = nativePointer(host, initialFrame.canvas, event);
     player.input.setPointer(point);
     player.input.setPressed(true);
-    if (point) player.input.activate(point);
+    if (point) {
+      player.replay?.recordActivation(logicalTick, point);
+      player.input.activate(point);
+    }
     if (player.statusText) updateStatus(player.statusText());
     event.preventDefault();
   };
@@ -267,6 +301,7 @@ const mountPlayer = async (
   const restoreQuickSlot = (): void => {
     if (!player.persistence) return;
     try {
+      player.replay?.cancel();
       logicalTick = player.persistence.loadQuickSlot();
       clock = createFixedStepClock();
       previousTime = performance.now();
@@ -287,21 +322,78 @@ const mountPlayer = async (
     }
   };
 
+  const toggleReplayRecording = (): void => {
+    if (!player.replay) return;
+    try {
+      if (player.replay.status().recording) {
+        const replay = player.replay.finish();
+        updateStatus(`REPLAY RECORDED • ${replay.events.length} EVENTS`);
+      } else {
+        player.replay.start();
+        updateStatus("REPLAY RECORDING");
+      }
+    } catch (error) {
+      updateStatus(errorText("REPLAY FAILED", error));
+    }
+  };
+
+  const exportLatestReplay = (): void => {
+    if (!player.replay) return;
+    const json = player.replay.latestReplayJson();
+    if (!json) {
+      updateStatus("NO COMPLETED REPLAY TO EXPORT");
+      return;
+    }
+    downloadText(player.replay.fileName, json);
+    updateStatus("REPLAY EXPORTED");
+  };
+
   const onKeyDown = (event: KeyboardEvent): void => {
     const commandModifier = event.ctrlKey || event.metaKey;
-    if (commandModifier && event.shiftKey && event.code === "KeyS") {
+    if (
+      player.persistence &&
+      commandModifier &&
+      event.shiftKey &&
+      event.code === "KeyS"
+    ) {
       saveQuickSlot();
       event.preventDefault();
       return;
     }
-    if (commandModifier && event.shiftKey && event.code === "KeyL") {
+    if (
+      player.persistence &&
+      commandModifier &&
+      event.shiftKey &&
+      event.code === "KeyL"
+    ) {
       restoreQuickSlot();
+      event.preventDefault();
+      return;
+    }
+    if (
+      player.replay &&
+      commandModifier &&
+      event.shiftKey &&
+      event.code === "KeyR"
+    ) {
+      toggleReplayRecording();
+      event.preventDefault();
+      return;
+    }
+    if (
+      player.replay &&
+      commandModifier &&
+      event.shiftKey &&
+      event.code === "KeyE"
+    ) {
+      exportLatestReplay();
       event.preventDefault();
       return;
     }
 
     const input = parserKeyInputFromKeyboardEvent(event);
     if (!input || !player.input?.handleKey?.(input)) return;
+    player.replay?.recordParserInput(logicalTick, input);
     if (player.statusText) updateStatus(player.statusText());
     event.preventDefault();
   };
@@ -369,6 +461,7 @@ const packagedPlayer = async (
     bundle,
     { requestedActorInstanceId },
   );
+  const recorder = createPlayerReplayRecorder(bundle);
   const persistence: PlayerPersistence = {
     saveQuickSlot: () =>
       writeSaveGameSlot(
@@ -382,6 +475,16 @@ const packagedPlayer = async (
       ),
     hasQuickSlot: () => hasSaveGameSlot(window.localStorage, bundle),
   };
+  const replay: PlayerReplayControls = {
+    start: () => recorder.start(controller.createSaveGame()),
+    cancel: recorder.cancel,
+    finish: () => recorder.finish(controller.createSaveGame()),
+    latestReplayJson: recorder.latestReplayJson,
+    status: recorder.status,
+    recordActivation: recorder.recordActivation,
+    recordParserInput: recorder.recordParserInput,
+    fileName: `${bundle.projectId}.replay.json`,
+  };
 
   return {
     renderer: createPackagedRuntimeRenderer(bundle, textures),
@@ -389,6 +492,7 @@ const packagedPlayer = async (
     createFrame: controller.createFrame,
     input: controller,
     persistence,
+    replay,
     statusText: controller.statusText,
     disposeAdditional: () => textures.dispose(),
   };
