@@ -141,12 +141,40 @@ The target directory is built in a sibling temporary directory and swapped into 
 
 Runtime paths cannot contain traversal, backslashes, Windows-invalid characters, reserved device names, trailing dots/spaces or case-only collisions.
 
+## Validate a packaged save game
+
+Save validation needs only the packaged runtime bundle and save JSON:
+
+```powershell
+pnpm cli -- save-validate `
+  --bundle .\game\release\windows\game.bundle.json `
+  --save .\playtests\quick.save.json `
+  --json
+```
+
+The command verifies bundle parsing, save schema, save payload fingerprint, exact bundle and asset-manifest fingerprints, current scene and entrance, active dialogue and sequence state, actor playback and movement, persistent objects, deferred commands, inventory selections and parser limits.
+
+A successful JSON report includes the project ID, save fingerprint, logical tick and current scene.
+
+## Validate a packaged replay
+
+```powershell
+pnpm cli -- replay-validate `
+  --bundle .\game\release\windows\game.bundle.json `
+  --replay .\playtests\office.replay.json `
+  --json
+```
+
+This verifies replay schema and payload integrity, exact bundle identity, initial-save compatibility, event ordering, logical tick bounds, final checkpoint and optional expected final-save fingerprint metadata. It validates the replay document without executing gameplay; deterministic execution remains the replay runner or playtest debugger responsibility.
+
+A successful JSON report includes initial/final ticks, event count, replay fingerprint and expected final save fingerprint when present.
+
 ## Exit codes
 
 | Code | Meaning |
 | ---: | --- |
 | `0` | Validation, compilation or packaging succeeded. |
-| `1` | Project, scene, asset, art, font, interface or file evidence is invalid. |
+| `1` | Project, scene, asset, art, font, interface, save, replay or file evidence is invalid. |
 | `2` | Command-line usage is invalid. |
 | `3` | An unexpected internal failure occurred. |
 
@@ -154,4 +182,4 @@ Runtime paths cannot contain traversal, backslashes, Windows-invalid characters,
 
 The CLI does not add timestamps, absolute workstation paths or random identifiers to runtime output. Temporary filenames never appear in bundles, reports or release manifests.
 
-The runtime bundle fingerprint covers canonical JSON including canonically ordered font and skin documents. Authored verb order remains unchanged because it controls visible layout. The asset manifest fingerprint covers compiled evidence, and each source/runtime output carries its own SHA-256 digest.
+The runtime bundle fingerprint covers canonical JSON including canonically ordered font and skin documents. Authored verb order remains unchanged because it controls visible layout. Save and replay reports expose canonical artifact fingerprints without modifying the artifact. The asset manifest fingerprint covers compiled evidence, and each source/runtime output carries its own SHA-256 digest.
