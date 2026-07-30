@@ -34,6 +34,7 @@ Source projects compile into deterministic runtime bundles. The editor, renderer
 - [Interface skins and interaction layouts](docs/interface-skins.md)
 - [Deterministic save games](docs/save-games.md)
 - [Deterministic replays](docs/deterministic-replays.md)
+- [Renderer-free replay execution](docs/replay-execution.md)
 - [Playtest inspector](docs/playtest-inspector.md)
 - [Implementation roadmap](docs/foundation-roadmap.md)
 
