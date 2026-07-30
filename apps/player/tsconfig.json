@@ -9,6 +9,7 @@
   "references": [
     { "path": "../../packages/bitmap-font" },
     { "path": "../../packages/core" },
+    { "path": "../../packages/dialogue" },
     { "path": "../../packages/project-schema" },
     { "path": "../../packages/render-contract" },
     { "path": "../../packages/renderer-pixi" },
