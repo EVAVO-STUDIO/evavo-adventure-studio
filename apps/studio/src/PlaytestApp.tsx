@@ -3,6 +3,7 @@ import type {
   ReplayInspection,
   SaveGameInspection,
 } from "@evavo/adventure-playtest-inspector";
+import type { CanonicalSaveDiff } from "@evavo/adventure-playtest-inspector/canonical-diff";
 import { reportPlaytestArtifactReadFailure } from "./playtest-file-controller.js";
 import {
   clearPlaytestArtifact,
@@ -13,6 +14,7 @@ import {
 } from "./playtest-workspace.js";
 import "./playtest.css";
 import "./playtest-controls.css";
+import "./playtest-audit.css";
 
 interface ArtifactPickerProps {
   readonly kind: PlaytestArtifactKind;
@@ -159,6 +161,86 @@ const formatValue = (value: unknown): string => {
   const encoded = JSON.stringify(value);
   return encoded === undefined ? String(value) : encoded;
 };
+
+const CanonicalAudit = ({
+  diff,
+  semanticChanged,
+}: {
+  readonly diff: CanonicalSaveDiff;
+  readonly semanticChanged: boolean;
+}) => (
+  <section className="playtest-card playtest-diff playtest-canonical-audit">
+    <header>
+      <div>
+        <span className="playtest-eyebrow">Deterministic state audit</span>
+        <h2>
+          {diff.changed
+            ? `${diff.entries.length}${diff.truncated ? "+" : ""} exact path changes`
+            : "Canonical states match"}
+        </h2>
+      </div>
+      <span
+        className={`playtest-canonical-status${diff.changed ? " has-difference" : ""}`}
+      >
+        {diff.changed ? "Divergence found" : "Exact match"}
+      </span>
+    </header>
+    <p className="playtest-canonical-copy">
+      This audit compares every serialized world and interface field, including
+      random streams, consumed interactions, dialogue choices and score-award
+      identities that are intentionally summarized by the semantic view.
+    </p>
+    <div className="playtest-metric-grid">
+      <Metric label="Exact paths" value={diff.entries.length} />
+      <Metric label="Truncated" value={diff.truncated ? "Yes" : "No"} />
+      <Metric label="Semantic changes" value={semanticChanged ? "Yes" : "No"} />
+      <Metric
+        label="Hidden divergence"
+        value={diff.changed && !semanticChanged ? "Yes" : "No"}
+      />
+    </div>
+    {diff.changed ? (
+      <details
+        className="playtest-canonical-details"
+        open={!semanticChanged}
+      >
+        <summary>Review exact deterministic paths</summary>
+        <div className="playtest-table-wrap">
+          <table>
+            <thead>
+              <tr>
+                <th>Change</th>
+                <th>Path</th>
+                <th>Before</th>
+                <th>After</th>
+              </tr>
+            </thead>
+            <tbody>
+              {diff.entries.map((entry) => (
+                <tr key={`${entry.kind}:${entry.path}`}>
+                  <td>
+                    <span className="playtest-badge">{entry.kind}</span>
+                  </td>
+                  <td>
+                    <code>{entry.path}</code>
+                  </td>
+                  <td>{formatValue(entry.before)}</td>
+                  <td>{formatValue(entry.after)}</td>
+                </tr>
+              ))}
+            </tbody>
+          </table>
+        </div>
+        {diff.truncated ? (
+          <p className="playtest-canonical-note">
+            The audit reached its 250-path display limit. The saves still differ
+            beyond the paths shown here.
+          </p>
+        ) : null}
+      </details>
+    ) : null}
+  </section>
+);
 
 const ReplayTimeline = ({
   inspection,
@@ -319,7 +401,7 @@ export const PlaytestApp = () => {
               <h2>
                 {state.diff.changed
                   ? `${state.diff.entries.length} changes`
-                  : "No state changes"}
+                  : "No semantic state changes"}
               </h2>
             </div>
           </header>
@@ -350,6 +432,13 @@ export const PlaytestApp = () => {
             </table>
           </div>
         </section>
+      ) : null}
+
+      {state.canonicalDiff ? (
+        <CanonicalAudit
+          diff={state.canonicalDiff}
+          semanticChanged={state.diff?.changed ?? false}
+        />
       ) : null}
 
       {state.replayInspection ? (
