@@ -55,6 +55,7 @@ const replayPayloadSchema = z
     bundleFingerprint: fnvFingerprintSchema,
     initialSave: saveGameSchema,
     events: z.array(replayEventSchema),
+    finalTick: z.number().int().nonnegative(),
     expectedFinalSaveFingerprint: fnvFingerprintSchema.optional(),
   })
   .strict();
@@ -65,11 +66,12 @@ export const replayLogSchema = replayPayloadSchema
 export type ReplayLog = z.infer<typeof replayLogSchema>;
 
 export type ReplayValidationIssueCode =
-  | "replay-fingerprint-mismatch"
   | "project-mismatch"
   | "bundle-fingerprint-mismatch"
   | "initial-save-incompatible"
+  | "final-tick-before-initial"
   | "event-before-initial-tick"
+  | "event-after-final-tick"
   | "event-order-invalid";
 
 export interface ReplayValidationIssue {
@@ -97,9 +99,9 @@ export class ReplayCompatibilityError extends Error {
 }
 
 export class ReplayExecutionError extends Error {
-  readonly event: ReplayEvent;
+  readonly event: ReplayEvent | null;
 
-  constructor(event: ReplayEvent, message: string) {
+  constructor(event: ReplayEvent | null, message: string) {
     super(message);
     this.name = "ReplayExecutionError";
     this.event = event;
@@ -161,6 +163,7 @@ const replayPayload = (replay: ReplayLog): z.infer<typeof replayPayloadSchema> =
   bundleFingerprint: replay.bundleFingerprint,
   initialSave: replay.initialSave,
   events: replay.events,
+  finalTick: replay.finalTick,
   ...(replay.expectedFinalSaveFingerprint
     ? { expectedFinalSaveFingerprint: replay.expectedFinalSaveFingerprint }
     : {}),
@@ -217,6 +220,15 @@ export const validateReplayCompatibility = (
   }
 
   const initialTick = replay.initialSave.world.story.tick;
+  if (replay.finalTick < initialTick) {
+    addIssue(
+      issues,
+      "final-tick-before-initial",
+      "finalTick",
+      `Replay final tick ${replay.finalTick} precedes initial tick ${initialTick}.`,
+    );
+  }
+
   let previousTick = initialTick;
   let previousSequence = -1;
   replay.events.forEach((event, index) => {
@@ -228,11 +240,15 @@ export const validateReplayCompatibility = (
         `Replay event tick ${event.tick} precedes initial save tick ${initialTick}.`,
       );
     }
-    if (
-      event.tick < previousTick ||
-      (event.tick === previousTick && event.sequence <= previousSequence) ||
-      (event.tick > previousTick && event.sequence <= previousSequence)
-    ) {
+    if (event.tick > replay.finalTick) {
+      addIssue(
+        issues,
+        "event-after-final-tick",
+        `events[${index}].tick`,
+        `Replay event tick ${event.tick} exceeds final tick ${replay.finalTick}.`,
+      );
+    }
+    if (event.tick < previousTick || event.sequence <= previousSequence) {
       addIssue(
         issues,
         "event-order-invalid",
@@ -249,6 +265,7 @@ export const validateReplayCompatibility = (
 
 export interface CreateReplayLogOptions {
   readonly events: readonly ReplayEvent[];
+  readonly finalTick: number;
   readonly expectedFinalSaveFingerprint?: string;
 }
 
@@ -264,6 +281,7 @@ export const createReplayLog = (
     bundleFingerprint: runtimeBundleFingerprint(bundle),
     initialSave,
     events: options.events,
+    finalTick: options.finalTick,
     ...(options.expectedFinalSaveFingerprint
       ? { expectedFinalSaveFingerprint: options.expectedFinalSaveFingerprint }
       : {}),
@@ -307,12 +325,7 @@ export const executeReplay = (
   const restoredTick = runtime.restoreSaveGame(replay.initialSave);
   if (restoredTick !== replay.initialSave.world.story.tick) {
     throw new ReplayExecutionError(
-      replay.events[0] ?? {
-        kind: "activate",
-        tick: restoredTick,
-        sequence: 0,
-        position: { x: 0, y: 0 },
-      },
+      null,
       `Replay runtime restored tick ${restoredTick}, expected ${replay.initialSave.world.story.tick}.`,
     );
   }
@@ -331,6 +344,9 @@ export const executeReplay = (
         `Replay parser input '${event.input.kind}' was not handled at tick ${event.tick}.`,
       );
     }
+  }
+  if (replay.finalTick > currentTick) {
+    runtime.createFrame(replay.finalTick);
   }
 
   const finalSave = runtime.createSaveGame();
