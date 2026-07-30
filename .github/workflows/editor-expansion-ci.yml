@@ -14,6 +14,7 @@ on:
       - "packages/ui-skin/**"
       - "packages/ui-skin-editor-core/**"
       - "packages/save-game/**"
+      - "packages/replay/**"
       - "packages/asset-pipeline/**"
       - "packages/project-editor-core/**"
       - "packages/editor-core/**"
@@ -39,6 +40,7 @@ on:
       - "packages/ui-skin/**"
       - "packages/ui-skin-editor-core/**"
       - "packages/save-game/**"
+      - "packages/replay/**"
       - "packages/asset-pipeline/**"
       - "packages/project-editor-core/**"
       - "packages/editor-core/**"
@@ -105,6 +107,7 @@ jobs:
           packages/ui-skin/tests
           packages/ui-skin-editor-core/tests
           packages/save-game/tests
+          packages/replay/tests
           packages/asset-pipeline/tests/art-evidence.test.ts
           packages/compiler/tests/bitmap-font-compilation.test.ts
           packages/compiler/tests/ui-skin-compilation.test.ts
