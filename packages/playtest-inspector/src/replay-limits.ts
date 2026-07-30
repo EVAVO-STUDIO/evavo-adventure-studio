@@ -3,6 +3,7 @@ import type { RuntimeBundle } from "@evavo/adventure-runtime-bundle";
 
 export const DEFAULT_MAXIMUM_REPLAY_EVENTS = 10_000;
 export const DEFAULT_MAXIMUM_REPLAY_DURATION_SECONDS = 3_600;
+export const DEFAULT_ABSOLUTE_MAXIMUM_REPLAY_DURATION_TICKS = 216_000;
 
 export interface ReplayExecutionLimits {
   readonly maxEvents?: number;
@@ -42,6 +43,15 @@ const positiveInteger = (value: number, label: string): number => {
   return value;
 };
 
+const defaultMaximumDurationTicks = (
+  bundle: Pick<RuntimeBundle, "presentation">,
+): number =>
+  Math.min(
+    bundle.presentation.logicalTicksPerSecond *
+      DEFAULT_MAXIMUM_REPLAY_DURATION_SECONDS,
+    DEFAULT_ABSOLUTE_MAXIMUM_REPLAY_DURATION_TICKS,
+  );
+
 export const resolveReplayExecutionLimits = (
   bundle: Pick<RuntimeBundle, "presentation">,
   limits: ReplayExecutionLimits = {},
@@ -51,9 +61,7 @@ export const resolveReplayExecutionLimits = (
     "maxEvents",
   ),
   maxDurationTicks: positiveInteger(
-    limits.maxDurationTicks ??
-      bundle.presentation.logicalTicksPerSecond *
-        DEFAULT_MAXIMUM_REPLAY_DURATION_SECONDS,
+    limits.maxDurationTicks ?? defaultMaximumDurationTicks(bundle),
     "maxDurationTicks",
   ),
 });
@@ -72,8 +80,7 @@ export const assertReplayWithinExecutionLimits = (
     );
   }
 
-  const duration =
-    replay.finalTick - replay.initialSave.world.story.tick;
+  const duration = replay.finalTick - replay.initialSave.world.story.tick;
   if (duration > resolved.maxDurationTicks) {
     throw new ReplayExecutionLimitError(
       "duration-exceeded",

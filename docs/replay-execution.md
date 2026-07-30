@@ -20,9 +20,9 @@ Player retains compatibility re-exports, so browser gameplay and renderer-free e
 Renderer-free execution fails before controller creation when either default limit is exceeded:
 
 - 10,000 deliberate events;
-- one hour of logical ticks at the bundle's configured tick rate.
+- one hour at the authored logical tick rate, capped absolutely at 216,000 ticks.
 
-The defaults prevent a structurally valid but extreme replay from consuming unbounded CPU. API callers can supply lower or higher positive safe-integer limits when the workload is trusted.
+The absolute cap prevents an extreme but schema-valid tick rate from expanding the default CPU budget. API callers can supply lower or higher positive safe-integer limits when the workload is trusted.
 
 ```ts
 import { executeInspectedReplay } from "@evavo/adventure-playtest-inspector/replay-execution";

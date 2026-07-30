@@ -15,6 +15,7 @@ import {
 } from "./replay-limits.js";
 
 export {
+  DEFAULT_ABSOLUTE_MAXIMUM_REPLAY_DURATION_TICKS,
   DEFAULT_MAXIMUM_REPLAY_DURATION_SECONDS,
   DEFAULT_MAXIMUM_REPLAY_EVENTS,
   ReplayExecutionLimitError,

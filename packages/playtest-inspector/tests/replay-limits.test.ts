@@ -27,11 +27,21 @@ const replay = (
   }) as ReplayLog;
 
 describe("replay execution limits", () => {
-  it("derives the default duration from the bundle tick rate", () => {
+  it("derives the default duration from the tick rate within an absolute cap", () => {
     expect(resolveReplayExecutionLimits(bundle)).toEqual({
       maxEvents: 10_000,
       maxDurationTicks: 216_000,
     });
+    expect(
+      resolveReplayExecutionLimits({
+        presentation: { logicalTicksPerSecond: 30 },
+      }).maxDurationTicks,
+    ).toBe(108_000);
+    expect(
+      resolveReplayExecutionLimits({
+        presentation: { logicalTicksPerSecond: 10_000 },
+      }).maxDurationTicks,
+    ).toBe(216_000);
   });
 
   it("rejects excessive event counts before execution", () => {
