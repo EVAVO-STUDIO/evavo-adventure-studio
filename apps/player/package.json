@@ -12,6 +12,7 @@
   "dependencies": {
     "@evavo/adventure-bitmap-font": "workspace:*",
     "@evavo/adventure-core": "workspace:*",
+    "@evavo/adventure-dialogue": "workspace:*",
     "@evavo/adventure-project-schema": "workspace:*",
     "@evavo/adventure-render-contract": "workspace:*",
     "@evavo/adventure-renderer-pixi": "workspace:*",
