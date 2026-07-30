@@ -32,6 +32,7 @@ Source projects compile into deterministic runtime bundles. The editor, renderer
 - [Art direction and compiled pixel evidence](docs/art-direction.md)
 - [Native bitmap fonts](docs/bitmap-fonts.md)
 - [Interface skins and interaction layouts](docs/interface-skins.md)
+- [Deterministic save games](docs/save-games.md)
 - [Implementation roadmap](docs/foundation-roadmap.md)
 
 ## First playable milestone
@@ -71,6 +72,13 @@ pnpm dev:studio
 ```
 
 The player uses port `5173`; the Studio uses port `5174`; the Cinematic Timeline Lab uses port `5175`.
+
+Packaged browser games provide one bundle-scoped quick slot:
+
+```text
+Ctrl/Cmd + Shift + S  Save
+Ctrl/Cmd + Shift + L  Load
+```
 
 Studio routes currently include:
 
