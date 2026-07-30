@@ -12,6 +12,8 @@ describe("replay execute exit codes", () => {
     for (const code of [
       "ENOENT",
       "invalid-json",
+      "input-not-file",
+      "file-too-large",
       "schema-invalid",
       "runtime-bundle-invalid",
       "replay-integrity",
