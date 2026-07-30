@@ -19,7 +19,9 @@ The workspace accepts four JSON documents:
 3. an optional Save B checkpoint;
 4. an optional deterministic replay log.
 
-Saves and replays can be loaded before the bundle. The workspace retains them and recomputes inspection results once the matching runtime bundle is available.
+Saves and replays can be loaded before the bundle. The workspace retains valid JSON inputs and recomputes inspection results once the matching runtime bundle is available.
+
+Each picker can be cleared independently. A newer selection or a clear action invalidates any older in-progress file read, so a slow stale read cannot overwrite the current artifact. Browser file-read failures and JSON/schema failures remain separate visible errors.
 
 ## Save summary
 
@@ -56,6 +58,31 @@ Current categories include:
 
 Diff entries are sorted by canonical state path. Object key insertion order in a save cannot change the report.
 
+## Canonical state audit
+
+The semantic diff is intentionally concise, so it is paired with a separate exact audit. `diffCanonicalSaveGames` recursively compares every serialized `world` and `interface` field while preserving array order.
+
+This catches deterministic differences that a human summary may deliberately omit, including:
+
+- random-stream state;
+- consumed interaction IDs;
+- consumed dialogue-choice IDs;
+- awarded score IDs;
+- ordered inventory and history entries;
+- any other canonical save field.
+
+The Studio audit is bounded to 250 displayed paths. If the limit is reached, the result is marked as truncated and never presented as a complete diff. A canonical difference with no semantic changes is labelled as hidden divergence and opens automatically.
+
+Automation can import the exact comparator directly:
+
+```ts
+import { diffCanonicalSaveGames } from "@evavo/adventure-playtest-inspector/canonical-diff";
+
+const result = diffCanonicalSaveGames(bundle, beforeSave, afterSave, {
+  maxDifferences: 500,
+});
+```
+
 ## Replay timeline
 
 A validated replay is grouped by logical tick. Every event shows:
@@ -67,7 +94,22 @@ A validated replay is grouped by logical tick. Every event shows:
 - duration and checkpoint count;
 - optional expected final save fingerprint.
 
-The inspector validates the replay document but does not execute it. Execution and convergence remain the responsibility of `@evavo/adventure-replay`, the packaged controller tests or a future step-through replay debugger.
+## Replay closure
+
+When a replay is loaded, the workspace classifies its final-save checkpoint as one of four states:
+
+- **no checkpoint** — the replay did not record an expected final save;
+- **awaiting Save B** — the replay has a checkpoint but no after-save is loaded;
+- **checkpoint match** — Save B exactly matches the recorded final fingerprint;
+- **checkpoint mismatch** — Save B is valid for the bundle but differs from the replay checkpoint.
+
+This is a checkpoint comparison, not replay execution. It prevents a displayed fingerprint from being mistaken for a verified match while still keeping the inspector renderer-free.
+
+## Replay execution boundary
+
+`@evavo/adventure-replay` already executes a replay through the `ReplayRuntimeAdapter` contract and fails on final-save divergence. The packaged player controller satisfies that contract, but it currently lives inside `apps/player`.
+
+Studio must not import player-app internals. The next architectural step for renderer-free execution is to extract the packaged controller into a shared runtime-controller package used by both Player and Studio. Until that extraction is complete, replay execution and convergence remain the responsibility of the replay package and packaged-controller regression tests.
 
 ## Relationship to CLI
 
@@ -85,4 +127,4 @@ pnpm cli -- replay-validate `
   --json
 ```
 
-The Studio workspace adds human-readable summaries, cross-save diffs and replay grouping. It does not weaken any compatibility or fingerprint rule.
+The Studio workspace adds human-readable summaries, canonical cross-save auditing, replay grouping and checkpoint closure. It does not weaken any compatibility or fingerprint rule.
