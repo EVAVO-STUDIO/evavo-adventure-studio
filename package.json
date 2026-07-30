@@ -23,8 +23,9 @@
     "test:watch": "vitest",
     "lint": "biome lint .",
     "format": "biome format --write .",
-    "check": "biome check . && tsc -b --pretty false && vitest run && pnpm run build:player && pnpm run build:studio",
-    "check:ci": "biome ci . && tsc -b --pretty false && vitest run && pnpm run build:player && pnpm run build:studio"
+    "check:toolchain": "node scripts/verify-toolchain-version.mjs",
+    "check": "pnpm run check:toolchain && biome check . && tsc -b --pretty false && vitest run && pnpm run build:player && pnpm run build:studio",
+    "check:ci": "pnpm run check:toolchain && biome ci . && tsc -b --pretty false && vitest run && pnpm run build:player && pnpm run build:studio"
   },
   "devDependencies": {
     "@biomejs/biome": "2.5.5",
