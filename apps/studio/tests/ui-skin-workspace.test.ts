@@ -1,6 +1,5 @@
 import { describe, expect, it } from "vitest";
 import type { Id } from "@evavo/adventure-project-schema";
-import { UiSkinEditorCommandError } from "@evavo/adventure-ui-skin-editor-core";
 import {
   createUiSkinWorkspace,
   replaceSelectedUiSkinCommand,
@@ -27,7 +26,9 @@ describe("interface skin Studio workspace", () => {
       studioUiSkins,
     );
 
-    expect(state.history.document.manifest.skins.map((skin) => skin.interactionMode)).toEqual([
+    expect(
+      state.history.document.manifest.skins.map((skin) => skin.interactionMode),
+    ).toEqual([
       "context",
       "verb-list",
       "icon-bar",
@@ -39,7 +40,9 @@ describe("interface skin Studio workspace", () => {
       id: "ui-skin.context-noir",
       interactionMode: "context",
     });
-    expect(uiSkinWorkspaceIssues(state).filter((issue) => issue.severity === "error")).toEqual([]);
+    expect(
+      uiSkinWorkspaceIssues(state).filter((issue) => issue.severity === "error"),
+    ).toEqual([]);
   });
 
   it("composes status score inventory and dialogue nodes from the runtime composer", () => {
@@ -138,29 +141,27 @@ describe("interface skin Studio workspace", () => {
     ).toBe("SPEAK");
   });
 
-  it("rejects out-of-bounds interface edits before history mutation", () => {
+  it("keeps rejected interface edits out of history and reports a notice", () => {
     const state = createUiSkinWorkspace(
       studioUiProject,
       studioUiBitmapFonts,
       studioUiSkins,
     );
     const current = selectedUiSkin(state);
+    const rejected = uiSkinWorkspaceReducer(state, {
+      type: "execute",
+      command: replaceSelectedUiSkinCommand(state, {
+        ...current,
+        status: {
+          ...current.status,
+          rect: { x: 0, y: 195, width: 320, height: 20 },
+        },
+      }),
+    });
 
-    expect(() =>
-      uiSkinWorkspaceReducer(state, {
-        type: "execute",
-        command: replaceSelectedUiSkinCommand(state, {
-          ...current,
-          status: {
-            ...current.status,
-            rect: { x: 0, y: 195, width: 320, height: 20 },
-          },
-        }),
-      }),
-    ).toThrowError(
-      expect.objectContaining<Partial<UiSkinEditorCommandError>>({
-        code: "invalid-document",
-      }),
-    );
+    expect(rejected.history).toBe(state.history);
+    expect(selectedUiSkin(rejected).status.rect).toEqual(current.status.rect);
+    expect(rejected.notice).toMatch(/interface edit rejected/i);
+    expect(uiSkinWorkspaceIsDirty(rejected)).toBe(false);
   });
 });
