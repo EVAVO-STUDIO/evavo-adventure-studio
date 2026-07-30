@@ -146,6 +146,22 @@ export const cursorIdForObjectTarget = (
   target: ResolvedSceneObjectHotspot | null,
 ): string => target?.hotspot.cursor ?? (target ? "use" : "walk");
 
+export const verbForCursorId = (cursorId: string): string => {
+  switch (cursorId) {
+    case "default":
+    case "pointer":
+    case "walk":
+    case "inventory":
+    case "inventory-item":
+    case "invalid":
+    case "busy":
+    case "waiting":
+      return "use";
+    default:
+      return cursorId;
+  }
+};
+
 const cursorColour = (cursorId: string): number => {
   switch (cursorId) {
     case "look":
