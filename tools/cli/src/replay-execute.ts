@@ -1,4 +1,4 @@
-import { readFile } from "node:fs/promises";
+import { readFile, stat } from "node:fs/promises";
 import { resolve } from "node:path";
 import {
   executeInspectedReplay,
@@ -13,6 +13,12 @@ import {
   ReplayIntegrityError,
 } from "@evavo/adventure-replay";
 import { parseRuntimeBundle } from "@evavo/adventure-runtime-bundle";
+import {
+  assertReplayInputFileSize,
+  MAXIMUM_REPLAY_BUNDLE_BYTES,
+  MAXIMUM_REPLAY_FILE_BYTES,
+  ReplayInputFileTooLargeError,
+} from "./replay-file-limits.js";
 import {
   assertReplayOutputPath,
   ReplayOutputCollisionError,
@@ -76,8 +82,13 @@ const positiveIntegerOption = (
 ): number | undefined => {
   const value = values.get(option);
   if (value === undefined) return undefined;
+  if (!/^[1-9]\d*$/u.test(value)) {
+    throw new ReplayExecuteUsageError(
+      `Option '${option}' must be a positive safe integer.`,
+    );
+  }
   const parsed = Number(value);
-  if (!Number.isSafeInteger(parsed) || parsed <= 0) {
+  if (!Number.isSafeInteger(parsed)) {
     throw new ReplayExecuteUsageError(
       `Option '${option}' must be a positive safe integer.`,
     );
@@ -151,22 +162,49 @@ const parseCommand = (argv: readonly string[]): ReplayExecuteCommand | null => {
   };
 };
 
-const readJson = async (path: string, label: string): Promise<unknown> => {
+const inputFailure = (
+  path: string,
+  label: string,
+  error: unknown,
+): ReplayExecuteInputError => {
+  const code =
+    typeof error === "object" && error !== null && "code" in error
+      ? String((error as { readonly code: unknown }).code)
+      : "read-failed";
+  return new ReplayExecuteInputError(
+    code,
+    path,
+    `Unable to read ${label} '${path}': ${
+      error instanceof Error ? error.message : String(error)
+    }`,
+  );
+};
+
+const readJson = async (
+  path: string,
+  label: string,
+  maximumBytes: number,
+): Promise<unknown> => {
+  let metadata;
+  try {
+    metadata = await stat(path);
+  } catch (error) {
+    throw inputFailure(path, label, error);
+  }
+  if (!metadata.isFile()) {
+    throw new ReplayExecuteInputError(
+      "input-not-file",
+      path,
+      `The ${label} path '${path}' is not a regular file.`,
+    );
+  }
+  assertReplayInputFileSize(path, metadata.size, maximumBytes);
+
   let text: string;
   try {
     text = await readFile(path, "utf8");
   } catch (error) {
-    const code =
-      typeof error === "object" && error !== null && "code" in error
-        ? String((error as { readonly code: unknown }).code)
-        : "read-failed";
-    throw new ReplayExecuteInputError(
-      code,
-      path,
-      `Unable to read ${label} '${path}': ${
-        error instanceof Error ? error.message : String(error)
-      }`,
-    );
+    throw inputFailure(path, label, error);
   }
   try {
     return JSON.parse(text) as unknown;
@@ -226,6 +264,13 @@ const issueDiagnostic = (error: unknown): ReplayExecuteDiagnostic | null => {
 const executionError = (error: unknown): ReplayExecuteDiagnostic => {
   if (error instanceof ReplayExecuteInputError) {
     return { code: error.code, path: error.path, message: error.message };
+  }
+  if (error instanceof ReplayInputFileTooLargeError) {
+    return {
+      code: "file-too-large",
+      path: error.path,
+      message: error.message,
+    };
   }
   if (error instanceof ReplayOutputCollisionError) {
     return {
@@ -377,13 +422,17 @@ export const runReplayExecuteCli = async (
       assertReplayOutputPath(outputSavePath, [bundlePath, replayPath]);
     }
     const bundle = parseRuntimeBundle(
-      await readJson(bundlePath, "runtime bundle"),
+      await readJson(
+        bundlePath,
+        "runtime bundle",
+        MAXIMUM_REPLAY_BUNDLE_BYTES,
+      ),
     );
     const limits = commandLimits(command);
     const resolvedLimits = resolveReplayExecutionLimits(bundle, limits);
     const execution = executeInspectedReplay(
       bundle,
-      await readJson(replayPath, "replay"),
+      await readJson(replayPath, "replay", MAXIMUM_REPLAY_FILE_BYTES),
       limits,
     );
     if (outputSavePath) {
