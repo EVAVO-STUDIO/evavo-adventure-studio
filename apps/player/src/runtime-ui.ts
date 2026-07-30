@@ -2,6 +2,7 @@ import type { Id, Point } from "@evavo/adventure-project-schema";
 import type { ResolvedFrame } from "@evavo/adventure-render-contract";
 import type { RuntimeBundle } from "@evavo/adventure-runtime-bundle";
 import type { InteractiveRuntimeWorldState } from "@evavo/adventure-scene-runtime/commands";
+import { resolveActiveRuntimeDialogue } from "@evavo/adventure-scene-runtime/dialogue";
 import {
   appendUiSkinFrame,
   type UiAssetGeometryResolver,
@@ -19,6 +20,7 @@ export interface RuntimeUiInteractionState {
   readonly hoveredVerbId?: Id<"ui-verb">;
   readonly selectedItemId?: Id<"item">;
   readonly verbCoinPosition?: Point;
+  readonly hoveredDialogueChoiceId?: Id<"dialogue-choice">;
 }
 
 const runtimeAssetsById = (
@@ -94,8 +96,22 @@ const cursorVerbId = (
     (verb) => verb.cursorId === cursorId || verb.verb === cursorId,
   )?.id;
 
+const runtimeDialogueChoices = (
+  bundle: Pick<RuntimeBundle, "dialogues">,
+  world: InteractiveRuntimeWorldState,
+): UiRuntimeState["dialogueChoices"] => {
+  const view = resolveActiveRuntimeDialogue(bundle, world);
+  return view?.choices
+    .filter((choice) => choice.visible)
+    .map((choice) => ({
+      choiceId: choice.id,
+      text: choice.text,
+      enabled: choice.enabled,
+    }));
+};
+
 export const runtimeUiState = (
-  bundle: Pick<RuntimeBundle, "inventoryItems">,
+  bundle: Pick<RuntimeBundle, "inventoryItems" | "dialogues">,
   world: InteractiveRuntimeWorldState,
   skin: UiSkin,
   statusText: string,
@@ -103,6 +119,7 @@ export const runtimeUiState = (
   interaction: RuntimeUiInteractionState = {},
 ): UiRuntimeState => {
   const activeVerbId = interaction.activeVerbId ?? cursorVerbId(skin, cursor.cursorId);
+  const dialogueChoices = runtimeDialogueChoices(bundle, world);
   return {
     statusText,
     ...(activeVerbId ? { activeVerbId } : {}),
@@ -119,6 +136,12 @@ export const runtimeUiState = (
       : {}),
     ...(interaction.verbCoinPosition
       ? { verbCoinPosition: interaction.verbCoinPosition }
+      : {}),
+    ...(dialogueChoices && dialogueChoices.length > 0
+      ? { dialogueChoices }
+      : {}),
+    ...(interaction.hoveredDialogueChoiceId
+      ? { hoveredDialogueChoiceId: interaction.hoveredDialogueChoiceId }
       : {}),
   };
 };
