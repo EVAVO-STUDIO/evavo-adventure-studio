@@ -10,29 +10,22 @@ import type {
 } from "@evavo/adventure-render-contract";
 import { PixiWebGLRenderer } from "@evavo/adventure-renderer-pixi";
 import { PixiAssetTextureStore } from "@evavo/adventure-renderer-pixi/texture-store";
-import type { RuntimeBundle } from "@evavo/adventure-runtime-bundle";
-import { resolveRuntimeSceneFrame } from "@evavo/adventure-scene-runtime";
-import { hitTestSceneObject } from "@evavo/adventure-scene-runtime/interactions";
+import type { NativeCanvas } from "@evavo/adventure-render-contract";
 import {
-  advanceNavigableRuntimeWorld,
-  beginActorMovement,
-  createInitialNavigableRuntimeWorldState,
-  type NavigableRuntimeWorldState,
-} from "@evavo/adventure-scene-runtime/movement";
-import {
-  appendSoftwareCursor,
-  cursorIdForObjectTarget,
   mapClientPointToNative,
-  nativeScreenPointToWorld,
   requestedActorFromSearch,
-  selectControlledActorInstance,
-  walkDestinationForTarget,
-  type SoftwareCursorState,
 } from "./input.js";
+import {
+  createPackagedRuntimeController,
+  type PackagedRuntimeController,
+} from "./packaged-controller.js";
+import {
+  createPackagedRuntimeRenderer,
+} from "./runtime-renderer.js";
 import { loadRuntimeBundle } from "./runtime-loader.js";
 import "./style.css";
 
-const id = <T extends string>(value: string) => value as Id<T>;
+const id = <T extends string>(value: string): Id<T> => value as Id<T>;
 
 const rectangle = (
   nodeId: string,
@@ -89,27 +82,10 @@ const createLaboratoryFrame = (tick: number): ResolvedFrame => {
       rectangle("room.floor", "background", 0, 132, 320, 40, 0x171520),
       rectangle("room.floor-line.1", "background", 0, 143, 320, 1, 0x343043),
       rectangle("room.floor-line.2", "background", 0, 158, 320, 1, 0x0c0b12),
-
       rectangle("window.recess", "background", 228, 22, 72, 82, 0x0a0911),
       rectangle("window.sky", "background", 233, 27, 62, 72, 0x091727),
-      rectangle(
-        "window.frame.vertical",
-        "rear-ambient",
-        263,
-        27,
-        3,
-        72,
-        0x454157,
-      ),
-      rectangle(
-        "window.frame.horizontal",
-        "rear-ambient",
-        233,
-        61,
-        62,
-        3,
-        0x454157,
-      ),
+      rectangle("window.frame.vertical", "rear-ambient", 263, 27, 3, 72, 0x454157),
+      rectangle("window.frame.horizontal", "rear-ambient", 233, 61, 62, 3, 0x454157),
       rectangle(
         "window.city-light.1",
         "rear-ambient",
@@ -137,7 +113,6 @@ const createLaboratoryFrame = (tick: number): ResolvedFrame => {
         2,
         cityLight === 2 ? 0x79b9d1 : 0x263b45,
       ),
-
       rectangle("desk.body", "world", 92, 101, 132, 48, 0x493a35),
       rectangle("desk.top", "world", 86, 96, 144, 8, 0x765a48),
       rectangle("desk.drawer", "world", 111, 110, 82, 17, 0x30272a),
@@ -145,7 +120,6 @@ const createLaboratoryFrame = (tick: number): ResolvedFrame => {
       rectangle("desk.handle", "world", 147, 116, 12, 3, 0xc8a36d),
       rectangle("desk.leg.left", "world", 98, 145, 12, 24, 0x2f2528),
       rectangle("desk.leg.right", "world", 206, 145, 12, 24, 0x2f2528),
-
       rectangle("lamp.base", "world", 196, 91, 18, 5, 0x17141a),
       rectangle("lamp.stem", "world", 203, 66, 3, 26, 0xaaa0a2),
       rectangle("lamp.shade", "world", 194, 59, 21, 9, 0x7d1f35),
@@ -158,7 +132,6 @@ const createLaboratoryFrame = (tick: number): ResolvedFrame => {
         2,
         lampOn ? 0xffc86b : 0x493923,
       ),
-
       rectangle("actor.shadow", "world", 37, 158, 38, 5, 0x0b0a0f),
       rectangle("actor.legs.left", "world", 47, 132, 8, 28, 0x12121a),
       rectangle("actor.legs.right", "world", 59, 132, 8, 28, 0x12121a),
@@ -169,7 +142,6 @@ const createLaboratoryFrame = (tick: number): ResolvedFrame => {
       rectangle("actor.hair", "world", 48, 68, 20, 7, 0x16131a),
       rectangle("actor.hat.brim", "world", 44, 67, 29, 3, 0x252937),
       rectangle("actor.hat.crown", "world", 49, 58, 20, 10, 0x303545),
-
       rectangle("ui.panel", "interface", 0, 172, 320, 28, 0x08090e),
       rectangle("ui.rule", "interface", 0, 172, 320, 2, 0xff244e),
       rectangle("ui.verb.look", "interface", 10, 180, 28, 11, 0x272b38),
@@ -177,7 +149,6 @@ const createLaboratoryFrame = (tick: number): ResolvedFrame => {
       rectangle("ui.inventory", "interface", 245, 178, 64, 15, 0x12151f),
       rectangle("ui.inventory.key", "interface", 268, 182, 15, 4, 0xc9a465),
       rectangle("ui.inventory.key-tooth", "interface", 280, 186, 4, 3, 0xc9a465),
-
       rectangle("cursor.horizontal", "cursor", cursorX - 4, 103, 9, 1, 0xff244e),
       rectangle("cursor.vertical", "cursor", cursorX, 99, 1, 9, 0xff244e),
     ],
@@ -192,20 +163,36 @@ interface PlayerInputController {
 
 interface MountedPlayer {
   readonly renderer: PixiWebGLRenderer;
-  readonly disposeAdditional?: () => Promise<void>;
   readonly ticksPerSecond: number;
   readonly createFrame: (tick: number) => ResolvedFrame;
   readonly input?: PlayerInputController;
-  readonly statusText?: string;
+  readonly statusText?: () => string;
+  readonly disposeAdditional?: () => Promise<void>;
 }
 
 const updateStatus = (text: string): void => {
   const status = document.querySelector<HTMLElement>(
     ".player-status span:last-child",
   );
-  if (status) {
-    status.textContent = text;
-  }
+  if (status) status.textContent = text;
+};
+
+const nativePointer = (
+  host: HTMLElement,
+  canvas: NativeCanvas,
+  event: PointerEvent,
+): Point | null => {
+  const bounds = host.getBoundingClientRect();
+  return mapClientPointToNative(
+    { x: event.clientX, y: event.clientY },
+    {
+      left: bounds.left,
+      top: bounds.top,
+      width: bounds.width,
+      height: bounds.height,
+    },
+    canvas,
+  );
 };
 
 const mountPlayer = async (
@@ -217,9 +204,7 @@ const mountPlayer = async (
     { target: host, devicePixelRatio: window.devicePixelRatio },
     initialFrame.canvas,
   );
-  if (player.statusText) {
-    updateStatus(player.statusText);
-  }
+  if (player.statusText) updateStatus(player.statusText());
 
   const resize = (): void => {
     const bounds = host.getBoundingClientRect();
@@ -231,54 +216,32 @@ const mountPlayer = async (
   observer.observe(host);
   resize();
 
-  const nativePointer = (event: PointerEvent): Point | null => {
-    const bounds = host.getBoundingClientRect();
-    return mapClientPointToNative(
-      { x: event.clientX, y: event.clientY },
-      {
-        left: bounds.left,
-        top: bounds.top,
-        width: bounds.width,
-        height: bounds.height,
-      },
-      initialFrame.canvas,
-    );
-  };
-
   const onPointerMove = (event: PointerEvent): void => {
-    player.input?.setPointer(nativePointer(event));
+    player.input?.setPointer(nativePointer(host, initialFrame.canvas, event));
   };
   const onPointerLeave = (): void => {
     player.input?.setPointer(null);
     player.input?.setPressed(false);
   };
   const onPointerDown = (event: PointerEvent): void => {
-    if (!player.input || event.button !== 0) {
-      return;
-    }
-    const point = nativePointer(event);
+    if (!player.input || event.button !== 0) return;
+    const point = nativePointer(host, initialFrame.canvas, event);
     player.input.setPointer(point);
     player.input.setPressed(true);
-    if (point) {
-      player.input.activate(point);
-    }
+    if (point) player.input.activate(point);
+    if (player.statusText) updateStatus(player.statusText());
     event.preventDefault();
   };
   const onPointerUp = (event: PointerEvent): void => {
-    if (event.button === 0) {
-      player.input?.setPressed(false);
-    }
+    if (event.button === 0) player.input?.setPressed(false);
   };
-  const onPointerCancel = (): void => {
-    player.input?.setPressed(false);
-  };
+  const onPointerCancel = (): void => player.input?.setPressed(false);
   const onContextMenu = (event: MouseEvent): void => {
-    if (player.input) {
-      event.preventDefault();
-    }
+    if (player.input) event.preventDefault();
   };
 
   if (player.input) {
+    host.style.cursor = "none";
     host.addEventListener("pointermove", onPointerMove);
     host.addEventListener("pointerleave", onPointerLeave);
     host.addEventListener("pointerdown", onPointerDown);
@@ -294,9 +257,7 @@ const mountPlayer = async (
   let disposed = false;
 
   const renderLoop = (now: number): void => {
-    if (disposed) {
-      return;
-    }
+    if (disposed) return;
     const advanced = advanceFixedStepClock(clock, now - previousTime, {
       ticksPerSecond: player.ticksPerSecond,
       maxCatchUpTicks: 4,
@@ -306,6 +267,7 @@ const mountPlayer = async (
     logicalTick += advanced.ticksToRun;
     previousTime = now;
     player.renderer.render(player.createFrame(logicalTick));
+    if (player.statusText) updateStatus(player.statusText());
     animationFrame = requestAnimationFrame(renderLoop);
   };
 
@@ -334,125 +296,29 @@ const mountPlayer = async (
 };
 
 const packagedPlayer = async (
-  bundle: RuntimeBundle,
   bundleUrl: string,
   requestedActorInstanceId: string | null,
 ): Promise<MountedPlayer> => {
-  const textures = new PixiAssetTextureStore({
-    aliasNamespace: bundle.projectId,
-  });
+  const bundle = await loadRuntimeBundle(bundleUrl);
+  const textures = new PixiAssetTextureStore({ aliasNamespace: bundle.projectId });
   await textures.loadRuntimeAssets(bundle.assets, bundleUrl);
-  const renderer = new PixiWebGLRenderer({ textures });
-  let world: NavigableRuntimeWorldState =
-    createInitialNavigableRuntimeWorldState(bundle);
-  let renderedTick = 0;
-  let latestBaseFrame = resolveRuntimeSceneFrame(bundle, world);
-  let cursor: SoftwareCursorState = {
-    position: null,
-    cursorId: "walk",
-    pressed: false,
-  };
-
-  const selection = selectControlledActorInstance(
+  const controller: PackagedRuntimeController = createPackagedRuntimeController(
     bundle,
-    requestedActorInstanceId,
+    { requestedActorInstanceId },
   );
-  if (selection.kind === "invalid") {
-    throw new Error(
-      selection.reason === "requested-actor-is-fixed"
-        ? `Requested actor instance '${selection.requestedActorInstanceId}' is fixed and cannot be controlled.`
-        : `Requested actor instance '${selection.requestedActorInstanceId}' is not placed in the start scene.`,
-    );
-  }
-  const controlledActorInstanceId =
-    selection.kind === "selected" ? selection.actorInstanceId : null;
-
-  const pointerTarget = () => {
-    if (!cursor.position) {
-      return null;
-    }
-    return hitTestSceneObject(
-      bundle,
-      world,
-      nativeScreenPointToWorld(cursor.position, latestBaseFrame.camera),
-    );
-  };
-
-  const refreshCursor = (): void => {
-    cursor = {
-      ...cursor,
-      cursorId: cursorIdForObjectTarget(pointerTarget()),
-    };
-  };
-
-  const input: PlayerInputController = {
-    setPointer: (position) => {
-      cursor = { ...cursor, position };
-      refreshCursor();
-    },
-    setPressed: (pressed) => {
-      cursor = { ...cursor, pressed };
-    },
-    activate: (position) => {
-      cursor = { ...cursor, position };
-      refreshCursor();
-      if (!controlledActorInstanceId) {
-        return;
-      }
-      const worldPoint = nativeScreenPointToWorld(
-        position,
-        latestBaseFrame.camera,
-      );
-      const destination = walkDestinationForTarget(pointerTarget(), worldPoint);
-      if (!destination) {
-        return;
-      }
-      const movement = beginActorMovement(
-        bundle,
-        world,
-        controlledActorInstanceId,
-        destination,
-      );
-      if (movement.kind === "started") {
-        world = movement.state;
-      }
-    },
-  };
-
-  const statusText =
-    selection.kind === "selected"
-      ? `CLICK TO WALK • ${selection.actorInstanceId}`
-      : selection.reason === "ambiguous-walkable-actors"
-        ? "ADD ?actor=<INSTANCE-ID> TO CONTROL"
-        : "VIEW-ONLY RUNTIME";
-
   return {
-    renderer,
-    disposeAdditional: () => textures.dispose(),
+    renderer: createPackagedRuntimeRenderer(bundle, textures),
     ticksPerSecond: bundle.presentation.logicalTicksPerSecond,
-    input,
-    statusText,
-    createFrame: (tick) => {
-      if (tick < renderedTick) {
-        throw new RangeError("Packaged player logical time cannot move backwards.");
-      }
-      const delta = tick - renderedTick;
-      if (delta > 0) {
-        world = advanceNavigableRuntimeWorld(bundle, world, delta).state;
-        renderedTick = tick;
-      }
-      latestBaseFrame = resolveRuntimeSceneFrame(bundle, world);
-      refreshCursor();
-      return appendSoftwareCursor(latestBaseFrame, cursor);
-    },
+    createFrame: controller.createFrame,
+    input: controller,
+    statusText: controller.statusText,
+    disposeAdditional: () => textures.dispose(),
   };
 };
 
 const laboratoryPlayer = (): MountedPlayer => ({
   renderer: new PixiWebGLRenderer({
-    textures: {
-      getTexture: () => null,
-    },
+    textures: { getTexture: () => null },
   }),
   ticksPerSecond: 60,
   createFrame: createLaboratoryFrame,
@@ -460,9 +326,7 @@ const laboratoryPlayer = (): MountedPlayer => ({
 
 const boot = async (): Promise<void> => {
   const host = document.querySelector<HTMLElement>("#player-host");
-  if (!host) {
-    throw new Error("Player host element was not found.");
-  }
+  if (!host) throw new Error("Player host element was not found.");
 
   const bundleParameter = new URLSearchParams(window.location.search).get(
     "bundle",
@@ -476,21 +340,13 @@ const boot = async (): Promise<void> => {
   const bundleUrl = new URL(bundleParameter, window.location.href).href;
   host.dataset.mode = "runtime-bundle";
   host.textContent = "Loading runtime bundle…";
-  const bundle = await loadRuntimeBundle(bundleUrl);
+  const player = await packagedPlayer(
+    bundleUrl,
+    requestedActorFromSearch(window.location.search),
+  );
   host.textContent = "";
-  host.setAttribute(
-    "aria-label",
-    `${bundle.title} native adventure game canvas`,
-  );
-  document.title = `${bundle.title} — EVAVO Adventure Player`;
-  await mountPlayer(
-    host,
-    await packagedPlayer(
-      bundle,
-      bundleUrl,
-      requestedActorFromSearch(window.location.search),
-    ),
-  );
+  host.setAttribute("aria-label", "Native adventure game canvas");
+  await mountPlayer(host, player);
 };
 
 void boot().catch((error: unknown) => {
