@@ -12,6 +12,9 @@
     { "path": "../../packages/bitmap-font" },
     { "path": "../../packages/compiler" },
     { "path": "../../packages/project-schema" },
+    { "path": "../../packages/replay" },
+    { "path": "../../packages/runtime-bundle" },
+    { "path": "../../packages/save-game" },
     { "path": "../../packages/scene-instances" },
     { "path": "../../packages/ui-skin" },
     { "path": "../../packages/validation" }
