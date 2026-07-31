@@ -1,151 +1,135 @@
-name: Editor Expansion CI
+name: Adventure editor expansion verification
 
 on:
-  push:
-    branches: [main]
-    paths:
-      - "packages/dialogue-editor-core/**"
-      - "packages/sequence-editor-core/**"
-      - "packages/narrative-library-editor-core/**"
-      - "packages/animation-editor-core/**"
-      - "packages/art-direction/**"
-      - "packages/bitmap-font/**"
-      - "packages/bitmap-font-editor-core/**"
-      - "packages/ui-skin/**"
-      - "packages/ui-skin-editor-core/**"
-      - "packages/save-game/**"
-      - "packages/replay/**"
-      - "packages/runtime-controller/**"
-      - "packages/playtest-inspector/**"
-      - "packages/asset-pipeline/**"
-      - "packages/project-editor-core/**"
-      - "packages/editor-core/**"
-      - "packages/render-contract/**"
-      - "packages/renderer-pixi/**"
-      - "packages/runtime-bundle/**"
-      - "packages/compiler/**"
-      - "apps/player/**"
-      - "apps/studio/**"
-      - "apps/timeline-lab/**"
-      - "tools/cli/**"
-      - "scripts/verify-toolchain-version.mjs"
-      - "package.json"
-      - "pnpm-workspace.yaml"
-      - ".node-version"
-      - ".nvmrc"
-      - "tsconfig.editor-expansion.json"
-      - ".github/workflows/editor-expansion-ci.yml"
-  pull_request:
-    paths:
-      - "packages/dialogue-editor-core/**"
-      - "packages/sequence-editor-core/**"
-      - "packages/narrative-library-editor-core/**"
-      - "packages/animation-editor-core/**"
-      - "packages/art-direction/**"
-      - "packages/bitmap-font/**"
-      - "packages/bitmap-font-editor-core/**"
-      - "packages/ui-skin/**"
-      - "packages/ui-skin-editor-core/**"
-      - "packages/save-game/**"
-      - "packages/replay/**"
-      - "packages/runtime-controller/**"
-      - "packages/playtest-inspector/**"
-      - "packages/asset-pipeline/**"
-      - "packages/project-editor-core/**"
-      - "packages/editor-core/**"
-      - "packages/render-contract/**"
-      - "packages/renderer-pixi/**"
-      - "packages/runtime-bundle/**"
-      - "packages/compiler/**"
-      - "apps/player/**"
-      - "apps/studio/**"
-      - "apps/timeline-lab/**"
-      - "tools/cli/**"
-      - "scripts/verify-toolchain-version.mjs"
-      - "package.json"
-      - "pnpm-workspace.yaml"
-      - ".node-version"
-      - ".nvmrc"
-      - "tsconfig.editor-expansion.json"
-      - ".github/workflows/editor-expansion-ci.yml"
   workflow_dispatch:
+    inputs:
+      expected_sha:
+        description: Exact 40-character current main commit SHA
+        required: true
+        type: string
+      request_source:
+        description: Governed dispatcher identity
+        required: true
+        default: evavo-development-studio
+        type: string
+      runner_os:
+        description: Deliberate single operating-system runner
+        required: true
+        default: ubuntu-24.04
+        type: choice
+        options:
+          - ubuntu-24.04
+          - windows-2022
 
 permissions:
   contents: read
 
 concurrency:
-  group: editor-expansion-${{ github.workflow }}-${{ github.ref }}
-  cancel-in-progress: true
+  group: adventure-editor-expansion-${{ inputs.runner_os }}-${{ inputs.expected_sha }}
+  cancel-in-progress: false
 
 jobs:
   verify:
-    name: Verify editor expansion (${{ matrix.os }})
-    runs-on: ${{ matrix.os }}
-    timeout-minutes: 25
-    strategy:
-      fail-fast: false
-      matrix:
-        os: [ubuntu-latest, windows-latest]
+    name: Editor expansion on ${{ inputs.runner_os }}
+    runs-on: ${{ inputs.runner_os }}
+    timeout-minutes: 40
+    env:
+      CI: "true"
 
     steps:
-      - name: Check out repository
-        uses: actions/checkout@v6
+      - name: Validate governed dispatch
+        shell: pwsh
+        env:
+          EXPECTED_SHA: ${{ inputs.expected_sha }}
+          REQUEST_SOURCE: ${{ inputs.request_source }}
+          RUNNER_OS_INPUT: ${{ inputs.runner_os }}
+        run: |
+          $ErrorActionPreference = "Stop"
+          if ($env:EXPECTED_SHA -notmatch '^[0-9a-f]{40}$') { throw "Invalid expected_sha" }
+          if ($env:REQUEST_SOURCE -ne "evavo-development-studio") { throw "Unsupported request_source" }
+          if ($env:RUNNER_OS_INPUT -notin @("ubuntu-24.04", "windows-2022")) { throw "Unsupported runner_os" }
+          if ($env:GITHUB_REF -ne "refs/heads/main") { throw "Validation must be dispatched from main" }
+          if ($env:EXPECTED_SHA -ne $env:GITHUB_SHA) { throw "expected_sha must equal the dispatched main SHA" }
 
-      - name: Install pnpm
-        uses: pnpm/action-setup@v6
+      - name: Check out exact mainline candidate
+        uses: actions/checkout@08eba0b27e820071cde6df949e0beb9ba4906955 # v4.3.0
+        with:
+          ref: ${{ inputs.expected_sha }}
+          fetch-depth: 0
+          persist-credentials: false
 
-      - name: Install Node.js
-        uses: actions/setup-node@v6
+      - name: Verify exact mainline candidate and clean source
+        shell: pwsh
+        env:
+          EXPECTED_SHA: ${{ inputs.expected_sha }}
+        run: |
+          $ErrorActionPreference = "Stop"
+          if ((git rev-parse HEAD).Trim() -ne $env:EXPECTED_SHA) { throw "Checkout SHA mismatch" }
+          git show-ref --verify --quiet refs/remotes/origin/main
+          if ($LASTEXITCODE -ne 0) { throw "origin/main is missing" }
+          git merge-base --is-ancestor $env:EXPECTED_SHA origin/main
+          if ($LASTEXITCODE -ne 0) { throw "Candidate is not on main" }
+          if (git status --porcelain=v1 --untracked-files=all) { throw "Checkout is not clean" }
+
+      - name: Set up exact Node.js
+        uses: actions/setup-node@49933ea5288caeca8642d1e84afbd3f7d6820020 # v4.4.0
         with:
           node-version-file: .nvmrc
-          package-manager-cache: false
 
-      - name: Install dependencies
-        run: pnpm install --no-frozen-lockfile
+      - name: Activate the exact package manager
+        shell: pwsh
+        run: |
+          $ErrorActionPreference = "Stop"
+          corepack enable
+          corepack prepare pnpm@11.17.0 --activate
+          node --version
+          pnpm --version
 
-      - name: Verify Node toolchain contract
-        run: pnpm run check:toolchain
+      - name: Require installed workspace readiness
+        run: node scripts/check-ci-release-readiness.mjs --full
 
-      - name: Type-check editor expansion graph
-        run: pnpm exec tsc -b tsconfig.editor-expansion.json --pretty false
+      - name: Install the committed dependency graph
+        run: pnpm install --frozen-lockfile
 
-      - name: Run editor expansion tests
-        run: >-
-          pnpm exec vitest run
-          packages/editor-core/tests
-          packages/project-editor-core/tests
-          packages/dialogue-editor-core/tests
-          packages/sequence-editor-core/tests
-          packages/narrative-library-editor-core/tests
-          packages/animation-editor-core/tests
-          packages/art-direction/tests
-          packages/bitmap-font/tests
-          packages/bitmap-font-editor-core/tests
-          packages/ui-skin/tests
-          packages/ui-skin-editor-core/tests
-          packages/save-game/tests
-          packages/replay/tests
-          packages/runtime-controller/tests
-          packages/playtest-inspector/tests
-          packages/asset-pipeline/tests/art-evidence.test.ts
-          packages/compiler/tests/bitmap-font-compilation.test.ts
-          packages/compiler/tests/ui-skin-compilation.test.ts
-          packages/runtime-bundle/tests/bitmap-font-runtime.test.ts
-          packages/runtime-bundle/tests/ui-skin-runtime.test.ts
-          packages/renderer-pixi/tests
-          apps/player/tests
-          apps/studio/tests
-          apps/timeline-lab/tests
-          tools/cli/tests
+      - name: Run the complete editor expansion chain
+        run: pnpm run check:editor-expansion
 
-      - name: Build browser player
-        run: pnpm --filter @evavo/adventure-player build
+      - name: Confirm validation did not modify tracked source
+        if: always()
+        shell: pwsh
+        run: |
+          $ErrorActionPreference = "Stop"
+          git diff --exit-code
+          if ($LASTEXITCODE -ne 0) { throw "Validation changed tracked source" }
+          if (git status --porcelain=v1 --untracked-files=no) { throw "Tracked source status is not clean" }
 
-      - name: Build main visual studio
-        run: pnpm --filter @evavo/adventure-studio-app build
+      - name: Write bounded validation receipt
+        if: success()
+        shell: pwsh
+        env:
+          EXPECTED_SHA: ${{ inputs.expected_sha }}
+          RUNNER_OS_INPUT: ${{ inputs.runner_os }}
+        run: |
+          $ErrorActionPreference = "Stop"
+          New-Item -ItemType Directory -Path .evavo-evidence/editor-expansion -Force | Out-Null
+          @"
+          {
+            "schemaVersion": "1.0",
+            "repository": "EVAVO-STUDIO/evavo-adventure-studio",
+            "candidateSha": "$env:EXPECTED_SHA",
+            "runner": "$env:RUNNER_OS_INPUT",
+            "validationScope": "editor-expansion",
+            "installedWorkspace": "passed",
+            "providerMutation": "not-performed",
+            "deployment": "disabled"
+          }
+          "@ | Set-Content -Path .evavo-evidence/editor-expansion/receipt.json -Encoding utf8
 
-      - name: Build cinematic timeline lab
-        run: pnpm --filter @evavo/adventure-timeline-lab build
-
-      - name: Build command-line tools
-        run: pnpm --filter @evavo/adventure-cli build
+      - name: Upload bounded validation evidence
+        if: always()
+        uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4.6.2
+        with:
+          name: adventure-editor-expansion-${{ inputs.runner_os }}-${{ inputs.expected_sha }}
+          path: .evavo-evidence/editor-expansion
+          if-no-files-found: warn
+          retention-days: 14
