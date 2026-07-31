@@ -24,8 +24,11 @@
     "lint": "biome lint .",
     "format": "biome format --write .",
     "check:toolchain": "node scripts/verify-toolchain-version.mjs",
-    "check": "pnpm run check:toolchain && biome check . && tsc -b --pretty false && vitest run && pnpm run build:player && pnpm run build:studio",
-    "check:ci": "pnpm run check:toolchain && biome ci . && tsc -b --pretty false && vitest run && pnpm run build:player && pnpm run build:studio"
+    "release:check": "node scripts/check-ci-release-readiness.mjs --full",
+    "source:check": "node scripts/check-ci-release-readiness.mjs --source && pnpm run check:toolchain",
+    "check:editor-expansion": "pnpm run release:check && node scripts/run-editor-expansion-check.mjs",
+    "check": "pnpm run release:check && pnpm run check:toolchain && biome check . && tsc -b --pretty false && vitest run && pnpm run build:player && pnpm run build:studio",
+    "check:ci": "pnpm run release:check && pnpm run check:toolchain && biome ci . && tsc -b --pretty false && vitest run && pnpm run build:player && pnpm run build:studio"
   },
   "devDependencies": {
     "@biomejs/biome": "2.5.5",
