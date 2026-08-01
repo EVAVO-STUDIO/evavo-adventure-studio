@@ -6,6 +6,7 @@ This index maps the current authoring and inspection surfaces to their canonical
 | --- | --- | --- | --- |
 | Scene Composer | `/?workspace=composer` | scene composition manifest | `@evavo/adventure-editor-core` |
 | Adventure Design Director | `/?workspace=design` | production bible, map, chapters, puzzles, clues and storyboards | `@evavo/adventure-design` |
+| Authenticity Lab | `/?workspace=authenticity` | deterministic production audit and native scene briefs | `@evavo/adventure-design/authenticity` |
 | Project Geometry | `/?workspace=geometry` | source `project.json` scenes | `@evavo/adventure-project-editor-core` |
 | Object States | `/?workspace=objects` | scene composition object definitions | `@evavo/adventure-editor-core` |
 | Sprite & Animation | `/?workspace=animation` | focused actor definition | `@evavo/adventure-animation-editor-core` |
@@ -19,6 +20,8 @@ This index maps the current authoring and inspection surfaces to their canonical
 | Narrative Project Library | service layer | project dialogues and sequences | `@evavo/adventure-narrative-library-editor-core` |
 
 ## Shared rules
+
+Adventure Design Director also provides a deterministic 100-point authenticity report and native scene-production briefs. These review authored evidence across canvas, palette, composition, performance, interface, audio, geography, puzzles, cinematics and production discipline without claiming that a document score proves final asset quality.
 
 All command packages use:
 

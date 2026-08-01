@@ -148,3 +148,41 @@ These examples demonstrate production grammar without reproducing commercial cha
 The package is part of both the root TypeScript graph and `tsconfig.editor-expansion.json`. Its tests are included in `scripts/run-editor-expansion-check.mjs` before the Player, Studio, Timeline Lab and CLI builds.
 
 A complete build must not be reported as successful until the repository's governed installed-workspace verification has run with the pinned Node.js, pnpm and committed lockfile.
+
+## Authenticity Lab
+
+The companion `/?workspace=authenticity` Authenticity Lab turns the production bible into a deterministic review instead of treating authenticity as a subjective adjective.
+
+`evaluateAdventureAuthenticity` scores ten independent production disciplines from zero to ten:
+
+1. native canvas;
+2. palette and value architecture;
+3. scene composition;
+4. actor performance;
+5. interface identity;
+6. music and ambience;
+7. world cohesion;
+8. puzzle causality;
+9. cinematic continuity;
+10. production discipline.
+
+The report contains a stable score out of 100, a readiness grade and concrete findings with source paths and corrective recommendations. Errors can block production. Warnings identify missing authored evidence. Notes identify opportunities to strengthen a coherent foundation without pretending that a design-sidecar score proves finished art or gameplay quality.
+
+The audit includes objective checks for:
+
+- recognised 320 × 200 VGA and 640 × 480 SVGA canvases;
+- a controlled 16-to-256-colour budget;
+- valid, unique hexadecimal palette anchors;
+- usable luminance range, shadow and highlight anchors and a chromatic accent;
+- native-map bounds and distinct location briefs;
+- actor silhouette, portrait and animation doctrine;
+- project-specific interface guardrails;
+- music-cue and storyboard-sound coverage;
+- connected chapter geography;
+- backwards puzzles, cycles and guaranteed clue delivery;
+- contiguous shot order, visual progression and skip-state convergence;
+- canonical validator errors and required review coverage.
+
+`createAdventureSceneProductionBriefs` derives one scene-production card per design location. Each card records the native canvas, palette budget, interaction lane, focal hierarchy, layer plan, actor and animation direction, interface treatment, audio direction and review questions. These cards provide the handoff from the project bible to background, character, animation, audio and scene-composition production.
+
+The seven original showcase productions are maintained as readiness reference fixtures. Their visible findings demonstrate how the audit guides improvement without pretending a design-sidecar score proves finished production quality. Regression tests also prove that malformed palettes, backwards puzzle construction and missing guaranteed clues are detected rather than hidden by the aggregate score.

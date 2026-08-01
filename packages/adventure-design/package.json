@@ -15,9 +15,15 @@
     "./showcases": {
       "types": "./dist/src/showcases.d.ts",
       "import": "./dist/src/showcases.js"
+    },
+    "./authenticity": {
+      "types": "./dist/src/authenticity.d.ts",
+      "import": "./dist/src/authenticity.js"
     }
   },
-  "files": ["dist"],
+  "files": [
+    "dist"
+  ],
   "scripts": {
     "build": "tsc -b",
     "typecheck": "tsc -b --pretty false"

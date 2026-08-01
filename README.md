@@ -93,6 +93,7 @@ Studio routes currently include:
 ```text
 /?workspace=composer
 /?workspace=design
+/?workspace=authenticity
 /?workspace=geometry
 /?workspace=objects
 /?workspace=animation

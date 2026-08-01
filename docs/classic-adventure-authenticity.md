@@ -125,3 +125,15 @@ A complete authoring environment therefore needs connected surfaces for:
 - deterministic playtest inspection and validation.
 
 Adventure Design Director provides the connective production layer. Existing Studio workspaces remain the canonical editors for their specialised runtime documents.
+
+## Primary-source research basis
+
+The production rules above are derived from reusable lessons documented by original creators and rights holders, not from copying protected game content.
+
+- Ron Gilbert's 1989 design article, [Why Adventure Games Suck](https://grumpygamer.com/why_adventure_games_suck/), argues for clear objectives and sub-goals, survivable danger, presenting the problem before its solution, story-advancing puzzles, incremental reward, logical causality and rewarding player intent. Adventure Design Director turns those principles into puzzle, clue, recovery and feedback checks.
+- Gilbert's [Monkey Island design notebook notes](https://grumpygamer.com/monkey_island_design_scribblings/) show that main flow and individual ideas were iterated rather than arriving fully formed. The editor therefore keeps puzzle order, map progression and chapter intent editable and undoable instead of locking them into a one-pass template.
+- Double Fine's official [Day of the Tentacle Remastered](https://www.doublefine.com/games/day-of-the-tentacle-remastered) material preserves classic graphics, audio and interface as independently selectable systems and includes concept art and original-creator commentary. Adventure Studio likewise treats art direction, interface, audio and runtime behaviour as connected but separately authored disciplines.
+- The official [Day of the Tentacle credits](https://www.doublefine.com/games/day-of-the-tentacle-remastered/credits) distinguish lead art, background styling, character design, animation, music and interactive-music responsibilities. The production brief therefore avoids collapsing every visual and audio decision into one generic style field.
+- Double Fine's [Making of Grim Fandango Remastered](https://www.doublefine.com/games/grim-fandango-remastered/making) documents recovery of archived material and involvement of original creators. That supports keeping production intent, concept decisions and canonical game state reviewable alongside final assets.
+
+These references justify the architecture and review criteria. They do not license reproducing commercial scenes, characters, dialogue, maps, interfaces, music, art or puzzle solutions.
