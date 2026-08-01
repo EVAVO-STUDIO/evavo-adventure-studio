@@ -1,0 +1,28 @@
+{
+  "name": "@evavo/adventure-design",
+  "version": "0.1.0",
+  "private": true,
+  "type": "module",
+  "exports": {
+    ".": {
+      "types": "./dist/src/index.d.ts",
+      "import": "./dist/src/index.js"
+    },
+    "./editor": {
+      "types": "./dist/src/editor.d.ts",
+      "import": "./dist/src/editor.js"
+    },
+    "./showcases": {
+      "types": "./dist/src/showcases.d.ts",
+      "import": "./dist/src/showcases.js"
+    }
+  },
+  "files": ["dist"],
+  "scripts": {
+    "build": "tsc -b",
+    "typecheck": "tsc -b --pretty false"
+  },
+  "dependencies": {
+    "@evavo/adventure-project-schema": "workspace:*"
+  }
+}

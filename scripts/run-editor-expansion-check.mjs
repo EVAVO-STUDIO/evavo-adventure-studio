@@ -18,6 +18,7 @@ const commands = [
     "packages/narrative-library-editor-core/tests",
     "packages/animation-editor-core/tests",
     "packages/art-direction/tests",
+    "packages/adventure-design/tests",
     "packages/bitmap-font/tests",
     "packages/bitmap-font-editor-core/tests",
     "packages/ui-skin/tests",

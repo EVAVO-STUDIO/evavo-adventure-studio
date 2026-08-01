@@ -8,6 +8,7 @@ The project is designed around the production grammar of classic Sierra, LucasAr
 
 - **Authentic presentation:** integer-scaled low-resolution rendering, palette-aware art, bitmap typography, deliberate animation timing, scene transitions, cursor language and era-appropriate UI layouts.
 - **Complete adventure runtime:** navigation, hotspots, verbs, inventory, dialogue, conditions, flags, scoring, cutscenes, audio and save-state persistence.
+- **Connected game direction:** a production bible for visual identity, illustrated geography, chapters, puzzle causality, clue delivery and shot-based cinematic intent.
 - **Visual production studio:** scene composition, walkmesh editing, depth maps, occluders, hotspot authoring, character animation, art-direction policy, bitmap fonts, interaction skins, dialogue graphs, timeline sequencing, playtest artifact inspection and project validation.
 - **Flexible game identity:** supports parser-like, icon-bar, verb-list, verb-coin, two-button and context-sensitive interaction models without copying any one commercial game.
 - **Deterministic projects:** human-readable project files, stable IDs, schema validation, reproducible builds and revision-safe exports.
@@ -23,6 +24,8 @@ Source projects compile into deterministic runtime bundles. The editor, renderer
 - [Architecture](docs/architecture.md)
 - [Technology stack](docs/technology-stack.md)
 - [Authentic pixel rendering](docs/pixel-rendering.md)
+- [Authentic classic-adventure production principles](docs/classic-adventure-authenticity.md)
+- [Adventure Design Director](docs/adventure-design.md)
 - [Project format and compilation](docs/project-format.md)
 - [Command-line build workflow](docs/cli.md)
 - [Scene composition and runtime](docs/scene-composition.md)
@@ -89,6 +92,7 @@ Studio routes currently include:
 
 ```text
 /?workspace=composer
+/?workspace=design
 /?workspace=geometry
 /?workspace=objects
 /?workspace=animation

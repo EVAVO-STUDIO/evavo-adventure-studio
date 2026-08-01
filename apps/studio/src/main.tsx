@@ -1,6 +1,7 @@
 import { StrictMode, type ReactNode } from "react";
 import { createRoot } from "react-dom/client";
 import { App } from "./App.js";
+import { AdventureDesignApp } from "./AdventureDesignApp.js";
 import { AnimationApp } from "./AnimationApp.js";
 import { ArtDirectionApp } from "./ArtDirectionApp.js";
 import { DialogueApp } from "./DialogueApp.js";
@@ -21,7 +22,9 @@ if (!root) {
 
 const workspace = new URLSearchParams(window.location.search).get("workspace");
 const application: ReactNode =
-  workspace === "geometry" ? (
+  workspace === "design" ? (
+    <AdventureDesignApp />
+  ) : workspace === "geometry" ? (
     <GeometryApp />
   ) : workspace === "objects" ? (
     <ObjectApp />
@@ -48,6 +51,7 @@ switcher.className = "workspace-switcher";
 switcher.setAttribute("aria-label", "Adventure Studio workspaces");
 const workspaces = [
   { id: "composer", href: "/", label: "Composer" },
+  { id: "design", href: "/?workspace=design", label: "Design" },
   { id: "geometry", href: "/?workspace=geometry", label: "Geometry" },
   { id: "objects", href: "/?workspace=objects", label: "Objects" },
   { id: "animation", href: "/?workspace=animation", label: "Animation" },
@@ -59,6 +63,7 @@ const workspaces = [
   { id: "validation", href: "/?workspace=validation", label: "Validate" },
 ] as const;
 const activeWorkspace =
+  workspace === "design" ||
   workspace === "geometry" ||
   workspace === "objects" ||
   workspace === "animation" ||

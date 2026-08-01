@@ -5,6 +5,7 @@ This index maps the current authoring and inspection surfaces to their canonical
 | Workspace | Route or app | Canonical document | Command or service package |
 | --- | --- | --- | --- |
 | Scene Composer | `/?workspace=composer` | scene composition manifest | `@evavo/adventure-editor-core` |
+| Adventure Design Director | `/?workspace=design` | production bible, map, chapters, puzzles, clues and storyboards | `@evavo/adventure-design` |
 | Project Geometry | `/?workspace=geometry` | source `project.json` scenes | `@evavo/adventure-project-editor-core` |
 | Object States | `/?workspace=objects` | scene composition object definitions | `@evavo/adventure-editor-core` |
 | Sprite & Animation | `/?workspace=animation` | focused actor definition | `@evavo/adventure-animation-editor-core` |
@@ -26,10 +27,25 @@ All command packages use:
 - stable ID protection;
 - schema-compatible immutable collection clones;
 - deterministic dirty-state comparison;
-- recursive batch schemas;
+- recursive batch commands;
 - tests that do not require a browser.
 
 Inspection services use the same principle without mutation: parse canonical artifacts, validate exact bundle identity, produce deterministic summaries and sort semantic differences by stable state path.
+
+## Adventure-level production direction
+
+The Adventure Design Director is a project-scoped production sidecar. It owns the connective design information that would otherwise be scattered across unrelated editor screens:
+
+- native-resolution visual doctrine and authenticity guardrails;
+- illustrated locations, travel routes and chapter availability;
+- acts, days, missions, eras and open phases;
+- puzzle dependencies, clues, hints, alternate solutions and recovery policy;
+- shot-based cutscene storyboards with deterministic completion actions;
+- production review checklists.
+
+It does not replace executable documents. Cross-document validation links design locations to real project scenes, puzzle steps to inventory items, dialogue-choice triggers to dialogue graphs and completion actions to their canonical project entities.
+
+The package protects referenced locations, chapters, clues, puzzles and cutscenes from unsafe removal. Studio creation tools use atomic command batches when one design operation spans several collections.
 
 ## Focused documents and project integration
 
@@ -51,46 +67,48 @@ Save games and replay logs are packaged-runtime artifacts. Their payload fingerp
 
 The primary repository workflow remains `.github/workflows/ci.yml`.
 
-The editor expansion also has `.github/workflows/editor-expansion-ci.yml`, which verifies:
+The editor expansion also has `.github/workflows/editor-expansion-ci.yml`. A governed exact-SHA dispatch runs one deliberately selected operating-system lane and calls the shared `check:editor-expansion` command.
+
+The expansion verification includes:
 
 - the dedicated TypeScript expansion graph;
+- Adventure Design parsing, semantic validation, dependency ordering and protected history tests;
 - editor command and workspace tests;
 - art-direction policy and evidence tests;
 - bitmap-font layout, authoring, compilation and runtime tests;
 - interface-skin schema, editor, compiler, runtime, hit-testing and player tests;
 - save-game, deterministic replay and playtest-inspector tests;
-- browser player, Studio, Timeline Lab and CLI builds;
-- Windows and Linux behavior.
+- browser Player, Studio, Timeline Lab and CLI builds.
 
-Run the expansion graph locally with:
+Run the canonical expansion gate from an installed workspace with:
 
 ```powershell
-pnpm install
-pnpm exec tsc -b tsconfig.editor-expansion.json --pretty false
-pnpm exec vitest run `
-  packages/editor-core/tests `
-  packages/project-editor-core/tests `
-  packages/dialogue-editor-core/tests `
-  packages/sequence-editor-core/tests `
-  packages/narrative-library-editor-core/tests `
-  packages/animation-editor-core/tests `
-  packages/art-direction/tests `
-  packages/bitmap-font/tests `
-  packages/bitmap-font-editor-core/tests `
-  packages/ui-skin/tests `
-  packages/ui-skin-editor-core/tests `
-  packages/save-game/tests `
-  packages/replay/tests `
-  packages/playtest-inspector/tests `
-  packages/renderer-pixi/tests `
-  apps/player/tests `
-  apps/studio/tests `
-  apps/timeline-lab/tests `
-  tools/cli/tests
-pnpm --filter @evavo/adventure-player build
-pnpm --filter @evavo/adventure-studio-app build
-pnpm --filter @evavo/adventure-timeline-lab build
-pnpm --filter @evavo/adventure-cli build
+pnpm run check:editor-expansion
 ```
 
-A build must not be described as successful until one of these workflows or commands has completed with evidence.
+The underlying focused test selection includes:
+
+```text
+packages/adventure-design/tests
+packages/editor-core/tests
+packages/project-editor-core/tests
+packages/dialogue-editor-core/tests
+packages/sequence-editor-core/tests
+packages/narrative-library-editor-core/tests
+packages/animation-editor-core/tests
+packages/art-direction/tests
+packages/bitmap-font/tests
+packages/bitmap-font-editor-core/tests
+packages/ui-skin/tests
+packages/ui-skin-editor-core/tests
+packages/save-game/tests
+packages/replay/tests
+packages/runtime-controller/tests
+packages/playtest-inspector/tests
+apps/player/tests
+apps/studio/tests
+apps/timeline-lab/tests
+tools/cli/tests
+```
+
+A build must not be described as successful until the governed installed-workspace command or workflow has completed with evidence.

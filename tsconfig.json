@@ -8,6 +8,7 @@
     { "path": "packages/narrative-library-editor-core" },
     { "path": "packages/animation-editor-core" },
     { "path": "packages/art-direction" },
+    { "path": "packages/adventure-design" },
     { "path": "packages/bitmap-font" },
     { "path": "packages/bitmap-font-editor-core" },
     { "path": "packages/ui-skin" },

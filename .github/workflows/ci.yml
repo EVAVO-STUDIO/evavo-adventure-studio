@@ -96,7 +96,7 @@ jobs:
           pnpm --version
 
       - name: Run dependency-free source contracts
-        run: pnpm run source:check
+        run: pnpm source:check
 
       - name: Require installed workspace readiness
         if: ${{ inputs.validation_scope == 'complete-workspace' }}
