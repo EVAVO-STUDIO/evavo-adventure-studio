@@ -3,6 +3,7 @@ import { createRoot } from "react-dom/client";
 import { App } from "./App.js";
 import { AdventureAuthenticityApp } from "./AdventureAuthenticityApp.js";
 import { AdventureDesignApp } from "./AdventureDesignApp.js";
+import { AdventureEvidenceApp } from "./AdventureEvidenceApp.js";
 import { AnimationApp } from "./AnimationApp.js";
 import { ArtDirectionApp } from "./ArtDirectionApp.js";
 import { DialogueApp } from "./DialogueApp.js";
@@ -23,7 +24,9 @@ if (!root) {
 
 const workspace = new URLSearchParams(window.location.search).get("workspace");
 const application: ReactNode =
-  workspace === "authenticity" ? (
+  workspace === "evidence" ? (
+    <AdventureEvidenceApp />
+  ) : workspace === "authenticity" ? (
     <AdventureAuthenticityApp />
   ) : workspace === "design" ? (
     <AdventureDesignApp />
@@ -56,6 +59,7 @@ const workspaces = [
   { id: "composer", href: "/", label: "Composer" },
   { id: "design", href: "/?workspace=design", label: "Design" },
   { id: "authenticity", href: "/?workspace=authenticity", label: "Authenticity" },
+  { id: "evidence", href: "/?workspace=evidence", label: "Proof" },
   { id: "geometry", href: "/?workspace=geometry", label: "Geometry" },
   { id: "objects", href: "/?workspace=objects", label: "Objects" },
   { id: "animation", href: "/?workspace=animation", label: "Animation" },
@@ -67,6 +71,7 @@ const workspaces = [
   { id: "validation", href: "/?workspace=validation", label: "Validate" },
 ] as const;
 const activeWorkspace =
+  workspace === "evidence" ||
   workspace === "authenticity" ||
   workspace === "design" ||
   workspace === "geometry" ||

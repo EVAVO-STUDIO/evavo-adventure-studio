@@ -19,6 +19,10 @@
     "./authenticity": {
       "types": "./dist/src/authenticity.d.ts",
       "import": "./dist/src/authenticity.js"
+    },
+    "./compiled-evidence": {
+      "types": "./dist/src/compiled-evidence.d.ts",
+      "import": "./dist/src/compiled-evidence.js"
     }
   },
   "files": [
@@ -29,6 +33,10 @@
     "typecheck": "tsc -b --pretty false"
   },
   "dependencies": {
-    "@evavo/adventure-project-schema": "workspace:*"
+    "@evavo/adventure-art-direction": "workspace:*",
+    "@evavo/adventure-asset-contract": "workspace:*",
+    "@evavo/adventure-bitmap-font": "workspace:*",
+    "@evavo/adventure-project-schema": "workspace:*",
+    "@evavo/adventure-ui-skin": "workspace:*"
   }
 }

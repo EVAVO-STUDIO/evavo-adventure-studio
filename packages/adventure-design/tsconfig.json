@@ -6,6 +6,10 @@
   },
   "include": ["src/**/*.ts", "tests/**/*.ts"],
   "references": [
-    { "path": "../project-schema" }
+    { "path": "../art-direction" },
+    { "path": "../asset-contract" },
+    { "path": "../bitmap-font" },
+    { "path": "../project-schema" },
+    { "path": "../ui-skin" }
   ]
 }
