@@ -11,6 +11,7 @@ The project is designed around the production grammar of classic Sierra, LucasAr
 - **Connected game direction:** a production bible for visual identity, illustrated geography, chapters, puzzle causality, clue delivery and shot-based cinematic intent.
 - **Evidence-backed production:** compiled dimensions, indexed pixels, binary alpha, bitmap fonts and native interface geometry are reviewed against the same canonical project.
 - **Native scene construction:** walk lanes, depth bands, entrances, hotspots and foreground occlusion are reviewed together at the exact gameplay canvas before final art lock.
+- **Native scene staging:** player control, actor silhouettes, stateful props, portal handoffs and deterministic layer order are reviewed in the same scene-instance graph that ships.
 - **Visual production studio:** scene composition, walkmesh editing, depth maps, occluders, hotspot authoring, character animation, art-direction policy, bitmap fonts, interaction skins, dialogue graphs, timeline sequencing, playtest artifact inspection and project validation.
 - **Flexible game identity:** supports parser-like, icon-bar, verb-list, verb-coin, two-button and context-sensitive interaction models without copying any one commercial game.
 - **Deterministic projects:** human-readable project files, stable IDs, schema validation, reproducible builds and revision-safe exports.
@@ -50,6 +51,7 @@ The top-level `/card-game-studio/` path is ignored defensively so an accidental 
 - [Adventure Design Director](docs/adventure-design.md)
 - [Compiled authenticity evidence](docs/compiled-authenticity-evidence.md)
 - [Native scene composition and readability](docs/native-scene-composition.md)
+- [Native scene staging and initial runtime state](docs/native-scene-staging.md)
 - [Project format and compilation](docs/project-format.md)
 - [Command-line build workflow](docs/cli.md)
 - [Scene composition and runtime](docs/scene-composition.md)
@@ -120,6 +122,7 @@ Studio routes currently include:
 /?workspace=authenticity
 /?workspace=evidence
 /?workspace=composition
+/?workspace=staging
 /?workspace=geometry
 /?workspace=objects
 /?workspace=animation

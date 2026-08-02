@@ -9,6 +9,7 @@ This index maps the current authoring and inspection surfaces to their canonical
 | Authenticity Lab | `/?workspace=authenticity` | deterministic production audit and native scene briefs | `@evavo/adventure-design/authenticity` |
 | Compiled Proof Lab | `/?workspace=evidence` | project, art policy, build manifest, pixel evidence, fonts and UI skins | `@evavo/adventure-design/compiled-evidence` |
 | Native Composition Lab | `/?workspace=composition` | canonical scene geometry plus linked design location | `@evavo/adventure-design/scene-readability` |
+| Native Staging Lab | `/?workspace=staging` | canonical scene instances and initial runtime staging | `@evavo/adventure-design/scene-staging` |
 | Project Geometry | `/?workspace=geometry` | source `project.json` scenes | `@evavo/adventure-project-editor-core` |
 | Object States | `/?workspace=objects` | scene composition object definitions | `@evavo/adventure-editor-core` |
 | Sprite & Animation | `/?workspace=animation` | focused actor definition | `@evavo/adventure-animation-editor-core` |
@@ -23,7 +24,7 @@ This index maps the current authoring and inspection surfaces to their canonical
 
 ## Shared rules
 
-Adventure Design Director provides a deterministic 100-point authored-intent audit and native scene-production briefs. The separate Compiled Proof Lab validates the corresponding build manifests, encoded pixel evidence, bitmap fonts and native interface geometry. The Native Composition Lab audits canonical walk, depth, entrance, hotspot and occlusion geometry at the exact scene canvas. A document score cannot stand in for compiled evidence, and a technically valid build cannot stand in for artistic or playtest review.
+Adventure Design Director provides a deterministic 100-point authored-intent audit and native scene-production briefs. The separate Compiled Proof Lab validates the corresponding build manifests, encoded pixel evidence, bitmap fonts and native interface geometry. The Native Composition Lab audits canonical walk, depth, entrance, hotspot and occlusion geometry at the exact scene canvas. The Native Staging Lab audits the actors, stateful props, portal handoffs, player-control candidates and layer order that inhabit that geometry. A document score cannot stand in for compiled evidence, and a technically valid build cannot stand in for artistic or playtest review.
 
 All command packages use:
 
@@ -72,6 +73,20 @@ The browser workspace reads all files locally and performs no mutation. A report
 
 The Studio overlay combines walk polygons, far and near depth lines, entrances, hotspots, exits, approach points and occlusion masks over a 1× grid. A separate handoff view turns the same report into review language for background art, actor animation, interaction authoring and level implementation.
 
+## Native scene staging
+
+`@evavo/adventure-design/scene-staging` evaluates the canonical `scene-instances.json` sidecar against the same project scene. It first preserves the existing scene-instance validator and then adds production findings for:
+
+- missing or ambiguous start-scene player control;
+- actor frame resolution, native bounds, clipping, entrance clearance and silhouette overlap;
+- initial object state, visibility, opacity, interaction shape and reachable approach points;
+- consequential targets placed on ambient layers;
+- portal distance, traversal animation, route weighting and object obstruction;
+- deterministic layer order and artistically significant ordering ties;
+- missing composition and design-location links.
+
+The Studio overlay renders actor frame bounds and foot points, object target geometry, object approach points, portal handoffs, entrances and navigation over one native stage. The layer-order view exposes the exact layer, elevation, baseline, z-offset and stable-ID ordering that the packaged runtime receives. Staging review therefore connects Composer and Object authoring to final actor, prop, animation and runtime evidence without creating a second shipping format.
+
 ## Focused documents and project integration
 
 Dialogue graphs, cinematic sequences and actors are edited as focused documents for usable tooling. They are not independent shipping formats.
@@ -98,7 +113,7 @@ The expansion verification includes:
 
 - the dedicated TypeScript expansion graph;
 - Adventure Design parsing, semantic validation, dependency ordering and protected history tests;
-- authored-intent authenticity, compiled-evidence and scene-readability regression tests;
+- authored-intent authenticity, compiled-evidence, scene-readability and scene-staging regression tests;
 - editor command and workspace tests;
 - art-direction policy and evidence tests;
 - bitmap-font layout, authoring, compilation and runtime tests;

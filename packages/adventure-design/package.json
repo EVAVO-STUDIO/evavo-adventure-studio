@@ -27,6 +27,10 @@
     "./scene-readability": {
       "types": "./dist/src/scene-readability.d.ts",
       "import": "./dist/src/scene-readability.js"
+    },
+    "./scene-staging": {
+      "types": "./dist/src/scene-staging.d.ts",
+      "import": "./dist/src/scene-staging.js"
     }
   },
   "files": [
@@ -41,6 +45,7 @@
     "@evavo/adventure-asset-contract": "workspace:*",
     "@evavo/adventure-bitmap-font": "workspace:*",
     "@evavo/adventure-project-schema": "workspace:*",
+    "@evavo/adventure-scene-instances": "workspace:*",
     "@evavo/adventure-ui-skin": "workspace:*"
   }
 }
