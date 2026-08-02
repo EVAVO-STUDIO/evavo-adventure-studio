@@ -20,6 +20,26 @@ The foundation is a TypeScript monorepo with a renderer-independent domain engin
 
 Source projects compile into deterministic runtime bundles. The editor, renderer and platform shell are replaceable clients of the canonical schemas and services rather than owners of game data.
 
+## Repository boundaries
+
+Adventure Studio is an independent Git repository. Other EVAVO repositories must be sibling checkouts, not directories inside this worktree.
+
+Recommended Windows layout:
+
+```text
+C:\Gitrepos\evavo-adventure-studio
+C:\Gitrepos\card-game-studio
+C:\Gitrepos\evavo-development-studio
+```
+
+Do not use a nested layout such as:
+
+```text
+C:\Gitrepos\evavo-adventure-studio\card-game-studio
+```
+
+The top-level `/card-game-studio/` path is ignored defensively so an accidental nested clone cannot be staged into Adventure Studio. That ignore rule is not an endorsement of nesting: move or recreate the clone as a sibling repository, then work from the standalone path.
+
 ## Foundation specifications
 
 - [Architecture](docs/architecture.md)
