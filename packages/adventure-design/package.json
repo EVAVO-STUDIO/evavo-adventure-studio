@@ -23,6 +23,10 @@
     "./compiled-evidence": {
       "types": "./dist/src/compiled-evidence.d.ts",
       "import": "./dist/src/compiled-evidence.js"
+    },
+    "./scene-readability": {
+      "types": "./dist/src/scene-readability.d.ts",
+      "import": "./dist/src/scene-readability.js"
     }
   },
   "files": [
