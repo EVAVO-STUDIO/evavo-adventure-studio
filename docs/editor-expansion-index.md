@@ -10,6 +10,7 @@ This index maps the current authoring and inspection surfaces to their canonical
 | Compiled Proof Lab | `/?workspace=evidence` | project, art policy, build manifest, pixel evidence, fonts and UI skins | `@evavo/adventure-design/compiled-evidence` |
 | Native Composition Lab | `/?workspace=composition` | canonical scene geometry plus linked design location | `@evavo/adventure-design/scene-readability` |
 | Native Staging Lab | `/?workspace=staging` | canonical scene instances and initial runtime staging | `@evavo/adventure-design/scene-staging` |
+| Progression Flow Lab | `/?workspace=progression` | bounded canonical state graph, shortest witnesses and branch recovery | `@evavo/adventure-design/progression` |
 | Project Geometry | `/?workspace=geometry` | source `project.json` scenes | `@evavo/adventure-project-editor-core` |
 | Object States | `/?workspace=objects` | scene composition object definitions | `@evavo/adventure-editor-core` |
 | Sprite & Animation | `/?workspace=animation` | focused actor definition | `@evavo/adventure-animation-editor-core` |
@@ -24,7 +25,7 @@ This index maps the current authoring and inspection surfaces to their canonical
 
 ## Shared rules
 
-Adventure Design Director provides a deterministic 100-point authored-intent audit and native scene-production briefs. The separate Compiled Proof Lab validates the corresponding build manifests, encoded pixel evidence, bitmap fonts and native interface geometry. The Native Composition Lab audits canonical walk, depth, entrance, hotspot and occlusion geometry at the exact scene canvas. The Native Staging Lab audits the actors, stateful props, portal handoffs, player-control candidates and layer order that inhabit that geometry. A document score cannot stand in for compiled evidence, and a technically valid build cannot stand in for artistic or playtest review.
+Adventure Design Director provides a deterministic 100-point authored-intent audit and native scene-production briefs. The separate Compiled Proof Lab validates the corresponding build manifests, encoded pixel evidence, bitmap fonts and native interface geometry. The Native Composition Lab audits canonical walk, depth, entrance, hotspot and occlusion geometry at the exact scene canvas. The Native Staging Lab audits the actors, stateful props, portal handoffs, player-control candidates and layer order that inhabit that geometry. The Progression Flow Lab explores the actual state-changing consequences that connect scenes, inventory, dialogue, sequences and object states. A document score cannot stand in for compiled evidence, and a technically valid build cannot stand in for artistic or playtest review.
 
 All command packages use:
 
@@ -87,6 +88,22 @@ The Studio overlay combines walk polygons, far and near depth lines, entrances, 
 
 The Studio overlay renders actor frame bounds and foot points, object target geometry, object approach points, portal handoffs, entrances and navigation over one native stage. The layer-order view exposes the exact layer, elevation, baseline, z-offset and stable-ID ordering that the packaged runtime receives. Staging review therefore connects Composer and Object authoring to final actor, prop, animation and runtime evidence without creating a second shipping format.
 
+## Progression flow
+
+`@evavo/adventure-design/progression` performs bounded breadth-first exploration over the same canonical consequence model used by gameplay. It follows source hotspots, stateful object interactions, inventory requirements, flags, variables, one-shot memory, dialogue choices, sequence story actions, deterministic sequence completion and scene changes.
+
+The evaluator produces:
+
+- required scene and item objective coverage derived from Adventure Design;
+- the proven runtime scene-transition graph;
+- shortest witness paths for scenes, items, dialogues, sequences and object states;
+- terminal branch summaries;
+- unreachable required content findings;
+- potential soft-lock findings for branches that cannot return to the maximum explored objective coverage;
+- explicit truncation, looping-sequence and recursion findings when exhaustive proof is unavailable.
+
+State exploration is deliberately bounded by maximum states and decision depth. A complete report means the configured graph was exhausted, not that human playtesting, timing, readability or puzzle enjoyment has been proven. The shortest witness should be replayed against the compiled Player and retained as deterministic replay evidence before release.
+
 ## Focused documents and project integration
 
 Dialogue graphs, cinematic sequences and actors are edited as focused documents for usable tooling. They are not independent shipping formats.
@@ -113,7 +130,7 @@ The expansion verification includes:
 
 - the dedicated TypeScript expansion graph;
 - Adventure Design parsing, semantic validation, dependency ordering and protected history tests;
-- authored-intent authenticity, compiled-evidence, scene-readability and scene-staging regression tests;
+- authored-intent authenticity, compiled-evidence, scene-readability, scene-staging and progression regression tests;
 - editor command and workspace tests;
 - art-direction policy and evidence tests;
 - bitmap-font layout, authoring, compilation and runtime tests;

@@ -12,6 +12,7 @@ The project is designed around the production grammar of classic Sierra, LucasAr
 - **Evidence-backed production:** compiled dimensions, indexed pixels, binary alpha, bitmap fonts and native interface geometry are reviewed against the same canonical project.
 - **Native scene construction:** walk lanes, depth bands, entrances, hotspots and foreground occlusion are reviewed together at the exact gameplay canvas before final art lock.
 - **Native scene staging:** player control, actor silhouettes, stateful props, portal handoffs and deterministic layer order are reviewed in the same scene-instance graph that ships.
+- **Progression integrity:** bounded canonical state exploration proves routes through object interactions, inventory, dialogue and sequence outcomes while exposing unreachable objectives and recoverability risks.
 - **Visual production studio:** scene composition, walkmesh editing, depth maps, occluders, hotspot authoring, character animation, art-direction policy, bitmap fonts, interaction skins, dialogue graphs, timeline sequencing, playtest artifact inspection and project validation.
 - **Flexible game identity:** supports parser-like, icon-bar, verb-list, verb-coin, two-button and context-sensitive interaction models without copying any one commercial game.
 - **Deterministic projects:** human-readable project files, stable IDs, schema validation, reproducible builds and revision-safe exports.
@@ -52,6 +53,7 @@ The top-level `/card-game-studio/` path is ignored defensively so an accidental 
 - [Compiled authenticity evidence](docs/compiled-authenticity-evidence.md)
 - [Native scene composition and readability](docs/native-scene-composition.md)
 - [Native scene staging and initial runtime state](docs/native-scene-staging.md)
+- [Progression flow and soft-lock analysis](docs/progression-flow.md)
 - [Project format and compilation](docs/project-format.md)
 - [Command-line build workflow](docs/cli.md)
 - [Scene composition and runtime](docs/scene-composition.md)
@@ -77,8 +79,9 @@ The first milestone is a small five-room mystery vignette that proves:
 4. authentic native-resolution rendering, palettes, sprite timing and bitmap text;
 5. verbs, cursors, dialogue, inventory, score and alternate interface policies;
 6. skippable in-scene cinematics with equivalent completion state;
-7. validation fixtures, rendering laboratories and compiled exports;
-8. browser and Windows development players.
+7. bounded progression exploration and one deliberately broken recoverability variant;
+8. validation fixtures, rendering laboratories and compiled exports;
+9. browser and Windows development players.
 
 ## Development
 
@@ -123,6 +126,7 @@ Studio routes currently include:
 /?workspace=evidence
 /?workspace=composition
 /?workspace=staging
+/?workspace=progression
 /?workspace=geometry
 /?workspace=objects
 /?workspace=animation

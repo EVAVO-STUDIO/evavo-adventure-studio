@@ -12,6 +12,7 @@ import { FontApp } from "./FontApp.js";
 import { GeometryApp } from "./GeometryApp.js";
 import { ObjectApp } from "./ObjectApp.js";
 import { PlaytestApp } from "./PlaytestApp.js";
+import { ProgressionApp } from "./ProgressionApp.js";
 import { SceneReadabilityApp } from "./SceneReadabilityApp.js";
 import { SceneStagingApp } from "./SceneStagingApp.js";
 import { UiSkinApp } from "./UiSkinApp.js";
@@ -26,7 +27,9 @@ if (!root) {
 
 const workspace = new URLSearchParams(window.location.search).get("workspace");
 const application: ReactNode =
-  workspace === "staging" ? (
+  workspace === "progression" ? (
+    <ProgressionApp />
+  ) : workspace === "staging" ? (
     <SceneStagingApp />
   ) : workspace === "composition" ? (
     <SceneReadabilityApp />
@@ -68,6 +71,7 @@ const workspaces = [
   { id: "evidence", href: "/?workspace=evidence", label: "Proof" },
   { id: "composition", href: "/?workspace=composition", label: "Composition" },
   { id: "staging", href: "/?workspace=staging", label: "Staging" },
+  { id: "progression", href: "/?workspace=progression", label: "Flow" },
   { id: "geometry", href: "/?workspace=geometry", label: "Geometry" },
   { id: "objects", href: "/?workspace=objects", label: "Objects" },
   { id: "animation", href: "/?workspace=animation", label: "Animation" },
@@ -79,6 +83,7 @@ const workspaces = [
   { id: "validation", href: "/?workspace=validation", label: "Validate" },
 ] as const;
 const activeWorkspace =
+  workspace === "progression" ||
   workspace === "staging" ||
   workspace === "composition" ||
   workspace === "evidence" ||

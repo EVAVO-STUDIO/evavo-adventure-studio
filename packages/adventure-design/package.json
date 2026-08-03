@@ -31,6 +31,10 @@
     "./scene-staging": {
       "types": "./dist/src/scene-staging.d.ts",
       "import": "./dist/src/scene-staging.js"
+    },
+    "./progression": {
+      "types": "./dist/src/progression.d.ts",
+      "import": "./dist/src/progression.js"
     }
   },
   "files": [
@@ -46,6 +50,7 @@
     "@evavo/adventure-bitmap-font": "workspace:*",
     "@evavo/adventure-project-schema": "workspace:*",
     "@evavo/adventure-scene-instances": "workspace:*",
-    "@evavo/adventure-ui-skin": "workspace:*"
+    "@evavo/adventure-ui-skin": "workspace:*",
+    "@evavo/adventure-validation": "workspace:*"
   }
 }
