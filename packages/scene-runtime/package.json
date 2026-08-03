@@ -8,6 +8,10 @@
       "types": "./dist/src/index.d.ts",
       "import": "./dist/src/index.js"
     },
+    "./commands": {
+      "types": "./dist/src/runtime-commands.d.ts",
+      "import": "./dist/src/runtime-commands.js"
+    },
     "./interactions": {
       "types": "./dist/src/interactions.d.ts",
       "import": "./dist/src/interactions.js"
@@ -19,9 +23,15 @@
     "./dialogue": {
       "types": "./dist/src/dialogue.d.ts",
       "import": "./dist/src/dialogue.js"
+    },
+    "./narrative": {
+      "types": "./dist/src/narrative.d.ts",
+      "import": "./dist/src/narrative.js"
     }
   },
-  "files": ["dist"],
+  "files": [
+    "dist"
+  ],
   "scripts": {
     "build": "tsc -b",
     "typecheck": "tsc -b --pretty false"
@@ -37,6 +47,7 @@
     "@evavo/adventure-render-contract": "workspace:*",
     "@evavo/adventure-runtime-bundle": "workspace:*",
     "@evavo/adventure-scene": "workspace:*",
-    "@evavo/adventure-scene-instances": "workspace:*"
+    "@evavo/adventure-scene-instances": "workspace:*",
+    "@evavo/adventure-sequence": "workspace:*"
   }
 }

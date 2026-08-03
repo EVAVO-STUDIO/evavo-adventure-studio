@@ -26,6 +26,7 @@ const commands = [
     "packages/save-game/tests",
     "packages/replay/tests",
     "packages/runtime-controller/tests",
+    "packages/scene-runtime/tests",
     "packages/playtest-inspector/tests",
     "packages/asset-pipeline/tests/art-evidence.test.ts",
     "packages/compiler/tests/bitmap-font-compilation.test.ts",

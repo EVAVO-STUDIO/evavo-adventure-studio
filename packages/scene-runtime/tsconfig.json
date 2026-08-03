@@ -16,6 +16,7 @@
     { "path": "../render-contract" },
     { "path": "../frame-resolver" },
     { "path": "../scene-instances" },
-    { "path": "../runtime-bundle" }
+    { "path": "../runtime-bundle" },
+    { "path": "../sequence" }
   ]
 }
