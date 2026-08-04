@@ -1,0 +1,453 @@
+.scg-native-frame {
+  position: relative;
+  width: 100%;
+  overflow: hidden;
+  border: 1px solid #303540;
+  background: var(--ppf-ink);
+  image-rendering: pixelated;
+  aspect-ratio: 16 / 10;
+  box-shadow:
+    inset 0 0 0 1px rgb(255 255 255 / 3%),
+    0 10px 28px rgb(0 0 0 / 30%);
+}
+
+.scg-native-frame svg {
+  display: block;
+  width: 100%;
+  height: 100%;
+}
+
+.scg-sky {
+  fill: var(--ppf-ink);
+}
+
+.scg-far,
+.scg-building-mid,
+.scg-water {
+  fill: var(--ppf-deep);
+}
+
+.scg-mid,
+.scg-architecture,
+.scg-building,
+.scg-hangar,
+.scg-cabinet,
+.scg-shelf,
+.scg-workbench {
+  fill: color-mix(in srgb, var(--ppf-mid) 68%, var(--ppf-deep));
+}
+
+.scg-ground,
+.scg-counter,
+.scg-dock,
+.scg-aircraft,
+.scg-airlock,
+.scg-water-mid {
+  fill: color-mix(in srgb, var(--ppf-deep) 58%, black);
+}
+
+.scg-roof,
+.scg-lighthouse,
+.scg-foreground,
+.scg-fire-escape {
+  fill: color-mix(in srgb, var(--ppf-mid) 58%, black);
+  stroke: color-mix(in srgb, var(--ppf-paper) 20%, transparent);
+  stroke-width: 1;
+}
+
+.scg-light,
+.scg-star,
+.scg-accent,
+.scg-prop.is-clue rect,
+.scg-prop.is-puzzle rect {
+  fill: var(--ppf-warm);
+}
+
+.scg-panel-line,
+.scg-pipe,
+.scg-window-frame,
+.scg-shelf-line,
+.scg-cabinet-line,
+.scg-dial-line,
+.scg-runway-line,
+.scg-aircraft-line,
+.scg-fire-escape,
+.scg-branch {
+  fill: none;
+  stroke: color-mix(in srgb, var(--ppf-paper) 38%, transparent);
+  stroke-width: 1;
+}
+
+.scg-window,
+.scg-airlock-core,
+.scg-dial {
+  fill: color-mix(in srgb, var(--ppf-deep) 62%, black);
+  stroke: color-mix(in srgb, var(--ppf-paper) 26%, transparent);
+  stroke-width: 1;
+}
+
+.scg-warning-stripe,
+.scg-rain-streak {
+  fill: color-mix(in srgb, var(--ppf-accent) 72%, var(--ppf-deep));
+  stroke: color-mix(in srgb, var(--ppf-paper) 30%, transparent);
+  stroke-width: 1;
+  opacity: 0.55;
+}
+
+.scg-water,
+.scg-water-mid {
+  opacity: 0.95;
+}
+
+.scg-windows rect {
+  fill: color-mix(in srgb, var(--ppf-deep) 82%, black);
+  stroke: color-mix(in srgb, var(--ppf-paper) 18%, transparent);
+  stroke-width: 1;
+}
+
+.scg-windows rect.scg-light {
+  fill: var(--ppf-warm);
+}
+
+.scg-sail {
+  fill: color-mix(in srgb, var(--ppf-paper) 54%, var(--ppf-mid));
+}
+
+.scg-horizon {
+  stroke: color-mix(in srgb, var(--ppf-accent) 32%, transparent);
+  stroke-width: 0.5;
+  stroke-dasharray: 2 4;
+  opacity: 0.42;
+}
+
+.scg-prop rect {
+  fill: color-mix(in srgb, var(--ppf-mid) 58%, var(--ppf-deep));
+  stroke: color-mix(in srgb, var(--ppf-paper) 32%, transparent);
+  stroke-width: 1;
+}
+
+.scg-prop.is-exit rect {
+  fill: color-mix(in srgb, var(--ppf-accent) 26%, var(--ppf-deep));
+}
+
+.scg-prop.is-ambience rect {
+  opacity: 0.48;
+}
+
+.scg-prop.is-interactive rect {
+  stroke: color-mix(in srgb, var(--ppf-paper) 50%, transparent);
+}
+
+.scg-prop-accent {
+  fill: none;
+  stroke: var(--ppf-paper);
+  stroke-width: 1;
+  opacity: 0.75;
+}
+
+.scg-actor {
+  fill: color-mix(in srgb, var(--ppf-paper) 80%, var(--ppf-mid));
+  stroke: color-mix(in srgb, var(--ppf-ink) 88%, black);
+  stroke-width: 1.5;
+}
+
+.scg-actor.is-player {
+  fill: color-mix(in srgb, var(--ppf-paper) 88%, var(--ppf-warm));
+}
+
+.scg-actor.is-companion {
+  fill: color-mix(in srgb, var(--ppf-mid) 62%, var(--ppf-paper));
+}
+
+.scg-actor.is-npc {
+  fill: color-mix(in srgb, var(--ppf-accent) 52%, var(--ppf-paper));
+}
+
+.scg-actor.is-threat {
+  fill: var(--ppf-accent);
+}
+
+.scg-actor-arm {
+  fill: none;
+  stroke: currentColor;
+  stroke-width: 3;
+}
+
+.scg-focus-marker {
+  fill: none;
+  stroke: var(--ppf-accent);
+  stroke-width: 0.6;
+  opacity: 0.62;
+}
+
+.scg-chrome {
+  position: absolute;
+  z-index: 4;
+  font-family: "Courier New", monospace;
+  image-rendering: pixelated;
+}
+
+.scg-icon-chrome {
+  top: 6px;
+  left: 50%;
+  display: flex;
+  gap: 3px;
+  padding: 3px;
+  border: 1px solid color-mix(in srgb, var(--ppf-paper) 48%, black);
+  background: color-mix(in srgb, var(--ppf-deep) 92%, black);
+  transform: translateX(-50%);
+}
+
+.scg-icon-chrome span {
+  display: grid;
+  width: 22px;
+  height: 18px;
+  place-items: center;
+  border: 1px solid color-mix(in srgb, var(--ppf-paper) 22%, black);
+  color: var(--ppf-paper);
+  background: color-mix(in srgb, var(--ppf-mid) 42%, black);
+  font-size: 9px;
+}
+
+.scg-topic-chrome {
+  right: 5px;
+  bottom: 5px;
+  display: grid;
+  width: 118px;
+  grid-template-columns: 34px 1fr;
+  gap: 5px;
+  padding: 5px;
+  border: 1px solid color-mix(in srgb, var(--ppf-paper) 34%, black);
+  background: color-mix(in srgb, var(--ppf-deep) 95%, black);
+}
+
+.scg-topic-chrome i {
+  display: block;
+  height: 46px;
+  border: 1px solid color-mix(in srgb, var(--ppf-paper) 24%, black);
+  background:
+    radial-gradient(circle at 55% 31%, var(--ppf-paper) 0 6px, transparent 7px),
+    linear-gradient(120deg, var(--ppf-mid), var(--ppf-ink));
+}
+
+.scg-topic-chrome div {
+  display: grid;
+  gap: 2px;
+}
+
+.scg-topic-chrome strong {
+  color: var(--ppf-warm);
+  font-size: 5px;
+}
+
+.scg-topic-chrome span {
+  padding: 2px 3px;
+  color: var(--ppf-paper);
+  background: color-mix(in srgb, var(--ppf-mid) 30%, transparent);
+  font-size: 5px;
+}
+
+.scg-verb-chrome {
+  right: 0;
+  bottom: 0;
+  left: 0;
+  display: grid;
+  grid-template-columns: 1.1fr 0.9fr;
+  grid-template-rows: 14px 42px;
+  border-top: 1px solid color-mix(in srgb, var(--ppf-paper) 34%, black);
+  background: color-mix(in srgb, var(--ppf-deep) 96%, black);
+}
+
+.scg-sentence {
+  grid-column: 1 / -1;
+  padding: 3px 7px;
+  border-bottom: 1px solid color-mix(in srgb, var(--ppf-paper) 24%, black);
+  color: var(--ppf-paper);
+  font-size: 6px;
+  text-align: center;
+}
+
+.scg-verbs {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 1px 4px;
+  padding: 4px 7px;
+}
+
+.scg-verbs span,
+.scg-inventory span {
+  color: color-mix(in srgb, var(--ppf-paper) 86%, white);
+  font-size: 5px;
+}
+
+.scg-inventory {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  align-content: center;
+  gap: 3px;
+  padding: 5px;
+  border-left: 1px solid color-mix(in srgb, var(--ppf-paper) 20%, black);
+}
+
+.scg-inventory span {
+  display: grid;
+  min-height: 20px;
+  place-items: center;
+  border: 1px solid color-mix(in srgb, var(--ppf-paper) 20%, black);
+  background: color-mix(in srgb, var(--ppf-mid) 32%, black);
+  text-align: center;
+}
+
+.scg-dossier-chrome {
+  top: 6px;
+  right: 6px;
+  display: grid;
+  width: 92px;
+  gap: 3px;
+  padding: 6px;
+  border-left: 2px solid var(--ppf-accent);
+  background: color-mix(in srgb, var(--ppf-ink) 88%, transparent);
+  box-shadow: 0 4px 12px rgb(0 0 0 / 36%);
+}
+
+.scg-dossier-chrome strong {
+  color: var(--ppf-paper);
+  font-size: 7px;
+  letter-spacing: 0.08em;
+}
+
+.scg-dossier-chrome span {
+  color: var(--ppf-warm);
+  font-size: 5px;
+}
+
+.scg-minimal-chrome {
+  right: 36px;
+  bottom: 8px;
+  left: 36px;
+  padding: 5px 8px;
+  color: var(--ppf-paper);
+  background: rgb(0 0 0 / 72%);
+  font-size: 6px;
+  text-align: center;
+}
+
+.scg-title-overlay {
+  position: absolute;
+  inset: 0;
+  z-index: 5;
+  display: grid;
+  place-content: center;
+  gap: 5px;
+  padding: 20px;
+  background:
+    radial-gradient(circle at 50% 42%, transparent 0 30%, rgb(0 0 0 / 24%) 70%),
+    linear-gradient(180deg, transparent 30%, rgb(0 0 0 / 62%));
+  text-align: center;
+  text-shadow: 0 2px 0 var(--ppf-ink);
+}
+
+.scg-title-overlay small {
+  color: var(--ppf-warm);
+  font-family: "Courier New", monospace;
+  font-size: 5px;
+  letter-spacing: 0.18em;
+  text-transform: uppercase;
+}
+
+.scg-title-overlay strong {
+  color: var(--ppf-paper);
+  font-family: Georgia, serif;
+  font-size: clamp(18px, 3.6vw, 40px);
+  letter-spacing: 0.05em;
+  text-transform: uppercase;
+}
+
+.scg-title-overlay span {
+  color: color-mix(in srgb, var(--ppf-paper) 74%, var(--ppf-mid));
+  font-family: "Courier New", monospace;
+  font-size: 5px;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+}
+
+.scg-dialogue-overlay {
+  position: absolute;
+  z-index: 5;
+  right: 6px;
+  bottom: 6px;
+  left: 6px;
+  padding: 6px 10px;
+  border: 1px solid color-mix(in srgb, var(--ppf-paper) 32%, black);
+  color: var(--ppf-paper);
+  background: color-mix(in srgb, var(--ppf-ink) 89%, transparent);
+  font-family: "Courier New", monospace;
+  font-size: 6px;
+  line-height: 1.4;
+  text-align: center;
+}
+
+.scg-dialogue-overlay.is-topic-ledger,
+.scg-dialogue-overlay.is-portrait-box,
+.scg-dialogue-overlay.is-cinematic-close-up {
+  left: 52px;
+  right: 52px;
+  border-left: 2px solid var(--ppf-accent);
+}
+
+.scg-dialogue-overlay.is-minimal-caption {
+  right: 42px;
+  left: 42px;
+  border-color: transparent;
+}
+
+.scg-system-overlay {
+  position: absolute;
+  inset: 14px;
+  z-index: 5;
+  display: grid;
+  align-content: end;
+  gap: 4px;
+  padding: 10px;
+  border: 1px solid color-mix(in srgb, var(--ppf-paper) 26%, black);
+  background:
+    linear-gradient(180deg, transparent 18%, color-mix(in srgb, var(--ppf-ink) 88%, transparent) 72%),
+    repeating-linear-gradient(0deg, transparent 0 7px, color-mix(in srgb, var(--ppf-mid) 14%, transparent) 8px);
+  pointer-events: none;
+}
+
+.scg-system-overlay strong {
+  max-width: 72%;
+  color: var(--ppf-paper);
+  font-size: 7px;
+  font-weight: 600;
+  line-height: 1.35;
+}
+
+.scg-system-overlay span {
+  color: var(--ppf-warm);
+  font-family: "Courier New", monospace;
+  font-size: 6px;
+  letter-spacing: 0.05em;
+}
+
+.scg-native-frame.is-verb-panel-comedy.is-gameplay svg,
+.scg-native-frame.is-verb-panel-pulp.is-gameplay svg {
+  height: calc(100% - 56px);
+}
+
+.scg-native-frame.is-portrait-investigation.is-gameplay svg {
+  filter: saturate(0.82) contrast(1.05);
+}
+
+.scg-native-frame.is-minimal-noir svg {
+  filter: saturate(0.46) contrast(1.18);
+}
+
+.scg-native-frame.is-icon-comic svg {
+  filter: saturate(1.12) contrast(1.05);
+}
+
+.scg-native-frame.is-cinematic-pulp svg {
+  filter: saturate(0.92) contrast(1.1);
+}

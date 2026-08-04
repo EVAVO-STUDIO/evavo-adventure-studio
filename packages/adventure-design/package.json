@@ -24,10 +24,6 @@
       "types": "./dist/src/compiled-evidence.d.ts",
       "import": "./dist/src/compiled-evidence.js"
     },
-    "./production-profiles": {
-      "types": "./dist/src/production-profiles.d.ts",
-      "import": "./dist/src/production-profiles.js"
-    },
     "./scene-readability": {
       "types": "./dist/src/scene-readability.d.ts",
       "import": "./dist/src/scene-readability.js"
@@ -39,6 +35,14 @@
     "./progression": {
       "types": "./dist/src/progression.d.ts",
       "import": "./dist/src/progression.js"
+    },
+    "./production-profiles": {
+      "types": "./dist/src/production-profiles.d.ts",
+      "import": "./dist/src/production-profiles.js"
+    },
+    "./production-showcases": {
+      "types": "./dist/src/production-showcases.d.ts",
+      "import": "./dist/src/production-showcases.js"
     }
   },
   "files": [

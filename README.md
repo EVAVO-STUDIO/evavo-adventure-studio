@@ -8,6 +8,7 @@ The project is designed around the production grammar of classic Sierra, LucasAr
 
 - **Authentic presentation:** integer-scaled low-resolution rendering, palette-aware art, bitmap typography, deliberate animation timing, scene transitions, cursor language and era-appropriate UI layouts.
 - **Profile-driven identity:** seven original production families connect canvas, palette, scene grammar, actor performance, interface, puzzles, audio, publisher splash and showcase direction instead of applying one generic retro filter.
+- **Original showcase proof:** every production family includes title, gameplay, dialogue and system plates with native composition, actor, prop, UI and recoverable puzzle intent.
 - **Complete adventure runtime:** navigation, hotspots, verbs, inventory, dialogue, conditions, flags, scoring, cutscenes, audio and save-state persistence.
 - **Connected game direction:** a production bible for visual identity, illustrated geography, chapters, puzzle causality, clue delivery and shot-based cinematic intent.
 - **Evidence-backed production:** compiled dimensions, indexed pixels, binary alpha, bitmap fonts and native interface geometry are reviewed against the same canonical project.
@@ -51,6 +52,7 @@ The top-level `/card-game-studio/` path is ignored defensively so an accidental 
 - [Authentic pixel rendering](docs/pixel-rendering.md)
 - [Authentic classic-adventure production principles](docs/classic-adventure-authenticity.md)
 - [Adventure production profiles](docs/production-profiles.md)
+- [Native showcase gallery](docs/native-showcase-gallery.md)
 - [Adventure Design Director](docs/adventure-design.md)
 - [Compiled authenticity evidence](docs/compiled-authenticity-evidence.md)
 - [Native scene composition and readability](docs/native-scene-composition.md)
@@ -79,13 +81,14 @@ The first milestone is a small five-room mystery vignette that proves:
 1. canonical project schemas and migrations;
 2. deterministic runtime commands, saves and replays;
 3. one selected production profile controlling canvas, palette, UI, puzzle grammar and original splash;
-4. navigation, depth, scale and partial occlusion;
-5. authentic native-resolution rendering, palettes, sprite timing and bitmap text;
-6. verbs, cursors, dialogue, inventory, score and alternate interface policies;
-7. skippable in-scene cinematics with equivalent completion state;
-8. bounded progression exploration and one deliberately broken recoverability variant;
-9. validation fixtures, rendering laboratories and compiled exports;
-10. browser and Windows development players.
+4. an original title, gameplay, dialogue and system showcase plate for the selected profile;
+5. navigation, depth, scale and partial occlusion;
+6. authentic native-resolution rendering, palettes, sprite timing and bitmap text;
+7. verbs, cursors, dialogue, inventory, score and alternate interface policies;
+8. skippable in-scene cinematics with equivalent completion state;
+9. bounded progression exploration and one deliberately broken recoverability variant;
+10. validation fixtures, rendering laboratories and compiled exports;
+11. browser and Windows development players.
 
 ## Development
 
@@ -126,6 +129,7 @@ Studio routes currently include:
 ```text
 /?workspace=composer
 /?workspace=profiles
+/?workspace=showcases
 /?workspace=design
 /?workspace=authenticity
 /?workspace=evidence

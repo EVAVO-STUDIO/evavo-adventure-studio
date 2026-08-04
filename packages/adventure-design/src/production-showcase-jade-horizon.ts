@@ -1,0 +1,124 @@
+import { actor, plate, prop, puzzle, showcase } from "./production-showcase-factory.js";
+
+export const jadeHorizonShowcase = showcase({
+  id: "jade-horizon",
+  profileId: "cinematic-pulp-vga",
+  title: "Jade Horizon",
+  genre: "cinematic travel thriller",
+  logline:
+    "A debt courier and disgraced pilot cross a collapsing route while every delay changes trust.",
+  motif: "night-airfield",
+  titleTreatment:
+    "A kinetic monolith mark cuts to a rain-lit aircraft silhouette and restrained travel-thriller lettering.",
+  dialogueTreatment:
+    "Directed close-ups preserve eyeline, route pressure and protagonist-specific knowledge.",
+  systemTreatment:
+    "A bespoke travel dossier exposes time, fare, trust and route consequence inside the fiction.",
+  plates: [
+    plate(
+      "plate.jade-horizon.title",
+      "title",
+      "Night departure title",
+      "Establish travel urgency, dual protagonists and a grounded pulp identity.",
+      160,
+      96,
+      124,
+      "JADE HORIZON",
+      [],
+      [
+        prop("prop.jade.title-aircraft", "ambience", 146, 76, 132, 48, "mail aircraft", "fuelled", false),
+        prop("prop.jade.title-clock", "clue", 58, 86, 34, 24, "departure clock", "21:40", false),
+      ],
+      [
+        "Aircraft, clock and title form one controlled cinematic triangle.",
+        "Rain and runway lights remain disciplined rather than decorative spectacle.",
+        "The original studio mark completes before the route title appears.",
+      ],
+    ),
+    plate(
+      "plate.jade-horizon.gameplay",
+      "gameplay",
+      "Airfield manifest office",
+      "Identify the passenger who altered the manifest before departure closes.",
+      222,
+      112,
+      104,
+      "ROUTE 03 · DEPARTURE IN 08 MINUTES",
+      [
+        actor("actor.jade.pilot", "player", 76, 166, 58, "right", "manifest challenge", "Cap, flight jacket and squared stance identify the pilot instantly."),
+        actor("actor.jade.translator", "companion", 126, 162, 54, "right", "document comparison", "Document case and narrower posture establish the second protagonist."),
+        actor("actor.jade.passenger", "npc", 240, 158, 54, "left", "guarded luggage", "Luggage strap and protected hand create the suspicious silhouette."),
+      ],
+      [
+        prop("prop.jade.manifest", "clue", 184, 118, 42, 24, "passenger manifest", "altered"),
+        prop("prop.jade.radio", "puzzle", 278, 88, 28, 34, "dispatch radio", "busy"),
+        prop("prop.jade.runway", "exit", 16, 72, 54, 66, "runway door", "counting down"),
+      ],
+      [
+        "Time pressure stays visible without a modern HUD overlay.",
+        "Three character silhouettes remain distinct in one wide shot.",
+        "The manifest, radio and exit communicate different kinds of urgency.",
+      ],
+    ),
+    plate(
+      "plate.jade-horizon.dialogue",
+      "dialogue",
+      "Passenger trust confrontation",
+      "Switch viewpoint to compare what the pilot and translator independently know.",
+      160,
+      100,
+      110,
+      "TRUST: GUARDED · DEPARTURE: 21:40",
+      [
+        actor("actor.jade.pilot-dialogue", "player", 70, 166, 78, "right", "direct challenge", "Authority comes through posture rather than weapon display."),
+        actor("actor.jade.passenger-dialogue", "npc", 242, 164, 80, "left", "controlled smile", "Luggage strap and hand position retain the concealed-clue silhouette."),
+      ],
+      [
+        prop("prop.jade.translation-note", "clue", 136, 62, 54, 22, "translation note", "private"),
+        prop("prop.jade.departure-clock", "ambience", 260, 48, 34, 18, "departure clock", "running", false),
+      ],
+      [
+        "Knowledge boundaries are shown by protagonist-specific dossier entries.",
+        "Close-up framing preserves the ticking departure threat.",
+        "Trust changes pose, route availability and later assistance.",
+      ],
+    ),
+    plate(
+      "plate.jade-horizon.system",
+      "system",
+      "Route and relationship dossier",
+      "Choose who travels, which route is affordable and whose knowledge drives the decision.",
+      160,
+      100,
+      116,
+      "ROUTE 03 · TRUST GUARDED · FARE 840",
+      [
+        actor("actor.jade.dossier-pilot", "player", 44, 146, 22, "right", "pilot marker", "A cap marker identifies the active protagonist."),
+        actor("actor.jade.dossier-translator", "companion", 76, 146, 22, "right", "translator marker", "A document-case marker identifies the alternate knowledge set."),
+      ],
+      [
+        prop("prop.jade.route-mountain", "exit", 142, 66, 64, 30, "mountain route", "fast"),
+        prop("prop.jade.route-river", "exit", 228, 124, 62, 30, "river route", "safe"),
+        prop("prop.jade.relationship", "puzzle", 156, 132, 50, 24, "passenger trust", "guarded"),
+      ],
+      [
+        "Route, money and trust share one cinematic production language.",
+        "Switching protagonists changes evidence rather than merely the portrait.",
+        "Branch divergence is visible before commitment and remains playable afterward.",
+      ],
+    ),
+  ],
+  puzzleBeats: [
+    puzzle(
+      "puzzle.jade.manifest",
+      "relationship-branch",
+      "plate.jade-horizon.dialogue",
+      "The altered manifest points to several passengers, but each protagonist holds different evidence.",
+      "Compare viewpoints, confront one passenger and choose a route compatible with the resulting trust state.",
+      "The flight departs with different companions, costs and later assistance.",
+      "A poor trust outcome changes the route and resources but does not end the adventure.",
+    ),
+  ],
+  originalityStatement:
+    "Original airfield, protagonists, passenger mystery, travel documents and relationship branches; no existing cinematic travel-adventure scene is reproduced.",
+});

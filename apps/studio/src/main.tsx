@@ -16,6 +16,7 @@ import { ProductionProfilesApp } from "./ProductionProfilesApp.js";
 import { ProgressionApp } from "./ProgressionApp.js";
 import { SceneReadabilityApp } from "./SceneReadabilityApp.js";
 import { SceneStagingApp } from "./SceneStagingApp.js";
+import { ShowcaseGalleryApp } from "./ShowcaseGalleryApp.js";
 import { UiSkinApp } from "./UiSkinApp.js";
 import { ValidationApp } from "./ValidationApp.js";
 import "./style.css";
@@ -28,7 +29,9 @@ if (!root) {
 
 const workspace = new URLSearchParams(window.location.search).get("workspace");
 const application: ReactNode =
-  workspace === "profiles" ? (
+  workspace === "showcases" ? (
+    <ShowcaseGalleryApp />
+  ) : workspace === "profiles" ? (
     <ProductionProfilesApp />
   ) : workspace === "progression" ? (
     <ProgressionApp />
@@ -70,6 +73,7 @@ switcher.setAttribute("aria-label", "Adventure Studio workspaces");
 const workspaces = [
   { id: "composer", href: "/", label: "Composer" },
   { id: "profiles", href: "/?workspace=profiles", label: "Profiles" },
+  { id: "showcases", href: "/?workspace=showcases", label: "Showcases" },
   { id: "design", href: "/?workspace=design", label: "Design" },
   { id: "authenticity", href: "/?workspace=authenticity", label: "Authenticity" },
   { id: "evidence", href: "/?workspace=evidence", label: "Proof" },
@@ -87,6 +91,7 @@ const workspaces = [
   { id: "validation", href: "/?workspace=validation", label: "Validate" },
 ] as const;
 const activeWorkspace =
+  workspace === "showcases" ||
   workspace === "profiles" ||
   workspace === "progression" ||
   workspace === "staging" ||
