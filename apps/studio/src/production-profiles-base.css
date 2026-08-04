@@ -1,0 +1,310 @@
+.ppf-app {
+  --ppf-ink: #090a0f;
+  --ppf-deep: #232731;
+  --ppf-mid: #52606c;
+  --ppf-accent: #b05545;
+  --ppf-warm: #d1a968;
+  --ppf-paper: #efe7cc;
+  --ppf-line: #303440;
+  --ppf-line-soft: #222631;
+  --ppf-panel: #11141b;
+  --ppf-raised: #171b24;
+  --ppf-text: #f3f4f7;
+  --ppf-muted: #9298a6;
+  display: grid;
+  grid-template-rows: 58px minmax(0, 1fr);
+  width: 100%;
+  height: 100%;
+  overflow: hidden;
+  color: var(--ppf-text);
+  background:
+    radial-gradient(circle at 54% 4%, color-mix(in srgb, var(--ppf-mid) 19%, transparent), transparent 42%),
+    #090a0f;
+}
+
+.ppf-app *,
+.ppf-app *::before,
+.ppf-app *::after {
+  box-sizing: border-box;
+}
+
+.ppf-app button,
+.ppf-app select {
+  font: inherit;
+}
+
+.ppf-topbar {
+  position: relative;
+  z-index: 3;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 0 16px;
+  border-bottom: 1px solid var(--ppf-line);
+  background: rgb(12 14 19 / 96%);
+  box-shadow: 0 12px 28px rgb(0 0 0 / 24%);
+  backdrop-filter: blur(18px);
+}
+
+.ppf-brand {
+  display: flex;
+  align-items: center;
+  gap: 11px;
+}
+
+.ppf-brand-mark {
+  display: grid;
+  width: 32px;
+  height: 32px;
+  place-items: center;
+  border: 1px solid var(--ppf-accent);
+  color: var(--ppf-paper);
+  background:
+    linear-gradient(135deg, color-mix(in srgb, var(--ppf-accent) 32%, transparent), transparent),
+    #11131a;
+  font-family: "Courier New", monospace;
+  font-size: 17px;
+  font-weight: 900;
+  box-shadow:
+    inset 0 0 0 1px color-mix(in srgb, var(--ppf-warm) 17%, transparent),
+    0 0 24px color-mix(in srgb, var(--ppf-accent) 18%, transparent);
+}
+
+.ppf-brand > div {
+  display: grid;
+  gap: 4px;
+}
+
+.ppf-brand > div > span {
+  color: var(--ppf-muted);
+  font-size: 8px;
+  font-weight: 800;
+  letter-spacing: 0.21em;
+}
+
+.ppf-brand strong {
+  font-size: 14px;
+  letter-spacing: 0.065em;
+}
+
+.ppf-profile-picker {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  color: var(--ppf-muted);
+  font-size: 8px;
+  font-weight: 800;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+}
+
+.ppf-profile-picker select {
+  min-width: 242px;
+  height: 31px;
+  padding: 0 30px 0 10px;
+  border: 1px solid var(--ppf-line);
+  border-radius: 4px;
+  color: var(--ppf-text);
+  background: var(--ppf-raised);
+  font-size: 10px;
+  text-transform: none;
+}
+
+.ppf-ready-state {
+  display: grid;
+  min-width: 136px;
+  grid-template-columns: 8px 1fr auto;
+  align-items: center;
+  gap: 8px;
+  color: var(--ppf-muted);
+  font-size: 8px;
+  letter-spacing: 0.11em;
+  text-transform: uppercase;
+}
+
+.ppf-ready-state > span {
+  width: 7px;
+  height: 7px;
+  border-radius: 50%;
+  background: #87909e;
+  box-shadow: 0 0 0 3px rgb(135 144 158 / 12%);
+}
+
+.ppf-ready-state.is-ready > span {
+  background: #83cb93;
+  box-shadow: 0 0 0 3px rgb(131 203 147 / 12%);
+}
+
+.ppf-ready-state.is-attention > span {
+  background: #daa258;
+  box-shadow: 0 0 0 3px rgb(218 162 88 / 12%);
+}
+
+.ppf-ready-state.is-blocked > span {
+  background: #ff5573;
+  box-shadow: 0 0 0 3px rgb(255 85 115 / 12%);
+}
+
+.ppf-ready-state strong {
+  color: #d7dae1;
+}
+
+.ppf-ready-state em {
+  color: var(--ppf-warm);
+  font-style: normal;
+}
+
+.ppf-workspace {
+  display: grid;
+  min-height: 0;
+  grid-template-columns: 278px minmax(720px, 1fr) 310px;
+}
+
+.ppf-profile-rail,
+.ppf-inspector {
+  min-height: 0;
+  overflow-y: auto;
+  background: rgb(14 16 22 / 98%);
+}
+
+.ppf-profile-rail {
+  display: grid;
+  grid-template-rows: auto minmax(0, 1fr) auto;
+  border-right: 1px solid var(--ppf-line);
+}
+
+.ppf-profile-rail > header {
+  padding: 20px 17px 17px;
+  border-bottom: 1px solid var(--ppf-line-soft);
+}
+
+.ppf-eyebrow {
+  display: block;
+  margin-bottom: 8px;
+  color: var(--ppf-accent);
+  font-size: 8px;
+  font-weight: 850;
+  letter-spacing: 0.16em;
+  text-transform: uppercase;
+}
+
+.ppf-profile-rail h1,
+.ppf-profile-heading h1,
+.ppf-preview-card h2,
+.ppf-doctrine-grid h2,
+.ppf-showcase h2,
+.ppf-inspector h2 {
+  margin: 0;
+  font-weight: 650;
+  letter-spacing: -0.025em;
+}
+
+.ppf-profile-rail h1 {
+  margin-bottom: 8px;
+  font-size: 20px;
+}
+
+.ppf-profile-rail p,
+.ppf-profile-heading p,
+.ppf-doctrine-grid p,
+.ppf-showcase p,
+.ppf-inspector p,
+.ppf-rule-section li {
+  color: var(--ppf-muted);
+  font-size: 10px;
+  line-height: 1.55;
+}
+
+.ppf-profile-rail p,
+.ppf-profile-heading p,
+.ppf-doctrine-grid p,
+.ppf-showcase p,
+.ppf-inspector p {
+  margin: 0;
+}
+
+.ppf-profile-list {
+  min-height: 0;
+  overflow-y: auto;
+  padding: 9px;
+}
+
+.ppf-profile-button {
+  --ppf-profile-line: color-mix(in srgb, var(--ppf-accent) 35%, #343946);
+  display: grid;
+  width: 100%;
+  grid-template-columns: 31px minmax(0, 1fr) auto;
+  align-items: center;
+  gap: 9px;
+  margin-bottom: 5px;
+  padding: 10px 9px;
+  border: 1px solid transparent;
+  border-radius: 5px;
+  color: #d6d8df;
+  background: transparent;
+  cursor: pointer;
+  text-align: left;
+}
+
+.ppf-profile-button:hover,
+.ppf-profile-button:focus-visible {
+  border-color: #343946;
+  background: #171a22;
+  outline: none;
+}
+
+.ppf-profile-button.is-selected {
+  border-color: var(--ppf-profile-line);
+  background:
+    linear-gradient(90deg, color-mix(in srgb, var(--ppf-accent) 14%, transparent), transparent 78%),
+    #181b24;
+  box-shadow: inset 2px 0 0 var(--ppf-accent);
+}
+
+.ppf-profile-swatch {
+  display: grid;
+  width: 31px;
+  height: 31px;
+  grid-template-columns: 1fr 1fr;
+  overflow: hidden;
+  border: 1px solid #363b47;
+  border-radius: 3px;
+  background: #0b0d12;
+}
+
+.ppf-profile-swatch i {
+  display: block;
+}
+
+.ppf-profile-button > span:nth-child(2) {
+  display: grid;
+  gap: 4px;
+}
+
+.ppf-profile-button strong {
+  font-size: 10px;
+}
+
+.ppf-profile-button small {
+  color: #767d8b;
+  font-size: 7px;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+}
+
+.ppf-profile-button em {
+  color: #666e7e;
+  font-family: "Courier New", monospace;
+  font-size: 7px;
+  font-style: normal;
+}
+
+.ppf-profile-rail > footer {
+  display: flex;
+  justify-content: space-between;
+  padding: 12px 13px;
+  border-top: 1px solid var(--ppf-line-soft);
+  color: #666d7b;
+  font-size: 7px;
+  text-transform: uppercase;
+}

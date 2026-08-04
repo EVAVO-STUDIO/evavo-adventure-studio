@@ -1,0 +1,136 @@
+@import "./production-profiles-layout.css";
+
+.ppf-native-frame {
+  position: relative;
+  overflow: hidden;
+  aspect-ratio: 16 / 10;
+  margin: 14px;
+  border: 1px solid #353a45;
+  background: var(--ppf-ink);
+  box-shadow:
+    0 0 0 4px #08090d,
+    0 16px 40px rgb(0 0 0 / 35%);
+  image-rendering: pixelated;
+}
+
+.ppf-native-frame::after {
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+  background: linear-gradient(rgb(255 255 255 / 2.4%) 1px, transparent 1px);
+  background-size: 100% 3px;
+  mix-blend-mode: overlay;
+  opacity: 0.22;
+  content: "";
+}
+
+.ppf-native-frame svg {
+  display: block;
+  width: 100%;
+  height: 100%;
+}
+
+.ppf-splash-background {
+  fill: var(--ppf-ink);
+}
+
+.ppf-glow-start {
+  stop-color: var(--ppf-deep);
+  stop-opacity: 0.9;
+}
+
+.ppf-glow-end {
+  stop-color: var(--ppf-ink);
+  stop-opacity: 0;
+}
+
+.ppf-splash-grid {
+  stroke: var(--ppf-paper);
+  stroke-opacity: 0.025;
+  stroke-width: 0.5;
+}
+
+.ppf-mark {
+  fill: color-mix(in srgb, var(--ppf-accent) 78%, var(--ppf-warm));
+  stroke: var(--ppf-paper);
+  stroke-width: 2;
+  filter: drop-shadow(0 8px 12px rgb(0 0 0 / 55%));
+}
+
+.ppf-mark-core {
+  fill: var(--ppf-paper);
+  stroke: var(--ppf-warm);
+}
+
+.ppf-mark-window {
+  fill: color-mix(in srgb, var(--ppf-deep) 70%, var(--ppf-accent));
+  stroke: var(--ppf-paper);
+}
+
+.ppf-mark-monolith {
+  fill: color-mix(in srgb, var(--ppf-accent) 70%, var(--ppf-warm));
+  stroke: #f0dbc0;
+}
+
+.ppf-mark-noir {
+  fill: var(--ppf-deep);
+  stroke: color-mix(in srgb, var(--ppf-paper) 65%, var(--ppf-mid));
+}
+
+.ppf-splash-title,
+.ppf-splash-subtitle {
+  fill: var(--ppf-paper);
+  font-family: "Courier New", monospace;
+  font-weight: 800;
+  letter-spacing: 1.2px;
+  text-anchor: middle;
+}
+
+.ppf-splash-title {
+  font-size: 9px;
+}
+
+.ppf-splash-subtitle {
+  fill: color-mix(in srgb, var(--ppf-paper) 58%, var(--ppf-mid));
+  font-size: 4px;
+  letter-spacing: 0.8px;
+}
+
+.ppf-timeline {
+  display: flex;
+  gap: 2px;
+  margin: 0 14px 10px;
+}
+
+.ppf-timeline > div {
+  display: grid;
+  min-width: 52px;
+  gap: 3px;
+  padding: 7px 8px;
+  border: 1px solid var(--ppf-line-soft);
+  border-top: 2px solid var(--ppf-accent);
+  background: #151820;
+}
+
+.ppf-timeline span {
+  overflow: hidden;
+  color: #aeb3bf;
+  font-size: 7px;
+  text-overflow: ellipsis;
+  text-transform: uppercase;
+  white-space: nowrap;
+}
+
+.ppf-timeline small {
+  color: #676e7c;
+  font-family: "Courier New", monospace;
+  font-size: 7px;
+}
+
+.ppf-preview-card > footer {
+  display: flex;
+  justify-content: space-between;
+  padding: 0 14px 13px;
+  color: #707785;
+  font-size: 8px;
+}

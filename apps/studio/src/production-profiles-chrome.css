@@ -1,0 +1,399 @@
+.ppf-ui-verb-panel {
+  position: absolute;
+  z-index: 8;
+  right: 0;
+  bottom: 0;
+  left: 0;
+  display: grid;
+  height: 34%;
+  grid-template-columns: 59% 41%;
+  grid-template-rows: 19% 81%;
+  border-top: 2px solid color-mix(in srgb, var(--ppf-paper) 28%, var(--ppf-mid));
+  color: var(--ppf-paper);
+  background: color-mix(in srgb, var(--ppf-ink) 94%, var(--ppf-deep));
+  font-family: "Courier New", monospace;
+}
+
+.ppf-sentence-line {
+  grid-column: 1 / -1;
+  padding: 3px 7px;
+  border-bottom: 1px solid color-mix(in srgb, var(--ppf-mid) 55%, black);
+  color: var(--ppf-warm);
+  font-size: 5px;
+}
+
+.ppf-verbs {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  align-content: center;
+  padding: 3px 7px;
+  border-right: 1px solid color-mix(in srgb, var(--ppf-mid) 45%, black);
+}
+
+.ppf-verbs span,
+.ppf-inventory-list span {
+  color: color-mix(in srgb, var(--ppf-paper) 82%, var(--ppf-mid));
+  font-size: 5px;
+  line-height: 1.55;
+}
+
+.ppf-verbs span:nth-child(3) {
+  color: var(--ppf-warm);
+}
+
+.ppf-inventory-list {
+  display: grid;
+  align-content: center;
+  gap: 2px;
+  padding: 3px 7px;
+}
+
+.ppf-ui-topic-panel {
+  position: absolute;
+  z-index: 8;
+  right: 4px;
+  bottom: 4px;
+  display: grid;
+  width: 39%;
+  height: 35%;
+  grid-template-columns: 36% 64%;
+  gap: 4px;
+  padding: 4px;
+  border: 1px solid color-mix(in srgb, var(--ppf-warm) 55%, var(--ppf-mid));
+  background: color-mix(in srgb, var(--ppf-ink) 92%, var(--ppf-deep));
+  box-shadow: -5px -5px 0 rgb(0 0 0 / 20%);
+}
+
+.ppf-portrait-silhouette {
+  position: relative;
+  overflow: hidden;
+  border: 1px solid color-mix(in srgb, var(--ppf-paper) 18%, var(--ppf-mid));
+  background:
+    radial-gradient(circle at 50% 34%, var(--ppf-paper) 0 19%, transparent 20%),
+    radial-gradient(ellipse at 50% 83%, var(--ppf-deep) 0 45%, transparent 46%),
+    color-mix(in srgb, var(--ppf-accent) 35%, var(--ppf-ink));
+}
+
+.ppf-ui-topic-panel > div:last-child {
+  display: grid;
+  align-content: center;
+  gap: 3px;
+}
+
+.ppf-ui-topic-panel strong,
+.ppf-ui-topic-panel span {
+  font-family: "Courier New", monospace;
+  font-size: 5px;
+}
+
+.ppf-ui-topic-panel strong {
+  color: var(--ppf-warm);
+}
+
+.ppf-ui-topic-panel span {
+  padding-bottom: 2px;
+  border-bottom: 1px solid color-mix(in srgb, var(--ppf-mid) 35%, transparent);
+  color: var(--ppf-paper);
+}
+
+.ppf-ui-dossier {
+  position: absolute;
+  z-index: 8;
+  top: 5px;
+  right: 5px;
+  width: 33%;
+  padding: 5px;
+  border: 1px solid color-mix(in srgb, var(--ppf-warm) 54%, var(--ppf-mid));
+  color: var(--ppf-paper);
+  background:
+    linear-gradient(135deg, color-mix(in srgb, var(--ppf-accent) 22%, transparent), transparent),
+    color-mix(in srgb, var(--ppf-ink) 92%, var(--ppf-deep));
+  font-family: "Courier New", monospace;
+}
+
+.ppf-ui-dossier header {
+  display: grid;
+  gap: 2px;
+  padding-bottom: 4px;
+  border-bottom: 1px solid color-mix(in srgb, var(--ppf-mid) 55%, transparent);
+}
+
+.ppf-ui-dossier header span {
+  color: var(--ppf-warm);
+  font-size: 4px;
+}
+
+.ppf-ui-dossier header strong {
+  font-size: 6px;
+}
+
+.ppf-ui-dossier dl {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 2px;
+  margin: 4px 0 0;
+}
+
+.ppf-ui-dossier dl > div {
+  display: grid;
+  gap: 1px;
+}
+
+.ppf-ui-dossier dt {
+  color: var(--ppf-mid);
+  font-size: 3px;
+}
+
+.ppf-ui-dossier dd {
+  margin: 0;
+  font-size: 4px;
+}
+
+.ppf-minimal-caption {
+  position: absolute;
+  z-index: 8;
+  right: 10%;
+  bottom: 7%;
+  left: 10%;
+  padding: 4px 6px;
+  color: color-mix(in srgb, var(--ppf-paper) 82%, var(--ppf-mid));
+  background: rgb(0 0 0 / 68%);
+  font-family: "Courier New", monospace;
+  font-size: 5px;
+  text-align: center;
+}
+
+.ppf-context-cursor {
+  position: absolute;
+  z-index: 9;
+  top: 48%;
+  left: 67%;
+  display: grid;
+  width: 10px;
+  height: 10px;
+  place-items: center;
+  color: var(--ppf-paper);
+  font-family: "Courier New", monospace;
+  font-size: 8px;
+  text-shadow: 1px 1px 0 var(--ppf-ink);
+}
+
+.ppf-interface-contract {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+  padding: 0 14px 13px;
+}
+
+.ppf-interface-contract span,
+.ppf-tag-list span,
+.ppf-system-strip span {
+  padding: 5px 7px;
+  border: 1px solid color-mix(in srgb, var(--ppf-accent) 24%, var(--ppf-line));
+  border-radius: 999px;
+  color: #aeb3bd;
+  background: color-mix(in srgb, var(--ppf-accent) 7%, #151820);
+  font-size: 7px;
+  letter-spacing: 0.045em;
+  text-transform: uppercase;
+}
+
+.ppf-doctrine-grid {
+  display: grid;
+  width: min(1180px, 100%);
+  grid-template-columns: repeat(3, 1fr);
+  gap: 12px;
+  margin: 14px auto;
+}
+
+.ppf-doctrine-grid article {
+  padding: 15px;
+}
+
+.ppf-doctrine-grid h2 {
+  margin-bottom: 9px;
+  font-size: 14px;
+  line-height: 1.35;
+}
+
+.ppf-doctrine-grid p + p {
+  margin-top: 8px;
+}
+
+.ppf-doctrine-grid small {
+  display: block;
+  margin-top: 10px;
+  color: var(--ppf-warm);
+  font-size: 8px;
+}
+
+.ppf-tag-list {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 5px;
+  margin-bottom: 11px;
+}
+
+.ppf-showcase {
+  width: min(1180px, 100%);
+  margin: 0 auto 24px;
+}
+
+.ppf-showcase > header p {
+  margin-top: 4px;
+  font-size: 8px;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+}
+
+.ppf-showcase-scenes {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 0;
+}
+
+.ppf-showcase-scenes article {
+  display: grid;
+  grid-template-columns: 27px 1fr;
+  gap: 9px;
+  min-height: 112px;
+  padding: 15px;
+  border-right: 1px solid var(--ppf-line-soft);
+}
+
+.ppf-showcase-scenes article:last-child {
+  border-right: 0;
+}
+
+.ppf-showcase-scenes article > span {
+  color: var(--ppf-accent);
+  font-family: "Courier New", monospace;
+  font-size: 13px;
+}
+
+.ppf-system-strip {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+  padding: 12px 15px;
+  border-top: 1px solid var(--ppf-line-soft);
+}
+
+.ppf-inspector {
+  border-left: 1px solid var(--ppf-line);
+}
+
+.ppf-inspector > section {
+  padding: 17px 16px;
+  border-bottom: 1px solid var(--ppf-line-soft);
+}
+
+.ppf-inspector h2 {
+  margin-bottom: 10px;
+  font-size: 15px;
+  text-transform: capitalize;
+}
+
+.ppf-inspector dl {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 6px;
+  margin: 0;
+}
+
+.ppf-rule-section ol {
+  display: grid;
+  gap: 8px;
+  margin: 0;
+  padding: 0;
+  counter-reset: profile-rule;
+  list-style: none;
+}
+
+.ppf-rule-section li {
+  position: relative;
+  padding-left: 24px;
+  counter-increment: profile-rule;
+}
+
+.ppf-rule-section li::before {
+  position: absolute;
+  top: 1px;
+  left: 0;
+  display: grid;
+  width: 16px;
+  height: 16px;
+  place-items: center;
+  border: 1px solid color-mix(in srgb, var(--ppf-accent) 34%, var(--ppf-line));
+  border-radius: 50%;
+  color: var(--ppf-accent);
+  font-family: "Courier New", monospace;
+  font-size: 6px;
+  content: counter(profile-rule);
+}
+
+.ppf-audio-section h2 {
+  color: color-mix(in srgb, var(--ppf-warm) 85%, white);
+}
+
+.ppf-audio-section p + p {
+  margin-top: 8px;
+}
+
+.ppf-originality {
+  background:
+    linear-gradient(145deg, color-mix(in srgb, var(--ppf-accent) 12%, transparent), transparent 72%),
+    #11141a;
+}
+
+.ppf-originality p {
+  color: #d1c5b6;
+}
+
+.ppf-inspector > footer {
+  display: flex;
+  justify-content: space-between;
+  padding: 13px 16px;
+  color: #686f7d;
+  font-size: 7px;
+  text-transform: uppercase;
+}
+
+@media (max-width: 1320px) {
+  .ppf-workspace {
+    grid-template-columns: 246px minmax(680px, 1fr) 278px;
+  }
+
+  .ppf-profile-heading dl {
+    display: none;
+  }
+
+  .ppf-preview-grid {
+    grid-template-columns: 1fr;
+  }
+}
+
+@media (max-width: 1040px) {
+  .ppf-app {
+    min-width: 820px;
+  }
+
+  .ppf-workspace {
+    grid-template-columns: 220px minmax(600px, 1fr);
+  }
+
+  .ppf-inspector {
+    display: none;
+  }
+
+  .ppf-doctrine-grid,
+  .ppf-showcase-scenes {
+    grid-template-columns: 1fr;
+  }
+
+  .ppf-showcase-scenes article {
+    min-height: 0;
+    border-right: 0;
+    border-bottom: 1px solid var(--ppf-line-soft);
+  }
+}

@@ -5,6 +5,7 @@ This index maps the current authoring and inspection surfaces to their canonical
 | Workspace | Route or app | Canonical document | Command or service package |
 | --- | --- | --- | --- |
 | Scene Composer | `/?workspace=composer` | scene composition manifest | `@evavo/adventure-editor-core` |
+| Production Profile Atelier | `/?workspace=profiles` | profile contract, canonical seed, original splash and showcase brief | `@evavo/adventure-design/production-profiles` |
 | Adventure Design Director | `/?workspace=design` | production bible, map, chapters, puzzles, clues and storyboards | `@evavo/adventure-design` |
 | Authenticity Lab | `/?workspace=authenticity` | deterministic production audit and native scene briefs | `@evavo/adventure-design/authenticity` |
 | Compiled Proof Lab | `/?workspace=evidence` | project, art policy, build manifest, pixel evidence, fonts and UI skins | `@evavo/adventure-design/compiled-evidence` |
@@ -25,7 +26,7 @@ This index maps the current authoring and inspection surfaces to their canonical
 
 ## Shared rules
 
-Adventure Design Director provides a deterministic 100-point authored-intent audit and native scene-production briefs. The separate Compiled Proof Lab validates the corresponding build manifests, encoded pixel evidence, bitmap fonts and native interface geometry. The Native Composition Lab audits canonical walk, depth, entrance, hotspot and occlusion geometry at the exact scene canvas. The Native Staging Lab audits the actors, stateful props, portal handoffs, player-control candidates and layer order that inhabit that geometry. The Progression Flow Lab explores the actual state-changing consequences that connect scenes, inventory, dialogue, sequences and object states. A document score cannot stand in for compiled evidence, and a technically valid build cannot stand in for artistic or playtest review.
+Production profiles establish one coherent visual, interface, puzzle, audio and splash language before content authoring begins. Adventure Design Director then provides a deterministic 100-point authored-intent audit and native scene-production briefs. The separate Compiled Proof Lab validates corresponding build manifests, encoded pixel evidence, bitmap fonts and native interface geometry. The Native Composition Lab audits canonical walk, depth, entrance, hotspot and occlusion geometry at the exact scene canvas. The Native Staging Lab audits the actors, stateful props, portal handoffs, player-control candidates and layer order that inhabit that geometry. The Progression Flow Lab explores the actual state-changing consequences that connect scenes, inventory, dialogue, sequences and object states. A document score cannot stand in for compiled evidence, and a technically valid build cannot stand in for artistic or playtest review.
 
 All command packages use:
 
@@ -38,6 +39,35 @@ All command packages use:
 - tests that do not require a browser.
 
 Inspection services use the same principle without mutation: parse canonical artifacts, validate exact project and bundle identity, produce deterministic summaries and sort findings by stable evidence path.
+
+## Production profiles
+
+`@evavo/adventure-design/production-profiles` contains seven original production families:
+
+- Storybook Icon VGA;
+- Comic Science-Fiction VGA;
+- Gothic Investigation VGA;
+- Verb Panel Cartoon VGA;
+- Pulp Archaeology VGA;
+- Cinematic Pulp VGA;
+- Neo-Noir Low-Resolution.
+
+Each profile defines:
+
+- native canvas, indexed palette budget and reserved UI colours;
+- background, depth, foreground and revisit doctrine;
+- actor silhouette, portrait, costume and performance guidance;
+- animation frame range, idle, transition and environmental cadence;
+- interface family, compatible interaction modes and persistent chrome allocation;
+- puzzle grammars;
+- music, ambience, transition and interface sound direction;
+- a deterministic original publisher splash;
+- an original showcase vertical-slice brief;
+- authenticity rules, prohibited shortcuts and required native-review questions.
+
+The profile seed produces canonical `PresentationProfile` defaults and an `AdventureCreativeDirection` for Adventure Design Director. The compatibility audit detects canvas, art-mode, palette, interaction, scaling, sampling, motion, score-policy and project-identity drift.
+
+The built-in profile data contains no commercial title, character, location, dialogue, logo, puzzle solution or interface artwork. Historical game names appear only in research documentation that explains the general production methods being studied.
 
 ## Adventure-level production direction
 
@@ -104,6 +134,12 @@ The evaluator produces:
 
 State exploration is deliberately bounded by maximum states and decision depth. A complete report means the configured graph was exhausted, not that human playtesting, timing, readability or puzzle enjoyment has been proven. The shortest witness should be replayed against the compiled Player and retained as deterministic replay evidence before release.
 
+## Runtime narrative closure
+
+`@evavo/adventure-scene-runtime/narrative` resolves dialogue and sequence requests emitted by canonical actions. It preserves emitted ordering, starts requested narrative content, advances active sequences, processes nested requests and fails visibly on missing or recursively unbounded targets.
+
+`@evavo/adventure-scene-runtime/commands` advances interactive movement, pending object commands and blocking narrative playback one logical tick at a time. Scene changes clear stale movement and command state from the previous room.
+
 ## Focused documents and project integration
 
 Dialogue graphs, cinematic sequences and actors are edited as focused documents for usable tooling. They are not independent shipping formats.
@@ -130,7 +166,8 @@ The expansion verification includes:
 
 - the dedicated TypeScript expansion graph;
 - Adventure Design parsing, semantic validation, dependency ordering and protected history tests;
-- authored-intent authenticity, compiled-evidence, scene-readability, scene-staging and progression regression tests;
+- production-profile, authored-intent authenticity, compiled-evidence, scene-readability, scene-staging and progression regression tests;
+- scene-runtime narrative request and command-boundary tests;
 - editor command and workspace tests;
 - art-direction policy and evidence tests;
 - bitmap-font layout, authoring, compilation and runtime tests;
@@ -159,6 +196,7 @@ packages/bitmap-font/tests
 packages/bitmap-font-editor-core/tests
 packages/ui-skin/tests
 packages/ui-skin-editor-core/tests
+packages/scene-runtime/tests
 packages/save-game/tests
 packages/replay/tests
 packages/runtime-controller/tests
