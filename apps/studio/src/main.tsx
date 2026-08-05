@@ -10,6 +10,7 @@ import { DialogueApp } from "./DialogueApp.js";
 import { StudioErrorBoundary } from "./ErrorBoundary.js";
 import { FontApp } from "./FontApp.js";
 import { GeometryApp } from "./GeometryApp.js";
+import { MotionFeelApp } from "./MotionFeelApp.js";
 import { ObjectApp } from "./ObjectApp.js";
 import { PlaytestApp } from "./PlaytestApp.js";
 import { ProductionProfilesApp } from "./ProductionProfilesApp.js";
@@ -29,7 +30,9 @@ if (!root) {
 
 const workspace = new URLSearchParams(window.location.search).get("workspace");
 const application: ReactNode =
-  workspace === "showcases" ? (
+  workspace === "feel" ? (
+    <MotionFeelApp />
+  ) : workspace === "showcases" ? (
     <ShowcaseGalleryApp />
   ) : workspace === "profiles" ? (
     <ProductionProfilesApp />
@@ -74,6 +77,7 @@ const workspaces = [
   { id: "composer", href: "/", label: "Composer" },
   { id: "profiles", href: "/?workspace=profiles", label: "Profiles" },
   { id: "showcases", href: "/?workspace=showcases", label: "Showcases" },
+  { id: "feel", href: "/?workspace=feel", label: "Feel" },
   { id: "design", href: "/?workspace=design", label: "Design" },
   { id: "authenticity", href: "/?workspace=authenticity", label: "Authenticity" },
   { id: "evidence", href: "/?workspace=evidence", label: "Proof" },
@@ -91,6 +95,7 @@ const workspaces = [
   { id: "validation", href: "/?workspace=validation", label: "Validate" },
 ] as const;
 const activeWorkspace =
+  workspace === "feel" ||
   workspace === "showcases" ||
   workspace === "profiles" ||
   workspace === "progression" ||

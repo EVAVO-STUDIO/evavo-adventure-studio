@@ -1,0 +1,46 @@
+{
+  "name": "@evavo/adventure-play-feel",
+  "version": "0.1.0",
+  "private": true,
+  "type": "module",
+  "exports": {
+    ".": {
+      "types": "./dist/src/index.d.ts",
+      "import": "./dist/src/index.js"
+    },
+    "./kinematics": {
+      "types": "./dist/src/kinematics.d.ts",
+      "import": "./dist/src/kinematics.js"
+    },
+    "./camera": {
+      "types": "./dist/src/camera.d.ts",
+      "import": "./dist/src/camera.js"
+    },
+    "./frame-pacing": {
+      "types": "./dist/src/frame-pacing.d.ts",
+      "import": "./dist/src/frame-pacing.js"
+    },
+    "./profiles": {
+      "types": "./dist/src/presets.d.ts",
+      "import": "./dist/src/presets.js"
+    },
+    "./audit": {
+      "types": "./dist/src/audit.d.ts",
+      "import": "./dist/src/audit.js"
+    },
+    "./runtime-extension": {
+      "types": "./dist/src/runtime-extension.d.ts",
+      "import": "./dist/src/runtime-extension.js"
+    }
+  },
+  "files": [
+    "dist"
+  ],
+  "scripts": {
+    "build": "tsc -b",
+    "typecheck": "tsc -b --pretty false"
+  },
+  "dependencies": {
+    "@evavo/adventure-core": "workspace:*"
+  }
+}

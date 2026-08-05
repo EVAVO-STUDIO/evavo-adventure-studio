@@ -18,6 +18,7 @@
     "@evavo/adventure-design": "workspace:*",
     "@evavo/adventure-dialogue-editor-core": "workspace:*",
     "@evavo/adventure-editor-core": "workspace:*",
+    "@evavo/adventure-play-feel": "workspace:*",
     "@evavo/adventure-playtest-inspector": "workspace:*",
     "@evavo/adventure-project-editor-core": "workspace:*",
     "@evavo/adventure-project-schema": "workspace:*",

@@ -15,6 +15,7 @@
     { "path": "packages/ui-skin-editor-core" },
     { "path": "packages/asset-contract" },
     { "path": "packages/core" },
+    { "path": "packages/play-feel" },
     { "path": "packages/scene" },
     { "path": "packages/scene-instances" },
     { "path": "packages/editor-core" },

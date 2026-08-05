@@ -17,6 +17,7 @@
     { "path": "../../packages/bitmap-font" },
     { "path": "../../packages/bitmap-font-editor-core" },
     { "path": "../../packages/adventure-design" },
+    { "path": "../../packages/play-feel" },
     { "path": "../../packages/playtest-inspector" },
     { "path": "../../packages/replay" },
     { "path": "../../packages/runtime-bundle" },

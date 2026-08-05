@@ -1,0 +1,122 @@
+import type { AdventurePlayFeelProfile } from "./types.js";
+import { baseProfile, sharedInput, sharedPresentation } from "./preset-factory.js";
+
+export const foundationPlayFeelProfiles: readonly AdventurePlayFeelProfile[] = [
+  baseProfile({
+    id: "classic-balanced",
+    label: "Classic Balanced",
+    summary:
+      "Neutral deterministic point-and-click timing for projects without " +
+      "a selected production family.",
+    logicalTicksPerSecond: 60,
+    movement: {
+      topSpeedPixelsPerSecond: 48,
+      accelerationPixelsPerSecondSquared: 320,
+      decelerationPixelsPerSecondSquared: 400,
+      minimumStartSpeedPixelsPerSecond: 12,
+      arrivalSpeedPixelsPerSecond: 8,
+      arrivalRadiusPixels: 0.25,
+      turnSlowdownDegrees: 62,
+      turnSpeedMultiplier: 0.72,
+      quantization: "subpixel",
+      retargetPolicy: "replace-immediately",
+    },
+    animation: {
+      phaseMode: "distance",
+      pixelsPerWalkCycle: 18,
+      footfallPhases: [0.2, 0.7],
+      startPoseTicks: 2,
+      turnPoseTicks: 1,
+      arrivalPoseTicks: 2,
+      actionAnticipationTicks: 2,
+      actionRecoveryTicks: 3,
+      minimumIdleTicks: 18,
+    },
+    camera: {
+      mode: "fixed",
+      deadZone: { left: 0.28, right: 0.72, top: 0.24, bottom: 0.76 },
+      maximumSpeedPixelsPerSecond: 90,
+      accelerationPixelsPerSecondSquared: 420,
+      lookAheadPixels: 0,
+      settleTicks: 2,
+      quantization: "native-pixel",
+    },
+    input: sharedInput,
+    presentation: { ...sharedPresentation, renderInterpolation: "none" },
+    authenticityRules: [
+      "Resolve story state only on logical ticks and never from renderer frame cadence.",
+      "Keep action feedback visible long enough to read at the native game scale.",
+    ],
+    prohibitedShortcuts: [
+      "Do not use unconstrained delta-time movement for canonical actor position.",
+      "Do not smooth native sprites with linear filtering or fractional presentation scale.",
+    ],
+    reviewQuestions: [
+      "Does identical input produce identical positions and event ticks?",
+      "Does the actor settle on the authored approach point without oscillation?",
+    ],
+  }),
+  baseProfile({
+    id: "storybook-deliberate",
+    label: "Storybook Deliberate",
+    summary:
+      "Measured tableau movement, readable starts and stops, fixed-room " +
+      "cameras and patient feedback holds.",
+    logicalTicksPerSecond: 60,
+    movement: {
+      topSpeedPixelsPerSecond: 43,
+      accelerationPixelsPerSecondSquared: 220,
+      decelerationPixelsPerSecondSquared: 285,
+      minimumStartSpeedPixelsPerSecond: 9,
+      arrivalSpeedPixelsPerSecond: 6,
+      arrivalRadiusPixels: 0.2,
+      turnSlowdownDegrees: 52,
+      turnSpeedMultiplier: 0.62,
+      quantization: "native-pixel",
+      retargetPolicy: "cancel-and-settle",
+    },
+    animation: {
+      phaseMode: "distance",
+      pixelsPerWalkCycle: 20,
+      footfallPhases: [0.18, 0.68],
+      startPoseTicks: 4,
+      turnPoseTicks: 3,
+      arrivalPoseTicks: 4,
+      actionAnticipationTicks: 4,
+      actionRecoveryTicks: 6,
+      minimumIdleTicks: 28,
+    },
+    camera: {
+      mode: "fixed",
+      deadZone: { left: 0.24, right: 0.76, top: 0.2, bottom: 0.8 },
+      maximumSpeedPixelsPerSecond: 72,
+      accelerationPixelsPerSecondSquared: 250,
+      lookAheadPixels: 0,
+      settleTicks: 4,
+      quantization: "native-pixel",
+    },
+    input: { ...sharedInput, doubleActivationWindowTicks: 18, commandBufferTicks: 10 },
+    presentation: {
+      ...sharedPresentation,
+      renderInterpolation: "none",
+      statusMinimumTicks: 42,
+      sceneFadeOutTicks: 16,
+      sceneDarkHoldTicks: 6,
+      sceneFadeInTicks: 20,
+    },
+    authenticityRules: [
+      "Let entrance poses and object reactions finish before returning full control.",
+      "Use distance-locked walk cadence so feet remain planted at native resolution.",
+      "Hold narration and score feedback as deliberate storybook beats.",
+    ],
+    prohibitedShortcuts: [
+      "Do not replace readable starts and stops with modern eased gliding.",
+      "Do not pan a fixed tableau merely to create artificial motion.",
+    ],
+    reviewQuestions: [
+      "Can every start, corner and arrival be read as an authored pose?",
+      "Does the room retain its illustrated composition throughout movement?",
+      "Does feedback remain readable without making control feel unresponsive?",
+    ],
+  }),
+] as const;
