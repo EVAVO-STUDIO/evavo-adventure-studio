@@ -6,6 +6,7 @@ import {
   advanceRuntimeWorld,
   createInitialRuntimeWorldState,
 } from "./index.js";
+import { synchronizeProfiledMovementAnimations } from "./movement-animation.js";
 import {
   applySegmentAnimation,
   authoredActorInstance,
@@ -186,8 +187,13 @@ export const advanceNavigableRuntimeWorld = (
     state = { ...state, movements };
 
     const animated = advanceRuntimeWorld(bundle, state, 1);
-    state = { ...animated.state, movements: state.movements };
-    animationEvents.push(...animated.animationEvents);
+    const synchronized = synchronizeProfiledMovementAnimations(
+      bundle,
+      { ...animated.state, movements: state.movements },
+      animated.animationEvents,
+    );
+    state = synchronized.state;
+    animationEvents.push(...synchronized.animationEvents);
   }
 
   return { state, animationEvents, movementEvents };
