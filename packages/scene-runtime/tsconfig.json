@@ -17,6 +17,7 @@
     { "path": "../frame-resolver" },
     { "path": "../scene-instances" },
     { "path": "../runtime-bundle" },
-    { "path": "../sequence" }
+    { "path": "../sequence" },
+    { "path": "../play-feel" }
   ]
 }
