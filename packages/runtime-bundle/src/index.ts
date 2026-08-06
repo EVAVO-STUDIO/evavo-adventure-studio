@@ -58,6 +58,20 @@ export const compiledSequenceSchema = sequenceSchema.extend({
 });
 export type CompiledSequence = z.infer<typeof compiledSequenceSchema>;
 
+export const runtimePlayFeelProfileIdSchema = z.enum([
+  "classic-balanced",
+  "storybook-deliberate",
+  "comic-snappy",
+  "gothic-measured",
+  "verb-panel-responsive",
+  "pulp-grounded",
+  "cinematic-directed",
+  "noir-restrained",
+]);
+export type RuntimePlayFeelProfileId = z.infer<
+  typeof runtimePlayFeelProfileIdSchema
+>;
+
 export const runtimeBundleSchema = z
   .object({
     bundleVersion: z.literal(1),
@@ -65,6 +79,7 @@ export const runtimeBundleSchema = z
     projectId: idSchema("project"),
     title: z.string().min(1),
     presentation: presentationProfileSchema,
+    playFeelProfileId: runtimePlayFeelProfileIdSchema.optional(),
     startSceneId: idSchema("scene"),
     startEntranceId: idSchema("entrance"),
     assetManifestFingerprint: sha256Schema,

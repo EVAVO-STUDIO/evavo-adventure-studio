@@ -15,6 +15,10 @@
     "./scene-instances": {
       "types": "./dist/src/with-instances.d.ts",
       "import": "./dist/src/with-instances.js"
+    },
+    "./with-play-feel": {
+      "types": "./dist/src/with-play-feel.d.ts",
+      "import": "./dist/src/with-play-feel.js"
     }
   },
   "files": ["dist"],
@@ -25,6 +29,7 @@
   "dependencies": {
     "@evavo/adventure-asset-contract": "workspace:*",
     "@evavo/adventure-bitmap-font": "workspace:*",
+    "@evavo/adventure-play-feel": "workspace:*",
     "@evavo/adventure-project-schema": "workspace:*",
     "@evavo/adventure-runtime-bundle": "workspace:*",
     "@evavo/adventure-scene-instances": "workspace:*",

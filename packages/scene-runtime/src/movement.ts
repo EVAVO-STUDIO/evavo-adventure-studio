@@ -1,4 +1,9 @@
 import { evaluateCondition } from "@evavo/adventure-core";
+import {
+  ADVENTURE_MOTION_UNITS_PER_PIXEL,
+  adventurePlayFeelProfileById,
+  type AdventurePlayFeelProfileId,
+} from "@evavo/adventure-play-feel";
 import type { Actor, Id, Point } from "@evavo/adventure-project-schema";
 import type { RuntimeBundle } from "@evavo/adventure-runtime-bundle";
 import {
@@ -9,6 +14,13 @@ import {
   type NavigationRouteSegment,
 } from "@evavo/adventure-scene/navigation";
 import type { SceneNavigationPortal } from "@evavo/adventure-scene-instances";
+import {
+  advanceProfiledNavigationMovement,
+  beginProfiledNavigationMovement,
+  type ProfiledNavigationFallbackReason,
+  type ProfiledNavigationMovementEvent,
+  type ProfiledNavigationMovementState,
+} from "./profiled-movement.js";
 import {
   advanceRuntimeWorld,
   createInitialRuntimeWorldState,
@@ -29,6 +41,7 @@ export interface ActorMovementState {
   readonly speedPixelsPerSecond: number;
   readonly walkAnimationState: string;
   readonly arrivalAnimationState: string;
+  readonly profiled?: ProfiledNavigationMovementState;
 }
 
 export interface NavigableRuntimeWorldState extends RuntimeWorldState {
@@ -41,6 +54,31 @@ export type ActorMovementEvent =
       readonly actorInstanceId: Id<"actor-instance">;
       readonly destination: Point;
       readonly routeDistance: number;
+      readonly movementMode?: "legacy" | "profiled";
+      readonly profileId?: AdventurePlayFeelProfileId;
+      readonly fallbackReason?: ProfiledNavigationFallbackReason;
+    }
+  | {
+      readonly kind: "movement-phase-changed";
+      readonly actorInstanceId: Id<"actor-instance">;
+      readonly previousPhase: Extract<
+        ProfiledNavigationMovementEvent,
+        { readonly kind: "movement-phase-changed" }
+      >["previousPhase"];
+      readonly phase: Extract<
+        ProfiledNavigationMovementEvent,
+        { readonly kind: "movement-phase-changed" }
+      >["phase"];
+      readonly movementTick: number;
+      readonly storyTick: number;
+    }
+  | {
+      readonly kind: "movement-footfall";
+      readonly actorInstanceId: Id<"actor-instance">;
+      readonly footfall: "left" | "right";
+      readonly position: Point;
+      readonly movementTick: number;
+      readonly storyTick: number;
     }
   | {
       readonly kind: "movement-segment-completed";
@@ -69,6 +107,7 @@ export interface BeginActorMovementOptions {
   readonly walkAnimationState?: string;
   readonly arrivalAnimationState?: string;
   readonly snapDestination?: boolean;
+  readonly playFeelProfileId?: AdventurePlayFeelProfileId | null;
 }
 
 export type BeginActorMovementResult =
@@ -76,6 +115,8 @@ export type BeginActorMovementResult =
       readonly kind: "started";
       readonly state: NavigableRuntimeWorldState;
       readonly route: NavigationRoute;
+      readonly movementMode: "legacy" | "profiled";
+      readonly profileFallbackReason?: ProfiledNavigationFallbackReason;
       readonly event: Extract<
         ActorMovementEvent,
         { readonly kind: "movement-started" }
@@ -111,47 +152,26 @@ const authoredActorInstance = (
     const instance = composition.actorInstances.find(
       (candidate) => candidate.id === actorInstanceId,
     );
-    if (instance) {
-      return { composition, instance };
-    }
+    if (instance) return { composition, instance };
   }
   return null;
 };
 
-const geometricDistance = (segment: NavigationRouteSegment): number => {
-  const x = segment.to.x - segment.from.x;
-  const y = segment.to.y - segment.from.y;
-  return Math.sqrt(x * x + y * y);
-};
+const geometricDistance = (segment: NavigationRouteSegment): number =>
+  Math.hypot(segment.to.x - segment.from.x, segment.to.y - segment.from.y);
 
 const directionName = (from: Point, to: Point): string => {
   const x = to.x - from.x;
   const y = to.y - from.y;
-  if (Math.abs(x) <= EPSILON && Math.abs(y) <= EPSILON) {
-    return "south";
-  }
+  if (Math.abs(x) <= EPSILON && Math.abs(y) <= EPSILON) return "south";
   const angle = (Math.atan2(y, x) * 180) / Math.PI;
-  if (angle >= -22.5 && angle < 22.5) {
-    return "east";
-  }
-  if (angle >= 22.5 && angle < 67.5) {
-    return "south-east";
-  }
-  if (angle >= 67.5 && angle < 112.5) {
-    return "south";
-  }
-  if (angle >= 112.5 && angle < 157.5) {
-    return "south-west";
-  }
-  if (angle >= 157.5 || angle < -157.5) {
-    return "west";
-  }
-  if (angle >= -157.5 && angle < -112.5) {
-    return "north-west";
-  }
-  if (angle >= -112.5 && angle < -67.5) {
-    return "north";
-  }
+  if (angle >= -22.5 && angle < 22.5) return "east";
+  if (angle >= 22.5 && angle < 67.5) return "south-east";
+  if (angle >= 67.5 && angle < 112.5) return "south";
+  if (angle >= 112.5 && angle < 157.5) return "south-west";
+  if (angle >= 157.5 || angle < -157.5) return "west";
+  if (angle >= -157.5 && angle < -112.5) return "north-west";
+  if (angle >= -112.5 && angle < -67.5) return "north";
   return "north-east";
 };
 
@@ -181,20 +201,12 @@ const resolveAnimationFacing = (
       .filter((animation) => animation.state === animationState)
       .map((animation) => animation.facing),
   );
-  if (available.has(desiredFacing)) {
-    return desiredFacing;
-  }
+  if (available.has(desiredFacing)) return desiredFacing;
   for (const fallback of cardinalFallback(desiredFacing)) {
-    if (available.has(fallback)) {
-      return fallback;
-    }
+    if (available.has(fallback)) return fallback;
   }
-  if (available.has(currentFacing)) {
-    return currentFacing;
-  }
-  const first = [...available].sort((left, right) =>
-    left.localeCompare(right),
-  )[0];
+  if (available.has(currentFacing)) return currentFacing;
+  const first = [...available].sort((left, right) => left.localeCompare(right))[0];
   if (!first) {
     throw new Error(
       `Actor '${actor.id}' has no '${animationState}' animation for movement.`,
@@ -221,360 +233,5 @@ const animationStateForSegment = (
 
 const applySegmentAnimation = (
   bundle: RuntimeBundle,
-  state: NavigableRuntimeWorldState,
-  movement: ActorMovementState,
-  segment: NavigationRouteSegment,
-  portals: readonly SceneNavigationPortal[],
-): NavigableRuntimeWorldState => {
-  const actorRuntime = state.actorInstances[movement.actorInstanceId];
-  if (!actorRuntime) {
-    throw new Error(
-      `Actor instance '${movement.actorInstanceId}' runtime state is missing.`,
-    );
-  }
-  const actor = actorsById(bundle).get(actorRuntime.actorId);
-  if (!actor) {
-    throw new Error(`Actor '${actorRuntime.actorId}' does not exist.`);
-  }
-  const animationState = animationStateForSegment(movement, portals, segment);
-  const facing = resolveAnimationFacing(
-    actor,
-    animationState,
-    directionName(segment.from, segment.to),
-    actorRuntime.facing,
-  );
-  if (
-    actorRuntime.animationState === animationState &&
-    actorRuntime.facing === facing
-  ) {
-    return state;
-  }
-  return {
-    ...setActorInstanceAnimation(
-      bundle,
-      state,
-      movement.actorInstanceId,
-      animationState,
-      facing,
-    ),
-    movements: state.movements,
-  };
-};
-
-const enabledPortals = (
-  bundle: RuntimeBundle,
-  state: NavigableRuntimeWorldState,
-  sceneId: Id<"scene">,
-): readonly NavigationPortal[] => {
-  const composition = bundle.sceneInstances?.scenes.find(
-    (candidate) => candidate.sceneId === sceneId,
-  );
-  return (composition?.navigationPortals ?? [])
-    .filter(
-      (portal) =>
-        !portal.enabledWhen ||
-        evaluateCondition(portal.enabledWhen, state.story),
-    )
-    .map((portal) => ({
-      id: portal.id,
-      fromAreaId: portal.fromAreaId,
-      toAreaId: portal.toAreaId,
-      fromPoint: portal.fromPoint,
-      toPoint: portal.toPoint,
-      bidirectional: portal.bidirectional,
-      traversalCost: portal.traversalCost,
-    }));
-};
-
-export const createInitialNavigableRuntimeWorldState = (
-  bundle: RuntimeBundle,
-  seed?: number,
-): NavigableRuntimeWorldState => ({
-  ...createInitialRuntimeWorldState(bundle, seed),
-  movements: {},
-});
-
-export const beginActorMovement = (
-  bundle: RuntimeBundle,
-  state: NavigableRuntimeWorldState,
-  actorInstanceId: Id<"actor-instance">,
-  destination: Point,
-  options: BeginActorMovementOptions = {},
-): BeginActorMovementResult => {
-  const authored = authoredActorInstance(bundle, actorInstanceId);
-  const runtime = state.actorInstances[actorInstanceId];
-  if (!authored || !runtime) {
-    return { kind: "rejected", reason: "missing-instance", state };
-  }
-  if (authored.instance.mobility !== "walkable") {
-    return { kind: "rejected", reason: "fixed-instance", state };
-  }
-
-  const speed = options.speedPixelsPerSecond ?? DEFAULT_WALK_SPEED;
-  if (!Number.isFinite(speed) || speed <= 0) {
-    return { kind: "rejected", reason: "invalid-speed", state };
-  }
-  const scene = bundle.scenes.find(
-    (candidate) => candidate.id === authored.composition.sceneId,
-  );
-  if (!scene) {
-    throw new Error(`Runtime scene '${authored.composition.sceneId}' is missing.`);
-  }
-  const areas = scene.navigationAreas.filter(
-    (area) =>
-      !area.enabledWhen || evaluateCondition(area.enabledWhen, state.story),
-  );
-  const routeResult = findNavigationRoute(
-    runtime.position,
-    destination,
-    areas,
-    enabledPortals(bundle, state, scene.id),
-    { snapEnd: options.snapDestination ?? true },
-  );
-  if (routeResult.kind !== "route") {
-    return { kind: "unreachable", routeResult, state };
-  }
-  if (routeResult.route.segments.length === 0) {
-    return { kind: "already-there", state, route: routeResult.route };
-  }
-
-  const movement: ActorMovementState = {
-    actorInstanceId,
-    route: routeResult.route,
-    nextSegmentIndex: 0,
-    distanceAlongSegment: 0,
-    speedPixelsPerSecond: speed,
-    walkAnimationState: options.walkAnimationState ?? "walk",
-    arrivalAnimationState: options.arrivalAnimationState ?? "idle",
-  };
-  let nextState: NavigableRuntimeWorldState = {
-    ...state,
-    movements: {
-      ...state.movements,
-      [actorInstanceId]: movement,
-    },
-  };
-  const firstSegment = movement.route.segments[0];
-  if (firstSegment) {
-    nextState = applySegmentAnimation(
-      bundle,
-      nextState,
-      movement,
-      firstSegment,
-      authored.composition.navigationPortals,
-    );
-  }
-  const event = {
-    kind: "movement-started" as const,
-    actorInstanceId,
-    destination: routeResult.route.points.at(-1) ?? destination,
-    routeDistance: routeResult.route.distance,
-  };
-  return { kind: "started", state: nextState, route: routeResult.route, event };
-};
-
-export const cancelActorMovement = (
-  bundle: RuntimeBundle,
-  state: NavigableRuntimeWorldState,
-  actorInstanceId: Id<"actor-instance">,
-  arrivalAnimationState = "idle",
-): NavigableRuntimeWorldTransition => {
-  if (!state.movements[actorInstanceId]) {
-    return { state, animationEvents: [], movementEvents: [] };
-  }
-  const actorRuntime = state.actorInstances[actorInstanceId];
-  if (!actorRuntime) {
-    throw new Error(`Actor instance '${actorInstanceId}' does not exist.`);
-  }
-  const actor = actorsById(bundle).get(actorRuntime.actorId);
-  if (!actor) {
-    throw new Error(`Actor '${actorRuntime.actorId}' does not exist.`);
-  }
-  const arrivalFacing = resolveAnimationFacing(
-    actor,
-    arrivalAnimationState,
-    actorRuntime.facing,
-    actorRuntime.facing,
-  );
-  const animated = setActorInstanceAnimation(
-    bundle,
-    state,
-    actorInstanceId,
-    arrivalAnimationState,
-    arrivalFacing,
-  );
-  const movements = { ...state.movements };
-  delete movements[actorInstanceId];
-  return {
-    state: { ...animated, movements },
-    animationEvents: [],
-    movementEvents: [{ kind: "movement-cancelled", actorInstanceId }],
-  };
-};
-
-const advanceMovementOneTick = (
-  bundle: RuntimeBundle,
-  state: NavigableRuntimeWorldState,
-  movement: ActorMovementState,
-): {
-  readonly state: NavigableRuntimeWorldState;
-  readonly movement: ActorMovementState | null;
-  readonly events: readonly ActorMovementEvent[];
-} => {
-  const authored = authoredActorInstance(bundle, movement.actorInstanceId);
-  if (!authored) {
-    throw new Error(
-      `Actor instance '${movement.actorInstanceId}' authoring data is missing.`,
-    );
-  }
-  let nextState = state;
-  let nextMovement = movement;
-  const events: ActorMovementEvent[] = [];
-  let availableDistance =
-    movement.speedPixelsPerSecond / bundle.presentation.logicalTicksPerSecond;
-
-  while (availableDistance > EPSILON) {
-    const segment = nextMovement.route.segments[nextMovement.nextSegmentIndex];
-    if (!segment) {
-      break;
-    }
-    const segmentLength = geometricDistance(segment);
-    const remaining = Math.max(
-      0,
-      segmentLength - nextMovement.distanceAlongSegment,
-    );
-
-    if (remaining > availableDistance + EPSILON) {
-      const progress =
-        segmentLength <= EPSILON
-          ? 1
-          : (nextMovement.distanceAlongSegment + availableDistance) /
-            segmentLength;
-      nextState = {
-        ...setActorInstancePosition(
-          nextState,
-          movement.actorInstanceId,
-          {
-            x: segment.from.x + (segment.to.x - segment.from.x) * progress,
-            y: segment.from.y + (segment.to.y - segment.from.y) * progress,
-          },
-        ),
-        movements: nextState.movements,
-      };
-      nextMovement = {
-        ...nextMovement,
-        distanceAlongSegment:
-          nextMovement.distanceAlongSegment + availableDistance,
-      };
-      availableDistance = 0;
-      break;
-    }
-
-    nextState = {
-      ...setActorInstancePosition(
-        nextState,
-        movement.actorInstanceId,
-        segment.to,
-      ),
-      movements: nextState.movements,
-    };
-    availableDistance -= remaining;
-    events.push({
-      kind: "movement-segment-completed",
-      actorInstanceId: movement.actorInstanceId,
-      segmentIndex: nextMovement.nextSegmentIndex,
-      portalId: segment.portalId,
-    });
-    const nextIndex = nextMovement.nextSegmentIndex + 1;
-    const following = nextMovement.route.segments[nextIndex];
-    if (!following) {
-      const actorRuntime = nextState.actorInstances[movement.actorInstanceId];
-      if (!actorRuntime) {
-        throw new Error(
-          `Actor instance '${movement.actorInstanceId}' runtime state is missing.`,
-        );
-      }
-      const actor = actorsById(bundle).get(actorRuntime.actorId);
-      if (!actor) {
-        throw new Error(`Actor '${actorRuntime.actorId}' does not exist.`);
-      }
-      const arrivalFacing = resolveAnimationFacing(
-        actor,
-        movement.arrivalAnimationState,
-        actorRuntime.facing,
-        actorRuntime.facing,
-      );
-      nextState = {
-        ...setActorInstanceAnimation(
-          bundle,
-          nextState,
-          movement.actorInstanceId,
-          movement.arrivalAnimationState,
-          arrivalFacing,
-        ),
-        movements: nextState.movements,
-      };
-      events.push({
-        kind: "movement-completed",
-        actorInstanceId: movement.actorInstanceId,
-        destination: segment.to,
-      });
-      return { state: nextState, movement: null, events };
-    }
-
-    nextMovement = {
-      ...nextMovement,
-      nextSegmentIndex: nextIndex,
-      distanceAlongSegment: 0,
-    };
-    nextState = applySegmentAnimation(
-      bundle,
-      nextState,
-      nextMovement,
-      following,
-      authored.composition.navigationPortals,
-    );
-  }
-
-  return { state: nextState, movement: nextMovement, events };
-};
-
-export const advanceNavigableRuntimeWorld = (
-  bundle: RuntimeBundle,
-  world: NavigableRuntimeWorldState,
-  ticks: number,
-): NavigableRuntimeWorldTransition => {
-  if (!Number.isSafeInteger(ticks) || ticks < 0) {
-    throw new RangeError("World advancement must be a non-negative safe integer.");
-  }
-  let state = world;
-  const animationEvents: ActorInstanceAnimationEvent[] = [];
-  const movementEvents: ActorMovementEvent[] = [];
-
-  for (let tick = 0; tick < ticks; tick += 1) {
-    const movements = { ...state.movements };
-    for (const actorInstanceId of Object.keys(movements).sort((left, right) =>
-      left.localeCompare(right),
-    )) {
-      const movement = movements[actorInstanceId];
-      if (!movement) {
-        continue;
-      }
-      const advanced = advanceMovementOneTick(bundle, state, movement);
-      state = advanced.state;
-      movementEvents.push(...advanced.events);
-      if (advanced.movement) {
-        movements[actorInstanceId] = advanced.movement;
-      } else {
-        delete movements[actorInstanceId];
-      }
-    }
-    state = { ...state, movements };
-
-    const animated = advanceRuntimeWorld(bundle, state, 1);
-    state = { ...animated.state, movements: state.movements };
-    animationEvents.push(...animated.animationEvents);
-  }
-
-  return { state, animationEvents, movementEvents };
-};
+  state: NavigmÆÈ‹j◊ù~äÎ{
+‚µÎ}Îr

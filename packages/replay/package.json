@@ -19,5 +19,8 @@
     "@evavo/adventure-runtime-bundle": "workspace:*",
     "@evavo/adventure-save-game": "workspace:*",
     "zod": "catalog:"
+  },
+  "devDependencies": {
+    "@evavo/adventure-scene-runtime": "workspace:*"
   }
 }

@@ -8,6 +8,7 @@
   "references": [
     { "path": "../project-schema" },
     { "path": "../runtime-bundle" },
-    { "path": "../save-game" }
+    { "path": "../save-game" },
+    { "path": "../scene-runtime" }
   ]
 }
