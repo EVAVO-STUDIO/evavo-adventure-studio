@@ -9,6 +9,7 @@
     { "path": "../bitmap-font" },
     { "path": "../core" },
     { "path": "../dialogue" },
+    { "path": "../play-feel" },
     { "path": "../project-schema" },
     { "path": "../render-contract" },
     { "path": "../runtime-bundle" },

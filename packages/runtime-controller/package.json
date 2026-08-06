@@ -23,6 +23,10 @@
     "./native-status": {
       "types": "./dist/src/native-status.d.ts",
       "import": "./dist/src/native-status.js"
+    },
+    "./profiled-camera": {
+      "types": "./dist/src/profiled-camera.d.ts",
+      "import": "./dist/src/profiled-camera.js"
     }
   },
   "files": ["dist"],
@@ -33,6 +37,7 @@
   "dependencies": {
     "@evavo/adventure-core": "workspace:*",
     "@evavo/adventure-dialogue": "workspace:*",
+    "@evavo/adventure-play-feel": "workspace:*",
     "@evavo/adventure-project-schema": "workspace:*",
     "@evavo/adventure-render-contract": "workspace:*",
     "@evavo/adventure-runtime-bundle": "workspace:*",
