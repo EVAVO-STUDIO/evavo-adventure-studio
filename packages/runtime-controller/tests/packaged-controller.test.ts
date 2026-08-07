@@ -1,8 +1,41 @@
-import { describe, expect, it } from "vitest";
 import type { RuntimeBundle } from "@evavo/adventure-runtime-bundle";
+import { describe, expect, it } from "vitest";
 import { createPackagedRuntimeController } from "../src/packaged-controller.js";
 
 const hash = "0".repeat(64);
+
+const imageAsset = (assetId: string, path: string, width: number, height: number) => ({
+  assetId,
+  kind: "image",
+  outputFiles: [
+    {
+      role: "primary",
+      runtimePath: path,
+      mediaType: "image/png",
+      sha256: hash,
+      byteLength: 1,
+    },
+  ],
+  metadata: {
+    kind: "image",
+    width,
+    height,
+    palette: true,
+    colourCount: 16,
+  },
+});
+
+const actorFrame = (id: string, x: number) => ({
+  id,
+  assetId: "asset.detective",
+  sourceRect: { x, y: 0, width: 12, height: 20 },
+  sourceSize: { width: 18, height: 24 },
+  trimOffset: { x: 3, y: 4 },
+  pivot: { x: 9, y: 23 },
+  footPoint: { x: 9, y: 23 },
+  durationTicks: 4,
+  mirrorEligible: true,
+});
 
 const bundle = {
   bundleVersion: 1,
@@ -23,28 +56,10 @@ const bundle = {
   startSceneId: "scene.office",
   startEntranceId: "entrance.office",
   assetManifestFingerprint: hash,
-  assetCompilerVersion: "0.1.0-test",
+  assetCompilerVersion: "test",
   assets: [
-    {
-      assetId: "asset.office",
-      kind: "image",
-      outputFiles: [
-        {
-          role: "primary",
-          runtimePath: "assets/office.png",
-          mediaType: "image/png",
-          sha256: hash,
-          byteLength: 1,
-        },
-      ],
-      metadata: {
-        kind: "image",
-        width: 320,
-        height: 200,
-        palette: false,
-        colourCount: 16,
-      },
-    },
+    imageAsset("asset.office", "assets/office.png", 320, 200),
+    imageAsset("asset.cabinet", "assets/cabinet.png", 20, 20),
     {
       assetId: "asset.detective",
       kind: "spritesheet",
@@ -87,56 +102,13 @@ const bundle = {
         ],
       },
     },
-    {
-      assetId: "asset.cabinet",
-      kind: "image",
-      outputFiles: [
-        {
-          role: "primary",
-          runtimePath: "assets/cabinet.png",
-          mediaType: "image/png",
-          sha256: hash,
-          byteLength: 1,
-        },
-      ],
-      metadata: {
-        kind: "image",
-        width: 20,
-        height: 20,
-        palette: false,
-        colourCount: 8,
-      },
-    },
   ],
   inventoryItems: [],
   actors: [
     {
       id: "actor.detective",
       name: "Detective",
-      frames: [
-        {
-          id: "frame.idle",
-          assetId: "asset.detective",
-          sourceRect: { x: 0, y: 0, width: 12, height: 20 },
-          sourceSize: { width: 18, height: 24 },
-          trimOffset: { x: 3, y: 4 },
-          pivot: { x: 9, y: 23 },
-          footPoint: { x: 9, y: 23 },
-          durationTicks: 4,
-          mirrorEligible: true,
-        },
-        {
-          id: "frame.walk",
-          assetId: "asset.detective",
-          sourceRect: { x: 12, y: 0, width: 12, height: 20 },
-          sourceSize: { width: 18, height: 24 },
-          trimOffset: { x: 3, y: 4 },
-          pivot: { x: 9, y: 23 },
-          footPoint: { x: 9, y: 23 },
-          durationTicks: 4,
-          mirrorEligible: true,
-        },
-      ],
+      frames: [actorFrame("frame.idle", 0), actorFrame("frame.walk", 12)],
       animations: [
         {
           id: "animation.idle-east",
@@ -204,17 +176,19 @@ const bundle = {
         states: [
           {
             id: "object-state.cabinet.closed",
+            visible: true,
             visual: {
               kind: "image",
               assetId: "asset.cabinet",
               pivot: { x: 10, y: 10 },
+              opacity: 1,
             },
             interactionShape: {
               points: [
-                { x: 0, y: 0 },
-                { x: 20, y: 0 },
-                { x: 20, y: 20 },
-                { x: 0, y: 20 },
+                { x: -10, y: -10 },
+                { x: 10, y: -10 },
+                { x: 10, y: 10 },
+                { x: -10, y: 10 },
               ],
             },
             walkToOffset: { x: 0, y: 20 },
@@ -235,17 +209,19 @@ const bundle = {
           },
           {
             id: "object-state.cabinet.open",
+            visible: true,
             visual: {
               kind: "image",
               assetId: "asset.cabinet",
               pivot: { x: 10, y: 10 },
+              opacity: 1,
             },
             interactionShape: {
               points: [
-                { x: 0, y: 0 },
-                { x: 20, y: 0 },
-                { x: 20, y: 20 },
-                { x: 0, y: 20 },
+                { x: -10, y: -10 },
+                { x: 10, y: -10 },
+                { x: 10, y: 10 },
+                { x: -10, y: 10 },
               ],
             },
             cursor: "look",
@@ -270,6 +246,10 @@ const bundle = {
             position: { x: 80, y: 120 },
             facing: "east",
             animationState: "idle",
+            mobility: "walkable",
+            elevation: 0,
+            zOffset: 0,
+            scaleMultiplier: 1,
           },
         ],
         objectInstances: [
@@ -277,6 +257,11 @@ const bundle = {
             id: "object.office.cabinet",
             definitionId: "object-definition.cabinet",
             position: { x: 100, y: 100 },
+            layer: "world",
+            elevation: 0,
+            zOffset: 0,
+            scaleMultiplier: 1,
+            mirrored: false,
           },
         ],
         navigationPortals: [],

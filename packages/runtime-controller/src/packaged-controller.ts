@@ -44,13 +44,23 @@ import {
   type ParserKeyInput,
 } from "./parser.js";
 import {
+  advanceProfiledRuntimeCamera,
+  createProfiledRuntimeCamera,
+  resolvedProfiledRuntimeCamera,
+  restoreProfiledRuntimeCamera,
+  type ProfiledRuntimeCameraState,
+} from "./profiled-camera.js";
+import {
   appendRuntimeInterface,
   runtimeUiState,
   type RuntimeUiInteractionState,
 } from "./runtime-ui.js";
 
 export interface PackagedRuntimeController {
-  readonly selection: Exclude<ControlledActorSelection, { readonly kind: "invalid" }>;
+  readonly selection: Exclude<
+    ControlledActorSelection,
+    { readonly kind: "invalid" }
+  >;
   readonly controlledActorInstanceId: Id<"actor-instance"> | null;
   createFrame(tick: number): ResolvedFrame;
   setPointer(position: Point | null): void;
@@ -61,6 +71,7 @@ export interface PackagedRuntimeController {
   restoreSaveGame(input: unknown): number;
   statusText(): string;
   worldState(): InteractiveRuntimeWorldState;
+  cameraState(): ProfiledRuntimeCameraState | null;
   parserState(): ParserBufferState;
 }
 
@@ -78,7 +89,8 @@ export class ControlledActorSaveMismatchError extends Error {
     savedActorInstanceId: Id<"actor-instance"> | null,
   ) {
     super(
-      `Save game controlled actor '${savedActorInstanceId ?? "none"}' does not match this player controller '${controllerActorInstanceId ?? "none"}'.`,
+      `Save game controlled actor '${savedActorInstanceId ?? "none"}' does not ` +
+        `match this player controller '${controllerActorInstanceId ?? "none"}'.`,
     );
     this.name = "ControlledActorSaveMismatchError";
     this.controllerActorInstanceId = controllerActorInstanceId;
@@ -153,6 +165,11 @@ const statusFromCommandEvent = (event: SceneCommandEvent): string => {
   }
 };
 
+const runtimeEventsFromCommand = (
+  event: SceneCommandEvent,
+): readonly RuntimeEvent[] =>
+  event.kind === "object-command-executed" ? event.runtimeEvents : [];
+
 const initialVerbId = (skin: UiSkin | null): Id<"ui-verb"> | null =>
   skin?.verbs.find((verb) => verb.primary)?.id ?? skin?.verbs[0]?.id ?? null;
 
@@ -167,8 +184,10 @@ export const createPackagedRuntimeController = (
   if (resolvedSelection.kind === "invalid") {
     throw new Error(
       resolvedSelection.reason === "requested-actor-is-fixed"
-        ? `Requested actor instance '${resolvedSelection.requestedActorInstanceId}' is fixed and cannot be controlled.`
-        : `Requested actor instance '${resolvedSelection.requestedActorInstanceId}' is not placed in the start scene.`,
+        ? `Requested actor instance '${resolvedSelection.requestedActorInstanceId}' ` +
+            "is fixed and cannot be controlled."
+        : `Requested actor instance '${resolvedSelection.requestedActorInstanceId}' ` +
+            "is not placed in the start scene.",
     );
   }
 
@@ -184,8 +203,16 @@ export const createPackagedRuntimeController = (
   let hoveredDialogueChoiceId: Id<"dialogue-choice"> | null = null;
   let parser = createParserBufferState();
   let world = createInitialInteractiveRuntimeWorldState(bundle);
-  let renderedTick = 0;
-  let baseFrame = resolveRuntimeSceneFrame(bundle, world);
+  let cameraState = createProfiledRuntimeCamera({
+    bundle,
+    world,
+    controlledActorInstanceId,
+  });
+  let persistProfiledCamera = cameraState !== null;
+  let renderedTick = world.story.tick;
+  let baseFrame = resolveRuntimeSceneFrame(bundle, world, {
+    camera: resolvedProfiledRuntimeCamera(bundle, cameraState),
+  });
   let cursor: SoftwareCursorState = {
     position: null,
     cursorId: "walk",
@@ -212,6 +239,26 @@ export const createPackagedRuntimeController = (
     if (status === text) return;
     status = text;
     options.onStatusChange?.(text);
+  };
+
+  const applyWorldState = (
+    nextWorld: InteractiveRuntimeWorldState,
+    runtimeEvents: readonly RuntimeEvent[] = [],
+  ): void => {
+    const previousWorld = world;
+    const camera = advanceProfiledRuntimeCamera({
+      bundle,
+      state: cameraState,
+      previousWorld,
+      nextWorld,
+      controlledActorInstanceId,
+      runtimeEvents,
+    });
+    world = nextWorld;
+    cameraState = camera.state;
+    baseFrame = resolveRuntimeSceneFrame(bundle, world, {
+      camera: camera.camera,
+    });
   };
 
   const setActiveDialogueStatus = (
@@ -302,7 +349,7 @@ export const createPackagedRuntimeController = (
       setStatus(`DIALOGUE REJECTED • ${chosen.detail}`);
       return;
     }
-    world = chosen.state;
+    applyWorldState(chosen.state, chosen.events);
     hoveredDialogueChoiceId = null;
     if (chosen.kind === "active") {
       setStatus(dialogueViewStatus(chosen.view, chosen.events));
@@ -348,7 +395,10 @@ export const createPackagedRuntimeController = (
       switch (queued.kind) {
         case "queued":
         case "resolved":
-          world = queued.state;
+          applyWorldState(
+            queued.state,
+            runtimeEventsFromCommand(queued.event),
+          );
           applyCommandStatus(queued.event);
           return;
         case "missing-target":
@@ -464,12 +514,14 @@ export const createPackagedRuntimeController = (
       );
       switch (movement.kind) {
         case "started":
-          world = clearPendingCommand(
-            {
-              ...movement.state,
-              pendingObjectCommands: world.pendingObjectCommands,
-            },
-            controlledActorInstanceId,
+          applyWorldState(
+            clearPendingCommand(
+              {
+                ...movement.state,
+                pendingObjectCommands: world.pendingObjectCommands,
+              },
+              controlledActorInstanceId,
+            ),
           );
           setStatus("WALKING");
           return;
@@ -508,6 +560,9 @@ export const createPackagedRuntimeController = (
         text: parser.text,
         history: parser.history,
       },
+      ...(persistProfiledCamera && cameraState
+        ? { profiledCamera: cameraState }
+        : {}),
     });
 
   const restoreControllerSave = (input: unknown): number => {
@@ -520,6 +575,13 @@ export const createPackagedRuntimeController = (
     }
 
     world = save.world as InteractiveRuntimeWorldState;
+    persistProfiledCamera = save.interface.profiledCamera !== undefined;
+    cameraState = restoreProfiledRuntimeCamera({
+      bundle,
+      world,
+      controlledActorInstanceId,
+      savedState: save.interface.profiledCamera ?? null,
+    });
     selectedVerbId = save.interface.selectedVerbId;
     selectedItemId = save.interface.selectedItemId;
     status = save.interface.statusText;
@@ -535,7 +597,9 @@ export const createPackagedRuntimeController = (
     verbCoinPosition = null;
     cursor = { position: null, cursorId: "walk", pressed: false };
     renderedTick = world.story.tick;
-    baseFrame = resolveRuntimeSceneFrame(bundle, world);
+    baseFrame = resolveRuntimeSceneFrame(bundle, world, {
+      camera: resolvedProfiledRuntimeCamera(bundle, cameraState),
+    });
     options.onStatusChange?.(status);
     return renderedTick;
   };
@@ -556,21 +620,21 @@ export const createPackagedRuntimeController = (
     restoreSaveGame: restoreControllerSave,
     statusText: () => status,
     worldState: () => world,
+    cameraState: () => cameraState,
     parserState: () => parser,
     createFrame: (tick) => {
       if (tick < renderedTick) {
         throw new RangeError("Packaged player logical time cannot move backwards.");
       }
       const delta = tick - renderedTick;
-      if (delta > 0) {
-        const advanced = advanceInteractiveRuntimeWorld(bundle, world, delta);
-        world = advanced.state;
-        renderedTick = tick;
+      for (let offset = 0; offset < delta; offset += 1) {
+        const advanced = advanceInteractiveRuntimeWorld(bundle, world, 1);
+        applyWorldState(advanced.state, advanced.runtimeEvents);
+        renderedTick = world.story.tick;
         for (const event of advanced.commandEvents) {
           applyCommandStatus(event);
         }
       }
-      baseFrame = resolveRuntimeSceneFrame(bundle, world);
       refreshCursor();
       const withInterface = appendRuntimeInterface(
         baseFrame,

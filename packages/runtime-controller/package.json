@@ -47,6 +47,7 @@
     "@evavo/adventure-ui-skin": "workspace:*"
   },
   "devDependencies": {
-    "@evavo/adventure-bitmap-font": "workspace:*"
+    "@evavo/adventure-bitmap-font": "workspace:*",
+    "@evavo/adventure-replay": "workspace:*"
   }
 }

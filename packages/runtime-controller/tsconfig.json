@@ -12,6 +12,7 @@
     { "path": "../play-feel" },
     { "path": "../project-schema" },
     { "path": "../render-contract" },
+    { "path": "../replay" },
     { "path": "../runtime-bundle" },
     { "path": "../save-game" },
     { "path": "../scene" },

@@ -6,6 +6,7 @@
   },
   "include": ["src/**/*.ts", "tests/**/*.ts"],
   "references": [
+    { "path": "../play-feel" },
     { "path": "../project-schema" },
     { "path": "../runtime-bundle" },
     { "path": "../scene-runtime" }

@@ -1,0 +1,66 @@
+import type { Id } from "@evavo/adventure-project-schema";
+import type { RuntimeBundle } from "@evavo/adventure-runtime-bundle";
+import type { InteractiveRuntimeWorldState } from "@evavo/adventure-scene-runtime/commands";
+import {
+  canonicalSaveGameJson,
+  fnv1a64,
+  parseSaveGame,
+  runtimeBundleFingerprint,
+} from "./canonical.js";
+import { validateSaveGameCompatibility } from "./compatibility.js";
+import { SaveGameCompatibilityError } from "./errors.js";
+import { assertSaveGameAllowed } from "./policy.js";
+import type { SaveGameProfiledRuntimeCameraState } from "./profiled-camera.js";
+import {
+  saveGamePayloadSchema,
+  saveGameSchema,
+  type SaveGame,
+} from "./schema.js";
+
+export interface CreateSaveGameOptions {
+  readonly controlledActorInstanceId: Id<"actor-instance"> | null;
+  readonly selectedVerbId: Id<"ui-verb"> | null;
+  readonly selectedItemId: Id<"item"> | null;
+  readonly statusText: string;
+  readonly parser: {
+    readonly text: string;
+    readonly history: readonly string[];
+  };
+  readonly profiledCamera?: SaveGameProfiledRuntimeCameraState;
+}
+
+export const createSaveGame = (
+  bundle: RuntimeBundle,
+  world: InteractiveRuntimeWorldState,
+  options: CreateSaveGameOptions,
+): SaveGame => {
+  assertSaveGameAllowed(bundle, world);
+  const payload = saveGamePayloadSchema.parse({
+    saveVersion: 1,
+    projectId: bundle.projectId,
+    bundleFingerprint: runtimeBundleFingerprint(bundle),
+    assetManifestFingerprint: bundle.assetManifestFingerprint,
+    world,
+    interface: options,
+  });
+  const save = saveGameSchema.parse({
+    ...payload,
+    saveFingerprint: fnv1a64(canonicalSaveGameJson(payload)),
+  });
+  const issues = validateSaveGameCompatibility(bundle, save);
+  if (issues.length > 0) throw new SaveGameCompatibilityError(issues);
+  return save;
+};
+
+export const loadSaveGame = (
+  bundle: RuntimeBundle,
+  input: unknown,
+): SaveGame => {
+  const save = parseSaveGame(input);
+  const issues = validateSaveGameCompatibility(bundle, save);
+  if (issues.length > 0) throw new SaveGameCompatibilityError(issues);
+  return save;
+};
+
+export const serializeSaveGame = (save: SaveGame): string =>
+  `${canonicalSaveGameJson(save)}\n`;

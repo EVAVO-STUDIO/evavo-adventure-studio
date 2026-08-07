@@ -15,6 +15,7 @@
     "typecheck": "tsc -b --pretty false"
   },
   "dependencies": {
+    "@evavo/adventure-play-feel": "workspace:*",
     "@evavo/adventure-project-schema": "workspace:*",
     "@evavo/adventure-runtime-bundle": "workspace:*",
     "@evavo/adventure-scene-runtime": "workspace:*",
