@@ -43,6 +43,10 @@
     "./production-showcases": {
       "types": "./dist/src/production-showcases.d.ts",
       "import": "./dist/src/production-showcases.js"
+    },
+    "./classic-game-creator": {
+      "types": "./dist/src/classic-game-creator.d.ts",
+      "import": "./dist/src/classic-game-creator.js"
     }
   },
   "files": [

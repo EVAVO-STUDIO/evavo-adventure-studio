@@ -1,0 +1,342 @@
+.cc-stage-column {
+  min-width: 0;
+  background:
+    linear-gradient(color-mix(in srgb, var(--cc-paper) 3%, transparent) 1px, transparent 1px),
+    linear-gradient(90deg, color-mix(in srgb, var(--cc-paper) 3%, transparent) 1px, transparent 1px),
+    color-mix(in srgb, var(--cc-deep) 35%, var(--cc-ink));
+  background-size: 24px 24px;
+}
+
+.cc-stage-toolbar {
+  position: sticky;
+  top: 68px;
+  z-index: 20;
+  min-height: 62px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 16px;
+  padding: 9px 14px;
+  border-bottom: 1px solid var(--cc-line);
+  background: color-mix(in srgb, var(--cc-ink) 90%, transparent);
+  backdrop-filter: blur(14px);
+}
+
+.cc-stage-toolbar nav,
+.cc-history-actions {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.cc-button {
+  min-height: 34px;
+  padding: 7px 10px;
+  border: 1px solid var(--cc-line);
+  background: color-mix(in srgb, var(--cc-deep) 72%, black);
+  color: var(--cc-text);
+  cursor: pointer;
+}
+
+.cc-button:hover:not(:disabled),
+.cc-button.is-active {
+  border-color: var(--cc-accent);
+  background: color-mix(in srgb, var(--cc-accent) 18%, var(--cc-panel));
+}
+
+.cc-button:disabled {
+  cursor: not-allowed;
+  opacity: 0.35;
+}
+
+.cc-stage-toolbar nav .cc-button {
+  min-width: 90px;
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: 2px;
+}
+
+.cc-stage-toolbar nav strong {
+  font-size: 11px;
+}
+
+.cc-stage-toolbar nav span {
+  font-size: 8px;
+  letter-spacing: 0.1em;
+}
+
+.cc-button.is-primary {
+  border-color: var(--cc-accent);
+  background: var(--cc-accent);
+  color: var(--cc-ink);
+  font-weight: 800;
+}
+
+.cc-button.is-danger {
+  border-color: color-mix(in srgb, #ff6f6f 52%, transparent);
+  color: #ffb0b0;
+}
+
+.cc-notice {
+  margin: 12px 18px 0;
+  padding: 10px 12px;
+  border: 1px solid color-mix(in srgb, var(--cc-warm) 45%, transparent);
+  background: color-mix(in srgb, var(--cc-warm) 9%, var(--cc-panel));
+  color: var(--cc-paper);
+  font-size: 11px;
+}
+
+.cc-stage-scroll {
+  padding: 22px 26px 70px;
+}
+
+.cc-scene-heading {
+  display: flex;
+  align-items: flex-end;
+  justify-content: space-between;
+  gap: 24px;
+  max-width: 960px;
+  margin: 0 auto 16px;
+}
+
+.cc-scene-heading h1 {
+  font-size: clamp(28px, 4vw, 46px);
+}
+
+.cc-scene-heading p {
+  max-width: 640px;
+  margin: 8px 0 0;
+  font-size: 13px;
+}
+
+.cc-scene-heading > div:last-child {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-end;
+  gap: 7px;
+}
+
+.cc-scene-heading code,
+.cc-native-frame footer code,
+.cc-puzzle-card code,
+.cc-inspector footer code {
+  color: var(--cc-warm);
+  font: 700 9px/1.2 ui-monospace, monospace;
+}
+
+.cc-scene-heading > div:last-child strong {
+  color: var(--cc-muted);
+  font-size: 10px;
+  text-transform: uppercase;
+}
+
+.cc-native-frame {
+  max-width: 960px;
+  margin: 0 auto;
+  padding: 12px;
+  border: 1px solid color-mix(in srgb, var(--cc-paper) 22%, transparent);
+  background: #020304;
+  box-shadow:
+    0 24px 60px rgb(0 0 0 / 34%),
+    0 0 0 1px rgb(255 255 255 / 3%) inset;
+}
+
+.cc-native-frame svg {
+  display: block;
+  width: 100%;
+  aspect-ratio: 16 / 10;
+  background: #000;
+  image-rendering: pixelated;
+}
+
+.cc-native-frame footer {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 10px 2px 0;
+  color: var(--cc-muted);
+  font-size: 9px;
+  text-transform: uppercase;
+}
+
+.cc-native-frame footer strong {
+  margin-left: auto;
+  color: var(--cc-paper);
+}
+
+.cc-safe-rect {
+  fill: none;
+  stroke: var(--cc-paper);
+  stroke-dasharray: 4 4;
+  stroke-opacity: 0.22;
+}
+
+.cc-walk-lane {
+  fill: var(--cc-warm);
+  fill-opacity: 0.08;
+  stroke: var(--cc-warm);
+  stroke-dasharray: 5 4;
+  stroke-opacity: 0.45;
+}
+
+.cc-horizon {
+  stroke: var(--cc-accent);
+  stroke-dasharray: 3 3;
+  stroke-opacity: 0.55;
+}
+
+.ccp-entity {
+  cursor: move;
+  outline: none;
+}
+
+.ccp-entity > rect:first-child,
+.ccp-actor > path {
+  fill: var(--cc-paper);
+  stroke: var(--cc-ink);
+  stroke-width: 1;
+}
+
+.ccp-actor-head {
+  fill: var(--cc-warm);
+  stroke: var(--cc-ink);
+  stroke-width: 1;
+}
+
+.ccp-actor-facing {
+  fill: none;
+  stroke: var(--cc-accent);
+  stroke-width: 1;
+}
+
+.ccp-entity-shadow {
+  fill: var(--cc-ink);
+  opacity: 0.5;
+}
+
+.ccp-prop.is-clue > rect:first-child {
+  fill: var(--cc-warm);
+}
+
+.ccp-prop.is-puzzle > rect:first-child {
+  fill: var(--cc-accent);
+}
+
+.ccp-prop.is-exit > rect:first-child {
+  fill: color-mix(in srgb, var(--cc-mid) 60%, var(--cc-paper));
+}
+
+.ccp-prop.is-ambience > rect:first-child {
+  fill: var(--cc-deep);
+  opacity: 0.78;
+}
+
+.ccp-prop-detail {
+  fill: var(--cc-paper);
+}
+
+.ccp-selection-box {
+  fill: none !important;
+  stroke: transparent !important;
+  stroke-dasharray: 3 2;
+  stroke-width: 1 !important;
+}
+
+.ccp-entity:hover .ccp-selection-box,
+.ccp-entity:focus .ccp-selection-box,
+.ccp-entity.is-selected .ccp-selection-box {
+  stroke: #ffffff !important;
+}
+
+.ccp-focal-marker {
+  fill: none;
+  stroke: var(--cc-accent);
+  stroke-width: 1;
+  pointer-events: none;
+}
+
+.ccp-interface-preview {
+  pointer-events: none;
+}
+
+.ccp-interface-preview > rect:first-child {
+  fill: color-mix(in srgb, var(--cc-ink) 92%, black);
+  stroke: var(--cc-paper);
+  stroke-opacity: 0.42;
+}
+
+.ccp-mini-icon rect,
+.ccp-topic-ledger rect,
+.ccp-verb-panel rect,
+.ccp-narration-strip rect {
+  fill: var(--cc-deep);
+  stroke: var(--cc-paper);
+  stroke-opacity: 0.48;
+}
+
+.ccp-interface-preview text {
+  fill: var(--cc-paper);
+  font: 6px ui-monospace, monospace;
+  letter-spacing: 0.04em;
+}
+
+.ccp-storybook-dialogue rect,
+.ccp-storybook-dialogue circle {
+  fill: color-mix(in srgb, var(--cc-deep) 84%, black);
+  stroke: var(--cc-paper);
+  stroke-opacity: 0.52;
+}
+
+.ccp-storybook-dialogue path {
+  fill: none;
+  stroke: var(--cc-warm);
+  stroke-opacity: 0.72;
+}
+
+.ccp-topic-ledger > rect:nth-of-type(2),
+.ccp-topic-ledger > rect:nth-of-type(3) {
+  fill: var(--cc-mid);
+}
+
+.ccp-topic-ledger path {
+  fill: none;
+  stroke: var(--cc-warm);
+}
+
+.ccp-verb-panel .ccp-sentence-line {
+  fill: var(--cc-ink);
+}
+
+.ccp-verb-panel .ccp-inventory-slot {
+  fill: color-mix(in srgb, var(--cc-warm) 18%, var(--cc-deep));
+}
+
+.cc-native-proof-grid {
+  max-width: 960px;
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 8px;
+  margin: 12px auto 0;
+}
+
+.cc-native-proof-grid article {
+  display: grid;
+  grid-template-columns: 28px 1fr;
+  gap: 10px;
+  padding: 12px;
+  border: 1px solid var(--cc-line);
+  background: var(--cc-panel-soft);
+}
+
+.cc-native-proof-grid span {
+  color: var(--cc-accent);
+  font: 900 12px/1 ui-monospace, monospace;
+}
+
+.cc-native-proof-grid p {
+  margin: 0;
+  color: var(--cc-muted);
+  font-size: 11px;
+  line-height: 1.45;
+}
