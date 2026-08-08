@@ -6,6 +6,7 @@ import { AdventureDesignApp } from "./AdventureDesignApp.js";
 import { AdventureEvidenceApp } from "./AdventureEvidenceApp.js";
 import { AnimationApp } from "./AnimationApp.js";
 import { ArtDirectionApp } from "./ArtDirectionApp.js";
+import { ClassicGameCreatorApp } from "./ClassicGameCreatorApp.js";
 import { DialogueApp } from "./DialogueApp.js";
 import { StudioErrorBoundary } from "./ErrorBoundary.js";
 import { FontApp } from "./FontApp.js";
@@ -30,7 +31,9 @@ if (!root) {
 
 const workspace = new URLSearchParams(window.location.search).get("workspace");
 const application: ReactNode =
-  workspace === "feel" ? (
+  workspace === "creator" ? (
+    <ClassicGameCreatorApp />
+  ) : workspace === "feel" ? (
     <MotionFeelApp />
   ) : workspace === "showcases" ? (
     <ShowcaseGalleryApp />
@@ -75,6 +78,7 @@ switcher.className = "workspace-switcher";
 switcher.setAttribute("aria-label", "Adventure Studio workspaces");
 const workspaces = [
   { id: "composer", href: "/", label: "Composer" },
+  { id: "creator", href: "/?workspace=creator", label: "Creator" },
   { id: "profiles", href: "/?workspace=profiles", label: "Profiles" },
   { id: "showcases", href: "/?workspace=showcases", label: "Showcases" },
   { id: "feel", href: "/?workspace=feel", label: "Feel" },
@@ -95,6 +99,7 @@ const workspaces = [
   { id: "validation", href: "/?workspace=validation", label: "Validate" },
 ] as const;
 const activeWorkspace =
+  workspace === "creator" ||
   workspace === "feel" ||
   workspace === "showcases" ||
   workspace === "profiles" ||
