@@ -1,0 +1,107 @@
+@media (max-width: 1320px) {
+  .cc-workspace {
+    grid-template-columns: 224px minmax(560px, 1fr) 286px;
+  }
+
+  .cc-stage-toolbar {
+    align-items: flex-start;
+    flex-direction: column;
+  }
+
+  .cc-stage-toolbar nav,
+  .cc-history-actions {
+    width: 100%;
+    flex-wrap: wrap;
+  }
+}
+
+@media (max-width: 1020px) {
+  .cc-topbar {
+    grid-template-columns: 1fr auto;
+  }
+
+  .cc-project-title {
+    display: none;
+  }
+
+  .cc-workspace {
+    grid-template-columns: 210px minmax(0, 1fr);
+  }
+
+  .cc-inspector {
+    grid-column: 1 / -1;
+    display: grid;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    border-top: 1px solid var(--cc-line);
+    border-left: 0;
+  }
+
+  .cc-inspector > footer {
+    grid-column: 1 / -1;
+  }
+
+  .cc-puzzle-card ol {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+}
+
+@media (max-width: 760px) {
+  .cc-topbar {
+    position: static;
+    grid-template-columns: 1fr;
+    gap: 10px;
+  }
+
+  .cc-readiness {
+    justify-self: stretch;
+  }
+
+  .cc-workspace {
+    display: block;
+  }
+
+  .cc-project-rail {
+    border-right: 0;
+    border-bottom: 1px solid var(--cc-line);
+  }
+
+  .cc-project-list {
+    grid-template-columns: 1fr;
+  }
+
+  .cc-stage-toolbar {
+    position: static;
+  }
+
+  .cc-stage-scroll {
+    padding: 18px 12px 54px;
+  }
+
+  .cc-scene-heading {
+    align-items: flex-start;
+    flex-direction: column;
+  }
+
+  .cc-scene-heading > div:last-child {
+    align-items: flex-start;
+  }
+
+  .cc-native-proof-grid,
+  .cc-interface-contract-grid,
+  .cc-timing-chart,
+  .cc-puzzle-outcomes,
+  .cc-inspector {
+    grid-template-columns: 1fr;
+  }
+
+  .cc-puzzle-card ol {
+    grid-template-columns: 1fr;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .cc-project-button,
+  .cc-button {
+    transition: none;
+  }
+}
