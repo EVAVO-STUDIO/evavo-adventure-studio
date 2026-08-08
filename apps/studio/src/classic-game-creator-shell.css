@@ -1,0 +1,329 @@
+:root {
+  color-scheme: dark;
+}
+
+.cc-app {
+  --cc-panel: color-mix(in srgb, var(--cc-ink) 88%, black);
+  --cc-panel-soft: color-mix(in srgb, var(--cc-deep) 78%, black);
+  --cc-line: color-mix(in srgb, var(--cc-paper) 15%, transparent);
+  --cc-text: color-mix(in srgb, var(--cc-paper) 92%, white);
+  --cc-muted: color-mix(in srgb, var(--cc-paper) 58%, transparent);
+  min-height: 100vh;
+  background:
+    radial-gradient(circle at 52% -20%, color-mix(in srgb, var(--cc-mid) 24%, transparent), transparent 44%),
+    var(--cc-ink);
+  color: var(--cc-text);
+  font-family: Inter, ui-sans-serif, system-ui, sans-serif;
+  letter-spacing: 0.01em;
+  padding-bottom: 44px;
+}
+
+.cc-app *,
+.cc-app *::before,
+.cc-app *::after {
+  box-sizing: border-box;
+}
+
+.cc-app button,
+.cc-app input {
+  font: inherit;
+}
+
+.cc-topbar {
+  position: sticky;
+  top: 0;
+  z-index: 40;
+  min-height: 68px;
+  display: grid;
+  grid-template-columns: minmax(280px, 1fr) minmax(260px, auto) auto;
+  align-items: center;
+  gap: 28px;
+  padding: 10px 20px;
+  border-bottom: 1px solid var(--cc-line);
+  background: color-mix(in srgb, var(--cc-ink) 92%, transparent);
+  backdrop-filter: blur(18px);
+}
+
+.cc-brand,
+.cc-project-title,
+.cc-readiness {
+  display: flex;
+  align-items: center;
+}
+
+.cc-brand {
+  gap: 12px;
+}
+
+.cc-brand-mark {
+  width: 38px;
+  height: 38px;
+  display: grid;
+  place-items: center;
+  border: 1px solid color-mix(in srgb, var(--cc-accent) 70%, white);
+  background: var(--cc-accent);
+  color: var(--cc-ink);
+  font: 900 19px/1 ui-monospace, monospace;
+  box-shadow: 0 0 0 4px color-mix(in srgb, var(--cc-accent) 12%, transparent);
+}
+
+.cc-brand div,
+.cc-project-title {
+  flex-direction: column;
+  align-items: flex-start;
+}
+
+.cc-brand span,
+.cc-project-title span,
+.cc-eyebrow,
+.cc-stage-toolbar nav span,
+.cc-project-button span,
+.cc-scene-stack span,
+.cc-interface-contract-grid article > span,
+.cc-puzzle-card header span,
+.cc-puzzle-outcomes span,
+.cc-dialogue-structure header span,
+.cc-timing-surface > header span {
+  color: var(--cc-muted);
+  font-size: 10px;
+  font-weight: 800;
+  letter-spacing: 0.16em;
+  text-transform: uppercase;
+}
+
+.cc-brand strong {
+  margin-top: 3px;
+  font-size: 15px;
+}
+
+.cc-project-title {
+  justify-self: center;
+  text-align: center;
+  align-items: center;
+}
+
+.cc-project-title strong {
+  margin-top: 3px;
+  font-family: Georgia, "Times New Roman", serif;
+  font-size: 20px;
+  font-weight: 500;
+  color: var(--cc-paper);
+}
+
+.cc-readiness {
+  gap: 9px;
+  justify-self: end;
+  min-width: 142px;
+  padding: 8px 10px;
+  border: 1px solid var(--cc-line);
+  background: var(--cc-panel-soft);
+  text-transform: uppercase;
+}
+
+.cc-readiness > span {
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  background: var(--cc-accent);
+  box-shadow: 0 0 12px var(--cc-accent);
+}
+
+.cc-readiness strong {
+  font-size: 10px;
+  letter-spacing: 0.12em;
+}
+
+.cc-readiness em {
+  margin-left: auto;
+  font: normal 800 12px/1 ui-monospace, monospace;
+}
+
+.cc-readiness.is-ready > span {
+  background: #8fda98;
+  box-shadow: 0 0 12px #8fda98;
+}
+
+.cc-readiness.is-blocked > span {
+  background: #ff6f6f;
+  box-shadow: 0 0 12px #ff6f6f;
+}
+
+.cc-workspace {
+  display: grid;
+  grid-template-columns: 264px minmax(620px, 1fr) 320px;
+  min-height: calc(100vh - 68px);
+}
+
+.cc-project-rail,
+.cc-inspector {
+  background: color-mix(in srgb, var(--cc-panel) 92%, transparent);
+}
+
+.cc-project-rail {
+  display: flex;
+  min-width: 0;
+  flex-direction: column;
+  border-right: 1px solid var(--cc-line);
+}
+
+.cc-project-rail > header {
+  padding: 24px 18px 18px;
+}
+
+.cc-project-rail h1,
+.cc-scene-heading h1,
+.cc-interface-contract-grid h2,
+.cc-puzzle-card h2,
+.cc-dialogue-structure h2,
+.cc-inspector h2 {
+  margin: 7px 0 0;
+  color: var(--cc-paper);
+  font-family: Georgia, "Times New Roman", serif;
+  font-weight: 500;
+}
+
+.cc-project-rail h1 {
+  font-size: 25px;
+  line-height: 1.08;
+}
+
+.cc-project-rail p,
+.cc-scene-heading p,
+.cc-interface-contract-grid p,
+.cc-puzzle-card p,
+.cc-dialogue-structure p,
+.cc-inspector p,
+.cc-timing-surface p {
+  color: var(--cc-muted);
+  line-height: 1.56;
+}
+
+.cc-project-rail > header p {
+  margin: 12px 0 0;
+  font-size: 12px;
+}
+
+.cc-project-list {
+  display: grid;
+  gap: 8px;
+  padding: 0 12px 18px;
+}
+
+.cc-project-button {
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  min-height: 88px;
+  padding: 13px 14px;
+  overflow: hidden;
+  border: 1px solid var(--cc-line);
+  background:
+    linear-gradient(135deg, color-mix(in srgb, var(--cc-mid) 18%, transparent), transparent 52%),
+    var(--cc-panel-soft);
+  color: var(--cc-text);
+  text-align: left;
+  cursor: pointer;
+  transition: border-color 120ms ease, transform 120ms ease;
+}
+
+.cc-project-button::before {
+  content: "";
+  position: absolute;
+  inset: 0 auto 0 0;
+  width: 3px;
+  background: var(--cc-accent);
+  opacity: 0.25;
+}
+
+.cc-project-button:hover,
+.cc-project-button.is-selected {
+  border-color: color-mix(in srgb, var(--cc-accent) 72%, white);
+  transform: translateX(2px);
+}
+
+.cc-project-button.is-selected::before {
+  opacity: 1;
+}
+
+.cc-project-button strong {
+  margin-top: 7px;
+  color: var(--cc-paper);
+  font-family: Georgia, "Times New Roman", serif;
+  font-size: 17px;
+  font-weight: 500;
+}
+
+.cc-project-button small {
+  margin-top: 7px;
+  color: var(--cc-muted);
+  font-size: 10px;
+  line-height: 1.35;
+  text-transform: capitalize;
+}
+
+.cc-scene-stack {
+  border-top: 1px solid var(--cc-line);
+  padding: 16px 12px;
+}
+
+.cc-scene-stack > header {
+  display: flex;
+  justify-content: space-between;
+  padding: 0 4px 9px;
+}
+
+.cc-scene-stack > header strong {
+  color: var(--cc-warm);
+  font: 800 11px/1 ui-monospace, monospace;
+}
+
+.cc-scene-stack > button {
+  width: 100%;
+  display: grid;
+  grid-template-columns: 56px 1fr;
+  align-items: center;
+  gap: 7px;
+  padding: 9px 8px;
+  border: 0;
+  border-left: 2px solid transparent;
+  background: transparent;
+  color: var(--cc-muted);
+  text-align: left;
+  cursor: pointer;
+}
+
+.cc-scene-stack > button:hover,
+.cc-scene-stack > button.is-selected {
+  border-left-color: var(--cc-accent);
+  background: color-mix(in srgb, var(--cc-accent) 9%, transparent);
+  color: var(--cc-text);
+}
+
+.cc-scene-stack > button span {
+  font-size: 8px;
+}
+
+.cc-scene-stack > button strong {
+  overflow: hidden;
+  font-size: 11px;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.cc-project-rail > footer {
+  margin-top: auto;
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+  padding: 14px;
+  border-top: 1px solid var(--cc-line);
+}
+
+.cc-project-rail > footer span {
+  padding: 5px 7px;
+  border: 1px solid var(--cc-line);
+  color: var(--cc-muted);
+  font: 700 9px/1 ui-monospace, monospace;
+  text-transform: uppercase;
+}
