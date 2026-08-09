@@ -82,11 +82,13 @@ describe("adventureProjectSchema", () => {
 
   it("rejects malformed walk geometry", () => {
     const malformed = structuredClone(minimalProject) as Record<string, unknown>;
-    const scenes = malformed.scenes as Array<Record<string, unknown>>;
+    const scenes = malformed["scenes"] as Array<Record<string, unknown>>;
     const scene = scenes[0];
-    const navigationAreas = scene?.navigationAreas as Array<Record<string, unknown>>;
+    const navigationAreas = scene?.["navigationAreas"] as Array<
+      Record<string, unknown>
+    >;
     const area = navigationAreas[0];
-    area!.shape = { points: [{ x: 0, y: 0 }, { x: 1, y: 1 }] };
+    area!["shape"] = { points: [{ x: 0, y: 0 }, { x: 1, y: 1 }] };
 
     expect(() => parseAdventureProject(malformed)).toThrow();
   });

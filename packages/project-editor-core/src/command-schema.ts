@@ -10,7 +10,7 @@ import {
 } from "@evavo/adventure-project-schema";
 import type { ProjectEditorCommand } from "./index.js";
 
-export const projectEditorCommandSchema: z.ZodType<ProjectEditorCommand> = z.lazy(
+export const projectEditorCommandSchema = z.lazy(
   () =>
     z.discriminatedUnion("kind", [
       z
@@ -138,7 +138,7 @@ export const projectEditorCommandSchema: z.ZodType<ProjectEditorCommand> = z.laz
         })
         .strict(),
     ]),
-);
+) as z.ZodType<ProjectEditorCommand>;
 
 export const parseProjectEditorCommand = (
   input: unknown,
