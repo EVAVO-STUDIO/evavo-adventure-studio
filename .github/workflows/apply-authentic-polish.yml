@@ -110,10 +110,28 @@ jobs:
       - name: Format and lint changed source
         shell: bash
         run: |
-          set -euo pipefail
+          set -uo pipefail
           mapfile -t BIOME_PATHS < /tmp/authentic-polish-biome-paths.txt
-          pnpm exec biome check --write "${BIOME_PATHS[@]}"
-          pnpm exec biome check "${BIOME_PATHS[@]}"
+          set +e
+          pnpm exec biome check --write "${BIOME_PATHS[@]}" \
+            > /tmp/authentic-polish-biome-write.log 2>&1
+          write_status=$?
+          set -e
+          cat /tmp/authentic-polish-biome-write.log
+          if [ "$write_status" -ne 0 ]; then
+            echo "::error title=Biome write gate failed::See authentic-polish-biome-write.log."
+            exit "$write_status"
+          fi
+          set +e
+          pnpm exec biome check "${BIOME_PATHS[@]}" \
+            > /tmp/authentic-polish-biome-check.log 2>&1
+          check_status=$?
+          set -e
+          cat /tmp/authentic-polish-biome-check.log
+          if [ "$check_status" -ne 0 ]; then
+            echo "::error title=Biome verification gate failed::See authentic-polish-biome-check.log."
+            exit "$check_status"
+          fi
           git diff --check
 
       - name: Verify changed text-file hygiene
@@ -151,15 +169,31 @@ jobs:
           PY
 
       - name: Validate canonical Red Ledger runtime source
-        run: node scripts/validate-red-ledger-runtime.mjs
+        shell: bash
+        run: |
+          set +e
+          node scripts/validate-red-ledger-runtime.mjs \
+            > /tmp/authentic-polish-runtime-validation.log 2>&1
+          status=$?
+          set -e
+          cat /tmp/authentic-polish-runtime-validation.log
+          exit "$status"
 
       - name: Build full strict TypeScript graph
-        run: pnpm exec tsc -b --pretty false
+        shell: bash
+        run: |
+          set +e
+          pnpm exec tsc -b --pretty false \
+            > /tmp/authentic-polish-tsc.log 2>&1
+          status=$?
+          set -e
+          cat /tmp/authentic-polish-tsc.log
+          exit "$status"
 
       - name: Run focused authenticity, runtime, and editor regressions
         shell: bash
         run: |
-          set -euo pipefail
+          set +e
           pnpm exec vitest run \
             packages/adventure-design/tests/classic-experience.test.ts \
             packages/renderer-pixi/tests/pixel-presentation.test.ts \
@@ -169,14 +203,28 @@ jobs:
             apps/player/tests/built-in-demos.test.ts \
             apps/player/tests/red-ledger-playable-slice.test.mjs \
             packages/adventure-design/tests/red-ledger-runtime.test.mjs \
-            --reporter=verbose
+            --reporter=verbose \
+            > /tmp/authentic-polish-vitest.log 2>&1
+          status=$?
+          set -e
+          cat /tmp/authentic-polish-vitest.log
+          exit "$status"
 
       - name: Build production Player and Studio
         shell: bash
         run: |
-          set -euo pipefail
-          pnpm --filter @evavo/adventure-player build
-          pnpm --filter @evavo/adventure-studio-app build
+          set +e
+          pnpm --filter @evavo/adventure-player build \
+            > /tmp/authentic-polish-player-build.log 2>&1
+          player_status=$?
+          pnpm --filter @evavo/adventure-studio-app build \
+            > /tmp/authentic-polish-studio-build.log 2>&1
+          studio_status=$?
+          set -e
+          cat /tmp/authentic-polish-player-build.log
+          cat /tmp/authentic-polish-studio-build.log
+          if [ "$player_status" -ne 0 ]; then exit "$player_status"; fi
+          exit "$studio_status"
 
       - name: Verify final feature scope
         shell: bash
@@ -193,7 +241,7 @@ jobs:
         with:
           name: authentic-polish-diagnostics-${{ github.run_number }}
           path: |
-            /tmp/authentic-polish-apply.log
+            /tmp/authentic-polish-*.log
             /tmp/authentic-polish-actual-paths.txt
             /tmp/authentic-polish-expected-paths.txt
             /tmp/authentic-polish-paths.txt
