@@ -34,7 +34,7 @@ jobs:
         run: |
           set -euo pipefail
           git merge-base --is-ancestor "$BASE_SHA" HEAD
-          git diff --name-only "$BASE_SHA" HEAD | sort > /tmp/staged-actual.txt
+          git diff --name-only "$BASE_SHA" HEAD | LC_ALL=C sort > /tmp/staged-actual.txt
           cat > /tmp/staged-expected.txt <<'EOF'
           .agent-release/part-00
           .agent-release/part-01
@@ -78,14 +78,15 @@ jobs:
           test -s /tmp/authentic-polish-biome-paths.txt
           grep -F '"changedPaths": 55' /tmp/authentic-polish-apply.log
           grep -F '"indexedAssets": 17' /tmp/authentic-polish-apply.log
+          LC_ALL=C sort -u /tmp/authentic-polish-paths.txt > /tmp/authentic-polish-expected-paths.txt
 
       - name: Verify exact applied scope before formatting
         shell: bash
         run: |
           set -euo pipefail
           { git diff --name-only "$BASE_SHA"; git ls-files --others --exclude-standard; } \
-            | sort -u > /tmp/authentic-polish-actual-paths.txt
-          diff -u /tmp/authentic-polish-paths.txt /tmp/authentic-polish-actual-paths.txt
+            | LC_ALL=C sort -u > /tmp/authentic-polish-actual-paths.txt
+          diff -u /tmp/authentic-polish-expected-paths.txt /tmp/authentic-polish-actual-paths.txt
           test ! -e .agent-release
           test ! -e .github/workflows/apply-authentic-polish.yml
 
@@ -183,8 +184,8 @@ jobs:
           set -euo pipefail
           git diff --check
           { git diff --name-only "$BASE_SHA"; git ls-files --others --exclude-standard; } \
-            | sort -u > /tmp/authentic-polish-actual-paths.txt
-          diff -u /tmp/authentic-polish-paths.txt /tmp/authentic-polish-actual-paths.txt
+            | LC_ALL=C sort -u > /tmp/authentic-polish-actual-paths.txt
+          diff -u /tmp/authentic-polish-expected-paths.txt /tmp/authentic-polish-actual-paths.txt
 
       - name: Upload failure diagnostics
         if: failure()
@@ -194,6 +195,7 @@ jobs:
           path: |
             /tmp/authentic-polish-apply.log
             /tmp/authentic-polish-actual-paths.txt
+            /tmp/authentic-polish-expected-paths.txt
             /tmp/authentic-polish-paths.txt
             /tmp/authentic-polish-biome-paths.txt
             /tmp/authentic-polish-text-paths.txt
@@ -207,7 +209,8 @@ jobs:
           git config user.name "EVAVO Release Agent"
           git config user.email "release-agent@evavo.com.au"
           git add -A
-          git diff --cached --name-only | sort > /tmp/authentic-polish-staged-paths.txt
-          diff -u /tmp/authentic-polish-paths.txt /tmp/authentic-polish-staged-paths.txt
+          git diff --cached --name-only "$BASE_SHA" | LC_ALL=C sort -u \
+            > /tmp/authentic-polish-staged-paths.txt
+          diff -u /tmp/authentic-polish-expected-paths.txt /tmp/authentic-polish-staged-paths.txt
           git commit -m "feat: add authentic classic adventure polish"
           git push origin "HEAD:$BRANCH_NAME"
