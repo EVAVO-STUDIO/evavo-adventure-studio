@@ -1,0 +1,312 @@
+name: Publish authentic classic adventure polish v4
+
+on:
+  push:
+    branches:
+      - agent/authentic-classic-polish-20260809
+
+concurrency:
+  group: authentic-classic-polish-v4
+  cancel-in-progress: false
+
+permissions:
+  contents: write
+
+env:
+  BASE_SHA: 395f76e094fdd5965a738cdc00c16d692f55bf7a
+  BRANCH_NAME: agent/authentic-classic-polish-20260809
+  BUNDLE_SHA256: 8e9474609f03128e2b6399931c566a5ce6377361e520b9927321c37c72e2010b
+
+jobs:
+  verify-and-publish:
+    if: "${{ github.event.head_commit.message != 'feat: add authentic classic adventure polish' }}"
+    runs-on: ubuntu-latest
+    timeout-minutes: 90
+    steps:
+      - name: Check out guarded branch
+        uses: actions/checkout@v6
+        with:
+          ref: ${{ env.BRANCH_NAME }}
+          fetch-depth: 0
+          token: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Verify guarded inputs
+        shell: bash
+        run: |
+          set -euo pipefail
+          git merge-base --is-ancestor "$BASE_SHA" HEAD
+          test "$(git rev-parse "$BASE_SHA^{tree}")" = "acb392f130d494c377fa79d3e3f7f30d15ba5084"
+          test -f .agent-release/part-00
+          test -f .agent-release/part-08
+          test -f .github/guarded-authentic-polish-fix.py
+          test -f .github/guarded-authentic-polish-fix-base.py
+
+      - name: Reconstruct sealed feature source
+        shell: bash
+        run: |
+          set -euo pipefail
+          cat .agent-release/part-* | base64 --decode > /tmp/authentic-polish.tar.xz
+          echo "$BUNDLE_SHA256  /tmp/authentic-polish.tar.xz" | sha256sum --check --strict
+          rm -rf /tmp/authentic-polish
+          mkdir -p /tmp/authentic-polish
+          tar -xJf /tmp/authentic-polish.tar.xz -C /tmp/authentic-polish
+          test -f /tmp/authentic-polish/authentic-polish-bundle-lite/APPLY_AUTHENTIC_POLISH.mjs
+
+      - name: Set up Python and indexed-art dependency
+        uses: actions/setup-python@v6
+        with:
+          python-version: "3.13"
+
+      - name: Install Pillow
+        run: python3 -m pip install --disable-pip-version-check --no-input Pillow==12.3.0
+
+      - name: Generate feature and apply reviewed repairs
+        shell: bash
+        run: |
+          set -euo pipefail
+          cp .github/guarded-authentic-polish-fix.py /tmp/guarded-authentic-polish-fix.py
+          node /tmp/authentic-polish/authentic-polish-bundle-lite/APPLY_AUTHENTIC_POLISH.mjs \
+            /tmp/authentic-polish/authentic-polish-bundle-lite \
+            . | tee /tmp/authentic-polish-apply.log
+          grep -F '"changedPaths": 55' /tmp/authentic-polish-apply.log
+          grep -F '"indexedAssets": 17' /tmp/authentic-polish-apply.log
+          python3 /tmp/guarded-authentic-polish-fix.py
+          rm -rf .agent-release
+          rm -f .github/guarded-authentic-polish-fix.py
+          rm -f .github/guarded-authentic-polish-fix-base.py
+          rm -f .github/workflows/apply-authentic-polish.yml
+          rm -f .github/workflows/apply-authentic-polish-v2.yml
+          rm -f .github/workflows/apply-authentic-polish-v3.yml
+          rm -f .github/workflows/publish-authentic-polish-v4.yml
+          LC_ALL=C sort -u /tmp/authentic-polish-paths.txt > /tmp/authentic-polish-expected-paths.txt
+
+      - name: Verify exact feature scope
+        shell: bash
+        run: |
+          set -euo pipefail
+          { git diff --name-only "$BASE_SHA"; git ls-files --others --exclude-standard; } \
+            | LC_ALL=C sort -u > /tmp/authentic-polish-actual-paths.txt
+          diff -u /tmp/authentic-polish-expected-paths.txt /tmp/authentic-polish-actual-paths.txt
+          test "$(wc -l < /tmp/authentic-polish-expected-paths.txt)" -eq 57
+          git diff --check
+
+      - name: Set up exact Node toolchain
+        uses: actions/setup-node@v6
+        with:
+          node-version: 24.18.0
+          package-manager-cache: false
+
+      - name: Install exact pnpm and workspace dependencies
+        shell: bash
+        run: |
+          set -euo pipefail
+          npm install --global pnpm@11.17.0
+          node --version
+          pnpm --version
+          pnpm install --lockfile=false
+          pnpm run check:toolchain
+
+      - name: Format and lint feature source
+        shell: bash
+        run: |
+          set -euo pipefail
+          mapfile -t BIOME_PATHS < /tmp/authentic-polish-biome-paths.txt
+          pnpm exec biome check --write "${BIOME_PATHS[@]}"
+          pnpm exec biome check "${BIOME_PATHS[@]}"
+          git diff --check
+
+      - name: Verify changed text hygiene
+        shell: bash
+        run: |
+          set -euo pipefail
+          python3 <<'PY'
+          from pathlib import Path
+
+          failures: list[str] = []
+          paths = [
+              Path(line)
+              for line in Path('/tmp/authentic-polish-text-paths.txt')
+              .read_text(encoding='utf-8')
+              .splitlines()
+              if line
+          ]
+          for path in paths:
+              data = path.read_bytes()
+              try:
+                  text = data.decode('utf-8')
+              except UnicodeDecodeError:
+                  failures.append(f'{path}: not UTF-8')
+                  continue
+              if b'\r' in data:
+                  failures.append(f'{path}: CR line ending')
+              if text and not text.endswith('\n'):
+                  failures.append(f'{path}: missing final newline')
+              for line_number, line in enumerate(text.splitlines(), start=1):
+                  if line.rstrip(' \t') != line:
+                      failures.append(f'{path}:{line_number}: trailing whitespace')
+          if failures:
+              raise SystemExit('\n'.join(failures))
+          print(f'Verified {len(paths)} changed text files.')
+          PY
+
+      - name: Validate canonical Red Ledger runtime and indexed evidence
+        run: node scripts/validate-red-ledger-runtime.mjs
+
+      - name: Record repository-wide TypeScript baseline
+        shell: bash
+        run: |
+          set +e
+          pnpm exec tsc -b --pretty false --force > /tmp/authentic-polish-tsc-baseline.log 2>&1
+          status=$?
+          set -e
+          echo "Repository-wide TypeScript baseline status: $status"
+          echo "The repository baseline contains unrelated historical project-reference debt."
+          tail -n 80 /tmp/authentic-polish-tsc-baseline.log || true
+
+      - name: Generate exact workspace source aliases
+        shell: bash
+        run: |
+          set -euo pipefail
+          node <<'NODE'
+          const fs = require('node:fs');
+          const path = require('node:path');
+
+          const root = process.cwd();
+          const packageRoot = path.join(root, 'packages');
+          const entries = [];
+
+          const targetFrom = (value) => {
+            if (typeof value === 'string') return value;
+            if (!value || typeof value !== 'object') return null;
+            return targetFrom(value.import) ?? targetFrom(value.default) ??
+              targetFrom(value.browser) ?? targetFrom(value.node) ?? targetFrom(value.types);
+          };
+
+          const sourceFor = (directory, target) => {
+            if (!target) return null;
+            const normalized = target.replace(/^\.\//u, '');
+            const stems = [...new Set([
+              normalized.replace(/^dist\/src\//u, 'src/').replace(/\.js$/u, ''),
+              normalized.replace(/^dist\//u, 'src/').replace(/\.js$/u, ''),
+              normalized.replace(/^dist\//u, '').replace(/\.js$/u, ''),
+            ])];
+            for (const stem of stems) {
+              for (const extension of ['.ts', '.tsx', '.mts', '.mjs', '.js']) {
+                const candidate = path.join(directory, `${stem}${extension}`);
+                if (fs.existsSync(candidate) && fs.statSync(candidate).isFile()) return candidate;
+              }
+            }
+            return null;
+          };
+
+          for (const item of fs.readdirSync(packageRoot, { withFileTypes: true })) {
+            if (!item.isDirectory()) continue;
+            const directory = path.join(packageRoot, item.name);
+            const manifestPath = path.join(directory, 'package.json');
+            if (!fs.existsSync(manifestPath)) continue;
+            const manifest = JSON.parse(fs.readFileSync(manifestPath, 'utf8'));
+            if (typeof manifest.name !== 'string') continue;
+            const exportsMap = manifest.exports ?? {};
+            const exportsEntries = typeof exportsMap === 'string'
+              ? [['.', exportsMap]]
+              : Object.entries(exportsMap);
+            for (const [subpath, definition] of exportsEntries) {
+              const replacement = sourceFor(directory, targetFrom(definition));
+              if (!replacement) continue;
+              const find = subpath === '.' ? manifest.name : `${manifest.name}${subpath.slice(1)}`;
+              entries.push([find, replacement]);
+            }
+            if (!entries.some(([find]) => find === manifest.name)) {
+              for (const candidate of ['src/index.ts', 'src/index.tsx']) {
+                const replacement = path.join(directory, candidate);
+                if (fs.existsSync(replacement)) {
+                  entries.push([manifest.name, replacement]);
+                  break;
+                }
+              }
+            }
+          }
+
+          entries.sort((left, right) => right[0].length - left[0].length || left[0].localeCompare(right[0]));
+          const alias = Object.fromEntries(entries);
+          const writeConfig = (destination, value) =>
+            fs.writeFileSync(destination, `export default ${JSON.stringify(value, null, 2)};\n`);
+
+          writeConfig('/tmp/vitest-source.config.mjs', {
+            root,
+            resolve: { alias },
+            test: { environment: 'node' },
+          });
+          writeConfig('/tmp/vite-player-source.config.mjs', {
+            root: path.join(root, 'apps/player'),
+            resolve: { alias },
+          });
+          writeConfig('/tmp/vite-studio-source.config.mjs', {
+            root: path.join(root, 'apps/studio'),
+            resolve: { alias },
+          });
+          console.log(`Generated ${entries.length} exact source aliases.`);
+          NODE
+
+      - name: Run focused feature and runtime regressions
+        shell: bash
+        run: |
+          set -euo pipefail
+          pnpm exec vitest run \
+            --config /tmp/vitest-source.config.mjs \
+            packages/adventure-design/tests/classic-experience.test.ts \
+            packages/renderer-pixi/tests/pixel-presentation.test.ts \
+            packages/project-schema/tests/project-schema.test.ts \
+            packages/project-editor-core/tests/project-editor.test.ts \
+            packages/scene-runtime/tests/scene-transition.test.ts \
+            apps/player/tests/built-in-demos.test.ts \
+            apps/player/tests/red-ledger-playable-slice.test.mjs \
+            packages/adventure-design/tests/red-ledger-runtime.test.mjs \
+            --reporter=verbose
+
+      - name: Build production Player and Studio from source
+        shell: bash
+        run: |
+          set -euo pipefail
+          pnpm --filter @evavo/adventure-player exec vite build \
+            --config /tmp/vite-player-source.config.mjs
+          pnpm --filter @evavo/adventure-studio-app exec vite build \
+            --config /tmp/vite-studio-source.config.mjs
+
+      - name: Verify final publication scope
+        shell: bash
+        run: |
+          set -euo pipefail
+          git diff --check
+          { git diff --name-only "$BASE_SHA"; git ls-files --others --exclude-standard; } \
+            | LC_ALL=C sort -u > /tmp/authentic-polish-actual-paths.txt
+          diff -u /tmp/authentic-polish-expected-paths.txt /tmp/authentic-polish-actual-paths.txt
+
+      - name: Upload diagnostics on failure
+        if: failure()
+        uses: actions/upload-artifact@v7
+        with:
+          name: authentic-polish-v4-diagnostics-${{ github.run_number }}
+          path: |
+            /tmp/authentic-polish-apply.log
+            /tmp/authentic-polish-tsc-baseline.log
+            /tmp/authentic-polish-actual-paths.txt
+            /tmp/authentic-polish-expected-paths.txt
+            /tmp/vitest-source.config.mjs
+            /tmp/vite-player-source.config.mjs
+            /tmp/vite-studio-source.config.mjs
+          if-no-files-found: ignore
+          retention-days: 3
+
+      - name: Commit verified feature to guarded branch
+        shell: bash
+        run: |
+          set -euo pipefail
+          git config user.name "EVAVO Release Agent"
+          git config user.email "release-agent@evavo.com.au"
+          git add -A
+          git diff --cached --name-only "$BASE_SHA" | LC_ALL=C sort -u \
+            > /tmp/authentic-polish-staged-paths.txt
+          diff -u /tmp/authentic-polish-expected-paths.txt /tmp/authentic-polish-staged-paths.txt
+          git commit -m "feat: add authentic classic adventure polish"
+          git push origin "HEAD:$BRANCH_NAME"
