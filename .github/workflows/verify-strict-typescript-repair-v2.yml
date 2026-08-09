@@ -1,0 +1,45 @@
+name: Verify strict TypeScript repair v2
+
+on:
+  push:
+    branches:
+      - agent/verify-strict-typescript-build-v2
+
+permissions:
+  contents: read
+
+jobs:
+  verify:
+    runs-on: ubuntu-latest
+    timeout-minutes: 45
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: agent/verify-strict-typescript-build-v2
+          fetch-depth: 0
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 24.18.0
+      - name: Install exact pnpm toolchain and dependencies
+        shell: bash
+        run: |
+          set -euo pipefail
+          npm install --global pnpm@11.17.0
+          pnpm install --lockfile=false
+      - name: Verify pinned toolchain
+        run: pnpm run check:toolchain
+      - name: Check repaired source
+        run: >-
+          pnpm exec biome check --reporter=github
+          packages/project-editor-core/src/command-schema.ts
+          packages/project-schema/tests/project-schema.test.ts
+      - name: Build full strict TypeScript graph
+        run: pnpm exec tsc -b --pretty false
+      - name: Run focused schema and editor tests
+        shell: bash
+        run: |
+          set -euo pipefail
+          pnpm exec vitest run \
+            packages/project-schema/tests/project-schema.test.ts \
+            packages/project-editor-core/tests/*.test.ts \
+            --reporter=verbose
