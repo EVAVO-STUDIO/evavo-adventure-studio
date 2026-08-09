@@ -82,11 +82,23 @@ describe("adventureProjectSchema", () => {
 
   it("rejects malformed walk geometry", () => {
     const malformed = structuredClone(minimalProject) as Record<string, unknown>;
-    const scenes = malformed.scenes as Array<Record<string, unknown>>;
-    const scene = scenes[0];
-    const navigationAreas = scene?.navigationAreas as Array<Record<string, unknown>>;
-    const area = navigationAreas[0];
-    area!.shape = { points: [{ x: 0, y: 0 }, { x: 1, y: 1 }] };
+    const scenes = malformed["scenes"];
+    if (!Array.isArray(scenes)) {
+      throw new Error("Fixture scenes are missing.");
+    }
+    const scene = scenes[0] as Record<string, unknown> | undefined;
+    if (!scene) {
+      throw new Error("Fixture scene is missing.");
+    }
+    const navigationAreas = scene["navigationAreas"];
+    if (!Array.isArray(navigationAreas)) {
+      throw new Error("Fixture navigation areas are missing.");
+    }
+    const area = navigationAreas[0] as Record<string, unknown> | undefined;
+    if (!area) {
+      throw new Error("Fixture navigation area is missing.");
+    }
+    area["shape"] = { points: [{ x: 0, y: 0 }, { x: 1, y: 1 }] };
 
     expect(() => parseAdventureProject(malformed)).toThrow();
   });
