@@ -1,0 +1,180 @@
+name: Apply Red Ledger runtime release
+
+on:
+  push:
+    branches:
+      - agent/red-ledger-runtime-20260809-v4
+
+concurrency:
+  group: red-ledger-runtime-release
+  cancel-in-progress: false
+
+permissions:
+  contents: write
+
+jobs:
+  apply-and-verify:
+    runs-on: ubuntu-latest
+    timeout-minutes: 60
+    env:
+      BASE_SHA: 395f76e094fdd5965a738cdc00c16d692f55bf7a
+      BRANCH_NAME: agent/red-ledger-runtime-20260809-v4
+      BUNDLE_SHA256: 435b8c3f65e211e5fb3cb81ce77f7408dbe70c63af3bab5f75c42f1b464ac168
+    steps:
+      - name: Check out guarded branch
+        uses: actions/checkout@v4
+        with:
+          ref: ${{ env.BRANCH_NAME }}
+          fetch-depth: 0
+          token: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Verify guarded publication base
+        shell: bash
+        run: |
+          set -euo pipefail
+          test "$(git rev-parse HEAD^)" = "$BASE_SHA"
+          git diff --name-only "$BASE_SHA" HEAD | sort > /tmp/scaffold-paths.txt
+          cat > /tmp/expected-scaffold-paths.txt <<'EOF'
+          .agent-release/bundle.part-00a
+          .agent-release/bundle.part-00b
+          .agent-release/bundle.part-00c
+          .agent-release/bundle.part-01
+          .agent-release/bundle.part-02
+          .agent-release/bundle.part-03
+          .github/workflows/apply-red-ledger-runtime.yml
+          EOF
+          diff -u /tmp/expected-scaffold-paths.txt /tmp/scaffold-paths.txt
+
+      - name: Reconstruct and verify sealed release
+        shell: bash
+        run: |
+          set -euo pipefail
+          cat .agent-release/bundle.part-* | base64 --decode > /tmp/red-ledger-release.tar.gz
+          echo "$BUNDLE_SHA256  /tmp/red-ledger-release.tar.gz" | sha256sum --check --strict
+          mkdir -p /tmp/red-ledger-release
+          tar -xzf /tmp/red-ledger-release.tar.gz -C /tmp/red-ledger-release
+          test -f /tmp/red-ledger-release/red-ledger-workflow-bundle/PATCH_SPEC.json
+
+      - name: Apply exact guarded replacements and payload
+        shell: bash
+        run: |
+          set -euo pipefail
+          node <<'NODE'
+          const fs = require("node:fs");
+          const path = require("node:path");
+
+          const releaseRoot = "/tmp/red-ledger-release/red-ledger-workflow-bundle";
+          const payloadRoot = path.join(releaseRoot, "payload");
+          const spec = JSON.parse(
+            fs.readFileSync(path.join(releaseRoot, "PATCH_SPEC.json"), "utf8"),
+          );
+
+          const replaceExactly = (entry) => {
+            const target = path.resolve(entry.path);
+            const source = fs.readFileSync(target, "utf8");
+            const first = source.indexOf(entry.old);
+            if (first < 0) {
+              throw new Error(`Guarded source block was not found in ${entry.path}.`);
+            }
+            if (source.indexOf(entry.old, first + entry.old.length) >= 0) {
+              throw new Error(`Guarded source block is ambiguous in ${entry.path}.`);
+            }
+            const output =
+              source.slice(0, first) +
+              entry.new +
+              source.slice(first + entry.old.length);
+            fs.writeFileSync(target, output);
+          };
+
+          const walk = (directory) =>
+            fs.readdirSync(directory, { withFileTypes: true }).flatMap((entry) => {
+              const absolute = path.join(directory, entry.name);
+              return entry.isDirectory() ? walk(absolute) : [absolute];
+            });
+
+          for (const replacement of spec.replacements) {
+            replaceExactly(replacement);
+          }
+          for (const entry of fs.readdirSync(payloadRoot)) {
+            fs.cpSync(path.join(payloadRoot, entry), path.resolve(entry), {
+              recursive: true,
+              force: true,
+            });
+          }
+
+          const expected = [
+            ...new Set([
+              ...spec.replacements.map((entry) => entry.path),
+              ...walk(payloadRoot).map((file) => path.relative(payloadRoot, file)),
+            ]),
+          ].sort((left, right) => left.localeCompare(right));
+          if (expected.length !== 36) {
+            throw new Error(`Expected 36 release paths, received ${expected.length}.`);
+          }
+          fs.writeFileSync("/tmp/red-ledger-expected-paths.txt", `${expected.join("\n")}\n`);
+          const formatTargets = expected.filter((file) => /\.(?:json|mjs|ts)$/u.test(file));
+          fs.writeFileSync("/tmp/red-ledger-format-paths.txt", `${formatTargets.join("\n")}\n`);
+          NODE
+
+          rm -rf .agent-release
+          rm -f .github/workflows/apply-red-ledger-runtime.yml
+          git diff --check
+          { git diff --name-only "$BASE_SHA"; git ls-files --others --exclude-standard; } | sort -u > /tmp/red-ledger-actual-paths.txt
+          diff -u /tmp/red-ledger-expected-paths.txt /tmp/red-ledger-actual-paths.txt
+
+      - name: Set up exact Node toolchain
+        uses: actions/setup-node@v4
+        with:
+          node-version: 24.18.0
+
+      - name: Install exact pnpm toolchain and dependencies
+        shell: bash
+        run: |
+          set -euo pipefail
+          npm install --global pnpm@11.17.0
+          node --version
+          pnpm --version
+          pnpm install --lockfile=false
+
+      - name: Format and run source-level release checks
+        shell: bash
+        run: |
+          set -euo pipefail
+          mapfile -t FORMAT_PATHS < /tmp/red-ledger-format-paths.txt
+          pnpm exec biome format --write "${FORMAT_PATHS[@]}"
+          git diff --check
+          node scripts/validate-red-ledger-runtime.mjs
+          pnpm exec vitest run \
+            apps/player/tests/red-ledger-playable-slice.test.mjs \
+            packages/adventure-design/tests/red-ledger-runtime.test.mjs
+          { git diff --name-only "$BASE_SHA"; git ls-files --others --exclude-standard; } | sort -u > /tmp/red-ledger-actual-paths.txt
+          diff -u /tmp/red-ledger-expected-paths.txt /tmp/red-ledger-actual-paths.txt
+
+      - name: Run installed workspace verification
+        shell: bash
+        run: |
+          set -euo pipefail
+          mapfile -t FORMAT_PATHS < /tmp/red-ledger-format-paths.txt
+          pnpm run check:toolchain
+          pnpm exec biome check "${FORMAT_PATHS[@]}"
+          pnpm exec tsc -b --pretty false
+          pnpm exec vitest run \
+            packages/scene-runtime/tests/scene-transition.test.ts \
+            apps/player/tests/built-in-demos.test.ts
+          pnpm --filter @evavo/adventure-player build
+
+      - name: Commit verified feature to guarded branch
+        shell: bash
+        run: |
+          set -euo pipefail
+          git diff --check
+          { git diff --name-only "$BASE_SHA"; git ls-files --others --exclude-standard; } | sort -u > /tmp/red-ledger-actual-paths.txt
+          diff -u /tmp/red-ledger-expected-paths.txt /tmp/red-ledger-actual-paths.txt
+
+          git config user.name "EVAVO Release Agent"
+          git config user.email "release-agent@evavo.com.au"
+          git add -A
+          git diff --cached --name-only "$BASE_SHA" | sort > /tmp/red-ledger-staged-paths.txt
+          diff -u /tmp/red-ledger-expected-paths.txt /tmp/red-ledger-staged-paths.txt
+          git commit -m "feat: add playable Red Ledger runtime slice"
+          git push origin "HEAD:$BRANCH_NAME"
