@@ -29,7 +29,7 @@ jobs:
           fetch-depth: 0
           token: ${{ secrets.GITHUB_TOKEN }}
 
-      - name: Verify guarded staging commit
+      - name: Verify guarded staging tree
         shell: bash
         run: |
           set -euo pipefail
@@ -81,38 +81,30 @@ jobs:
             . > /tmp/authentic-polish-apply.log 2>&1
           status=$?
           set -e
+          printf '%s\n' "$status" > /tmp/authentic-polish-apply-status.txt
           cat /tmp/authentic-polish-apply.log
-          echo "apply_status=$status"
-          if [ "$status" -ne 0 ]; then
-            python3 <<'PY'
-            from pathlib import Path
+          echo "Recorded source-application exit status: $status"
 
-            text = Path("/tmp/authentic-polish-apply.log").read_text(
-                encoding="utf-8",
-                errors="replace",
-            )
-            tail = "\n".join(text.splitlines()[-100:])
-            escaped = (
-                tail.replace("%", "%25")
-                .replace("\r", "%0D")
-                .replace("\n", "%0A")
-            )
-            print(f"::error title=Authentic polish source application failed::{escaped}")
-            PY
-            exit "$status"
-          fi
-
-      - name: Verify applied publication scope
+      - name: Verify completed source application and exact scope
         shell: bash
         run: |
           set -euo pipefail
+          test -f /tmp/authentic-polish-apply-status.txt
+          status="$(cat /tmp/authentic-polish-apply-status.txt)"
+          if [ "$status" -ne 0 ]; then
+            echo "::error title=Authentic polish source application failed::Exit status $status."
+            tail -n 100 /tmp/authentic-polish-apply.log
+            exit "$status"
+          fi
+          test -s /tmp/authentic-polish-paths.txt
+          test -s /tmp/authentic-polish-text-paths.txt
+          test -s /tmp/authentic-polish-biome-paths.txt
+          grep -F '"changedPaths": 55' /tmp/authentic-polish-apply.log
+          grep -F '"indexedAssets": 17' /tmp/authentic-polish-apply.log
           git diff --check
           { git diff --name-only "$BASE_SHA"; git ls-files --others --exclude-standard; } \
             | sort -u > /tmp/authentic-polish-actual-paths.txt
-          if ! diff -u /tmp/authentic-polish-paths.txt /tmp/authentic-polish-actual-paths.txt; then
-            echo "::error title=Authentic polish path scope mismatch::The applied path set differs from the sealed source manifest."
-            exit 1
-          fi
+          diff -u /tmp/authentic-polish-paths.txt /tmp/authentic-polish-actual-paths.txt
           test ! -e .agent-release
           test ! -e .github/workflows/apply-authentic-polish.yml
 
@@ -221,6 +213,7 @@ jobs:
           name: authentic-polish-diagnostics-${{ github.run_number }}
           path: |
             /tmp/authentic-polish-apply.log
+            /tmp/authentic-polish-apply-status.txt
             /tmp/authentic-polish-actual-paths.txt
             /tmp/authentic-polish-paths.txt
             /tmp/authentic-polish-biome-paths.txt
