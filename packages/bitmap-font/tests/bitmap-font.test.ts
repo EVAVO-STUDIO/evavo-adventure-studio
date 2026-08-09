@@ -1,12 +1,9 @@
-import { describe, expect, it } from "vitest";
 import { assetBuildManifestSchema } from "@evavo/adventure-asset-contract";
 import { parseAdventureProject } from "@evavo/adventure-project-schema";
-import {
-  bitmapFontManifestSchema,
-  validateBitmapFontManifest,
-} from "../src/index.js";
-import { layoutBitmapText } from "../src/layout.js";
+import { describe, expect, it } from "vitest";
 import { validateCompiledBitmapFontMappings } from "../src/compiled-mapping.js";
+import { bitmapFontManifestSchema, validateBitmapFontManifest } from "../src/index.js";
+import { layoutBitmapText } from "../src/layout.js";
 
 const hash = "0".repeat(64);
 
@@ -145,9 +142,7 @@ const spritesheetFontManifest = bitmapFontManifestSchema.parse({
 describe("bitmap font validation", () => {
   it("accepts image and spritesheet atlas contracts", () => {
     expect(validateBitmapFontManifest(project, imageFontManifest)).toEqual([]);
-    expect(validateBitmapFontManifest(project, spritesheetFontManifest)).toEqual(
-      [],
-    );
+    expect(validateBitmapFontManifest(project, spritesheetFontManifest)).toEqual([]);
   });
 
   it("reports missing fallback, duplicate code points and atlas-mode drift", () => {
@@ -171,11 +166,7 @@ describe("bitmap font validation", () => {
     });
 
     expect(validateBitmapFontManifest(project, broken).map((issue) => issue.code)).toEqual(
-      expect.arrayContaining([
-        "missing-fallback-glyph",
-        "duplicate-code-point",
-        "unexpected-glyph-frame-id",
-      ]),
+      expect.arrayContaining(["missing-fallback-glyph", "duplicate-code-point", "unexpected-glyph-frame-id"]),
     );
   });
 });
@@ -236,9 +227,7 @@ describe("compiled bitmap font mappings", () => {
       {
         assetId: "asset.office",
         kind: "image",
-        sourceFiles: [
-          { path: "art/office.png", sha256: hash, byteLength: 1 },
-        ],
+        sourceFiles: [{ path: "art/office.png", sha256: hash, byteLength: 1 }],
         outputFiles: [
           {
             role: "primary",
@@ -328,12 +317,8 @@ describe("compiled bitmap font mappings", () => {
   });
 
   it("accepts image bounds and exact atlas frame rectangles", () => {
-    expect(validateCompiledBitmapFontMappings(imageFontManifest, compiled)).toEqual(
-      [],
-    );
-    expect(
-      validateCompiledBitmapFontMappings(spritesheetFontManifest, compiled),
-    ).toEqual([]);
+    expect(validateCompiledBitmapFontMappings(imageFontManifest, compiled)).toEqual([]);
+    expect(validateCompiledBitmapFontMappings(spritesheetFontManifest, compiled)).toEqual([]);
   });
 
   it("reports stale atlas frame geometry", () => {
@@ -352,10 +337,8 @@ describe("compiled bitmap font mappings", () => {
       ],
     });
 
-    expect(
-      validateCompiledBitmapFontMappings(broken, compiled).map(
-        (issue) => issue.code,
-      ),
-    ).toContain("compiled-font-frame-rectangle-mismatch");
+    expect(validateCompiledBitmapFontMappings(broken, compiled).map((issue) => issue.code)).toContain(
+      "compiled-font-frame-rectangle-mismatch",
+    );
   });
 });

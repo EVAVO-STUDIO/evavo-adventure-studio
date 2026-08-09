@@ -1,8 +1,5 @@
 import type { Point } from "@evavo/adventure-project-schema";
-import type {
-  AdventureProductionProfileId,
-  AdventurePuzzleGrammar,
-} from "./production-profile-types.js";
+import type { AdventureProductionProfileId, AdventurePuzzleGrammar } from "./production-profile-types.js";
 
 export type AdventureProductionShowcaseId =
   | "the-glass-finch"
@@ -13,11 +10,7 @@ export type AdventureProductionShowcaseId =
   | "jade-horizon"
   | "cold-meridian";
 
-export type AdventureShowcasePlateKind =
-  | "title"
-  | "gameplay"
-  | "dialogue"
-  | "system";
+export type AdventureShowcasePlateKind = "title" | "gameplay" | "dialogue" | "system";
 
 export type AdventureShowcaseVisualMotif =
   | "enchanted-belltower"
@@ -28,17 +21,9 @@ export type AdventureShowcaseVisualMotif =
   | "night-airfield"
   | "rain-tenement";
 
-export type AdventureShowcaseActorRole =
-  | "player"
-  | "companion"
-  | "npc"
-  | "threat";
+export type AdventureShowcaseActorRole = "player" | "companion" | "npc" | "threat";
 
-export type AdventureShowcasePropRole =
-  | "clue"
-  | "exit"
-  | "puzzle"
-  | "ambience";
+export type AdventureShowcasePropRole = "clue" | "exit" | "puzzle" | "ambience";
 
 export interface AdventureShowcaseActorBeat {
   readonly id: string;

@@ -3,18 +3,17 @@ import type { Id } from "@evavo/adventure-project-schema";
 import type { RuntimeBundle } from "@evavo/adventure-runtime-bundle";
 import {
   advanceInteractiveRuntimeWorld as advanceBaseInteractiveRuntimeWorld,
-  queueSceneObjectCommand as queueBaseSceneObjectCommand,
   type InteractiveRuntimeWorldState,
   type InteractiveRuntimeWorldTransition,
   type QueueSceneObjectCommandResult,
+  queueSceneObjectCommand as queueBaseSceneObjectCommand,
   type SceneCommandEvent,
 } from "./commands.js";
 import { advanceRuntimeNarrativeSequences } from "./narrative.js";
 
 export * from "./commands.js";
 
-export interface InteractiveRuntimeNarrativeTransition
-  extends InteractiveRuntimeWorldTransition {
+export interface InteractiveRuntimeNarrativeTransition extends InteractiveRuntimeWorldTransition {
   readonly runtimeEvents: readonly RuntimeEvent[];
 }
 
@@ -22,17 +21,11 @@ const activeBlockingSequence = (
   bundle: Pick<RuntimeBundle, "sequences">,
   state: InteractiveRuntimeWorldState,
 ): boolean => {
-  const active = new Set(
-    state.story.activeSequences.map((sequence) => sequence.sequenceId),
-  );
-  return bundle.sequences.some(
-    (sequence) => sequence.blocking && active.has(sequence.id),
-  );
+  const active = new Set(state.story.activeSequences.map((sequence) => sequence.sequenceId));
+  return bundle.sequences.some((sequence) => sequence.blocking && active.has(sequence.id));
 };
 
-const clearSceneTransientState = (
-  state: InteractiveRuntimeWorldState,
-): InteractiveRuntimeWorldState => ({
+const clearSceneTransientState = (state: InteractiveRuntimeWorldState): InteractiveRuntimeWorldState => ({
   ...state,
   movements: {},
   pendingObjectCommands: {},
@@ -42,9 +35,7 @@ const clearTransientStateAfterSceneChange = (
   previousSceneId: Id<"scene">,
   state: InteractiveRuntimeWorldState,
 ): InteractiveRuntimeWorldState =>
-  state.story.currentSceneId === previousSceneId
-    ? state
-    : clearSceneTransientState(state);
+  state.story.currentSceneId === previousSceneId ? state : clearSceneTransientState(state);
 
 export const queueSceneObjectCommand = (
   bundle: RuntimeBundle,
@@ -55,14 +46,7 @@ export const queueSceneObjectCommand = (
   itemId: Id<"item"> | null = null,
 ): QueueSceneObjectCommandResult => {
   const previousSceneId = state.story.currentSceneId;
-  const result = queueBaseSceneObjectCommand(
-    bundle,
-    state,
-    actorInstanceId,
-    objectInstanceId,
-    verb,
-    itemId,
-  );
+  const result = queueBaseSceneObjectCommand(bundle, state, actorInstanceId, objectInstanceId, verb, itemId);
   return {
     ...result,
     state: clearTransientStateAfterSceneChange(previousSceneId, result.state),
@@ -88,17 +72,12 @@ export const advanceInteractiveRuntimeWorld = (
     const blockingAtTickStart = activeBlockingSequence(bundle, state);
     const narrativeSceneId = state.story.currentSceneId;
     const narrative = advanceRuntimeNarrativeSequences(bundle, state, 1);
-    state = clearTransientStateAfterSceneChange(
-      narrativeSceneId,
-      narrative.state,
-    );
+    state = clearTransientStateAfterSceneChange(narrativeSceneId, narrative.state);
     runtimeEvents.push(...narrative.events);
 
     const heldMovements = state.movements;
     const heldPendingCommands = state.pendingObjectCommands;
-    const baseInput = blockingAtTickStart
-      ? { ...state, movements: {} }
-      : state;
+    const baseInput = blockingAtTickStart ? { ...state, movements: {} } : state;
     const sceneBeforeBaseTick = baseInput.story.currentSceneId;
     const advanced = advanceBaseInteractiveRuntimeWorld(bundle, baseInput, 1);
     state = blockingAtTickStart

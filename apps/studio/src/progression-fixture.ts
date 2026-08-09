@@ -69,57 +69,38 @@ export const progressionProject = parseAdventureProject({
   startSceneId: "scene.archive",
   startEntranceId: "entrance.archive.front",
   scenes: [
-    scene(
-      "scene.archive",
-      "Municipal Archive",
-      "asset.background.archive",
-      "entrance.archive.front",
-      36,
-    ),
-    scene(
-      "scene.alley",
-      "Service Alley",
-      "asset.background.alley",
-      "entrance.alley.archive",
-      40,
-      [
-        {
-          id: "hotspot.alley.witness",
-          name: "Waiting witness",
-          shape: {
-            points: [
-              { x: 210, y: 90 },
-              { x: 262, y: 90 },
-              { x: 262, y: 178 },
-              { x: 210, y: 178 },
+    scene("scene.archive", "Municipal Archive", "asset.background.archive", "entrance.archive.front", 36),
+    scene("scene.alley", "Service Alley", "asset.background.alley", "entrance.alley.archive", 40, [
+      {
+        id: "hotspot.alley.witness",
+        name: "Waiting witness",
+        shape: {
+          points: [
+            { x: 210, y: 90 },
+            { x: 262, y: 90 },
+            { x: 262, y: 178 },
+            { x: 210, y: 178 },
+          ],
+        },
+        walkTo: { x: 194, y: 166 },
+        cursor: "talk",
+        interactions: [
+          {
+            id: "interaction.alley.witness",
+            verb: "talk",
+            once: true,
+            actions: [
+              {
+                kind: "start-dialogue",
+                dialogueId: "dialogue.witness",
+              },
             ],
           },
-          walkTo: { x: 194, y: 166 },
-          cursor: "talk",
-          interactions: [
-            {
-              id: "interaction.alley.witness",
-              verb: "talk",
-              once: true,
-              actions: [
-                {
-                  kind: "start-dialogue",
-                  dialogueId: "dialogue.witness",
-                },
-              ],
-            },
-          ],
-          fallbackText: "The witness studies the rain instead of volunteering a route.",
-        },
-      ],
-    ),
-    scene(
-      "scene.quay",
-      "Cinder Quay",
-      "asset.background.quay",
-      "entrance.quay.alley",
-      52,
-    ),
+        ],
+        fallbackText: "The witness studies the rain instead of volunteering a route.",
+      },
+    ]),
+    scene("scene.quay", "Cinder Quay", "asset.background.quay", "entrance.quay.alley", 52),
   ],
   actors: [],
   dialogues: [
@@ -375,9 +356,7 @@ const baseSceneInstances = parseSceneInstanceManifest({
   ],
 });
 
-const redLedgerDesign = showcaseAdventureDesigns.find(
-  (candidate) => candidate.title === "The Red Ledger",
-);
+const redLedgerDesign = showcaseAdventureDesigns.find((candidate) => candidate.title === "The Red Ledger");
 if (!redLedgerDesign) {
   throw new Error("The Red Ledger showcase design is missing.");
 }
@@ -501,9 +480,7 @@ export const progressionDesign = parseAdventureDesignDocument({
           solutions: puzzle.solutions.map((solution) => ({
             ...solution,
             steps: solution.steps.map((step, stepIndex) =>
-              stepIndex === solution.steps.length - 1
-                ? { ...step, itemId: "item.red-ledger.tool" }
-                : step,
+              stepIndex === solution.steps.length - 1 ? { ...step, itemId: "item.red-ledger.tool" } : step,
             ),
           })),
         }
@@ -524,9 +501,7 @@ withoutKey.objectDefinitions = withoutKey.objectDefinitions.map((definition) =>
                 ...state,
                 interactions: state.interactions.map((interaction) => ({
                   ...interaction,
-                  actions: interaction.actions.filter(
-                    (action) => action.kind !== "give-item",
-                  ),
+                  actions: interaction.actions.filter((action) => action.kind !== "give-item"),
                 })),
               }
             : state,

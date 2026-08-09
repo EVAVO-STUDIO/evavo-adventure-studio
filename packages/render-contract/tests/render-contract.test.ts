@@ -1,10 +1,10 @@
-import { describe, expect, it } from "vitest";
 import type { Id } from "@evavo/adventure-project-schema";
+import { describe, expect, it } from "vitest";
 import {
   orderRenderNodes,
-  validateResolvedFrame,
   type RenderNode,
   type ResolvedFrame,
+  validateResolvedFrame,
 } from "../src/index.js";
 
 const id = <T extends string>(value: string) => value as Id<T>;
@@ -32,9 +32,7 @@ const createNode = (
   },
   opacity: 1,
   visible: true,
-  ...(maskNodeId
-    ? { maskNodeId: id<"render-node">(maskNodeId) }
-    : {}),
+  ...(maskNodeId ? { maskNodeId: id<"render-node">(maskNodeId) } : {}),
   size: { width: 16, height: 16 },
   color: 0,
 });
@@ -63,19 +61,12 @@ describe("resolved frame contract", () => {
       createNode("far-actor", "world", 120),
     ]);
 
-    expect(ordered.map((node) => node.id)).toEqual([
-      "far-actor",
-      "near-actor",
-      "occluder",
-    ]);
+    expect(ordered.map((node) => node.id)).toEqual(["far-actor", "near-actor", "occluder"]);
   });
 
   it("reports duplicate IDs and unknown masks", () => {
     const issues = validateResolvedFrame(
-      createFrame([
-        createNode("actor", "world", 160, "missing-mask"),
-        createNode("actor", "world", 170),
-      ]),
+      createFrame([createNode("actor", "world", 160, "missing-mask"), createNode("actor", "world", 170)]),
     );
 
     expect(issues.map((issue) => issue.code)).toEqual(

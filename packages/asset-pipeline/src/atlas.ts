@@ -1,9 +1,4 @@
-import {
-  assertRgbaImage,
-  blitRgba,
-  extrudeRgba,
-  type RgbaImage,
-} from "./rgba.js";
+import { assertRgbaImage, blitRgba, extrudeRgba, type RgbaImage } from "./rgba.js";
 
 export interface AtlasFrameRequest {
   readonly id: string;
@@ -64,10 +59,7 @@ const assertPackOptions = (options: AtlasPackOptions): void => {
   }
 };
 
-const validateRequests = (
-  frames: readonly AtlasFrameRequest[],
-  options: AtlasPackOptions,
-): void => {
+const validateRequests = (frames: readonly AtlasFrameRequest[], options: AtlasPackOptions): void => {
   const ids = new Set<string>();
   for (const frame of frames) {
     if (!frame.id.trim()) {
@@ -84,25 +76,18 @@ const validateRequests = (
       frame.width <= 0 ||
       frame.height <= 0
     ) {
-      throw new RangeError(
-        `Atlas frame '${frame.id}' dimensions must be positive safe integers.`,
-      );
+      throw new RangeError(`Atlas frame '${frame.id}' dimensions must be positive safe integers.`);
     }
 
     const outerWidth = frame.width + options.padding * 2;
     const outerHeight = frame.height + options.padding * 2;
     if (outerWidth > options.pageWidth || outerHeight > options.pageHeight) {
-      throw new RangeError(
-        `Atlas frame '${frame.id}' including padding does not fit on a page.`,
-      );
+      throw new RangeError(`Atlas frame '${frame.id}' including padding does not fit on a page.`);
     }
   }
 };
 
-const sortedRequests = (
-  frames: readonly AtlasFrameRequest[],
-  padding: number,
-): AtlasFrameRequest[] =>
+const sortedRequests = (frames: readonly AtlasFrameRequest[], padding: number): AtlasFrameRequest[] =>
   [...frames].sort((left, right) => {
     const leftHeight = left.height + padding * 2;
     const rightHeight = right.height + padding * 2;
@@ -217,9 +202,7 @@ export const packAtlas = (
     index: page.index,
     width: options.pageWidth,
     height: options.pageHeight,
-    placements: [...page.placements].sort((left, right) =>
-      left.id.localeCompare(right.id),
-    ),
+    placements: [...page.placements].sort((left, right) => left.id.localeCompare(right.id)),
   }));
 };
 
@@ -241,9 +224,7 @@ export const composeAtlasPage = (
     }
     assertRgbaImage(frame);
     if (frame.width !== placement.width || frame.height !== placement.height) {
-      throw new RangeError(
-        `Atlas source frame '${placement.id}' dimensions do not match its layout.`,
-      );
+      throw new RangeError(`Atlas source frame '${placement.id}' dimensions do not match its layout.`);
     }
 
     const extruded = extrudeRgba(frame, placement.padding);

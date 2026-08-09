@@ -1,23 +1,23 @@
 import {
-  adventurePlayFeelProfileById,
-  advanceAdventureMotionRuntimeExtension,
-  createAdventureMotionRuntimeExtension,
   type AdventureMotionPhase,
   type AdventureNativePoint,
   type AdventurePlayFeelProfile,
+  advanceAdventureMotionRuntimeExtension,
+  adventurePlayFeelProfileById,
+  createAdventureMotionRuntimeExtension,
 } from "@evavo/adventure-play-feel";
 import type { NavigationRoute } from "@evavo/adventure-scene/navigation";
-import {
-  canonicalProfiledNavigationMovementJson,
-  parseProfiledNavigationMovementJson,
-  parseProfiledNavigationMovementState,
-  ProfiledNavigationMovementParseError,
-} from "./profiled-movement-save.js";
 import {
   assertProfiledNavigationMovementCompatibility,
   inspectProfiledNavigationRoute,
   ProfiledNavigationMovementCompatibilityError,
 } from "./profiled-movement-compatibility.js";
+import {
+  canonicalProfiledNavigationMovementJson,
+  ProfiledNavigationMovementParseError,
+  parseProfiledNavigationMovementJson,
+  parseProfiledNavigationMovementState,
+} from "./profiled-movement-save.js";
 import type {
   AdvanceProfiledNavigationMovementOptions,
   BeginProfiledNavigationMovementInput,
@@ -33,10 +33,7 @@ export type * from "./profiled-movement-types.js";
 
 const beginRejected = (
   input: BeginProfiledNavigationMovementInput,
-  reason: Extract<
-    BeginProfiledNavigationMovementResult,
-    { readonly kind: "rejected" }
-  >["reason"],
+  reason: Extract<BeginProfiledNavigationMovementResult, { readonly kind: "rejected" }>["reason"],
   message: string,
 ): BeginProfiledNavigationMovementResult => ({
   kind: "rejected",
@@ -173,9 +170,7 @@ export const advanceProfiledNavigationMovement = (
   }
   const ticks = options.ticks ?? 1;
   if (!Number.isSafeInteger(ticks) || ticks < 0) {
-    throw new RangeError(
-      "Profiled movement advancement must use a non-negative safe tick count.",
-    );
+    throw new RangeError("Profiled movement advancement must use a non-negative safe tick count.");
   }
   let nextState = state;
   const events: ProfiledNavigationMovementEvent[] = [];
@@ -225,7 +220,7 @@ export const advanceProfiledNavigationMovement = (
 
 export {
   canonicalProfiledNavigationMovementJson,
+  ProfiledNavigationMovementParseError,
   parseProfiledNavigationMovementJson,
   parseProfiledNavigationMovementState,
-  ProfiledNavigationMovementParseError,
 };

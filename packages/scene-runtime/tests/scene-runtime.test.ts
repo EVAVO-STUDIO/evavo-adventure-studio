@@ -1,6 +1,6 @@
-import { describe, expect, it } from "vitest";
 import type { Id } from "@evavo/adventure-project-schema";
 import { parseRuntimeBundle } from "@evavo/adventure-runtime-bundle";
+import { describe, expect, it } from "vitest";
 import {
   advanceRuntimeWorld,
   createInitialRuntimeWorldState,
@@ -165,10 +165,7 @@ const bundle = parseRuntimeBundle({
           id: "animation.detective.idle-east",
           state: "idle",
           facing: "east",
-          frameIds: [
-            "frame.detective.idle-1",
-            "frame.detective.idle-2",
-          ],
+          frameIds: ["frame.detective.idle-1", "frame.detective.idle-2"],
           loop: true,
           interruptible: true,
         },
@@ -277,19 +274,12 @@ describe("persistent scene runtime", () => {
   it("initialises placed actor animation and object state", () => {
     const world = createInitialRuntimeWorldState(bundle);
 
-    expect(world.story.objectStates["object.office.lamp"]).toBe(
-      "object-state.lamp.on",
-    );
-    expect(
-      world.actorInstances["actor-instance.office.detective"]?.playback.frameIndex,
-    ).toBe(0);
+    expect(world.story.objectStates["object.office.lamp"]).toBe("object-state.lamp.on");
+    expect(world.actorInstances["actor-instance.office.detective"]?.playback.frameIndex).toBe(0);
   });
 
   it("resolves background, actor and object using stable scene depth", () => {
-    const frame = resolveRuntimeSceneFrame(
-      bundle,
-      createInitialRuntimeWorldState(bundle),
-    );
+    const frame = resolveRuntimeSceneFrame(bundle, createInitialRuntimeWorldState(bundle));
 
     expect(frame.nodes.map((node) => node.id)).toEqual([
       "render.scene.scene.office.background",
@@ -327,21 +317,16 @@ describe("persistent scene runtime", () => {
       id<"object">("object.office.lamp"),
       id<"object-state">("object-state.lamp.off"),
     );
-    world = setActorInstancePosition(
-      world,
-      id<"actor-instance">("actor-instance.office.detective"),
-      { x: 100, y: 180 },
-    );
+    world = setActorInstancePosition(world, id<"actor-instance">("actor-instance.office.detective"), {
+      x: 100,
+      y: 180,
+    });
     const frame = resolveRuntimeSceneFrame(bundle, world);
 
-    expect(frame.nodes.some((node) => node.id === "render.object.object.office.lamp")).toBe(
-      false,
-    );
+    expect(frame.nodes.some((node) => node.id === "render.object.object.office.lamp")).toBe(false);
     expect(
-      frame.nodes.find(
-        (node) =>
-          node.id === "render.actor-instance.actor-instance.office.detective",
-      )?.transform.position,
+      frame.nodes.find((node) => node.id === "render.actor-instance.actor-instance.office.detective")
+        ?.transform.position,
     ).toEqual({ x: 100, y: 180 });
   });
 

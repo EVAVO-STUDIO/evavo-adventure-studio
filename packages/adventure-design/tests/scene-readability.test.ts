@@ -1,155 +1,184 @@
-import { describe, expect, it } from "vitest";
 import type { AdventureProject, Id } from "@evavo/adventure-project-schema";
-import type {
-  AdventureDesignDocument,
-  AdventureDesignId,
-} from "../src/types.js";
+import { describe, expect, it } from "vitest";
 import {
   AdventureSceneReadabilityError,
   createAdventureSceneReadabilityReports,
   evaluateAdventureSceneReadability,
   pointInAdventurePolygon,
 } from "../src/scene-readability.js";
+import type { AdventureDesignDocument, AdventureDesignId } from "../src/types.js";
 
 const id = <T extends string>(value: string): Id<T> => value as Id<T>;
-const designId = <T extends string>(value: string): AdventureDesignId<T> =>
-  value as AdventureDesignId<T>;
+const designId = <T extends string>(value: string): AdventureDesignId<T> => value as AdventureDesignId<T>;
 
-const project = (): AdventureProject => ({
-  id: id<"project">("project.readability"),
-  presentation: { nativeWidth: 320, nativeHeight: 200 },
-  scenes: [
-    {
-      id: id<"scene">("scene.office"),
-      name: "Rain Office",
-      width: 320,
-      height: 200,
-      navigationAreas: [
-        {
-          id: id<"navigation-area">("navigation.office"),
-          elevation: 0,
-          shape: {
-            points: [
-              { x: 12, y: 104 },
-              { x: 308, y: 104 },
-              { x: 308, y: 192 },
-              { x: 12, y: 192 },
-            ],
-          },
-        },
-      ],
-      depthBands: [
-        {
-          id: id<"depth-band">("depth.office"),
-          farY: 104,
-          nearY: 192,
-          farScale: 0.68,
-          nearScale: 1.04,
-        },
-      ],
-      entrances: [
-        {
-          id: id<"entrance">("entrance.office.front"),
-          position: { x: 42, y: 170 },
-          facing: "east",
-        },
-      ],
-      hotspots: [
-        {
-          id: id<"hotspot">("hotspot.office.door"),
-          name: "Frosted door",
-          shape: {
-            points: [
-              { x: 268, y: 92 },
-              { x: 312, y: 92 },
-              { x: 312, y: 174 },
-              { x: 268, y: 174 },
-            ],
-          },
-          walkTo: { x: 252, y: 160 },
-          interactions: [
-            {
-              actions: [
-                {
-                  kind: "change-scene",
-                  sceneId: "scene.alley",
-                  entranceId: "entrance.alley.office",
-                },
+const project = (): AdventureProject =>
+  ({
+    id: id<"project">("project.readability"),
+    presentation: { nativeWidth: 320, nativeHeight: 200 },
+    scenes: [
+      {
+        id: id<"scene">("scene.office"),
+        name: "Rain Office",
+        width: 320,
+        height: 200,
+        navigationAreas: [
+          {
+            id: id<"navigation-area">("navigation.office"),
+            elevation: 0,
+            shape: {
+              points: [
+                { x: 12, y: 104 },
+                { x: 308, y: 104 },
+                { x: 308, y: 192 },
+                { x: 12, y: 192 },
               ],
             },
-          ],
-          fallbackText: "The rain makes the glass look older than it is.",
-        },
-      ],
-      occluders: [
-        {
-          id: id<"occluder">("occluder.office.desk"),
-          position: { x: 128, y: 126 },
-          baselineY: 158,
-          mask: {
-            points: [
-              { x: 96, y: 126 },
-              { x: 210, y: 126 },
-              { x: 210, y: 172 },
-              { x: 96, y: 172 },
-            ],
           },
-        },
-      ],
-      fallbackText: "Nothing else in the office answers the question yet.",
-    },
-    {
-      id: id<"scene">("scene.alley"),
-      name: "Service Alley",
-      width: 320,
-      height: 200,
-      navigationAreas: [
-        {
-          id: id<"navigation-area">("navigation.alley"),
-          elevation: 0,
-          shape: {
-            points: [
-              { x: 8, y: 108 },
-              { x: 312, y: 108 },
-              { x: 304, y: 194 },
-              { x: 16, y: 194 },
-            ],
+        ],
+        depthBands: [
+          {
+            id: id<"depth-band">("depth.office"),
+            farY: 104,
+            nearY: 192,
+            farScale: 0.68,
+            nearScale: 1.04,
           },
-        },
-      ],
-      depthBands: [
-        {
-          id: id<"depth-band">("depth.alley"),
-          farY: 108,
-          nearY: 194,
-          farScale: 0.65,
-          nearScale: 1.05,
-        },
-      ],
-      entrances: [
-        {
-          id: id<"entrance">("entrance.alley.office"),
-          position: { x: 280, y: 164 },
-          facing: "west",
-        },
-      ],
-      hotspots: [],
-      occluders: [],
-      fallbackText: "The rain swallows the attempt before it reaches the street.",
-    },
-  ],
-} as AdventureProject);
+        ],
+        entrances: [
+          {
+            id: id<"entrance">("entrance.office.front"),
+            position: { x: 42, y: 170 },
+            facing: "east",
+          },
+        ],
+        hotspots: [
+          {
+            id: id<"hotspot">("hotspot.office.door"),
+            name: "Frosted door",
+            shape: {
+              points: [
+                { x: 268, y: 92 },
+                { x: 312, y: 92 },
+                { x: 312, y: 174 },
+                { x: 268, y: 174 },
+              ],
+            },
+            walkTo: { x: 252, y: 160 },
+            interactions: [
+              {
+                actions: [
+                  {
+                    kind: "change-scene",
+                    sceneId: "scene.alley",
+                    entranceId: "entrance.alley.office",
+                  },
+                ],
+              },
+            ],
+            fallbackText: "The rain makes the glass look older than it is.",
+          },
+        ],
+        occluders: [
+          {
+            id: id<"occluder">("occluder.office.desk"),
+            position: { x: 128, y: 126 },
+            baselineY: 158,
+            mask: {
+              points: [
+                { x: 96, y: 126 },
+                { x: 210, y: 126 },
+                { x: 210, y: 172 },
+                { x: 96, y: 172 },
+              ],
+            },
+          },
+        ],
+        fallbackText: "Nothing else in the office answers the question yet.",
+      },
+      {
+        id: id<"scene">("scene.alley"),
+        name: "Service Alley",
+        width: 320,
+        height: 200,
+        navigationAreas: [
+          {
+            id: id<"navigation-area">("navigation.alley"),
+            elevation: 0,
+            shape: {
+              points: [
+                { x: 8, y: 108 },
+                { x: 312, y: 108 },
+                { x: 304, y: 194 },
+                { x: 16, y: 194 },
+              ],
+            },
+          },
+        ],
+        depthBands: [
+          {
+            id: id<"depth-band">("depth.alley"),
+            farY: 108,
+            nearY: 194,
+            farScale: 0.65,
+            nearScale: 1.05,
+          },
+        ],
+        entrances: [
+          {
+            id: id<"entrance">("entrance.alley.office"),
+            position: { x: 280, y: 164 },
+            facing: "west",
+          },
+        ],
+        hotspots: [],
+        occluders: [],
+        fallbackText: "The rain swallows the attempt before it reaches the street.",
+      },
+    ],
+  }) as AdventureProject;
 
 const design = (): AdventureDesignDocument => ({
   documentVersion: 1,
   projectId: id<"project">("project.readability"),
   title: "The Red Ledger",
+  pitch: "A municipal mystery told through exact native-resolution staging.",
+  playerPromise: "Read each room clearly, follow the evidence, and never lose the route forward.",
+  creativeDirection: {
+    nativeSize: { width: 320, height: 200 },
+    productionMode: "painted-pixel",
+    compositionMode: "stage",
+    palette: {
+      maxColours: 64,
+      keyColours: ["rain-blue", "paper-ivory", "ledger-red"],
+      shadowRule: "Cool grouped shadows preserve silhouettes.",
+      highlightRule: "Warm practical highlights identify evidence.",
+      ditherRule: "Use ordered dithering only for broad atmospheric transitions.",
+    },
+    perspective: "Front-on rooms with shallow cinematic depth.",
+    lighting: "Rain-cool ambient light with restrained warm practicals.",
+    materialLanguage: "Wet stone, worn timber, paper and oxidised municipal metal.",
+    actorSilhouette: "Actors remain distinct from the evidence plane at native scale.",
+    backgroundHierarchy: "Navigation, evidence and exits read before decoration.",
+    portraitTreatment: "Tight low-colour portraits with controlled value groups.",
+    animationCadence: "Held key poses with deliberate transitions.",
+    interfaceTreatment: "Compact bitmap text and restrained evidence-red accents.",
+    musicDirection: "Sparse nocturnal chamber motifs.",
+    ambienceDirection: "Rain, distant trams and interior paper movement.",
+    authenticityRules: ["Compose and review at the native 320 by 200 canvas."],
+    prohibitedShortcuts: ["Do not hide required evidence through pixel hunting."],
+  },
   map: {
+    title: "Night Archive District",
+    artBrief: "A compact municipal quarter connected by rain-dark service routes.",
     locations: [
       {
         id: designId<"location">("location.office"),
         name: "Municipal Archive Night Office",
+        kind: "interior",
+        position: { x: 80, y: 96 },
         sceneId: id<"scene">("scene.office"),
+        chapterIds: [],
+        unlockedByPuzzleIds: [],
         artBrief:
           "A low, rain-lit records office where desk, clerk, frosted exit and red ledger " +
           "form four distinct value groups.",
@@ -160,7 +189,11 @@ const design = (): AdventureDesignDocument => ({
       {
         id: designId<"location">("location.alley"),
         name: "Service Alley",
+        kind: "scene",
+        position: { x: 196, y: 116 },
         sceneId: id<"scene">("scene.alley"),
+        chapterIds: [],
+        unlockedByPuzzleIds: [],
         artBrief:
           "A compressed wet alley with a broad lower walk lane, one bright tram " +
           "reflection and deep doorway silhouettes.",
@@ -169,17 +202,19 @@ const design = (): AdventureDesignDocument => ({
           "investigating the drain or service stairs.",
       },
     ],
+    routes: [],
   },
+  chapters: [],
+  clues: [],
+  puzzles: [],
+  cutscenes: [],
+  reviewChecklist: [],
 });
 
 describe("native scene readability", () => {
   it("produces a deterministic native-overlay report for a coherent scene", () => {
     const source = project();
-    const report = evaluateAdventureSceneReadability(
-      source,
-      id<"scene">("scene.office"),
-      design(),
-    );
+    const report = evaluateAdventureSceneReadability(source, id<"scene">("scene.office"), design());
 
     expect(report.status).toBe("ready");
     expect(report.score).toBe(100);
@@ -192,13 +227,7 @@ describe("native scene readability", () => {
       name: "Frosted door",
       changesScene: true,
     });
-    expect(
-      evaluateAdventureSceneReadability(
-        source,
-        id<"scene">("scene.office"),
-        design(),
-      ),
-    ).toEqual(report);
+    expect(evaluateAdventureSceneReadability(source, id<"scene">("scene.office"), design())).toEqual(report);
   });
 
   it("blocks unreachable entrances, invalid depth, bad geometry and occlusion", () => {
@@ -254,11 +283,7 @@ describe("native scene readability", () => {
       ],
     } as AdventureProject;
 
-    const report = evaluateAdventureSceneReadability(
-      broken,
-      id<"scene">("scene.office"),
-      design(),
-    );
+    const report = evaluateAdventureSceneReadability(broken, id<"scene">("scene.office"), design());
     expect(report.status).toBe("blocked");
     expect(report.findings.map((finding) => finding.id)).toEqual(
       expect.arrayContaining([
@@ -336,11 +361,7 @@ describe("native scene readability", () => {
       ],
     } as AdventureProject;
 
-    const report = evaluateAdventureSceneReadability(
-      broken,
-      id<"scene">("scene.office"),
-      design(),
-    );
+    const report = evaluateAdventureSceneReadability(broken, id<"scene">("scene.office"), design());
     expect(report.status).toBe("blocked");
     expect(report.findings.map((finding) => finding.id)).toEqual(
       expect.arrayContaining([
@@ -365,27 +386,16 @@ describe("native scene readability", () => {
 
     expect(report.status).toBe("blocked");
     expect(report.designLink).toBeNull();
-    expect(report.findings.map((finding) => finding.id)).toContain(
-      "composition-design-project-mismatch",
-    );
+    expect(report.findings.map((finding) => finding.id)).toContain("composition-design-project-mismatch");
     expect(() =>
-      evaluateAdventureSceneReadability(
-        project(),
-        id<"scene">("scene.missing"),
-        design(),
-      ),
+      evaluateAdventureSceneReadability(project(), id<"scene">("scene.missing"), design()),
     ).toThrow(AdventureSceneReadabilityError);
   });
 
   it("returns reports in canonical project scene order", () => {
     const reports = createAdventureSceneReadabilityReports(project(), design());
-    expect(reports.map((report) => report.sceneId)).toEqual([
-      "scene.office",
-      "scene.alley",
-    ]);
-    expect(reports[1]?.findings.map((finding) => finding.id)).toContain(
-      "hotspots-not-yet-authored",
-    );
+    expect(reports.map((report) => report.sceneId)).toEqual(["scene.office", "scene.alley"]);
+    expect(reports[1]?.findings.map((finding) => finding.id)).toContain("hotspots-not-yet-authored");
   });
 
   it("treats polygon boundaries as part of the authored region", () => {
@@ -410,8 +420,6 @@ describe("native scene readability", () => {
         { x: 10, y: 20 },
       ],
     };
-    expect(pointInAdventurePolygon({ x: 100, y: 100 }, duplicatedEdge)).toBe(
-      false,
-    );
+    expect(pointInAdventurePolygon({ x: 100, y: 100 }, duplicatedEdge)).toBe(false);
   });
 });

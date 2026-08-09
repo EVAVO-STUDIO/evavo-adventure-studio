@@ -1,26 +1,26 @@
-import { useMemo, useState, type ChangeEvent } from "react";
 import {
-  adventureProductionProfiles,
   type AdventureProductionProfile,
+  adventureProductionProfiles,
 } from "@evavo/adventure-design/production-profiles";
 import {
-  adventurePlayFeelProfileForProductionProfile,
   advanceAdventureCamera,
   advanceAdventureFramePacing,
+  adventurePlayFeelProfileForProductionProfile,
   auditAdventureMotionTrace,
   auditAdventurePlayFeelProfile,
   createAdventureCameraState,
   createAdventureFramePacingState,
   simulateAdventureMotion,
 } from "@evavo/adventure-play-feel";
+import { type ChangeEvent, useMemo, useState } from "react";
 import {
   Metric,
   MotionFeelButton,
+  type MotionFeelView,
   MotionStage,
+  motionFeelStyle,
   TimingContract,
   VelocityGraph,
-  motionFeelStyle,
-  type MotionFeelView,
 } from "./motion-feel-components.js";
 import "./motion-feel.css";
 
@@ -41,12 +41,8 @@ const cameraTrace = (
   for (const sample of samples.slice(1)) {
     const previous = samples[Math.max(0, sample.tick - 1)] ?? sample;
     const velocity = {
-      x:
-        (sample.unquantizedPosition.x - previous.unquantizedPosition.x) *
-        profile.logicalTicksPerSecond,
-      y:
-        (sample.unquantizedPosition.y - previous.unquantizedPosition.y) *
-        profile.logicalTicksPerSecond,
+      x: (sample.unquantizedPosition.x - previous.unquantizedPosition.x) * profile.logicalTicksPerSecond,
+      y: (sample.unquantizedPosition.y - previous.unquantizedPosition.y) * profile.logicalTicksPerSecond,
     };
     camera = advanceAdventureCamera(
       camera,
@@ -71,9 +67,7 @@ const cameraTrace = (
   return states;
 };
 
-const pacingEvidence = (
-  profile: ReturnType<typeof adventurePlayFeelProfileForProductionProfile>,
-) => {
+const pacingEvidence = (profile: ReturnType<typeof adventurePlayFeelProfileForProductionProfile>) => {
   const deltas = [16, 17, 16, 33, 8, 24, 120, 16, 250, 16] as const;
   let state = createAdventureFramePacingState();
   return deltas.map((milliseconds, index) => {
@@ -101,27 +95,19 @@ export const MotionFeelApp = () => {
   const boundedTick = Math.min(sampleTick, trace.arrivalTick);
   const sample = trace.samples[boundedTick] ?? trace.samples.at(-1)!;
   const camera = cameras[boundedTick] ?? cameras.at(-1)!;
-  const traceIssues = useMemo(
-    () => auditAdventureMotionTrace(trace, profile),
-    [trace, profile],
-  );
+  const traceIssues = useMemo(() => auditAdventureMotionTrace(trace, profile), [trace, profile]);
   const profileReport = useMemo(
     () =>
       auditAdventurePlayFeelProfile(profile, {
         logicalTicksPerSecond: profile.logicalTicksPerSecond,
         pixelMotionPolicy:
-          productionProfile.pixelMotionPolicy === "free"
-            ? "free"
-            : productionProfile.pixelMotionPolicy,
+          productionProfile.pixelMotionPolicy === "free" ? "free" : productionProfile.pixelMotionPolicy,
         renderInterpolation: profile.presentation.renderInterpolation,
       }),
     [profile, productionProfile],
   );
   const footfalls = trace.samples.filter((entry) => entry.footfall !== null).length;
-  const droppedMilliseconds = pacing.reduce(
-    (total, entry) => total + entry.droppedMilliseconds,
-    0,
-  );
+  const droppedMilliseconds = pacing.reduce((total, entry) => total + entry.droppedMilliseconds, 0);
 
   const selectProfile = (index: number): void => {
     setProfileIndex(index);
@@ -175,10 +161,7 @@ export const MotionFeelApp = () => {
             Contract
           </MotionFeelButton>
         </div>
-        <p>
-          Fixed-step story state · bounded kinematics · native display
-          quantization
-        </p>
+        <p>Fixed-step story state · bounded kinematics · native display quantization</p>
       </nav>
 
       <div className="mfl-workspace">
@@ -190,37 +173,22 @@ export const MotionFeelApp = () => {
             <code>{profile.id}</code>
           </section>
           <dl className="mfl-metrics">
-            <Metric
-              label="Logical rate"
-              value={`${profile.logicalTicksPerSecond} Hz`}
-            />
-            <Metric
-              label="Top speed"
-              value={`${profile.movement.topSpeedPixelsPerSecond} px/s`}
-            />
+            <Metric label="Logical rate" value={`${profile.logicalTicksPerSecond} Hz`} />
+            <Metric label="Top speed" value={`${profile.movement.topSpeedPixelsPerSecond} px/s`} />
             <Metric
               label="Arrival"
               value={`${trace.arrivalTick} ticks`}
-              detail={`${(
-                trace.arrivalTick / profile.logicalTicksPerSecond
-              ).toFixed(2)} seconds`}
+              detail={`${(trace.arrivalTick / profile.logicalTicksPerSecond).toFixed(2)} seconds`}
             />
-            <Metric
-              label="Walk cycle"
-              value={`${profile.animation.pixelsPerWalkCycle} px`}
-            />
+            <Metric label="Walk cycle" value={`${profile.animation.pixelsPerWalkCycle} px`} />
             <Metric label="Footfalls" value={footfalls} />
             <Metric label="Camera" value={profile.camera.mode} />
-            <Metric
-              label="Interpolation"
-              value={profile.presentation.renderInterpolation}
-            />
+            <Metric label="Interpolation" value={profile.presentation.renderInterpolation} />
           </dl>
           <section className="mfl-profile-stack">
             <span className="mfl-eyebrow">FAMILY COMPARISON</span>
             {adventureProductionProfiles.map((candidate, index) => {
-              const candidateFeel =
-                adventurePlayFeelProfileForProductionProfile(candidate.id);
+              const candidateFeel = adventurePlayFeelProfileForProductionProfile(candidate.id);
               return (
                 <button
                   type="button"
@@ -229,9 +197,7 @@ export const MotionFeelApp = () => {
                   onClick={() => selectProfile(index)}
                 >
                   <span>{candidate.label}</span>
-                  <strong>
-                    {candidateFeel.movement.topSpeedPixelsPerSecond}
-                  </strong>
+                  <strong>{candidateFeel.movement.topSpeedPixelsPerSecond}</strong>
                   <small>px/s</small>
                 </button>
               );
@@ -245,14 +211,10 @@ export const MotionFeelApp = () => {
               <header className="mfl-stage-heading">
                 <div>
                   <span className="mfl-eyebrow">
-                    {view === "camera"
-                      ? "CAMERA + ACTOR COORDINATION"
-                      : "DETERMINISTIC NATIVE KINEMATICS"}
+                    {view === "camera" ? "CAMERA + ACTOR COORDINATION" : "DETERMINISTIC NATIVE KINEMATICS"}
                   </span>
                   <h1>
-                    {view === "camera"
-                      ? `${profile.camera.mode} camera`
-                      : "Authored movement envelope"}
+                    {view === "camera" ? `${profile.camera.mode} camera` : "Authored movement envelope"}
                   </h1>
                   <p>
                     {view === "camera"
@@ -268,12 +230,7 @@ export const MotionFeelApp = () => {
                   <span>/ {trace.arrivalTick}</span>
                 </div>
               </header>
-              <MotionStage
-                profile={profile}
-                trace={trace}
-                sample={sample}
-                camera={camera}
-              />
+              <MotionStage profile={profile} trace={trace} sample={sample} camera={camera} />
               <label className="mfl-scrubber">
                 <span>Logical tick</span>
                 <input
@@ -301,9 +258,8 @@ export const MotionFeelApp = () => {
                   <span className="mfl-eyebrow">RENDER CADENCE EVIDENCE</span>
                   <h1>Simulation never inherits monitor jitter</h1>
                   <p>
-                    Irregular frame deltas are converted into bounded logical
-                    ticks. Only the profile-authorized camera interpolation
-                    fraction is exposed to presentation.
+                    Irregular frame deltas are converted into bounded logical ticks. Only the
+                    profile-authorized camera interpolation fraction is exposed to presentation.
                   </p>
                 </div>
                 <div className="mfl-drop-summary">
@@ -311,53 +267,52 @@ export const MotionFeelApp = () => {
                   <span>ms deliberately dropped</span>
                 </div>
               </header>
-              <div
-                className="mfl-frame-table"
-                role="table"
-                aria-label="Frame pacing evidence"
-              >
-                <div role="row" className="is-header">
-                  <span>Frame</span>
-                  <span>Delta</span>
-                  <span>Ticks</span>
-                  <span>Logical</span>
-                  <span>Alpha</span>
-                  <span>Dropped</span>
-                </div>
-                {pacing.map((entry) => (
-                  <div role="row" key={entry.frame}>
-                    <span>{entry.frame}</span>
-                    <span>{entry.milliseconds} ms</span>
-                    <strong>{entry.ticksToRun}</strong>
-                    <span>{entry.state.logicalTick}</span>
-                    <span>{entry.interpolationAlpha.toFixed(3)}</span>
-                    <span>{entry.droppedMilliseconds.toFixed(1)} ms</span>
-                  </div>
-                ))}
-              </div>
+              <table className="mfl-frame-table">
+                <caption>Frame pacing evidence</caption>
+                <thead>
+                  <tr>
+                    <th scope="col">Frame</th>
+                    <th scope="col">Delta</th>
+                    <th scope="col">Ticks</th>
+                    <th scope="col">Logical</th>
+                    <th scope="col">Alpha</th>
+                    <th scope="col">Dropped</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {pacing.map((entry) => (
+                    <tr key={entry.frame}>
+                      <td>{entry.frame}</td>
+                      <td>{entry.milliseconds} ms</td>
+                      <td>
+                        <strong>{entry.ticksToRun}</strong>
+                      </td>
+                      <td>{entry.state.logicalTick}</td>
+                      <td>{entry.interpolationAlpha.toFixed(3)}</td>
+                      <td>{entry.droppedMilliseconds.toFixed(1)} ms</td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
               <div className="mfl-timing-rules">
                 <article>
                   <span>01</span>
                   <h2>Canonical ticks first</h2>
-                  <p>
-                    Input, movement, dialogue, sequences, score and saves
-                    advance only on logical ticks.
-                  </p>
+                  <p>Input, movement, dialogue, sequences, score and saves advance only on logical ticks.</p>
                 </article>
                 <article>
                   <span>02</span>
                   <h2>Presentation is bounded</h2>
                   <p>
-                    Large frame stalls cannot run an unbounded catch-up loop
-                    or fast-forward puzzle state.
+                    Large frame stalls cannot run an unbounded catch-up loop or fast-forward puzzle state.
                   </p>
                 </article>
                 <article>
                   <span>03</span>
                   <h2>Interpolation is selective</h2>
                   <p>
-                    Profiles may interpolate camera presentation, but never
-                    canonical actors or interaction geometry.
+                    Profiles may interpolate camera presentation, but never canonical actors or interaction
+                    geometry.
                   </p>
                 </article>
               </div>
@@ -424,9 +379,8 @@ export const MotionFeelApp = () => {
                 : `${traceIssues.length} trace findings`}
             </h2>
             <p>
-              This proves renderer-neutral timing and movement. Final
-              character art, cursor feel, audio latency, scene composition and
-              puzzle comprehension still require compiled Player evidence.
+              This proves renderer-neutral timing and movement. Final character art, cursor feel, audio
+              latency, scene composition and puzzle comprehension still require compiled Player evidence.
             </p>
           </section>
           <footer>

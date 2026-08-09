@@ -10,10 +10,7 @@ import type {
   Sequence,
 } from "@evavo/adventure-project-schema";
 import type { SceneInstanceManifest } from "@evavo/adventure-scene-instances";
-import type {
-  AdventureProgressionOptions,
-  AdventureProgressionRuntimeState,
-} from "./progression-types.js";
+import type { AdventureProgressionOptions, AdventureProgressionRuntimeState } from "./progression-types.js";
 
 export interface AdventureProgressionRuntimeContext {
   readonly project: AdventureProject;
@@ -45,12 +42,8 @@ export interface AdventureProgressionImmediateResult {
 const sortedUnique = <T extends string>(values: readonly T[]): T[] =>
   [...new Set(values)].sort((left, right) => left.localeCompare(right));
 
-const sortedRecord = <T>(
-  record: Readonly<Record<string, T>>,
-): Readonly<Record<string, T>> =>
-  Object.fromEntries(
-    Object.entries(record).sort(([left], [right]) => left.localeCompare(right)),
-  );
+const sortedRecord = <T>(record: Readonly<Record<string, T>>): Readonly<Record<string, T>> =>
+  Object.fromEntries(Object.entries(record).sort(([left], [right]) => left.localeCompare(right)));
 
 export const canonicalAdventureProgressionState = (
   state: AdventureProgressionRuntimeState,
@@ -68,9 +61,8 @@ export const canonicalAdventureProgressionState = (
   reachedSequenceIds: sortedUnique(state.reachedSequenceIds),
 });
 
-export const adventureProgressionStateHash = (
-  state: AdventureProgressionRuntimeState,
-): string => JSON.stringify(canonicalAdventureProgressionState(state));
+export const adventureProgressionStateHash = (state: AdventureProgressionRuntimeState): string =>
+  JSON.stringify(canonicalAdventureProgressionState(state));
 
 export const createAdventureProgressionRuntimeContext = (
   project: AdventureProject,
@@ -79,14 +71,9 @@ export const createAdventureProgressionRuntimeContext = (
 ): AdventureProgressionRuntimeContext => ({
   project,
   sceneInstances,
-  dialoguesById: new Map(
-    project.dialogues.map((dialogue) => [dialogue.id as string, dialogue] as const),
-  ),
-  sequencesById: new Map(
-    project.sequences.map((sequence) => [sequence.id as string, sequence] as const),
-  ),
-  maximumNestedRequests:
-    options.maximumNestedRequests ?? options.maximumNestedSequences ?? 16,
+  dialoguesById: new Map(project.dialogues.map((dialogue) => [dialogue.id as string, dialogue] as const)),
+  sequencesById: new Map(project.sequences.map((sequence) => [sequence.id as string, sequence] as const)),
+  maximumNestedRequests: options.maximumNestedRequests ?? options.maximumNestedSequences ?? 16,
   recursiveSequenceIds: new Set<string>(),
   recursiveDialogueIds: new Set<string>(),
   loopingSequenceIds: new Set<string>(),
@@ -97,17 +84,14 @@ export const createInitialAdventureProgressionState = (
   sceneInstances: SceneInstanceManifest,
 ): AdventureProgressionRuntimeState => {
   const definitions = new Map(
-    sceneInstances.objectDefinitions.map(
-      (definition) => [definition.id as string, definition] as const,
-    ),
+    sceneInstances.objectDefinitions.map((definition) => [definition.id as string, definition] as const),
   );
   const objectStates: Record<string, string> = {};
   for (const composition of sceneInstances.scenes) {
     for (const instance of composition.objectInstances) {
       const definition = definitions.get(instance.definitionId);
       if (!definition) continue;
-      objectStates[instance.id] =
-        instance.initialStateId ?? definition.initialStateId;
+      objectStates[instance.id] = instance.initialStateId ?? definition.initialStateId;
     }
   }
 
@@ -173,9 +157,7 @@ export const evaluateAdventureProgressionCondition = (
       return (state.flags[condition.flag] ?? false) === condition.equals;
     case "variable": {
       const actual = state.variables[condition.variable];
-      return actual === undefined
-        ? false
-        : compareScalars(actual, condition.operator, condition.value);
+      return actual === undefined ? false : compareScalars(actual, condition.operator, condition.value);
     }
     case "has-item":
       return state.inventoryItemIds.includes(condition.itemId);
@@ -184,13 +166,9 @@ export const evaluateAdventureProgressionCondition = (
     case "dialogue-choice-used":
       return state.consumedDialogueChoiceIds.includes(condition.choiceId);
     case "all":
-      return condition.conditions.every((child) =>
-        evaluateAdventureProgressionCondition(child, state),
-      );
+      return condition.conditions.every((child) => evaluateAdventureProgressionCondition(child, state));
     case "any":
-      return condition.conditions.some((child) =>
-        evaluateAdventureProgressionCondition(child, state),
-      );
+      return condition.conditions.some((child) => evaluateAdventureProgressionCondition(child, state));
     case "not":
       return !evaluateAdventureProgressionCondition(condition.condition, state);
   }
@@ -242,9 +220,7 @@ export const applyImmediateAdventureProgressionActions = (
       case "remove-item":
         next = {
           ...next,
-          inventoryItemIds: next.inventoryItemIds.filter(
-            (itemId) => itemId !== action.itemId,
-          ),
+          inventoryItemIds: next.inventoryItemIds.filter((itemId) => itemId !== action.itemId),
         };
         break;
       case "change-scene":
@@ -285,17 +261,14 @@ const requestKey = (request: AdventureProgressionNarrativeRequest): string =>
 
 const scheduledStoryActions = (sequence: Sequence): readonly Action[] =>
   sequence.tracks
-    .flatMap((track) =>
-      track.cues.map((cue, cueIndex) => ({ trackId: track.id, cueIndex, cue })),
-    )
+    .flatMap((track) => track.cues.map((cue, cueIndex) => ({ trackId: track.id, cueIndex, cue })))
     .filter(
-      (entry): entry is {
+      (
+        entry,
+      ): entry is {
         readonly trackId: Id<"sequence-track">;
         readonly cueIndex: number;
-        readonly cue: Extract<
-          Sequence["tracks"][number]["cues"][number],
-          { readonly kind: "story-action" }
-        >;
+        readonly cue: Extract<Sequence["tracks"][number]["cues"][number], { readonly kind: "story-action" }>;
       } => entry.cue.kind === "story-action",
     )
     .sort(
@@ -315,10 +288,7 @@ export const processAdventureProgressionRequests = (
   let next = state;
   for (const request of requests) {
     const key = requestKey(request);
-    if (
-      requestStack.includes(key) ||
-      requestStack.length >= context.maximumNestedRequests
-    ) {
+    if (requestStack.includes(key) || requestStack.length >= context.maximumNestedRequests) {
       if (request.kind === "sequence") {
         context.recursiveSequenceIds.add(request.sequenceId);
         next = withReachedSequence(next, request.sequenceId);
@@ -343,22 +313,14 @@ export const processAdventureProgressionRequests = (
         ...entered.state,
         activeDialogue: { dialogueId: graph.id, nodeId: node.id },
       });
-      next = processAdventureProgressionRequests(
-        next,
-        entered.requests,
-        context,
-        nestedStack,
-      );
+      next = processAdventureProgressionRequests(next, entered.requests, context, nestedStack);
       continue;
     }
 
     const sequence = context.sequencesById.get(request.sequenceId);
     if (!sequence) continue;
     next = withReachedSequence(next, sequence.id);
-    const timeline = applyImmediateAdventureProgressionActions(
-      next,
-      scheduledStoryActions(sequence),
-    );
+    const timeline = applyImmediateAdventureProgressionActions(next, scheduledStoryActions(sequence));
     let boundaryState = timeline.state;
     let boundaryRequests = [...timeline.requests];
     if (sequence.loop) {
@@ -371,12 +333,7 @@ export const processAdventureProgressionRequests = (
       boundaryState = completed.state;
       boundaryRequests = [...boundaryRequests, ...completed.requests];
     }
-    next = processAdventureProgressionRequests(
-      boundaryState,
-      boundaryRequests,
-      context,
-      nestedStack,
-    );
+    next = processAdventureProgressionRequests(boundaryState, boundaryRequests, context, nestedStack);
   }
   return canonicalAdventureProgressionState(next);
 };
@@ -388,12 +345,7 @@ export const applyAdventureProgressionActions = (
   requestStack: readonly string[] = [],
 ): AdventureProgressionRuntimeState => {
   const immediate = applyImmediateAdventureProgressionActions(state, actions);
-  return processAdventureProgressionRequests(
-    immediate.state,
-    immediate.requests,
-    context,
-    requestStack,
-  );
+  return processAdventureProgressionRequests(immediate.state, immediate.requests, context, requestStack);
 };
 
 const dialogueNode = (
@@ -427,10 +379,7 @@ const enterDialogueNodeImmediate = (
   };
 };
 
-const choiceById = (
-  node: DialogueNode,
-  choiceId: Id<"dialogue-choice">,
-): DialogueChoice | undefined =>
+const choiceById = (node: DialogueNode, choiceId: Id<"dialogue-choice">): DialogueChoice | undefined =>
   node.choices.find((candidate) => candidate.id === choiceId);
 
 export const transitionAdventureProgressionDialogueChoice = (
@@ -445,20 +394,11 @@ export const transitionAdventureProgressionDialogueChoice = (
   let next: AdventureProgressionRuntimeState = choice.once
     ? {
         ...state,
-        consumedDialogueChoiceIds: sortedUnique([
-          ...state.consumedDialogueChoiceIds,
-          choice.id,
-        ]),
+        consumedDialogueChoiceIds: sortedUnique([...state.consumedDialogueChoiceIds, choice.id]),
       }
     : state;
-  const choiceActions = applyImmediateAdventureProgressionActions(
-    next,
-    choice.actions,
-  );
-  const exited = applyImmediateAdventureProgressionActions(
-    choiceActions.state,
-    node.exitActions,
-  );
+  const choiceActions = applyImmediateAdventureProgressionActions(next, choice.actions);
+  const exited = applyImmediateAdventureProgressionActions(choiceActions.state, node.exitActions);
   const requests = [...choiceActions.requests, ...exited.requests];
   next = exited.state;
 
@@ -466,9 +406,7 @@ export const transitionAdventureProgressionDialogueChoice = (
     next = canonicalAdventureProgressionState({ ...next, activeDialogue: null });
   } else {
     const nextNodeId = choice.nextNodeId ?? node.autoNextNodeId ?? null;
-    const nextNode = nextNodeId
-      ? graph.nodes.find((candidate) => candidate.id === nextNodeId)
-      : undefined;
+    const nextNode = nextNodeId ? graph.nodes.find((candidate) => candidate.id === nextNodeId) : undefined;
     if (nextNode) {
       const entered = enterDialogueNodeImmediate(next, graph, nextNode);
       next = entered.state;
@@ -487,16 +425,11 @@ export const continueAdventureProgressionDialogue = (
   node: DialogueNode,
   context: AdventureProgressionRuntimeContext,
 ): AdventureProgressionRuntimeState => {
-  const exited = applyImmediateAdventureProgressionActions(
-    state,
-    node.exitActions,
-  );
+  const exited = applyImmediateAdventureProgressionActions(state, node.exitActions);
   let next = exited.state;
   const requests = [...exited.requests];
   if (node.autoNextNodeId) {
-    const nextNode = graph.nodes.find(
-      (candidate) => candidate.id === node.autoNextNodeId,
-    );
+    const nextNode = graph.nodes.find((candidate) => candidate.id === node.autoNextNodeId);
     if (nextNode) {
       const entered = enterDialogueNodeImmediate(next, graph, nextNode);
       next = entered.state;

@@ -3,13 +3,13 @@ import type { ResolvedFrame } from "@evavo/adventure-render-contract";
 import type { RuntimeBundle } from "@evavo/adventure-runtime-bundle";
 import type { InteractiveRuntimeWorldState } from "@evavo/adventure-scene-runtime/commands";
 import { resolveActiveRuntimeDialogue } from "@evavo/adventure-scene-runtime/dialogue";
+import { type UiSkin, uiSkinById } from "@evavo/adventure-ui-skin";
 import {
   appendUiSkinFrame,
   type UiAssetGeometryResolver,
   type UiInventoryEntry,
   type UiRuntimeState,
 } from "@evavo/adventure-ui-skin/compose";
-import { uiSkinById, type UiSkin } from "@evavo/adventure-ui-skin";
 import type { SoftwareCursorState } from "./input.js";
 import { appendNativeStatusPanel } from "./native-status.js";
 
@@ -25,9 +25,7 @@ export interface RuntimeUiInteractionState {
   readonly parserCursorVisible?: boolean;
 }
 
-const runtimeAssetsById = (
-  bundle: Pick<RuntimeBundle, "assets">,
-): ReadonlyMap<string, RuntimeAsset> =>
+const runtimeAssetsById = (bundle: Pick<RuntimeBundle, "assets">): ReadonlyMap<string, RuntimeAsset> =>
   new Map(bundle.assets.map((asset) => [asset.assetId as string, asset] as const));
 
 export const createRuntimeUiGeometryResolver = (
@@ -55,9 +53,7 @@ export const createRuntimeUiGeometryResolver = (
         };
       }
       if (asset.kind !== "spritesheet" || !frameId) return null;
-      const frame = asset.metadata.frames.find(
-        (candidate) => candidate.frameId === frameId,
-      );
+      const frame = asset.metadata.frames.find((candidate) => candidate.frameId === frameId);
       return frame
         ? {
             sourceRect: frame.sourceRect,
@@ -73,9 +69,7 @@ const runtimeInventory = (
   bundle: Pick<RuntimeBundle, "inventoryItems">,
   world: InteractiveRuntimeWorldState,
 ): readonly UiInventoryEntry[] => {
-  const items = new Map(
-    bundle.inventoryItems.map((item) => [item.id as string, item] as const),
-  );
+  const items = new Map(bundle.inventoryItems.map((item) => [item.id as string, item] as const));
   return world.story.inventory.flatMap((itemId) => {
     const item = items.get(itemId);
     return item
@@ -90,13 +84,8 @@ const runtimeInventory = (
   });
 };
 
-const cursorVerbId = (
-  skin: UiSkin,
-  cursorId: string,
-): Id<"ui-verb"> | undefined =>
-  skin.verbs.find(
-    (verb) => verb.cursorId === cursorId || verb.verb === cursorId,
-  )?.id;
+const cursorVerbId = (skin: UiSkin, cursorId: string): Id<"ui-verb"> | undefined =>
+  skin.verbs.find((verb) => verb.cursorId === cursorId || verb.verb === cursorId)?.id;
 
 const runtimeDialogueChoices = (
   bundle: Pick<RuntimeBundle, "dialogues">,
@@ -125,13 +114,9 @@ export const runtimeUiState = (
   return {
     statusText,
     ...(activeVerbId ? { activeVerbId } : {}),
-    ...(interaction.hoveredVerbId
-      ? { hoveredVerbId: interaction.hoveredVerbId }
-      : {}),
+    ...(interaction.hoveredVerbId ? { hoveredVerbId: interaction.hoveredVerbId } : {}),
     inventory: runtimeInventory(bundle, world),
-    ...(interaction.selectedItemId
-      ? { selectedItemId: interaction.selectedItemId }
-      : {}),
+    ...(interaction.selectedItemId ? { selectedItemId: interaction.selectedItemId } : {}),
     score: world.story.score,
     ...(skin.interactionMode === "parser-assisted"
       ? {
@@ -139,12 +124,8 @@ export const runtimeUiState = (
           parserCursorVisible: interaction.parserCursorVisible ?? false,
         }
       : {}),
-    ...(interaction.verbCoinPosition
-      ? { verbCoinPosition: interaction.verbCoinPosition }
-      : {}),
-    ...(dialogueChoices && dialogueChoices.length > 0
-      ? { dialogueChoices }
-      : {}),
+    ...(interaction.verbCoinPosition ? { verbCoinPosition: interaction.verbCoinPosition } : {}),
+    ...(dialogueChoices && dialogueChoices.length > 0 ? { dialogueChoices } : {}),
     ...(interaction.hoveredDialogueChoiceId
       ? { hoveredDialogueChoiceId: interaction.hoveredDialogueChoiceId }
       : {}),

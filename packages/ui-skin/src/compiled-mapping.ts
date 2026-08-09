@@ -79,11 +79,7 @@ export const validateCompiledUiSkinMappings = (
         );
         return;
       }
-      if (
-        !asset.metadata.frames.some(
-          (frame) => frame.frameId === verb.iconFrameId,
-        )
-      ) {
+      if (!asset.metadata.frames.some((frame) => frame.frameId === verb.iconFrameId)) {
         addIssue(
           issues,
           "compiled-ui-icon-frame-missing",

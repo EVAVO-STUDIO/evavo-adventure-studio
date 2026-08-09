@@ -1,5 +1,5 @@
-import { describe, expect, it } from "vitest";
 import type { Id } from "@evavo/adventure-project-schema";
+import { describe, expect, it } from "vitest";
 import {
   appendSoftwareCursor,
   createSoftwareCursorNodes,
@@ -56,34 +56,16 @@ describe("packaged player input", () => {
   it("maps client coordinates through integer letterboxing", () => {
     const bounds = { left: 100, top: 50, width: 1000, height: 700 };
 
-    expect(
-      mapClientPointToNative(
-        { x: 120, y: 100 },
-        bounds,
-        { width: 320, height: 200 },
-      ),
-    ).toEqual({ x: 0, y: 0 });
-    expect(
-      mapClientPointToNative(
-        { x: 1079, y: 699 },
-        bounds,
-        { width: 320, height: 200 },
-      ),
-    ).toEqual({ x: 319, y: 199 });
-    expect(
-      mapClientPointToNative(
-        { x: 110, y: 100 },
-        bounds,
-        { width: 320, height: 200 },
-      ),
-    ).toBeNull();
-    expect(
-      mapClientPointToNative(
-        { x: 120, y: 80 },
-        bounds,
-        { width: 320, height: 200 },
-      ),
-    ).toBeNull();
+    expect(mapClientPointToNative({ x: 120, y: 100 }, bounds, { width: 320, height: 200 })).toEqual({
+      x: 0,
+      y: 0,
+    });
+    expect(mapClientPointToNative({ x: 1079, y: 699 }, bounds, { width: 320, height: 200 })).toEqual({
+      x: 319,
+      y: 199,
+    });
+    expect(mapClientPointToNative({ x: 110, y: 100 }, bounds, { width: 320, height: 200 })).toBeNull();
+    expect(mapClientPointToNative({ x: 120, y: 80 }, bounds, { width: 320, height: 200 })).toBeNull();
   });
 
   it("maps native screen points through camera and shake into world space", () => {
@@ -105,25 +87,16 @@ describe("packaged player input", () => {
       actorInstanceId: "actor-instance.detective",
       explicit: false,
     });
-    expect(
-      selectControlledActorInstance(
-        actorSelectionBundle,
-        "actor-instance.detective",
-      ),
-    ).toEqual({
+    expect(selectControlledActorInstance(actorSelectionBundle, "actor-instance.detective")).toEqual({
       kind: "selected",
       actorInstanceId: "actor-instance.detective",
       explicit: true,
     });
-    expect(
-      selectControlledActorInstance(actorSelectionBundle, "actor-instance.guard"),
-    ).toMatchObject({
+    expect(selectControlledActorInstance(actorSelectionBundle, "actor-instance.guard")).toMatchObject({
       kind: "invalid",
       reason: "requested-actor-is-fixed",
     });
-    expect(
-      selectControlledActorInstance(actorSelectionBundle, "actor-instance.missing"),
-    ).toMatchObject({
+    expect(selectControlledActorInstance(actorSelectionBundle, "actor-instance.missing")).toMatchObject({
       kind: "invalid",
       reason: "unknown-requested-actor",
     });
@@ -208,9 +181,7 @@ describe("packaged player input", () => {
 
     expect(walk).toHaveLength(5);
     expect(use).toHaveLength(5);
-    expect(walk.map((node) => node.id)).not.toEqual(
-      use.map((node) => node.id),
-    );
+    expect(walk.map((node) => node.id)).not.toEqual(use.map((node) => node.id));
     expect(use[0]?.transform.position).toEqual({ x: 40, y: 50 });
 
     const frame = appendSoftwareCursor(

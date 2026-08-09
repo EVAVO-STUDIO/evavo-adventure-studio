@@ -54,20 +54,13 @@ export type DialogueOperation =
       readonly state: RuntimeState;
     };
 
-const findNode = (
-  graph: DialogueGraph,
-  nodeId: Id<"dialogue-node">,
-): DialogueNode | undefined => graph.nodes.find((node) => node.id === nodeId);
+const findNode = (graph: DialogueGraph, nodeId: Id<"dialogue-node">): DialogueNode | undefined =>
+  graph.nodes.find((node) => node.id === nodeId);
 
-const resolveChoice = (
-  state: RuntimeState,
-  choice: DialogueChoice,
-): ResolvedDialogueChoice => {
+const resolveChoice = (state: RuntimeState, choice: DialogueChoice): ResolvedDialogueChoice => {
   const visible = !choice.visibleWhen || evaluateCondition(choice.visibleWhen, state);
-  const exhausted =
-    choice.once && state.consumedDialogueChoiceIds.includes(choice.id);
-  const enabledByCondition =
-    !choice.enabledWhen || evaluateCondition(choice.enabledWhen, state);
+  const exhausted = choice.once && state.consumedDialogueChoiceIds.includes(choice.id);
+  const enabledByCondition = !choice.enabledWhen || evaluateCondition(choice.enabledWhen, state);
 
   return {
     id: choice.id,
@@ -130,10 +123,7 @@ const enterNode = (
   };
 };
 
-const activeNode = (
-  state: RuntimeState,
-  graph: DialogueGraph,
-): DialogueNode | DialogueRejectionReason => {
+const activeNode = (state: RuntimeState, graph: DialogueGraph): DialogueNode | DialogueRejectionReason => {
   if (!state.activeDialogue) {
     return "dialogue-not-active";
   }
@@ -154,11 +144,7 @@ const finishDialogue = (
     kind: "ended",
     transition: {
       state: { ...exited.state, activeDialogue: null },
-      events: [
-        ...previousEvents,
-        ...exited.events,
-        { kind: "dialogue-ended", dialogueId: graph.id },
-      ],
+      events: [...previousEvents, ...exited.events, { kind: "dialogue-ended", dialogueId: graph.id }],
     },
   };
 };
@@ -170,25 +156,17 @@ export const beginDialogue = (
 ): DialogueOperation => {
   const nodeId = requestedNodeId ?? graph.startNodeId;
   const node = findNode(graph, nodeId);
-  return node
-    ? enterNode(state, graph, node)
-    : { kind: "rejected", reason: "unknown-node", state };
+  return node ? enterNode(state, graph, node) : { kind: "rejected", reason: "unknown-node", state };
 };
 
-export const endDialogue = (
-  state: RuntimeState,
-  graph: DialogueGraph,
-): DialogueOperation => {
+export const endDialogue = (state: RuntimeState, graph: DialogueGraph): DialogueOperation => {
   const node = activeNode(state, graph);
   return typeof node === "string"
     ? { kind: "rejected", reason: node, state }
     : finishDialogue(state, graph, node);
 };
 
-export const continueDialogue = (
-  state: RuntimeState,
-  graph: DialogueGraph,
-): DialogueOperation => {
+export const continueDialogue = (state: RuntimeState, graph: DialogueGraph): DialogueOperation => {
   const node = activeNode(state, graph);
   if (typeof node === "string") {
     return { kind: "rejected", reason: node, state };
@@ -260,19 +238,9 @@ export const chooseDialogueOption = (
   ];
 
   if (choice.closeDialogue || !nextNode) {
-    return finishDialogue(
-      choiceTransition.state,
-      graph,
-      currentNode,
-      events,
-    );
+    return finishDialogue(choiceTransition.state, graph, currentNode, events);
   }
 
   const exited = applyActions(choiceTransition.state, currentNode.exitActions);
-  return enterNode(
-    exited.state,
-    graph,
-    nextNode,
-    [...events, ...exited.events],
-  );
+  return enterNode(exited.state, graph, nextNode, [...events, ...exited.events]);
 };

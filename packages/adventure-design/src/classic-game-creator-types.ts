@@ -1,18 +1,12 @@
 import type { Point, Size } from "@evavo/adventure-project-schema";
-import type {
-  AdventureProductionProfileId,
-  AdventurePuzzleGrammar,
-} from "./production-profile-types.js";
+import type { AdventureProductionProfileId, AdventurePuzzleGrammar } from "./production-profile-types.js";
 import type {
   AdventureProductionShowcaseId,
   AdventureShowcasePlateKind,
   AdventureShowcaseVisualMotif,
 } from "./production-showcase-types.js";
 
-export type ClassicAdventureCreatorFamily =
-  | "storybook-icon"
-  | "gothic-investigation"
-  | "verb-panel-comedy";
+export type ClassicAdventureCreatorFamily = "storybook-icon" | "gothic-investigation" | "verb-panel-comedy";
 
 export type ClassicAdventureCreatorInterfaceFamily =
   | "temporary-icon-bar"
@@ -27,17 +21,9 @@ export type ClassicAdventureCreatorLayerRole =
   | "foreground"
   | "interface";
 
-export type ClassicAdventureCreatorActorRole =
-  | "player"
-  | "companion"
-  | "npc"
-  | "threat";
+export type ClassicAdventureCreatorActorRole = "player" | "companion" | "npc" | "threat";
 
-export type ClassicAdventureCreatorPropRole =
-  | "clue"
-  | "exit"
-  | "puzzle"
-  | "ambience";
+export type ClassicAdventureCreatorPropRole = "clue" | "exit" | "puzzle" | "ambience";
 
 export interface ClassicAdventureCreatorRect {
   readonly x: number;
@@ -136,8 +122,10 @@ export interface ClassicAdventureCreatorTiming {
   readonly sceneFadeInTicks: number;
 }
 
-export type ClassicAdventureCreatorTimingField =
-  keyof Omit<ClassicAdventureCreatorTiming, "logicalTicksPerSecond">;
+export type ClassicAdventureCreatorTimingField = keyof Omit<
+  ClassicAdventureCreatorTiming,
+  "logicalTicksPerSecond"
+>;
 
 export interface ClassicAdventureCreatorPuzzle {
   readonly id: string;
@@ -155,10 +143,7 @@ export interface ClassicAdventureCreatorPuzzle {
 export interface ClassicAdventureCreatorDialogue {
   readonly id: string;
   readonly sceneId: string;
-  readonly mode:
-    | "storybook-exchange"
-    | "portrait-topics"
-    | "in-scene-choices";
+  readonly mode: "storybook-exchange" | "portrait-topics" | "in-scene-choices";
   readonly openingLine: string;
   readonly topics: readonly string[];
   readonly stateChanges: readonly string[];
@@ -187,10 +172,7 @@ export interface ClassicAdventureCreatorProject {
   readonly originalityStatement: string;
 }
 
-export type ClassicAdventureCreatorIssueSeverity =
-  | "error"
-  | "warning"
-  | "note";
+export type ClassicAdventureCreatorIssueSeverity = "error" | "warning" | "note";
 
 export type ClassicAdventureCreatorIssueCode =
   | "profile-family-mismatch"

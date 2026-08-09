@@ -1,8 +1,5 @@
 import { describe, expect, it } from "vitest";
-import {
-  parseRuntimeBundle,
-  RuntimeUiSkinValidationError,
-} from "../src/index.js";
+import { parseRuntimeBundle, RuntimeUiSkinValidationError } from "../src/index.js";
 
 const hash = "0".repeat(64);
 
@@ -163,17 +160,23 @@ describe("runtime interface skins", () => {
     const input = runtimeBundle();
     input.uiSkins.skins[0]!.fonts.status.fontId = "bitmap-font.missing";
 
-    expect(() => parseRuntimeBundle(input)).toThrow(
-      RuntimeUiSkinValidationError,
-    );
+    expect(() => parseRuntimeBundle(input)).toThrow(RuntimeUiSkinValidationError);
   });
 
   it("rejects default skin interaction-mode drift", () => {
     const input = runtimeBundle();
-    input.uiSkins.skins[0]!.interactionMode = "verb-list";
+    const [defaultSkin] = input.uiSkins.skins;
+    if (!defaultSkin) {
+      throw new Error("Expected the runtime UI fixture to contain its default skin.");
+    }
+    const drifted = {
+      ...input,
+      uiSkins: {
+        ...input.uiSkins,
+        skins: [{ ...defaultSkin, interactionMode: "verb-list" as const }],
+      },
+    };
 
-    expect(() => parseRuntimeBundle(input)).toThrow(
-      RuntimeUiSkinValidationError,
-    );
+    expect(() => parseRuntimeBundle(drifted)).toThrow(RuntimeUiSkinValidationError);
   });
 });

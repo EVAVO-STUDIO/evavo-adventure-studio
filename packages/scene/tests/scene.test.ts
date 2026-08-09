@@ -1,5 +1,5 @@
-import { describe, expect, it } from "vitest";
 import type { DepthBand, Id, Polygon } from "@evavo/adventure-project-schema";
+import { describe, expect, it } from "vitest";
 import {
   createIntegerPresentationTransform,
   hostPointToNative,
@@ -59,11 +59,7 @@ describe("scene solver", () => {
       }),
     );
 
-    expect(sorted.map((actor) => actor.id)).toEqual([
-      "actor.ada",
-      "actor.zed",
-      "actor.near",
-    ]);
+    expect(sorted.map((actor) => actor.id)).toEqual(["actor.ada", "actor.zed", "actor.near"]);
   });
 
   it("maps letterboxed host input back to native pixels", () => {

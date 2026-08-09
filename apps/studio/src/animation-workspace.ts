@@ -1,4 +1,6 @@
 import {
+  type AnimationEditorCommand,
+  type AnimationEditorHistoryState,
   animationClipDurationTicks,
   animationFrameTimeline,
   createAnimationEditorHistory,
@@ -7,15 +9,8 @@ import {
   markAnimationEditorHistorySaved,
   redoAnimationEditorCommand,
   undoAnimationEditorCommand,
-  type AnimationEditorCommand,
-  type AnimationEditorHistoryState,
 } from "@evavo/adventure-animation-editor-core";
-import type {
-  Actor,
-  AnimationClip,
-  Id,
-  SpriteFrame,
-} from "@evavo/adventure-project-schema";
+import type { Actor, AnimationClip, Id, SpriteFrame } from "@evavo/adventure-project-schema";
 
 export interface AnimationWorkspaceState {
   readonly histories: Readonly<Record<string, AnimationEditorHistoryState>>;
@@ -77,32 +72,19 @@ const actorHistory = (
 export const activeAnimationActor = (state: AnimationWorkspaceState): Actor =>
   actorHistory(state).document.actor;
 
-export const selectedAnimationFrame = (
-  state: AnimationWorkspaceState,
-): SpriteFrame | null => {
+export const selectedAnimationFrame = (state: AnimationWorkspaceState): SpriteFrame | null => {
+  const actor = activeAnimationActor(state);
+  return actor.frames.find((frame) => frame.id === state.frameId) ?? actor.frames[0] ?? null;
+};
+
+export const selectedAnimationClip = (state: AnimationWorkspaceState): AnimationClip | null => {
   const actor = activeAnimationActor(state);
   return (
-    actor.frames.find((frame) => frame.id === state.frameId) ??
-    actor.frames[0] ??
-    null
+    actor.animations.find((animation) => animation.id === state.animationId) ?? actor.animations[0] ?? null
   );
 };
 
-export const selectedAnimationClip = (
-  state: AnimationWorkspaceState,
-): AnimationClip | null => {
-  const actor = activeAnimationActor(state);
-  return (
-    actor.animations.find((animation) => animation.id === state.animationId) ??
-    actor.animations[0] ??
-    null
-  );
-};
-
-const normalizedPlayhead = (
-  state: AnimationWorkspaceState,
-  tick: number,
-): number => {
+const normalizedPlayhead = (state: AnimationWorkspaceState, tick: number): number => {
   const actor = activeAnimationActor(state);
   const animation = selectedAnimationClip(state);
   if (!animation) return 0;
@@ -112,32 +94,22 @@ const normalizedPlayhead = (
   return animation.loop ? normalized % duration : Math.min(duration - 1, normalized);
 };
 
-export const frameAtPlayhead = (
-  state: AnimationWorkspaceState,
-): SpriteFrame | null => {
+export const frameAtPlayhead = (state: AnimationWorkspaceState): SpriteFrame | null => {
   const actor = activeAnimationActor(state);
   const animation = selectedAnimationClip(state);
   if (!animation) return selectedAnimationFrame(state);
   const timeline = animationFrameTimeline(actor, animation.id);
   const entry =
     timeline.find(
-      (candidate) =>
-        state.playheadTick >= candidate.startTick &&
-        state.playheadTick < candidate.endTick,
+      (candidate) => state.playheadTick >= candidate.startTick && state.playheadTick < candidate.endTick,
     ) ?? timeline.at(-1);
-  return entry
-    ? actor.frames.find((frame) => frame.id === entry.frameId) ?? null
-    : null;
+  return entry ? (actor.frames.find((frame) => frame.id === entry.frameId) ?? null) : null;
 };
 
-export const createAnimationWorkspace = (
-  actors: readonly Actor[],
-): AnimationWorkspaceState => {
+export const createAnimationWorkspace = (actors: readonly Actor[]): AnimationWorkspaceState => {
   const first = firstActor(actors);
   return {
-    histories: Object.fromEntries(
-      actors.map((actor) => [actor.id, createAnimationEditorHistory(actor)]),
-    ),
+    histories: Object.fromEntries(actors.map((actor) => [actor.id, createAnimationEditorHistory(actor)])),
     actorOrder: actors.map((actor) => actor.id),
     activeActorId: first.id,
     frameId: first.frames[0]?.id ?? null,
@@ -166,12 +138,9 @@ const selectionStillExists = (
   readonly animationId: Id<"animation-clip"> | null;
 } => ({
   frameId:
-    (frameId && actor.frames.some((frame) => frame.id === frameId)
-      ? frameId
-      : actor.frames[0]?.id) ?? null,
+    (frameId && actor.frames.some((frame) => frame.id === frameId) ? frameId : actor.frames[0]?.id) ?? null,
   animationId:
-    (animationId &&
-    actor.animations.some((animation) => animation.id === animationId)
+    (animationId && actor.animations.some((animation) => animation.id === animationId)
       ? animationId
       : actor.animations[0]?.id) ?? null,
 });
@@ -212,9 +181,7 @@ export const animationWorkspaceReducer = (
       };
     case "select-clip-frame": {
       const actor = activeAnimationActor(state);
-      const animation = actor.animations.find(
-        (candidate) => candidate.id === action.animationId,
-      );
+      const animation = actor.animations.find((candidate) => candidate.id === action.animationId);
       const frameId = animation?.frameIds[action.frameIndex] ?? null;
       return {
         ...state,
@@ -222,33 +189,24 @@ export const animationWorkspaceReducer = (
         frameId,
         clipFrameIndex: action.frameIndex,
         playheadTick: animation
-          ? animationFrameTimeline(actor, animation.id)[action.frameIndex]
-              ?.startTick ?? 0
+          ? (animationFrameTimeline(actor, animation.id)[action.frameIndex]?.startTick ?? 0)
           : 0,
         playing: false,
         notice: null,
       };
     }
     case "execute": {
-      const history = executeAnimationEditorCommand(
-        actorHistory(state),
-        action.command,
-      );
+      const history = executeAnimationEditorCommand(actorHistory(state), action.command);
       const actor = history.document.actor;
       const selection = selectionStillExists(
         actor,
         action.frameId === undefined ? state.frameId : action.frameId,
-        action.animationId === undefined
-          ? state.animationId
-          : action.animationId,
+        action.animationId === undefined ? state.animationId : action.animationId,
       );
       return {
         ...replaceHistory(state, history),
         ...selection,
-        clipFrameIndex:
-          action.clipFrameIndex === undefined
-            ? state.clipFrameIndex
-            : action.clipFrameIndex,
+        clipFrameIndex: action.clipFrameIndex === undefined ? state.clipFrameIndex : action.clipFrameIndex,
         playheadTick: 0,
         playing: false,
         notice: action.notice ?? null,
@@ -280,10 +238,7 @@ export const animationWorkspaceReducer = (
     }
     case "mark-saved":
       return {
-        ...replaceHistory(
-          state,
-          markAnimationEditorHistorySaved(actorHistory(state)),
-        ),
+        ...replaceHistory(state, markAnimationEditorHistorySaved(actorHistory(state))),
         notice: `Marked '${activeAnimationActor(state).name}' as saved.`,
       };
     case "set-playhead":
@@ -294,10 +249,7 @@ export const animationWorkspaceReducer = (
       return state.playing
         ? {
             ...state,
-            playheadTick: normalizedPlayhead(
-              state,
-              state.playheadTick + action.ticks,
-            ),
+            playheadTick: normalizedPlayhead(state, state.playheadTick + action.ticks),
           }
         : state;
     case "clear-notice":
@@ -305,12 +257,8 @@ export const animationWorkspaceReducer = (
   }
 };
 
-export const animationWorkspaceIsDirty = (
-  state: AnimationWorkspaceState,
-): boolean =>
-  Object.values(state.histories).some((history) =>
-    isAnimationEditorDocumentDirty(history.document),
-  );
+export const animationWorkspaceIsDirty = (state: AnimationWorkspaceState): boolean =>
+  Object.values(state.histories).some((history) => isAnimationEditorDocumentDirty(history.document));
 
 const actorIds = (actor: Actor): ReadonlySet<string> =>
   new Set([
@@ -336,9 +284,7 @@ export const insertAnimationFrameCommand = (
   if (!template) {
     throw new Error("Add an initial sprite frame before duplicating frame data.");
   }
-  const frameId = asId<"sprite-frame">(
-    uniqueId(actorIds(actor), `frame.${actor.id}.new`),
-  );
+  const frameId = asId<"sprite-frame">(uniqueId(actorIds(actor), `frame.${actor.id}.new`));
   const frame: SpriteFrame = {
     ...template,
     id: frameId,
@@ -363,9 +309,7 @@ export const insertAnimationClipCommand = (
   const actor = activeAnimationActor(state);
   const frame = selectedAnimationFrame(state) ?? actor.frames[0];
   if (!frame) throw new Error("Add a sprite frame before creating an animation clip.");
-  const animationId = asId<"animation-clip">(
-    uniqueId(actorIds(actor), `animation.${actor.id}.new`),
-  );
+  const animationId = asId<"animation-clip">(uniqueId(actorIds(actor), `animation.${actor.id}.new`));
   const performanceIndex = actor.animations.length + 1;
   const animation: AnimationClip = {
     id: animationId,
@@ -385,9 +329,7 @@ export const insertAnimationClipCommand = (
   };
 };
 
-export const appendSelectedFrameToClipCommand = (
-  state: AnimationWorkspaceState,
-): AnimationEditorCommand => {
+export const appendSelectedFrameToClipCommand = (state: AnimationWorkspaceState): AnimationEditorCommand => {
   const actor = activeAnimationActor(state);
   const animation = selectedAnimationClip(state);
   const frame = selectedAnimationFrame(state);
@@ -402,9 +344,7 @@ export const appendSelectedFrameToClipCommand = (
   };
 };
 
-export const removeSelectedClipFrameCommand = (
-  state: AnimationWorkspaceState,
-): AnimationEditorCommand => {
+export const removeSelectedClipFrameCommand = (state: AnimationWorkspaceState): AnimationEditorCommand => {
   const animation = selectedAnimationClip(state);
   if (!animation || state.clipFrameIndex === null) {
     throw new Error("Select a frame occurrence in the animation cadence.");

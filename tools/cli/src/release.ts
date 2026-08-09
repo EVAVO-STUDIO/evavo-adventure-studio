@@ -1,21 +1,15 @@
 import type { AssetBuildManifest } from "@evavo/adventure-asset-contract";
 import { portablePathKey } from "@evavo/adventure-asset-contract/portable-path";
 import type { CompiledProject } from "@evavo/adventure-compiler";
-import {
-  CliDataError,
-  sortDiagnostics,
-  type CliDiagnostic,
-} from "./diagnostics.js";
-import { withTrailingNewline, type AtomicDirectoryFile } from "./filesystem.js";
+import { CliDataError, type CliDiagnostic, sortDiagnostics } from "./diagnostics.js";
+import { type AtomicDirectoryFile, withTrailingNewline } from "./filesystem.js";
 import { canonicalStringify, sha256 } from "./hashing.js";
 import type { RuntimeOutputArtifact } from "./inputs.js";
 
 export const BUNDLE_FILE_NAME = "game.bundle.json";
 export const RELEASE_MANIFEST_FILE_NAME = "release.manifest.json";
 
-const RESERVED_RELEASE_PATHS = new Set(
-  [BUNDLE_FILE_NAME, RELEASE_MANIFEST_FILE_NAME].map(portablePathKey),
-);
+const RESERVED_RELEASE_PATHS = new Set([BUNDLE_FILE_NAME, RELEASE_MANIFEST_FILE_NAME].map(portablePathKey));
 
 const isReservedReleasePath = (runtimePath: string): boolean => {
   const firstSegment = runtimePath.split("/")[0] ?? "";
@@ -50,9 +44,7 @@ export const buildRelease = (
     throw new CliDataError(sortDiagnostics(diagnostics));
   }
 
-  const bundleData = new TextEncoder().encode(
-    withTrailingNewline(compiled.canonicalJson),
-  );
+  const bundleData = new TextEncoder().encode(withTrailingNewline(compiled.canonicalJson));
   const payload = {
     releaseVersion: 1 as const,
     projectId: compiled.bundle.projectId,
@@ -76,9 +68,7 @@ export const buildRelease = (
     })),
   };
   const fingerprint = sha256(canonicalStringify(payload));
-  const manifestData = new TextEncoder().encode(
-    `${canonicalStringify({ ...payload, fingerprint })}\n`,
-  );
+  const manifestData = new TextEncoder().encode(`${canonicalStringify({ ...payload, fingerprint })}\n`);
   const files: AtomicDirectoryFile[] = [
     ...artifacts.map((artifact) => ({
       relativePath: artifact.output.runtimePath,

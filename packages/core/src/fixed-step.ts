@@ -28,13 +28,8 @@ const validateConfig = (config: FixedStepConfig): void => {
   if (!Number.isSafeInteger(config.maxCatchUpTicks) || config.maxCatchUpTicks < 1) {
     throw new RangeError("maxCatchUpTicks must be a positive safe integer.");
   }
-  if (
-    !Number.isFinite(config.maxFrameDeltaMilliseconds) ||
-    config.maxFrameDeltaMilliseconds <= 0
-  ) {
-    throw new RangeError(
-      "maxFrameDeltaMilliseconds must be a positive finite number.",
-    );
+  if (!Number.isFinite(config.maxFrameDeltaMilliseconds) || config.maxFrameDeltaMilliseconds <= 0) {
+    throw new RangeError("maxFrameDeltaMilliseconds must be a positive finite number.");
   }
 };
 
@@ -57,10 +52,7 @@ export const advanceFixedStepClock = (
   }
 
   const tickMilliseconds = 1000 / config.ticksPerSecond;
-  const acceptedDelta = Math.min(
-    elapsedMilliseconds,
-    config.maxFrameDeltaMilliseconds,
-  );
+  const acceptedDelta = Math.min(elapsedMilliseconds, config.maxFrameDeltaMilliseconds);
   const clampedDrop = elapsedMilliseconds - acceptedDelta;
   const accumulated = state.remainderMilliseconds + acceptedDelta;
   const availableTicks = Math.floor(accumulated / tickMilliseconds);
@@ -72,8 +64,7 @@ export const advanceFixedStepClock = (
   return {
     state: {
       remainderMilliseconds,
-      totalDroppedMilliseconds:
-        state.totalDroppedMilliseconds + droppedMilliseconds,
+      totalDroppedMilliseconds: state.totalDroppedMilliseconds + droppedMilliseconds,
     },
     ticksToRun,
     interpolationAlpha: remainderMilliseconds / tickMilliseconds,

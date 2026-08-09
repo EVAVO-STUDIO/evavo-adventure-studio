@@ -1,13 +1,5 @@
-import type {
-  AssetBuildManifest,
-  CompiledAssetRecord,
-} from "./index.js";
-import type {
-  AdventureProject,
-  Point,
-  Rectangle,
-  Size,
-} from "@evavo/adventure-project-schema";
+import type { AdventureProject, Point, Rectangle, Size } from "@evavo/adventure-project-schema";
+import type { AssetBuildManifest, CompiledAssetRecord } from "./index.js";
 
 export type FrameAssetMappingIssueCode =
   | "missing-compiled-frame"
@@ -22,21 +14,15 @@ export interface FrameAssetMappingIssue {
   readonly message: string;
 }
 
-const samePoint = (left: Point, right: Point): boolean =>
-  left.x === right.x && left.y === right.y;
+const samePoint = (left: Point, right: Point): boolean => left.x === right.x && left.y === right.y;
 
 const sameSize = (left: Size, right: Size): boolean =>
   left.width === right.width && left.height === right.height;
 
 const sameRectangle = (left: Rectangle, right: Rectangle): boolean =>
-  left.x === right.x &&
-  left.y === right.y &&
-  left.width === right.width &&
-  left.height === right.height;
+  left.x === right.x && left.y === right.y && left.width === right.width && left.height === right.height;
 
-const compiledAssetsById = (
-  manifest: AssetBuildManifest,
-): ReadonlyMap<string, CompiledAssetRecord> =>
+const compiledAssetsById = (manifest: AssetBuildManifest): ReadonlyMap<string, CompiledAssetRecord> =>
   new Map(manifest.assets.map((asset) => [asset.assetId as string, asset]));
 
 export const validateCompiledFrameMappings = (
@@ -85,10 +71,8 @@ export const validateCompiledFrameMappings = (
 
       if (compiledAsset.kind === "image") {
         if (
-          frame.sourceRect.x + frame.sourceRect.width >
-            compiledAsset.metadata.width ||
-          frame.sourceRect.y + frame.sourceRect.height >
-            compiledAsset.metadata.height
+          frame.sourceRect.x + frame.sourceRect.width > compiledAsset.metadata.width ||
+          frame.sourceRect.y + frame.sourceRect.height > compiledAsset.metadata.height
         ) {
           issues.push({
             severity: "error",

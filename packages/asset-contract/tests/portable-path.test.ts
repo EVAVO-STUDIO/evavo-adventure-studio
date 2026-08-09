@@ -56,10 +56,7 @@ describe("portable runtime paths", () => {
       projectId: "project.paths",
       compilerVersion: "0.1.0-test",
       fingerprint: hash,
-      assets: [
-        record("asset.upper", "assets/Office.png"),
-        record("asset.lower", "assets/office.png"),
-      ],
+      assets: [record("asset.upper", "assets/Office.png"), record("asset.lower", "assets/office.png")],
     });
 
     expect(validatePortableRuntimePaths(manifest)).toEqual([

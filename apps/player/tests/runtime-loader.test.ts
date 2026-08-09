@@ -76,31 +76,28 @@ const bundle = {
   sequences: [],
 };
 
-const response = (
-  input: unknown,
-  overrides: Partial<{
-    readonly ok: boolean;
-    readonly status: number;
-    readonly statusText: string;
-  }> = {},
-): RuntimeBundleFetch => async () => ({
-  ok: overrides.ok ?? true,
-  status: overrides.status ?? 200,
-  statusText: overrides.statusText ?? "OK",
-  json: async () => input,
-});
+const response =
+  (
+    input: unknown,
+    overrides: Partial<{
+      readonly ok: boolean;
+      readonly status: number;
+      readonly statusText: string;
+    }> = {},
+  ): RuntimeBundleFetch =>
+  async () => ({
+    ok: overrides.ok ?? true,
+    status: overrides.status ?? 200,
+    statusText: overrides.statusText ?? "OK",
+    json: async () => input,
+  });
 
 describe("packaged runtime loading", () => {
   it("parses a valid source-free bundle", async () => {
-    const loaded = await loadRuntimeBundle(
-      "https://example.test/release/game.bundle.json",
-      response(bundle),
-    );
+    const loaded = await loadRuntimeBundle("https://example.test/release/game.bundle.json", response(bundle));
 
     expect(loaded.projectId).toBe("project.player-fixture");
-    expect(loaded.assets[0]?.outputFiles[0]?.runtimePath).toBe(
-      "assets/office.png",
-    );
+    expect(loaded.assets[0]?.outputFiles[0]?.runtimePath).toBe("assets/office.png");
   });
 
   it("reports HTTP failures with the bundle URL and status", async () => {
@@ -120,10 +117,7 @@ describe("packaged runtime loading", () => {
     const broken = { ...bundle, startSceneId: "scene.missing" };
 
     await expect(
-      loadRuntimeBundle(
-        "https://example.test/release/game.bundle.json",
-        response(broken),
-      ),
+      loadRuntimeBundle("https://example.test/release/game.bundle.json", response(broken)),
     ).rejects.toThrow();
   });
 
@@ -133,18 +127,12 @@ describe("packaged runtime loading", () => {
     };
 
     await expect(
-      loadRuntimeBundle(
-        "https://example.test/release/game.bundle.json",
-        failingFetch,
-      ),
+      loadRuntimeBundle("https://example.test/release/game.bundle.json", failingFetch),
     ).rejects.toThrow("network offline");
   });
 
   it("resolves the start-room background as a native sprite node", async () => {
-    const loaded = await loadRuntimeBundle(
-      "https://example.test/release/game.bundle.json",
-      response(bundle),
-    );
+    const loaded = await loadRuntimeBundle("https://example.test/release/game.bundle.json", response(bundle));
     const frame = createRuntimeStartFrame(loaded, 12);
 
     expect(frame.canvas).toEqual({

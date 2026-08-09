@@ -1,22 +1,7 @@
 import { randomUUID } from "node:crypto";
-import {
-  mkdir,
-  open,
-  rename,
-  rm,
-  stat,
-} from "node:fs/promises";
-import {
-  basename,
-  dirname,
-  join,
-  parse,
-  resolve,
-} from "node:path";
-import {
-  portablePathKey,
-  portableRelativePathError,
-} from "@evavo/adventure-asset-contract/portable-path";
+import { mkdir, open, rename, rm, stat } from "node:fs/promises";
+import { basename, dirname, join, parse, resolve } from "node:path";
+import { portablePathKey, portableRelativePathError } from "@evavo/adventure-asset-contract/portable-path";
 
 export interface AtomicFileWrite {
   readonly path: string;
@@ -54,10 +39,7 @@ export const pathExists = async (path: string): Promise<boolean> => {
 const duplicateAbsolutePathKey = (path: string): string =>
   process.platform === "win32" ? path.toLocaleLowerCase("en-US") : path;
 
-const writeFlushedFile = async (
-  path: string,
-  data: string | Uint8Array,
-): Promise<void> => {
+const writeFlushedFile = async (path: string, data: string | Uint8Array): Promise<void> => {
   await mkdir(dirname(path), { recursive: true });
   const handle = await open(path, "wx");
   try {
@@ -100,9 +82,7 @@ const rollbackFiles = async (writes: readonly StagedWrite[]): Promise<void> => {
   }
 };
 
-export const writeFilesAtomically = async (
-  files: readonly AtomicFileWrite[],
-): Promise<readonly string[]> => {
+export const writeFilesAtomically = async (files: readonly AtomicFileWrite[]): Promise<readonly string[]> => {
   if (files.length === 0) {
     return [];
   }
@@ -154,9 +134,7 @@ export const writeFilesAtomically = async (
 export const assertSafeRelativePath = (relativePath: string): string => {
   const pathError = portableRelativePathError(relativePath);
   if (pathError) {
-    throw new RangeError(
-      `Release path '${relativePath}' is not portable: ${pathError}`,
-    );
+    throw new RangeError(`Release path '${relativePath}' is not portable: ${pathError}`);
   }
   return relativePath;
 };
@@ -175,9 +153,7 @@ export const replaceDirectoryAtomically = async (
     const relativePath = assertSafeRelativePath(file.relativePath);
     const key = portablePathKey(relativePath);
     if (seen.has(key)) {
-      throw new RangeError(
-        `Release path '${relativePath}' collides with another release file.`,
-      );
+      throw new RangeError(`Release path '${relativePath}' collides with another release file.`);
     }
     seen.add(key);
     return { relativePath, data: file.data };
@@ -214,15 +190,10 @@ export const replaceDirectoryAtomically = async (
     if (hadExistingTarget && (await pathExists(backupPath))) {
       await rename(backupPath, targetPath).catch(() => undefined);
     }
-    await rm(temporaryPath, { recursive: true, force: true }).catch(
-      () => undefined,
-    );
-    await rm(backupPath, { recursive: true, force: true }).catch(
-      () => undefined,
-    );
+    await rm(temporaryPath, { recursive: true, force: true }).catch(() => undefined);
+    await rm(backupPath, { recursive: true, force: true }).catch(() => undefined);
     throw error;
   }
 };
 
-export const withTrailingNewline = (value: string): string =>
-  value.endsWith("\n") ? value : `${value}\n`;
+export const withTrailingNewline = (value: string): string => (value.endsWith("\n") ? value : `${value}\n`);

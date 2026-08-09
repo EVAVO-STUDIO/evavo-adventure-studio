@@ -32,9 +32,7 @@ describe("cinematic timeline workspace", () => {
     });
 
     expect(timelineSequenceDocument(state).tracks[0]?.cues.map((item) => item.atTick)).toEqual([
-      72,
-      150,
-      174,
+      72, 150, 174,
     ]);
     expect(selectedTimelineCue(state)?.cue.atTick).toBe(150);
     expect(state.history.undoStack).toHaveLength(1);

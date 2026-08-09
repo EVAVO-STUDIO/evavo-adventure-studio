@@ -2,9 +2,9 @@ import type { Id, Scalar } from "@evavo/adventure-project-schema";
 import {
   parseReplayLog,
   ReplayCompatibilityError,
-  validateReplayCompatibility,
   type ReplayEvent,
   type ReplayLog,
+  validateReplayCompatibility,
 } from "@evavo/adventure-replay";
 import type { RuntimeBundle } from "@evavo/adventure-runtime-bundle";
 import { loadSaveGame } from "@evavo/adventure-save-game";
@@ -67,21 +67,13 @@ export interface SaveGameInspection {
   readonly parserHistory: readonly string[];
 }
 
-const compareText = (left: string, right: string): number =>
-  left.localeCompare(right);
+const compareText = (left: string, right: string): number => left.localeCompare(right);
 
-export const inspectSaveGame = (
-  bundle: RuntimeBundle,
-  input: unknown,
-): SaveGameInspection => {
+export const inspectSaveGame = (bundle: RuntimeBundle, input: unknown): SaveGameInspection => {
   const save = loadSaveGame(bundle, input);
-  const scene = bundle.scenes.find(
-    (candidate) => candidate.id === save.world.story.currentSceneId,
-  );
+  const scene = bundle.scenes.find((candidate) => candidate.id === save.world.story.currentSceneId);
   if (!scene) {
-    throw new Error(
-      `Validated save scene '${save.world.story.currentSceneId}' is unavailable.`,
-    );
+    throw new Error(`Validated save scene '${save.world.story.currentSceneId}' is unavailable.`);
   }
 
   return {
@@ -95,9 +87,7 @@ export const inspectSaveGame = (
     score: save.world.story.score,
     inventory: save.world.story.inventory
       .map((itemId) => {
-        const item = bundle.inventoryItems.find(
-          (candidate) => candidate.id === itemId,
-        );
+        const item = bundle.inventoryItems.find((candidate) => candidate.id === itemId);
         return { id: itemId, name: item?.name ?? itemId };
       })
       .sort((left, right) => compareText(left.id, right.id)),
@@ -114,9 +104,7 @@ export const inspectSaveGame = (
       .sort((left, right) => compareText(left.name, right.name)),
     actors: Object.values(save.world.actorInstances)
       .map((state) => {
-        const actor = bundle.actors.find(
-          (candidate) => candidate.id === state.actorId,
-        );
+        const actor = bundle.actors.find((candidate) => candidate.id === state.actorId);
         return {
           instanceId: state.instanceId,
           actorId: state.actorId,
@@ -128,8 +116,7 @@ export const inspectSaveGame = (
           animationClipId: state.playback.clipId,
           frameIndex: state.playback.frameIndex,
           moving: save.world.movements[state.instanceId] !== undefined,
-          pendingCommand:
-            save.world.pendingObjectCommands[state.instanceId] !== undefined,
+          pendingCommand: save.world.pendingObjectCommands[state.instanceId] !== undefined,
         };
       })
       .sort((left, right) => compareText(left.instanceId, right.instanceId)),
@@ -143,10 +130,8 @@ export const inspectSaveGame = (
       ? {
           dialogueId: save.world.story.activeDialogue.dialogueId,
           dialogueName:
-            bundle.dialogues.find(
-              (dialogue) =>
-                dialogue.id === save.world.story.activeDialogue?.dialogueId,
-            )?.name ?? save.world.story.activeDialogue.dialogueId,
+            bundle.dialogues.find((dialogue) => dialogue.id === save.world.story.activeDialogue?.dialogueId)
+              ?.name ?? save.world.story.activeDialogue.dialogueId,
           nodeId: save.world.story.activeDialogue.nodeId,
         }
       : null,
@@ -154,9 +139,7 @@ export const inspectSaveGame = (
       .map((active) => ({
         sequenceId: active.sequenceId,
         sequenceName:
-          bundle.sequences.find(
-            (sequence) => sequence.id === active.sequenceId,
-          )?.name ?? active.sequenceId,
+          bundle.sequences.find((sequence) => sequence.id === active.sequenceId)?.name ?? active.sequenceId,
         elapsedTicks: active.elapsedTicks,
         iteration: active.iteration,
       }))
@@ -244,16 +227,13 @@ const diffRecord = (
   before: Readonly<Record<string, unknown>>,
   after: Readonly<Record<string, unknown>>,
 ): void => {
-  const keys = [...new Set([...Object.keys(before), ...Object.keys(after)])].sort(
-    compareText,
-  );
+  const keys = [...new Set([...Object.keys(before), ...Object.keys(after)])].sort(compareText);
   for (const key of keys) {
     addChanged(entries, code, `${path}.${key}`, before[key] ?? null, after[key] ?? null);
   }
 };
 
-const sortedSet = (values: readonly string[]): readonly string[] =>
-  [...new Set(values)].sort(compareText);
+const sortedSet = (values: readonly string[]): readonly string[] => [...new Set(values)].sort(compareText);
 
 export const diffSaveGames = (
   bundle: RuntimeBundle,
@@ -265,29 +245,105 @@ export const diffSaveGames = (
   const entries: SaveGameDiffEntry[] = [];
 
   addChanged(entries, "tick", "world.story.tick", before.world.story.tick, after.world.story.tick);
-  addChanged(entries, "scene", "world.story.currentSceneId", before.world.story.currentSceneId, after.world.story.currentSceneId);
-  addChanged(entries, "entrance", "world.story.currentEntranceId", before.world.story.currentEntranceId, after.world.story.currentEntranceId);
+  addChanged(
+    entries,
+    "scene",
+    "world.story.currentSceneId",
+    before.world.story.currentSceneId,
+    after.world.story.currentSceneId,
+  );
+  addChanged(
+    entries,
+    "entrance",
+    "world.story.currentEntranceId",
+    before.world.story.currentEntranceId,
+    after.world.story.currentEntranceId,
+  );
   addChanged(entries, "score", "world.story.score", before.world.story.score, after.world.story.score);
-  addChanged(entries, "inventory", "world.story.inventory", sortedSet(before.world.story.inventory), sortedSet(after.world.story.inventory));
+  addChanged(
+    entries,
+    "inventory",
+    "world.story.inventory",
+    sortedSet(before.world.story.inventory),
+    sortedSet(after.world.story.inventory),
+  );
   diffRecord(entries, "flag", "world.story.flags", before.world.story.flags, after.world.story.flags);
-  diffRecord(entries, "variable", "world.story.variables", before.world.story.variables, after.world.story.variables);
-  diffRecord(entries, "object-state", "world.story.objectStates", before.world.story.objectStates, after.world.story.objectStates);
-  diffRecord(entries, "actor-state", "world.actorInstances", before.world.actorInstances, after.world.actorInstances);
+  diffRecord(
+    entries,
+    "variable",
+    "world.story.variables",
+    before.world.story.variables,
+    after.world.story.variables,
+  );
+  diffRecord(
+    entries,
+    "object-state",
+    "world.story.objectStates",
+    before.world.story.objectStates,
+    after.world.story.objectStates,
+  );
+  diffRecord(
+    entries,
+    "actor-state",
+    "world.actorInstances",
+    before.world.actorInstances,
+    after.world.actorInstances,
+  );
   diffRecord(entries, "movement", "world.movements", before.world.movements, after.world.movements);
-  diffRecord(entries, "pending-command", "world.pendingObjectCommands", before.world.pendingObjectCommands, after.world.pendingObjectCommands);
-  addChanged(entries, "active-dialogue", "world.story.activeDialogue", before.world.story.activeDialogue, after.world.story.activeDialogue);
-  addChanged(entries, "active-sequence", "world.story.activeSequences", before.world.story.activeSequences, after.world.story.activeSequences);
-  addChanged(entries, "interface-selection", "interface.controlledActorInstanceId", before.interface.controlledActorInstanceId, after.interface.controlledActorInstanceId);
-  addChanged(entries, "interface-selection", "interface.selectedVerbId", before.interface.selectedVerbId, after.interface.selectedVerbId);
-  addChanged(entries, "interface-selection", "interface.selectedItemId", before.interface.selectedItemId, after.interface.selectedItemId);
-  addChanged(entries, "status", "interface.statusText", before.interface.statusText, after.interface.statusText);
+  diffRecord(
+    entries,
+    "pending-command",
+    "world.pendingObjectCommands",
+    before.world.pendingObjectCommands,
+    after.world.pendingObjectCommands,
+  );
+  addChanged(
+    entries,
+    "active-dialogue",
+    "world.story.activeDialogue",
+    before.world.story.activeDialogue,
+    after.world.story.activeDialogue,
+  );
+  addChanged(
+    entries,
+    "active-sequence",
+    "world.story.activeSequences",
+    before.world.story.activeSequences,
+    after.world.story.activeSequences,
+  );
+  addChanged(
+    entries,
+    "interface-selection",
+    "interface.controlledActorInstanceId",
+    before.interface.controlledActorInstanceId,
+    after.interface.controlledActorInstanceId,
+  );
+  addChanged(
+    entries,
+    "interface-selection",
+    "interface.selectedVerbId",
+    before.interface.selectedVerbId,
+    after.interface.selectedVerbId,
+  );
+  addChanged(
+    entries,
+    "interface-selection",
+    "interface.selectedItemId",
+    before.interface.selectedItemId,
+    after.interface.selectedItemId,
+  );
+  addChanged(
+    entries,
+    "status",
+    "interface.statusText",
+    before.interface.statusText,
+    after.interface.statusText,
+  );
   addChanged(entries, "parser", "interface.parser", before.interface.parser, after.interface.parser);
 
   entries.sort((left, right) => {
     const pathDifference = compareText(left.path, right.path);
-    return pathDifference !== 0
-      ? pathDifference
-      : compareText(left.code, right.code);
+    return pathDifference !== 0 ? pathDifference : compareText(left.code, right.code);
   });
 
   return {
@@ -329,10 +385,7 @@ const replayEventLabel = (event: ReplayEvent): string =>
       ? `Parser text: ${event.input.text}`
       : `Parser: ${event.input.kind}`;
 
-export const inspectReplay = (
-  bundle: RuntimeBundle,
-  input: unknown,
-): ReplayInspection => {
+export const inspectReplay = (bundle: RuntimeBundle, input: unknown): ReplayInspection => {
   const replay: ReplayLog = parseReplayLog(input);
   const issues = validateReplayCompatibility(bundle, replay);
   if (issues.length > 0) throw new ReplayCompatibilityError(issues);

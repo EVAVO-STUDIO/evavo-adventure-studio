@@ -1,9 +1,4 @@
-import type {
-  AdventureProject,
-  Id,
-  Point,
-  Size,
-} from "@evavo/adventure-project-schema";
+import type { AdventureProject, Id, Point, Size } from "@evavo/adventure-project-schema";
 import type { AdventureDesignId } from "./types.js";
 
 export type AdventureSceneReadabilityArea =

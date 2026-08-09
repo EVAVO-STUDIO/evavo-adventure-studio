@@ -39,9 +39,7 @@ button {
   width: 100%;
   height: 100%;
   grid-template-rows: 54px 44px minmax(0, 1fr);
-  background:
-    radial-gradient(circle at 50% 0%, rgb(255 36 78 / 4%), transparent 34%),
-    #090a0f;
+  background: radial-gradient(circle at 50% 0%, rgb(255 36 78 / 4%), transparent 34%), #090a0f;
 }
 
 .timeline-topbar {
@@ -367,13 +365,7 @@ button {
   min-width: 900px;
   overflow: hidden;
   background:
-    repeating-linear-gradient(
-      90deg,
-      transparent 0,
-      transparent 47px,
-      rgb(255 255 255 / 3%) 48px
-    ),
-    #0d0e13;
+    repeating-linear-gradient(90deg, transparent 0, transparent 47px, rgb(255 255 255 / 3%) 48px), #0d0e13;
 }
 
 .timeline-cue {

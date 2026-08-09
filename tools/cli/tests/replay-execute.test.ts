@@ -1,10 +1,10 @@
 import { mkdtemp, readFile, rm, writeFile } from "node:fs/promises";
 import { tmpdir } from "node:os";
 import { join } from "node:path";
-import { afterEach, describe, expect, it } from "vitest";
 import { createReplayLog } from "@evavo/adventure-replay";
 import { parseRuntimeBundle } from "@evavo/adventure-runtime-bundle";
 import { createSaveGame, parseSaveGame } from "@evavo/adventure-save-game";
+import { afterEach, describe, expect, it } from "vitest";
 import { runReplayExecuteCli } from "../src/replay-execute.js";
 
 const directories: string[] = [];
@@ -72,7 +72,6 @@ const bundle = parseRuntimeBundle({
         },
       ],
       fallbackText: "Nothing happens.",
-      interactionIndex: {},
     },
   ],
   dialogues: [],
@@ -131,9 +130,7 @@ const fixture = async (expected = save.saveFingerprint) => {
 
 afterEach(async () => {
   await Promise.all(
-    directories.splice(0).map((directory) =>
-      rm(directory, { recursive: true, force: true }),
-    ),
+    directories.splice(0).map((directory) => rm(directory, { recursive: true, force: true })),
   );
 });
 
@@ -173,9 +170,7 @@ describe("replay execute CLI", () => {
       finalSaveFingerprint: save.saveFingerprint,
       outputSavePath: files.outputSavePath,
     });
-    expect(parseSaveGame(JSON.parse(await readFile(files.outputSavePath, "utf8")))).toEqual(
-      save,
-    );
+    expect(parseSaveGame(JSON.parse(await readFile(files.outputSavePath, "utf8")))).toEqual(save);
   });
 
   it("reports deterministic divergence with a stable diagnostic code", async () => {
@@ -184,14 +179,7 @@ describe("replay execute CLI", () => {
 
     expect(
       await runReplayExecuteCli(
-        [
-          "replay-execute",
-          "--bundle",
-          files.bundlePath,
-          "--replay",
-          files.replayPath,
-          "--json",
-        ],
+        ["replay-execute", "--bundle", files.bundlePath, "--replay", files.replayPath, "--json"],
         {
           stdout: (text) => {
             stdout += text;
@@ -202,9 +190,7 @@ describe("replay execute CLI", () => {
     ).toBe(1);
     expect(JSON.parse(stdout)).toMatchObject({
       valid: false,
-      diagnostics: [
-        expect.objectContaining({ code: "replay-divergence" }),
-      ],
+      diagnostics: [expect.objectContaining({ code: "replay-divergence" })],
     });
   });
 

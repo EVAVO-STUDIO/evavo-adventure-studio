@@ -7,17 +7,44 @@
   },
   "include": ["src/**/*.ts", "tests/**/*.ts"],
   "references": [
-    { "path": "../../packages/art-direction" },
-    { "path": "../../packages/asset-contract" },
-    { "path": "../../packages/bitmap-font" },
-    { "path": "../../packages/compiler" },
-    { "path": "../../packages/playtest-inspector" },
-    { "path": "../../packages/project-schema" },
-    { "path": "../../packages/replay" },
-    { "path": "../../packages/runtime-bundle" },
-    { "path": "../../packages/save-game" },
-    { "path": "../../packages/scene-instances" },
-    { "path": "../../packages/ui-skin" },
-    { "path": "../../packages/validation" }
+    {
+      "path": "../../packages/art-direction"
+    },
+    {
+      "path": "../../packages/asset-contract"
+    },
+    {
+      "path": "../../packages/asset-pipeline"
+    },
+    {
+      "path": "../../packages/bitmap-font"
+    },
+    {
+      "path": "../../packages/compiler"
+    },
+    {
+      "path": "../../packages/playtest-inspector"
+    },
+    {
+      "path": "../../packages/project-schema"
+    },
+    {
+      "path": "../../packages/replay"
+    },
+    {
+      "path": "../../packages/runtime-bundle"
+    },
+    {
+      "path": "../../packages/save-game"
+    },
+    {
+      "path": "../../packages/scene-instances"
+    },
+    {
+      "path": "../../packages/ui-skin"
+    },
+    {
+      "path": "../../packages/validation"
+    }
   ]
 }

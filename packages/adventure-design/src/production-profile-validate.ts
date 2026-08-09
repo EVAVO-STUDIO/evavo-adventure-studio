@@ -130,9 +130,7 @@ export const validateAdventureProductionProfile = (
   }
   if (
     profile.interface.allowedInteractionModes.length === 0 ||
-    !profile.interface.allowedInteractionModes.includes(
-      profile.interface.primaryInteractionMode,
-    )
+    !profile.interface.allowedInteractionModes.includes(profile.interface.primaryInteractionMode)
   ) {
     findings.push(
       issue(
@@ -171,11 +169,7 @@ export const validateAdventureProductionProfile = (
     );
   }
   const [minimumActorHeight, maximumActorHeight] = profile.actors.relativeHeightPercent;
-  if (
-    minimumActorHeight <= 0 ||
-    maximumActorHeight < minimumActorHeight ||
-    maximumActorHeight > 100
-  ) {
+  if (minimumActorHeight <= 0 || maximumActorHeight < minimumActorHeight || maximumActorHeight > 100) {
     findings.push(
       issue(
         "error",
@@ -322,12 +316,7 @@ export const validateAdventureProductionProfile = (
     );
   }
   validateStringList(profile.showcase.sceneBriefs, "showcase.sceneBriefs", 3, findings);
-  validateStringList(
-    profile.showcase.featuredSystems,
-    "showcase.featuredSystems",
-    4,
-    findings,
-  );
+  validateStringList(profile.showcase.featuredSystems, "showcase.featuredSystems", 4, findings);
   validateStringList(profile.authenticityRules, "authenticityRules", 3, findings);
   validateStringList(profile.prohibitedShortcuts, "prohibitedShortcuts", 3, findings);
   validateStringList(profile.reviewQuestions, "reviewQuestions", 3, findings);

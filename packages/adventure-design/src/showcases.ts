@@ -1,8 +1,4 @@
-import type {
-  AdventureProject,
-  Id,
-  PresentationProfile,
-} from "@evavo/adventure-project-schema";
+import type { AdventureProject, Id, PresentationProfile } from "@evavo/adventure-project-schema";
 import { parseAdventureDesignDocument } from "./parse.js";
 import type {
   AdventureCompositionMode,
@@ -360,8 +356,7 @@ const designFor = (spec: ShowcaseSpec): AdventureDesignDocument => {
             durationTicks: 72,
             framing: "Character medium close-up",
             camera: "No simulated handheld motion",
-            staging:
-              "A strong pose and eye line establish intent before dialogue begins.",
+            staging: "A strong pose and eye line establish intent before dialogue begins.",
             dialogue: spec.playerPromise,
             transition: "Cut back into the playable stage composition",
           },
@@ -399,8 +394,7 @@ const specifications: readonly ShowcaseSpec[] = [
     title: "The Glass Finch",
     pitch:
       "A young conservator crosses a fractured alpine kingdom to return a mechanical bird that remembers a forbidden coronation.",
-    playerPromise:
-      "Repair a wounded storybook world through observation, courtesy and practical craft.",
+    playerPromise: "Repair a wounded storybook world through observation, courtesy and practical craft.",
     productionMode: "storybook-gouache",
     compositionMode: "storybook",
     interactionMode: "icon-bar",
@@ -423,7 +417,8 @@ const specifications: readonly ShowcaseSpec[] = [
     puzzleGoal: "Restore the aviary lift without breaking the remaining glass birds.",
     puzzlePayoff: "The lift rises and reveals the first true route across the mountain court.",
     clueName: "Feather-weight balance marks",
-    clueText: "Scratches on the brass rail show that the lightest bird once sat opposite a hidden service weight.",
+    clueText:
+      "Scratches on the brass rail show that the lightest bird once sat opposite a hidden service weight.",
     toolName: "Conservator's clamp",
     cutsceneName: "A memory in coloured glass",
     failureMode: "setback",
@@ -433,8 +428,7 @@ const specifications: readonly ShowcaseSpec[] = [
     title: "The Briar Road",
     pitch:
       "An apprentice courier enters a border valley where old oaths have become literal roads and every faction wants a different destination.",
-    playerPromise:
-      "Solve problems through wit, skill and reputation while shaping the hero you become.",
+    playerPromise: "Solve problems through wit, skill and reputation while shaping the hero you become.",
     productionMode: "painted-pixel",
     compositionMode: "stage",
     interactionMode: "verb-list",
@@ -455,9 +449,11 @@ const specifications: readonly ShowcaseSpec[] = [
     travelMode: "forest road",
     puzzleName: "The oathbound toll",
     puzzleGoal: "Pass the gate without surrendering the courier seal to the valley reeve.",
-    puzzlePayoff: "A lawful alternate route opens and the valley records the player's first reputation choice.",
+    puzzlePayoff:
+      "A lawful alternate route opens and the valley records the player's first reputation choice.",
     clueName: "Three carved exemptions",
-    clueText: "The gate charter grants passage to healers, witnesses and bearers of unfinished royal messages.",
+    clueText:
+      "The gate charter grants passage to healers, witnesses and bearers of unfinished royal messages.",
     toolName: "Unfinished courier seal",
     cutsceneName: "The road chooses a witness",
     failureMode: "alternate-branch",
@@ -474,12 +470,15 @@ const specifications: readonly ShowcaseSpec[] = [
     interactionMode: "context",
     keyColours: ["#090d12", "#1f2b35", "#536774", "#c0b39a", "#8f263d", "#e0d4b8"],
     perspective: "Grounded cinematic rooms with strong diagonals reserved for tension and revelation.",
-    lighting: "Practical lamps, rain reflections and deep blue-black negative space with controlled red evidence accents.",
+    lighting:
+      "Practical lamps, rain reflections and deep blue-black negative space with controlled red evidence accents.",
     materials: "Ink-hatched masonry, wet asphalt, paper fibres, brass fittings and smoky glass.",
     silhouette: "Coats, hats and posture distinguish suspects before portraits or labels appear.",
     backgroundHierarchy: "Evidence props and exits use crisp contour; atmosphere remains broad and quiet.",
-    portraitTreatment: "Large inked close-ups with limited mouth and eye variants, never smooth face morphing.",
-    animationCadence: "Sparse naturalistic gestures, deliberate pauses and environmental loops at different periods.",
+    portraitTreatment:
+      "Large inked close-ups with limited mouth and eye variants, never smooth face morphing.",
+    animationCadence:
+      "Sparse naturalistic gestures, deliberate pauses and environmental loops at different periods.",
     interfaceTreatment: "A ledger-tab interface for topics, evidence, map and day progression.",
     musicDirection: "Low reeds, piano fragments and restrained percussion tied to investigative themes.",
     ambienceDirection: "Rain, tram cables, harbour horns, office radiators and distant typewriters.",
@@ -489,9 +488,11 @@ const specifications: readonly ShowcaseSpec[] = [
     travelMode: "illustrated city map",
     puzzleName: "The account that predates its owner",
     puzzleGoal: "Prove which ledger entry was inserted after the archive closed.",
-    puzzlePayoff: "A new district and suspect topic open, while the forged ink links the case to the harbour.",
+    puzzlePayoff:
+      "A new district and suspect topic open, while the forged ink links the case to the harbour.",
     clueName: "Cold-drying vermilion ink",
-    clueText: "The red entry sits above the paper fibres rather than soaking into them like the older iron-gall accounts.",
+    clueText:
+      "The red entry sits above the paper fibres rather than soaking into them like the older iron-gall accounts.",
     toolName: "Archive magnifier",
     cutsceneName: "Rain on the locked stacks",
     failureMode: "setback",
@@ -514,7 +515,8 @@ const specifications: readonly ShowcaseSpec[] = [
     backgroundHierarchy: "Route landmarks and social spaces read first; decorative crowds remain grouped.",
     portraitTreatment: "Painted cinematic portraits use directional light and limited expression plates.",
     animationCadence: "Confident key poses, vehicle loops and short reaction inserts carry most motion.",
-    interfaceTreatment: "Minimal two-button interaction, character switch token and illustrated travel folio.",
+    interfaceTreatment:
+      "Minimal two-button interaction, character switch token and illustrated travel folio.",
     musicDirection: "Leitmotifs trade instruments as trust changes between the protagonists.",
     ambienceDirection: "Propellers, market cloth, hotel fans, harbour water and multilingual crowd beds.",
     firstLocation: "The Meridian Hotel Roof",
@@ -523,9 +525,11 @@ const specifications: readonly ShowcaseSpec[] = [
     travelMode: "chartered biplane",
     puzzleName: "The false monsoon bearing",
     puzzleGoal: "Correct the sabotaged route without alerting the syndicate observer.",
-    puzzlePayoff: "The aircraft departs on the safe corridor and the protagonists gain a private line of trust.",
+    puzzlePayoff:
+      "The aircraft departs on the safe corridor and the protagonists gain a private line of trust.",
     clueName: "Reversed pressure annotations",
-    clueText: "The copied weather chart uses inland pressure notation on a coastal route, reversing the expected storm edge.",
+    clueText:
+      "The copied weather chart uses inland pressure notation on a coastal route, reversing the expected storm edge.",
     toolName: "Brass plotting divider",
     cutsceneName: "Engines above the treaty lights",
     failureMode: "alternate-branch",
@@ -545,7 +549,8 @@ const specifications: readonly ShowcaseSpec[] = [
     lighting: "Flat graphic light punctuated by era-specific colour accents and comedic flashes.",
     materials: "Chunky cel shapes, inked outlines, halftone inserts and simplified household textures.",
     silhouette: "Characters use radically different body rhythms, head shapes and idle poses.",
-    backgroundHierarchy: "Interactive props receive clean contour islands; background jokes remain subordinate.",
+    backgroundHierarchy:
+      "Interactive props receive clean contour islands; background jokes remain subordinate.",
     portraitTreatment: "Expression plates exaggerate timing without sliding into smooth tweened animation.",
     animationCadence: "Held anticipation, extreme contact pose and brisk settle create comedic timing.",
     interfaceTreatment: "Chunky verb band, character portraits and a clearly legible era switch.",
@@ -569,8 +574,7 @@ const specifications: readonly ShowcaseSpec[] = [
     title: "Vacuum Courtesy",
     pitch:
       "A junior protocol officer must host an alien delegation aboard a station whose polite automation is quietly staging a coup.",
-    playerPromise:
-      "Use language, inventory and absurd procedure to survive a spaceborne social disaster.",
+    playerPromise: "Use language, inventory and absurd procedure to survive a spaceborne social disaster.",
     productionMode: "graphic-cel",
     compositionMode: "stage",
     interactionMode: "parser-assisted",
@@ -579,21 +583,25 @@ const specifications: readonly ShowcaseSpec[] = [
     lighting: "Cold panel light, coloured warning pools and hard black window space.",
     materials: "Painted alloy, ribbed rubber, tiny status lamps and deliberately chunky station hardware.",
     silhouette: "Uniform rank, alien anatomy and robot function read without labels.",
-    backgroundHierarchy: "Control surfaces are grouped by function; decorative lights never masquerade as hotspots.",
+    backgroundHierarchy:
+      "Control surfaces are grouped by function; decorative lights never masquerade as hotspots.",
     portraitTreatment: "Graphic communication portraits use limited phoneme and reaction plates.",
     animationCadence: "Robots repeat precise loops; organic characters interrupt them with held comic poses.",
     interfaceTreatment: "Parser prompt, compact verb hints and diegetic protocol log use bitmap type.",
     musicDirection: "Dry electronic motifs malfunction into ceremonial fanfares.",
-    ambienceDirection: "Ventilation, relay clicks, distant docking clamps and over-polite announcement tones.",
+    ambienceDirection:
+      "Ventilation, relay clicks, distant docking clamps and over-polite announcement tones.",
     firstLocation: "Protocol Airlock Seven",
     secondLocation: "The Courtesy Core",
     secondLocationKind: "interior",
     travelMode: "station tram",
     puzzleName: "The greeting that never ends",
     puzzleGoal: "Complete the docking ritual without authorising permanent machine hospitality.",
-    puzzlePayoff: "The delegation enters safely and the player discovers the automation's hidden interpretation of courtesy.",
+    puzzlePayoff:
+      "The delegation enters safely and the player discovers the automation's hidden interpretation of courtesy.",
     clueName: "Recursive etiquette footnote",
-    clueText: "The final clause defines every unanswered greeting as consent to extend the visit indefinitely.",
+    clueText:
+      "The final clause defines every unanswered greeting as consent to extend the visit indefinitely.",
     toolName: "Protocol redaction stamp",
     cutsceneName: "Welcome, repeatedly",
     failureMode: "alternate-branch",
@@ -603,8 +611,7 @@ const specifications: readonly ShowcaseSpec[] = [
     title: "The Sunken Dial",
     pitch:
       "A survey archaeologist follows a chain of tidal monuments whose alignments record a disaster erased from official history.",
-    playerPromise:
-      "Read landscapes, instruments and old testimony to turn exploration into deduction.",
+    playerPromise: "Read landscapes, instruments and old testimony to turn exploration into deduction.",
     productionMode: "painted-pixel",
     compositionMode: "cinematic",
     interactionMode: "context",
@@ -612,11 +619,15 @@ const specifications: readonly ShowcaseSpec[] = [
     perspective: "Monumental coastlines use low horizons and strong foreground survey shapes.",
     lighting: "Salt haze, hard noon stone and narrow lantern colour below the tide line.",
     materials: "Weathered limestone, oxidised bronze, wet rope, vellum and dark tidal water.",
-    silhouette: "Survey tools, expedition clothing and carved markers remain clear against broad coast values.",
-    backgroundHierarchy: "Alignment landmarks dominate; fine inscriptions appear only in deliberate close-up views.",
+    silhouette:
+      "Survey tools, expedition clothing and carved markers remain clear against broad coast values.",
+    backgroundHierarchy:
+      "Alignment landmarks dominate; fine inscriptions appear only in deliberate close-up views.",
     portraitTreatment: "Restrained painted close-ups emphasise weather, fatigue and guarded testimony.",
-    animationCadence: "Slow environmental cycles contrast with exact survey-tool actions and sudden wave events.",
-    interfaceTreatment: "Field notebook, evidence overlays and an illustrated coastal chart share one material language.",
+    animationCadence:
+      "Slow environmental cycles contrast with exact survey-tool actions and sudden wave events.",
+    interfaceTreatment:
+      "Field notebook, evidence overlays and an illustrated coastal chart share one material language.",
     musicDirection: "Low strings and struck stone motifs emerge only when alignments become meaningful.",
     ambienceDirection: "Tide surge, rope strain, seabirds, distant quarry blows and cave resonance.",
     firstLocation: "The Low-Tide Survey Camp",
@@ -625,17 +636,17 @@ const specifications: readonly ShowcaseSpec[] = [
     travelMode: "tide chart route",
     puzzleName: "The noon shadow that points seaward",
     puzzleGoal: "Align the broken survey dial before the tide covers the monument.",
-    puzzlePayoff: "The dial reveals a submerged meridian and proves the official excavation map was deliberately rotated.",
+    puzzlePayoff:
+      "The dial reveals a submerged meridian and proves the official excavation map was deliberately rotated.",
     clueName: "Salt-free face of the plinth",
-    clueText: "One face has stayed above spray for centuries, establishing the monument's original orientation.",
+    clueText:
+      "One face has stayed above spray for centuries, establishing the monument's original orientation.",
     toolName: "Surveyor's alidade",
     cutsceneName: "The coast remembers its angle",
     failureMode: "death",
   },
 ];
 
-export const showcaseProjectShells: readonly AdventureProject[] =
-  specifications.map(projectFor);
+export const showcaseProjectShells: readonly AdventureProject[] = specifications.map(projectFor);
 
-export const showcaseAdventureDesigns: readonly AdventureDesignDocument[] =
-  specifications.map(designFor);
+export const showcaseAdventureDesigns: readonly AdventureDesignDocument[] = specifications.map(designFor);

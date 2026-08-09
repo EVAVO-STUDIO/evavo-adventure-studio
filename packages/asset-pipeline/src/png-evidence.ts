@@ -1,9 +1,5 @@
 import sharp from "sharp";
-import {
-  assertRgbaImage,
-  countUniqueRgbaColours,
-  type RgbaImage,
-} from "./rgba.js";
+import { assertRgbaImage, countUniqueRgbaColours, type RgbaImage } from "./rgba.js";
 
 export type ImageAlphaMode = "opaque" | "binary" | "full";
 
@@ -24,9 +20,7 @@ export const classifyAlphaMode = (image: RgbaImage): ImageAlphaMode => {
   return hasTransparent ? "binary" : "opaque";
 };
 
-export const analysePngEvidence = async (
-  encoded: Uint8Array,
-): Promise<PngEvidence> => {
+export const analysePngEvidence = async (encoded: Uint8Array): Promise<PngEvidence> => {
   if (encoded.byteLength === 0) {
     throw new RangeError("PNG evidence source cannot be empty.");
   }
@@ -38,9 +32,7 @@ export const analysePngEvidence = async (
     .raw()
     .toBuffer({ resolveWithObject: true });
   if (decoded.info.channels !== 4) {
-    throw new Error(
-      `PNG evidence decode produced ${decoded.info.channels} channels instead of RGBA.`,
-    );
+    throw new Error(`PNG evidence decode produced ${decoded.info.channels} channels instead of RGBA.`);
   }
   const image: RgbaImage = {
     width: decoded.info.width,

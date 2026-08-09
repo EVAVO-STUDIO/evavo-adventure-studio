@@ -1,15 +1,3 @@
-import {
-  useCallback,
-  useEffect,
-  useMemo,
-  useReducer,
-  useRef,
-  useState,
-  type ChangeEvent,
-  type Dispatch,
-  type PointerEvent as ReactPointerEvent,
-  type ReactNode,
-} from "react";
 import type { EditorCommand } from "@evavo/adventure-editor-core";
 import type { Id, Point } from "@evavo/adventure-project-schema";
 import {
@@ -18,6 +6,18 @@ import {
   type SceneNavigationPortal,
   type SceneObjectInstance,
 } from "@evavo/adventure-scene-instances";
+import {
+  type ChangeEvent,
+  type Dispatch,
+  type ReactNode,
+  type PointerEvent as ReactPointerEvent,
+  useCallback,
+  useEffect,
+  useMemo,
+  useReducer,
+  useRef,
+  useState,
+} from "react";
 import { studioProject, studioSceneInstances } from "./fixture.js";
 import {
   activeProjectScene,
@@ -27,13 +27,13 @@ import {
   insertActorCommand,
   insertObjectCommand,
   replaceSelectedPositionCommand,
+  type StudioWorkspaceAction,
+  type StudioWorkspaceState,
   selectedEntity,
   selectionTitle,
   studioWorkspaceReducer,
-  workspaceIsDirty,
-  type StudioWorkspaceAction,
-  type StudioWorkspaceState,
   type WorkspaceSelection,
+  workspaceIsDirty,
 } from "./workspace.js";
 
 type WorkspaceDispatch = Dispatch<StudioWorkspaceAction>;
@@ -66,25 +66,13 @@ const Button = ({
   </button>
 );
 
-const ToolbarDivider = () => (
-  <span className="toolbar-divider" aria-hidden="true" />
-);
+const ToolbarDivider = () => <span className="toolbar-divider" aria-hidden="true" />;
 
-const scenePoint = (
-  event: ReactPointerEvent<SVGSVGElement>,
-  width: number,
-  height: number,
-): Point => {
+const scenePoint = (event: ReactPointerEvent<SVGSVGElement>, width: number, height: number): Point => {
   const bounds = event.currentTarget.getBoundingClientRect();
   return {
-    x: Math.min(
-      width - 1,
-      Math.max(0, ((event.clientX - bounds.left) / bounds.width) * width),
-    ),
-    y: Math.min(
-      height - 1,
-      Math.max(0, ((event.clientY - bounds.top) / bounds.height) * height),
-    ),
+    x: Math.min(width - 1, Math.max(0, ((event.clientX - bounds.left) / bounds.width) * width)),
+    y: Math.min(height - 1, Math.max(0, ((event.clientY - bounds.top) / bounds.height) * height)),
   };
 };
 
@@ -104,22 +92,12 @@ const entityPosition = (
   const composition = activeSceneComposition(state);
   switch (selection.kind) {
     case "actor":
-      return (
-        composition.actorInstances.find(
-          (candidate) => candidate.id === selection.id,
-        )?.position ?? null
-      );
+      return composition.actorInstances.find((candidate) => candidate.id === selection.id)?.position ?? null;
     case "object":
-      return (
-        composition.objectInstances.find(
-          (candidate) => candidate.id === selection.id,
-        )?.position ?? null
-      );
+      return composition.objectInstances.find((candidate) => candidate.id === selection.id)?.position ?? null;
     case "portal":
       return (
-        composition.navigationPortals.find(
-          (candidate) => candidate.id === selection.id,
-        )?.fromPoint ?? null
+        composition.navigationPortals.find((candidate) => candidate.id === selection.id)?.fromPoint ?? null
       );
   }
 };
@@ -129,9 +107,7 @@ const previewPosition = (
   selection: Exclude<WorkspaceSelection, null>,
   drag: DragState | null,
 ): Point | null =>
-  drag &&
-  drag.selection.kind === selection.kind &&
-  drag.selection.id === selection.id
+  drag && drag.selection.kind === selection.kind && drag.selection.id === selection.id
     ? drag.position
     : entityPosition(state, selection);
 
@@ -141,89 +117,28 @@ const SceneBackdrop = ({ sceneId }: { readonly sceneId: Id<"scene"> }) =>
       <rect x="0" y="0" width="320" height="200" fill="#090d13" />
       <rect x="0" y="0" width="320" height="106" fill="#18212a" />
       <path d="M0 24L320 5V104H0Z" fill="#202b35" />
-      <rect
-        x="18"
-        y="42"
-        width="76"
-        height="70"
-        fill="#11171d"
-        stroke="#394653"
-      />
-      <rect
-        x="225"
-        y="28"
-        width="70"
-        height="84"
-        fill="#10161c"
-        stroke="#394653"
-      />
+      <rect x="18" y="42" width="76" height="70" fill="#11171d" stroke="#394653" />
+      <rect x="225" y="28" width="70" height="84" fill="#10161c" stroke="#394653" />
       <path d="M0 111L320 101V200H0Z" fill="#11151a" />
-      <path
-        d="M7 145L307 126M10 174L309 157"
-        stroke="#303741"
-        strokeWidth="1"
-      />
-      <path
-        d="M36 0L18 200M117 0L108 200M244 0L257 200"
-        stroke="#8fa1ad"
-        strokeOpacity="0.2"
-      />
+      <path d="M7 145L307 126M10 174L309 157" stroke="#303741" strokeWidth="1" />
+      <path d="M36 0L18 200M117 0L108 200M244 0L257 200" stroke="#8fa1ad" strokeOpacity="0.2" />
     </g>
   ) : (
     <g className="scene-art scene-art-office">
       <rect x="0" y="0" width="320" height="200" fill="#11131a" />
       <rect x="0" y="0" width="320" height="112" fill="#242735" />
       <rect x="0" y="112" width="320" height="88" fill="#18161c" />
-      <rect
-        x="224"
-        y="18"
-        width="72"
-        height="82"
-        fill="#090b12"
-        stroke="#4a4e60"
-      />
+      <rect x="224" y="18" width="72" height="82" fill="#090b12" stroke="#4a4e60" />
       <rect x="229" y="23" width="62" height="72" fill="#0a1b2a" />
-      <line
-        x1="260"
-        y1="23"
-        x2="260"
-        y2="95"
-        stroke="#4b5164"
-        strokeWidth="2"
-      />
-      <line
-        x1="229"
-        y1="58"
-        x2="291"
-        y2="58"
-        stroke="#4b5164"
-        strokeWidth="2"
-      />
+      <line x1="260" y1="23" x2="260" y2="95" stroke="#4b5164" strokeWidth="2" />
+      <line x1="229" y1="58" x2="291" y2="58" stroke="#4b5164" strokeWidth="2" />
       <circle cx="241" cy="72" r="1.5" fill="#f4c26a" />
       <circle cx="279" cy="44" r="1.5" fill="#ff244e" />
       <rect x="82" y="103" width="146" height="11" rx="1" fill="#795a46" />
       <rect x="91" y="113" width="128" height="46" fill="#443431" />
-      <rect
-        x="109"
-        y="121"
-        width="91"
-        height="21"
-        fill="#2b2427"
-        stroke="#80604c"
-      />
-      <path
-        d="M0 129H320M0 153H320M0 178H320"
-        stroke="#292733"
-        strokeWidth="1"
-      />
-      <rect
-        x="276"
-        y="64"
-        width="38"
-        height="88"
-        fill="#151820"
-        stroke="#565b6c"
-      />
+      <rect x="109" y="121" width="91" height="21" fill="#2b2427" stroke="#80604c" />
+      <path d="M0 129H320M0 153H320M0 178H320" stroke="#292733" strokeWidth="1" />
+      <rect x="276" y="64" width="38" height="88" fill="#151820" stroke="#565b6c" />
       <rect x="282" y="71" width="25" height="54" fill="#242936" />
     </g>
   );
@@ -231,55 +146,19 @@ const SceneBackdrop = ({ sceneId }: { readonly sceneId: Id<"scene"> }) =>
 const ActorGlyph = ({ selected }: { readonly selected: boolean }) => (
   <g className={`actor-glyph ${selected ? "is-selected" : ""}`}>
     <ellipse cx="0" cy="1" rx="8" ry="2.5" fill="#05060a" opacity="0.65" />
-    <path
-      d="M-5-17L5-17L8-4L5 0H-5L-8-4Z"
-      fill="#273043"
-      stroke="#d7d9e0"
-      strokeWidth="0.65"
-    />
+    <path d="M-5-17L5-17L8-4L5 0H-5L-8-4Z" fill="#273043" stroke="#d7d9e0" strokeWidth="0.65" />
     <rect x="-4" y="-23" width="8" height="7" rx="2" fill="#b88a71" />
-    <path
-      d="M-6-24H6L4-29H-4Z"
-      fill="#31394b"
-      stroke="#d7d9e0"
-      strokeWidth="0.5"
-    />
-    {selected ? (
-      <circle
-        cx="0"
-        cy="-14"
-        r="12"
-        fill="none"
-        stroke="#ff244e"
-        strokeWidth="1"
-      />
-    ) : null}
+    <path d="M-6-24H6L4-29H-4Z" fill="#31394b" stroke="#d7d9e0" strokeWidth="0.5" />
+    {selected ? <circle cx="0" cy="-14" r="12" fill="none" stroke="#ff244e" strokeWidth="1" /> : null}
   </g>
 );
 
 const ObjectGlyph = ({ selected }: { readonly selected: boolean }) => (
   <g className={`object-glyph ${selected ? "is-selected" : ""}`}>
-    <rect
-      x="-7"
-      y="-14"
-      width="14"
-      height="14"
-      rx="1.5"
-      fill="#8f6949"
-      stroke="#e2c69f"
-      strokeWidth="0.75"
-    />
+    <rect x="-7" y="-14" width="14" height="14" rx="1.5" fill="#8f6949" stroke="#e2c69f" strokeWidth="0.75" />
     <rect x="-3" y="-18" width="6" height="5" fill="#ff244e" opacity="0.85" />
     {selected ? (
-      <rect
-        x="-11"
-        y="-22"
-        width="22"
-        height="25"
-        fill="none"
-        stroke="#ff244e"
-        strokeWidth="1"
-      />
+      <rect x="-11" y="-22" width="22" height="25" fill="none" stroke="#ff244e" strokeWidth="1" />
     ) : null}
   </g>
 );
@@ -327,10 +206,7 @@ const EditorViewport = ({
     if (!drag || drag.pointerId !== event.pointerId) {
       return;
     }
-    const command = replaceSelectedPositionCommand(
-      { ...state, selection: drag.selection },
-      drag.position,
-    );
+    const command = replaceSelectedPositionCommand({ ...state, selection: drag.selection }, drag.position);
     if (command) {
       dispatch({
         type: "execute",
@@ -344,10 +220,7 @@ const EditorViewport = ({
 
   return (
     <div className="viewport-scroll">
-      <div
-        className="viewport-stage"
-        style={{ width: scene.width * scale, height: scene.height * scale }}
-      >
+      <div className="viewport-stage" style={{ width: scene.width * scale, height: scene.height * scale }}>
         <svg
           className="scene-viewport"
           viewBox={`0 0 ${scene.width} ${scene.height}`}
@@ -364,31 +237,13 @@ const EditorViewport = ({
           <SceneBackdrop sceneId={scene.id} />
 
           {state.view.showGrid ? (
-            <g className="grid-overlay" aria-hidden="true">
-              {Array.from(
-                { length: Math.floor(scene.width / 16) + 1 },
-                (_, index) => (
-                  <line
-                    key={`x-${index}`}
-                    x1={index * 16}
-                    y1="0"
-                    x2={index * 16}
-                    y2={scene.height}
-                  />
-                ),
-              )}
-              {Array.from(
-                { length: Math.floor(scene.height / 16) + 1 },
-                (_, index) => (
-                  <line
-                    key={`y-${index}`}
-                    x1="0"
-                    y1={index * 16}
-                    x2={scene.width}
-                    y2={index * 16}
-                  />
-                ),
-              )}
+            <g className="grid-overlay">
+              {Array.from({ length: Math.floor(scene.width / 16) + 1 }, (_, index) => (
+                <line key={`x-${index}`} x1={index * 16} y1="0" x2={index * 16} y2={scene.height} />
+              ))}
+              {Array.from({ length: Math.floor(scene.height / 16) + 1 }, (_, index) => (
+                <line key={`y-${index}`} x1="0" y1={index * 16} x2={scene.width} y2={index * 16} />
+              ))}
             </g>
           ) : null}
 
@@ -407,16 +262,12 @@ const EditorViewport = ({
           {state.view.showPortals ? (
             <g className="portal-overlay">
               {composition.navigationPortals.map((portal) => {
-                const selected =
-                  state.selection?.kind === "portal" &&
-                  state.selection.id === portal.id;
+                const selected = state.selection?.kind === "portal" && state.selection.id === portal.id;
                 return (
                   <g
                     key={portal.id}
                     className={selected ? "is-selected" : ""}
-                    onPointerDown={(event) =>
-                      beginDrag(event, { kind: "portal", id: portal.id })
-                    }
+                    onPointerDown={(event) => beginDrag(event, { kind: "portal", id: portal.id })}
                   >
                     <line
                       x1={portal.fromPoint.x}
@@ -424,11 +275,7 @@ const EditorViewport = ({
                       x2={portal.toPoint.x}
                       y2={portal.toPoint.y}
                     />
-                    <circle
-                      cx={portal.fromPoint.x}
-                      cy={portal.fromPoint.y}
-                      r="3"
-                    />
+                    <circle cx={portal.fromPoint.x} cy={portal.fromPoint.y} r="3" />
                     <circle cx={portal.toPoint.x} cy={portal.toPoint.y} r="3" />
                   </g>
                 );
@@ -439,11 +286,8 @@ const EditorViewport = ({
           <g className="instance-overlay">
             {composition.objectInstances.map((instance) => {
               const selection = { kind: "object", id: instance.id } as const;
-              const position =
-                previewPosition(state, selection, drag) ?? instance.position;
-              const selected =
-                state.selection?.kind === "object" &&
-                state.selection.id === instance.id;
+              const position = previewPosition(state, selection, drag) ?? instance.position;
+              const selected = state.selection?.kind === "object" && state.selection.id === instance.id;
               return (
                 <g
                   key={instance.id}
@@ -457,11 +301,8 @@ const EditorViewport = ({
             })}
             {composition.actorInstances.map((instance) => {
               const selection = { kind: "actor", id: instance.id } as const;
-              const position =
-                previewPosition(state, selection, drag) ?? instance.position;
-              const selected =
-                state.selection?.kind === "actor" &&
-                state.selection.id === instance.id;
+              const position = previewPosition(state, selection, drag) ?? instance.position;
+              const selected = state.selection?.kind === "actor" && state.selection.id === instance.id;
               return (
                 <g
                   key={instance.id}
@@ -493,12 +334,7 @@ const SceneTree = ({
         <span className="eyebrow">PROJECT</span>
         <h2>{state.project.title}</h2>
       </div>
-      <button
-        type="button"
-        className="icon-button"
-        title="Project settings"
-        aria-label="Project settings"
-      >
+      <button type="button" className="icon-button" title="Project settings" aria-label="Project settings">
         •••
       </button>
     </div>
@@ -511,21 +347,15 @@ const SceneTree = ({
           <button
             type="button"
             key={scene.id}
-            className={`scene-row ${
-              state.activeSceneId === scene.id ? "is-active" : ""
-            }`}
-            onClick={() =>
-              dispatch({ type: "select-scene", sceneId: scene.id })
-            }
+            className={`scene-row ${state.activeSceneId === scene.id ? "is-active" : ""}`}
+            onClick={() => dispatch({ type: "select-scene", sceneId: scene.id })}
           >
-            <span className="scene-index">
-              {String(index + 1).padStart(2, "0")}
-            </span>
+            <span className="scene-index">{String(index + 1).padStart(2, "0")}</span>
             <span className="scene-copy">
               <strong>{scene.name}</strong>
               <span>
-                {composition?.actorInstances.length ?? 0} actors ·{" "}
-                {composition?.objectInstances.length ?? 0} objects
+                {composition?.actorInstances.length ?? 0} actors · {composition?.objectInstances.length ?? 0}{" "}
+                objects
               </span>
             </span>
             <span className="scene-dot" />
@@ -546,14 +376,8 @@ const SceneTree = ({
       ))}
     </div>
     <div className="sidebar-footer">
-      <span
-        className={`save-indicator ${
-          workspaceIsDirty(state) ? "is-dirty" : ""
-        }`}
-      />
-      {workspaceIsDirty(state)
-        ? "Unsaved scene edits"
-        : "Scene document saved"}
+      <span className={`save-indicator ${workspaceIsDirty(state) ? "is-dirty" : ""}`} />
+      {workspaceIsDirty(state) ? "Unsaved scene edits" : "Scene document saved"}
     </div>
   </aside>
 );
@@ -567,9 +391,7 @@ const LayersPanel = ({
 }) => {
   const composition = activeSceneComposition(state);
   const actorName = (instance: SceneActorInstance): string =>
-    state.project.actors.find(
-      (candidate) => candidate.id === instance.actorId,
-    )?.name ?? instance.id;
+    state.project.actors.find((candidate) => candidate.id === instance.actorId)?.name ?? instance.id;
   const objectName = (instance: SceneObjectInstance): string =>
     state.history.document.manifest.objectDefinitions.find(
       (candidate) => candidate.id === instance.definitionId,
@@ -579,9 +401,7 @@ const LayersPanel = ({
     <section className="layers-panel">
       <div className="layers-heading">
         <span>SCENE LAYERS</span>
-        <span>
-          {composition.actorInstances.length + composition.objectInstances.length}
-        </span>
+        <span>{composition.actorInstances.length + composition.objectInstances.length}</span>
       </div>
       <div className="layer-group">
         <div className="layer-group-title">Actors</div>
@@ -590,10 +410,7 @@ const LayersPanel = ({
             type="button"
             key={instance.id}
             className={`layer-row ${
-              state.selection?.kind === "actor" &&
-              state.selection.id === instance.id
-                ? "is-active"
-                : ""
+              state.selection?.kind === "actor" && state.selection.id === instance.id ? "is-active" : ""
             }`}
             onClick={() =>
               dispatch({
@@ -617,10 +434,7 @@ const LayersPanel = ({
             type="button"
             key={instance.id}
             className={`layer-row ${
-              state.selection?.kind === "object" &&
-              state.selection.id === instance.id
-                ? "is-active"
-                : ""
+              state.selection?.kind === "object" && state.selection.id === instance.id ? "is-active" : ""
             }`}
             onClick={() =>
               dispatch({
@@ -644,10 +458,7 @@ const LayersPanel = ({
             type="button"
             key={portal.id}
             className={`layer-row ${
-              state.selection?.kind === "portal" &&
-              state.selection.id === portal.id
-                ? "is-active"
-                : ""
+              state.selection?.kind === "portal" && state.selection.id === portal.id ? "is-active" : ""
             }`}
             onClick={() =>
               dispatch({
@@ -668,17 +479,11 @@ const LayersPanel = ({
   );
 };
 
-const Field = ({
-  label,
-  children,
-}: {
-  readonly label: string;
-  readonly children: ReactNode;
-}) => (
-  <label className="field">
+const Field = ({ label, children }: { readonly label: string; readonly children: ReactNode }) => (
+  <div className="field">
     <span>{label}</span>
     {children}
-  </label>
+  </div>
 );
 
 const NumberInput = ({
@@ -703,9 +508,7 @@ const NumberInput = ({
   />
 );
 
-const removeInitialState = (
-  instance: SceneObjectInstance,
-): SceneObjectInstance => {
+const removeInitialState = (instance: SceneObjectInstance): SceneObjectInstance => {
   const { initialStateId: _initialStateId, ...rest } = instance;
   return rest;
 };
@@ -720,10 +523,8 @@ const Inspector = ({
   const entity = selectedEntity(state);
   const scene = activeProjectScene(state);
 
-  const executeReplacement = (
-    command: EditorCommand,
-    notice: string,
-  ): void => dispatch({ type: "execute", command, notice });
+  const executeReplacement = (command: EditorCommand, notice: string): void =>
+    dispatch({ type: "execute", command, notice });
 
   const updateActor = (instance: SceneActorInstance): void =>
     executeReplacement(
@@ -822,9 +623,7 @@ const Inspector = ({
               <NumberInput
                 value={entity.value.scaleMultiplier}
                 step={0.05}
-                onChange={(scaleMultiplier) =>
-                  updateActor({ ...entity.value, scaleMultiplier })
-                }
+                onChange={(scaleMultiplier) => updateActor({ ...entity.value, scaleMultiplier })}
               />
             </Field>
           </section>
@@ -843,9 +642,7 @@ const Inspector = ({
                 {[
                   ...new Set(
                     state.project.actors
-                      .find(
-                        (candidate) => candidate.id === entity.value.actorId,
-                      )
+                      .find((candidate) => candidate.id === entity.value.actorId)
                       ?.animations.map((animation) => animation.state) ?? [],
                   ),
                 ].map((animationState) => (
@@ -887,8 +684,7 @@ const Inspector = ({
                 onChange={(event) =>
                   updateActor({
                     ...entity.value,
-                    mobility: event.currentTarget
-                      .value as SceneActorInstance["mobility"],
+                    mobility: event.currentTarget.value as SceneActorInstance["mobility"],
                   })
                 }
               >
@@ -932,9 +728,7 @@ const Inspector = ({
               <NumberInput
                 value={entity.value.scaleMultiplier}
                 step={0.05}
-                onChange={(scaleMultiplier) =>
-                  updateObject({ ...entity.value, scaleMultiplier })
-                }
+                onChange={(scaleMultiplier) => updateObject({ ...entity.value, scaleMultiplier })}
               />
             </Field>
           </section>
@@ -946,8 +740,7 @@ const Inspector = ({
                 onChange={(event) =>
                   updateObject({
                     ...entity.value,
-                    layer: event.currentTarget
-                      .value as SceneObjectInstance["layer"],
+                    layer: event.currentTarget.value as SceneObjectInstance["layer"],
                   })
                 }
               >
@@ -974,10 +767,7 @@ const Inspector = ({
               >
                 <option value="">Definition default</option>
                 {state.history.document.manifest.objectDefinitions
-                  .find(
-                    (candidate) =>
-                      candidate.id === entity.value.definitionId,
-                  )
+                  .find((candidate) => candidate.id === entity.value.definitionId)
                   ?.states.map((objectState) => (
                     <option key={objectState.id} value={objectState.id}>
                       {objectState.id.split(".").at(-1)}
@@ -1074,9 +864,7 @@ const Inspector = ({
                 onChange={(event) =>
                   updatePortal({
                     ...entity.value,
-                    fromAreaId: asId<"navigation-area">(
-                      event.currentTarget.value,
-                    ),
+                    fromAreaId: asId<"navigation-area">(event.currentTarget.value),
                   })
                 }
               >
@@ -1093,9 +881,7 @@ const Inspector = ({
                 onChange={(event) =>
                   updatePortal({
                     ...entity.value,
-                    toAreaId: asId<"navigation-area">(
-                      event.currentTarget.value,
-                    ),
+                    toAreaId: asId<"navigation-area">(event.currentTarget.value),
                   })
                 }
               >
@@ -1115,9 +901,7 @@ const Inspector = ({
 
 const downloadManifest = (state: StudioWorkspaceState): void => {
   const text = `${JSON.stringify(state.history.document.manifest, null, 2)}\n`;
-  const url = URL.createObjectURL(
-    new Blob([text], { type: "application/json" }),
-  );
+  const url = URL.createObjectURL(new Blob([text], { type: "application/json" }));
   const anchor = document.createElement("a");
   anchor.href = url;
   anchor.download = "scene-instances.json";
@@ -1183,30 +967,20 @@ export const App = () => {
     return () => window.removeEventListener("keydown", onKeyDown);
   }, [removeSelection, save]);
 
-  const openManifest = async (
-    event: ChangeEvent<HTMLInputElement>,
-  ): Promise<void> => {
+  const openManifest = async (event: ChangeEvent<HTMLInputElement>): Promise<void> => {
     const file = event.currentTarget.files?.[0];
     event.currentTarget.value = "";
     if (!file) {
       return;
     }
     try {
-      const manifest = parseSceneInstanceManifest(
-        JSON.parse(await file.text()) as unknown,
-      );
+      const manifest = parseSceneInstanceManifest(JSON.parse(await file.text()) as unknown);
       if (manifest.projectId !== state.project.id) {
-        throw new Error(
-          `Manifest project '${manifest.projectId}' does not match '${state.project.id}'.`,
-        );
+        throw new Error(`Manifest project '${manifest.projectId}' does not match '${state.project.id}'.`);
       }
       dispatch({ type: "replace-manifest", manifest });
     } catch (error) {
-      window.alert(
-        error instanceof Error
-          ? error.message
-          : "The scene composition could not be opened.",
-      );
+      window.alert(error instanceof Error ? error.message : "The scene composition could not be opened.");
     }
   };
 
@@ -1220,9 +994,7 @@ export const App = () => {
         notice: "Placed a new actor instance.",
       });
     } catch (error) {
-      window.alert(
-        error instanceof Error ? error.message : "Actor placement failed.",
-      );
+      window.alert(error instanceof Error ? error.message : "Actor placement failed.");
     }
   };
 
@@ -1236,9 +1008,7 @@ export const App = () => {
         notice: "Placed a new object instance.",
       });
     } catch (error) {
-      window.alert(
-        error instanceof Error ? error.message : "Object placement failed.",
-      );
+      window.alert(error instanceof Error ? error.message : "Object placement failed.");
     }
   };
 
@@ -1260,17 +1030,10 @@ export const App = () => {
           {dirty ? <i>●</i> : null}
         </div>
         <div className="topbar-actions">
-          <Button
-            onClick={() => fileInput.current?.click()}
-            title="Open scene instance manifest"
-          >
+          <Button onClick={() => fileInput.current?.click()} title="Open scene instance manifest">
             Open
           </Button>
-          <Button
-            onClick={save}
-            className="primary-button"
-            title="Export scene instance manifest"
-          >
+          <Button onClick={save} className="primary-button" title="Export scene instance manifest">
             Export JSON
           </Button>
           <input
@@ -1306,11 +1069,7 @@ export const App = () => {
           <Button onClick={addObject} title="Place object instance">
             ＋O
           </Button>
-          <Button
-            onClick={removeSelection}
-            disabled={!state.selection}
-            title="Delete selected instance"
-          >
+          <Button onClick={removeSelection} disabled={!state.selection} title="Delete selected instance">
             ⌫
           </Button>
         </div>
@@ -1339,18 +1098,14 @@ export const App = () => {
         </div>
         <div className="toolbar-group zoom-tools">
           <Button
-            onClick={() =>
-              dispatch({ type: "set-zoom", zoom: state.view.zoom - 0.25 })
-            }
+            onClick={() => dispatch({ type: "set-zoom", zoom: state.view.zoom - 0.25 })}
             title="Zoom out"
           >
             −
           </Button>
           <span>{Math.round(state.view.zoom * 100)}%</span>
           <Button
-            onClick={() =>
-              dispatch({ type: "set-zoom", zoom: state.view.zoom + 0.25 })
-            }
+            onClick={() => dispatch({ type: "set-zoom", zoom: state.view.zoom + 0.25 })}
             title="Zoom in"
           >
             +
@@ -1379,12 +1134,10 @@ export const App = () => {
             <EditorViewport state={state} dispatch={dispatch} />
           </div>
           <footer className="canvas-footer">
+            <span>{state.notice ?? "Drag instances to place them on native pixels."}</span>
             <span>
-              {state.notice ?? "Drag instances to place them on native pixels."}
-            </span>
-            <span>
-              Revision {state.history.document.operationRevision} ·{" "}
-              {state.history.undoStack.length} undo steps
+              Revision {state.history.document.operationRevision} · {state.history.undoStack.length} undo
+              steps
             </span>
           </footer>
         </section>

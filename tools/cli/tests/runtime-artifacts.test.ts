@@ -1,10 +1,10 @@
 import { mkdtemp, readFile, rm, writeFile } from "node:fs/promises";
 import { tmpdir } from "node:os";
 import { join } from "node:path";
-import { afterEach, describe, expect, it } from "vitest";
 import { createReplayLog } from "@evavo/adventure-replay";
 import { parseRuntimeBundle } from "@evavo/adventure-runtime-bundle";
 import { createSaveGame } from "@evavo/adventure-save-game";
+import { afterEach, describe, expect, it } from "vitest";
 import { runRuntimeArtifactCli } from "../src/runtime-artifacts.js";
 
 const directories: string[] = [];
@@ -73,7 +73,6 @@ const bundle = parseRuntimeBundle({
         },
       ],
       fallbackText: "Nothing happens.",
-      interactionIndex: {},
     },
   ],
   dialogues: [],
@@ -131,9 +130,7 @@ const fixture = async () => {
 
 afterEach(async () => {
   await Promise.all(
-    directories.splice(0).map((directory) =>
-      rm(directory, { recursive: true, force: true }),
-    ),
+    directories.splice(0).map((directory) => rm(directory, { recursive: true, force: true })),
   );
 });
 
@@ -145,14 +142,7 @@ describe("runtime artifact CLI", () => {
 
     expect(
       await runRuntimeArtifactCli(
-        [
-          "save-validate",
-          "--bundle",
-          files.bundlePath,
-          "--save",
-          files.savePath,
-          "--json",
-        ],
+        ["save-validate", "--bundle", files.bundlePath, "--save", files.savePath, "--json"],
         {
           stdout: (text) => {
             saveOutput += text;
@@ -171,14 +161,7 @@ describe("runtime artifact CLI", () => {
 
     expect(
       await runRuntimeArtifactCli(
-        [
-          "replay-validate",
-          "--bundle",
-          files.bundlePath,
-          "--replay",
-          files.replayPath,
-          "--json",
-        ],
+        ["replay-validate", "--bundle", files.bundlePath, "--replay", files.replayPath, "--json"],
         {
           stdout: (text) => {
             replayOutput += text;
@@ -206,23 +189,13 @@ describe("runtime artifact CLI", () => {
         interface: { ...save.interface, statusText: "TAMPERED" },
       })}\n`,
     );
-    await writeFile(
-      files.replayPath,
-      `${JSON.stringify({ ...replay, finalTick: 13 })}\n`,
-    );
+    await writeFile(files.replayPath, `${JSON.stringify({ ...replay, finalTick: 13 })}\n`);
 
     let saveOutput = "";
     let replayOutput = "";
     expect(
       await runRuntimeArtifactCli(
-        [
-          "save-validate",
-          "--bundle",
-          files.bundlePath,
-          "--save",
-          files.savePath,
-          "--json",
-        ],
+        ["save-validate", "--bundle", files.bundlePath, "--save", files.savePath, "--json"],
         {
           stdout: (text) => {
             saveOutput += text;
@@ -233,21 +206,12 @@ describe("runtime artifact CLI", () => {
     ).toBe(1);
     expect(JSON.parse(saveOutput)).toMatchObject({
       valid: false,
-      diagnostics: [
-        expect.objectContaining({ source: "save-game-integrity" }),
-      ],
+      diagnostics: [expect.objectContaining({ source: "save-game-integrity" })],
     });
 
     expect(
       await runRuntimeArtifactCli(
-        [
-          "replay-validate",
-          "--bundle",
-          files.bundlePath,
-          "--replay",
-          files.replayPath,
-          "--json",
-        ],
+        ["replay-validate", "--bundle", files.bundlePath, "--replay", files.replayPath, "--json"],
         {
           stdout: (text) => {
             replayOutput += text;
@@ -288,14 +252,7 @@ describe("runtime artifact CLI", () => {
 
     expect(
       await runRuntimeArtifactCli(
-        [
-          "save-validate",
-          "--bundle",
-          files.bundlePath,
-          "--save",
-          files.savePath,
-          "--json",
-        ],
+        ["save-validate", "--bundle", files.bundlePath, "--save", files.savePath, "--json"],
         {
           stdout: (text) => {
             output += text;
@@ -313,8 +270,6 @@ describe("runtime artifact CLI", () => {
       ],
     });
 
-    expect(await readFile(files.bundlePath, "utf8")).toContain(
-      "project.cli-artifacts",
-    );
+    expect(await readFile(files.bundlePath, "utf8")).toContain("project.cli-artifacts");
   });
 });

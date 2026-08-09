@@ -1,23 +1,13 @@
 import type { ArtDirectionManifest } from "@evavo/adventure-art-direction";
 import {
-  evaluateArtDirectionWithVisualEvidence,
   type ArtVisualEvidenceManifest,
   type ArtVisualEvidenceRecord,
+  evaluateArtDirectionWithVisualEvidence,
 } from "@evavo/adventure-art-direction/evidence";
-import type {
-  AssetBuildManifest,
-  CompiledAssetRecord,
-} from "@evavo/adventure-asset-contract";
-import {
-  validateBitmapFontManifest,
-  type BitmapFontManifest,
-} from "@evavo/adventure-bitmap-font";
+import type { AssetBuildManifest, CompiledAssetRecord } from "@evavo/adventure-asset-contract";
+import { type BitmapFontManifest, validateBitmapFontManifest } from "@evavo/adventure-bitmap-font";
 import type { AdventureProject, Id, Rectangle } from "@evavo/adventure-project-schema";
-import {
-  validateUiSkinManifest,
-  type UiSkin,
-  type UiSkinManifest,
-} from "@evavo/adventure-ui-skin";
+import { type UiSkin, type UiSkinManifest, validateUiSkinManifest } from "@evavo/adventure-ui-skin";
 import type { AdventureAuthenticitySeverity } from "./authenticity-types.js";
 import type { AdventureDesignDocument } from "./types.js";
 import { validateAdventureDesignAgainstProject } from "./validation.js";
@@ -111,9 +101,7 @@ const appendIssues = (
   }
 };
 
-const byAssetId = <T extends { readonly assetId: unknown }>(
-  assets: readonly T[],
-): ReadonlyMap<string, T> =>
+const byAssetId = <T extends { readonly assetId: unknown }>(assets: readonly T[]): ReadonlyMap<string, T> =>
   new Map(assets.map((asset) => [String(asset.assetId), asset] as const));
 
 const visualPasses = (
@@ -124,19 +112,12 @@ const visualPasses = (
   if (!record) return false;
   const pages = record.kind === "image" ? [record] : record.pages;
   return pages.every(
-    (page) =>
-      page.palette &&
-      page.colourCount <= maximumColours &&
-      page.alphaMode === alpha,
+    (page) => page.palette && page.colourCount <= maximumColours && page.alphaMode === alpha,
   );
 };
 
 const actorAssetIds = (project: AdventureProject): ReadonlySet<string> =>
-  new Set(
-    project.actors.flatMap((actor) =>
-      actor.frames.map((frame) => frame.assetId as string),
-    ),
-  );
+  new Set(project.actors.flatMap((actor) => actor.frames.map((frame) => frame.assetId as string)));
 
 const persistentRegions = (skin: UiSkin): readonly Rectangle[] => [
   skin.status.rect,
@@ -148,10 +129,7 @@ const persistentRegions = (skin: UiSkin): readonly Rectangle[] => [
 
 const persistentCoverage = (skin: UiSkin): number => {
   const canvas = skin.nativeSize.width * skin.nativeSize.height;
-  const occupied = persistentRegions(skin).reduce(
-    (total, rect) => total + rect.width * rect.height,
-    0,
-  );
+  const occupied = persistentRegions(skin).reduce((total, rect) => total + rect.width * rect.height, 0);
   return canvas <= 0 ? 1 : occupied / canvas;
 };
 
@@ -160,10 +138,7 @@ const uniqueSorted = (
 ): readonly AdventureCompiledEvidenceFinding[] => {
   const unique = new Map<string, AdventureCompiledEvidenceFinding>();
   for (const finding of findings) {
-    unique.set(
-      [finding.id, finding.area, finding.path, finding.message].join("|"),
-      finding,
-    );
+    unique.set([finding.id, finding.area, finding.path, finding.message].join("|"), finding);
   }
   return [...unique.values()].sort(
     (left, right) =>
@@ -189,8 +164,7 @@ export const createAdventureAuthenticityEvidenceRequirements = (
     label: "Art-direction policy",
     artifact: "art-direction.json",
     required: true,
-    rationale:
-      `Proves that ${document.creativeDirection.productionMode} rules are executable policy.`,
+    rationale: `Proves that ${document.creativeDirection.productionMode} rules are executable policy.`,
   },
   {
     id: "asset-build",
@@ -234,12 +208,8 @@ export const evaluateAdventureCompiledEvidence = (
     ["artDirection.projectId", artDirection.projectId],
     ["compiledAssets.projectId", compiledAssets.projectId],
     ["visualEvidence.projectId", visualEvidence.projectId],
-    ...(bundle.bitmapFonts
-      ? [["bitmapFonts.projectId", bundle.bitmapFonts.projectId] as const]
-      : []),
-    ...(bundle.uiSkins
-      ? [["uiSkins.projectId", bundle.uiSkins.projectId] as const]
-      : []),
+    ...(bundle.bitmapFonts ? [["bitmapFonts.projectId", bundle.bitmapFonts.projectId] as const] : []),
+    ...(bundle.uiSkins ? [["uiSkins.projectId", bundle.uiSkins.projectId] as const] : []),
   ] as const;
   for (const [path, identity] of identities) {
     if (String(identity) !== expectedProjectId) {
@@ -265,12 +235,7 @@ export const evaluateAdventureCompiledEvidence = (
     findings,
     "art-evidence",
     "compiled-contracts",
-    evaluateArtDirectionWithVisualEvidence(
-      project,
-      artDirection,
-      compiledAssets,
-      visualEvidence,
-    ),
+    evaluateArtDirectionWithVisualEvidence(project, artDirection, compiledAssets, visualEvidence),
     "Rebuild the affected asset and regenerate its pixel evidence.",
   );
 
@@ -317,11 +282,7 @@ export const evaluateAdventureCompiledEvidence = (
       recommendation: "Use strict or camera-strict motion, or document the exception.",
     });
   }
-  if (
-    native.width === 320 &&
-    native.height === 200 &&
-    artDirection.profile.palette.mode !== "indexed"
-  ) {
+  if (native.width === 320 && native.height === 200 && artDirection.profile.palette.mode !== "indexed") {
     add(findings, {
       id: "evidence-vga-not-indexed",
       area: "native-output",
@@ -382,9 +343,7 @@ export const evaluateAdventureCompiledEvidence = (
     }
     const authored = new Set(
       project.actors.flatMap((actor) =>
-        actor.frames
-          .filter((frame) => String(frame.assetId) === assetId)
-          .map((frame) => String(frame.id)),
+        actor.frames.filter((frame) => String(frame.assetId) === assetId).map((frame) => String(frame.id)),
       ),
     );
     const built = new Set(asset.metadata.frames.map((frame) => String(frame.frameId)));
@@ -493,17 +452,12 @@ export const evaluateAdventureCompiledEvidence = (
     }
   }
 
-  const required = project.assets.filter(
-    (asset) => asset.kind === "image" || asset.kind === "spritesheet",
-  );
+  const required = project.assets.filter((asset) => asset.kind === "image" || asset.kind === "spritesheet");
   const compiledCount = required.filter((asset) => compiled.has(String(asset.id))).length;
   const evidenceCount = required.filter((asset) => visual.has(String(asset.id))).length;
-  const coveragePercent =
-    required.length === 0 ? 100 : Math.round((evidenceCount / required.length) * 100);
+  const coveragePercent = required.length === 0 ? 100 : Math.round((evidenceCount / required.length) * 100);
   const ordered = uniqueSorted(findings);
-  const status: AdventureCompiledEvidenceStatus = ordered.some(
-    (finding) => finding.severity === "error",
-  )
+  const status: AdventureCompiledEvidenceStatus = ordered.some((finding) => finding.severity === "error")
     ? "blocked"
     : ordered.some((finding) => finding.severity === "warning")
       ? "attention"

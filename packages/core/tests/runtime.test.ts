@@ -1,11 +1,11 @@
-import { describe, expect, it } from "vitest";
 import type { Id, Interaction } from "@evavo/adventure-project-schema";
+import { describe, expect, it } from "vitest";
 import {
   applyActions,
   evaluateCondition,
   nextRandom,
-  runInteraction,
   type RuntimeState,
+  runInteraction,
 } from "../src/index.js";
 
 const id = <T extends string>(value: string) => value as Id<T>;
@@ -66,9 +66,7 @@ describe("deterministic runtime", () => {
       consumedDialogueChoiceIds: [choiceId],
     };
 
-    expect(
-      evaluateCondition({ kind: "dialogue-choice-used", choiceId }, state),
-    ).toBe(true);
+    expect(evaluateCondition({ kind: "dialogue-choice-used", choiceId }, state)).toBe(true);
   });
 
   it("awards each score event at most once", () => {
@@ -138,9 +136,6 @@ describe("deterministic runtime", () => {
     const rightFirst = nextRandom(createState(), "puzzle");
     const rightSecond = nextRandom(rightFirst.state, "puzzle");
 
-    expect([leftFirst.value, leftSecond.value]).toEqual([
-      rightFirst.value,
-      rightSecond.value,
-    ]);
+    expect([leftFirst.value, leftSecond.value]).toEqual([rightFirst.value, rightSecond.value]);
   });
 });

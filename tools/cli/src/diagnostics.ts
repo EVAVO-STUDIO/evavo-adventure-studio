@@ -55,9 +55,7 @@ export const errorCode = (error: unknown): string | null =>
     ? String((error as { readonly code: unknown }).code)
     : null;
 
-export const sortDiagnostics = (
-  diagnostics: readonly CliDiagnostic[],
-): readonly CliDiagnostic[] =>
+export const sortDiagnostics = (diagnostics: readonly CliDiagnostic[]): readonly CliDiagnostic[] =>
   [...diagnostics].sort((left, right) => {
     const severityDifference = left.severity.localeCompare(right.severity);
     if (severityDifference !== 0) {
@@ -68,14 +66,11 @@ export const sortDiagnostics = (
       return sourceDifference;
     }
     const pathDifference = left.path.localeCompare(right.path);
-    return pathDifference !== 0
-      ? pathDifference
-      : left.code.localeCompare(right.code);
+    return pathDifference !== 0 ? pathDifference : left.code.localeCompare(right.code);
   });
 
-export const hasErrors = (
-  diagnostics: readonly CliDiagnostic[],
-): boolean => diagnostics.some((diagnostic) => diagnostic.severity === "error");
+export const hasErrors = (diagnostics: readonly CliDiagnostic[]): boolean =>
+  diagnostics.some((diagnostic) => diagnostic.severity === "error");
 
 export const formatDiagnostic = (diagnostic: CliDiagnostic): string =>
   `${diagnostic.severity.toUpperCase()} ${diagnostic.source}:${

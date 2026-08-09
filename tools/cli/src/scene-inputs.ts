@@ -5,16 +5,11 @@ import type { AdventureProject } from "@evavo/adventure-project-schema";
 import {
   emptySceneInstanceManifest,
   parseSceneInstanceManifest,
-  validateSceneInstanceManifest,
   type SceneInstanceManifest,
+  validateSceneInstanceManifest,
 } from "@evavo/adventure-scene-instances";
 import { validateCompiledObjectVisualMappings } from "@evavo/adventure-scene-instances/compiled-mapping";
-import {
-  CliDataError,
-  errorCode,
-  sortDiagnostics,
-  type CliDiagnostic,
-} from "./diagnostics.js";
+import { CliDataError, type CliDiagnostic, errorCode, sortDiagnostics } from "./diagnostics.js";
 
 export interface LoadedSceneInstances {
   readonly path: string | null;
@@ -41,22 +36,20 @@ const schemaDiagnostics = (error: unknown): readonly CliDiagnostic[] => {
     "issues" in error &&
     Array.isArray((error as { readonly issues: unknown }).issues)
   ) {
-    return (error as { readonly issues: readonly unknown[] }).issues.map(
-      (issue) => {
-        const candidate = issue as {
-          readonly code?: unknown;
-          readonly path?: readonly PropertyKey[];
-          readonly message?: unknown;
-        };
-        return {
-          severity: "error" as const,
-          source: "scene-instances-schema" as const,
-          code: String(candidate.code ?? "schema-invalid"),
-          path: schemaPath(candidate.path ?? []),
-          message: String(candidate.message ?? "Schema validation failed."),
-        };
-      },
-    );
+    return (error as { readonly issues: readonly unknown[] }).issues.map((issue) => {
+      const candidate = issue as {
+        readonly code?: unknown;
+        readonly path?: readonly PropertyKey[];
+        readonly message?: unknown;
+      };
+      return {
+        severity: "error" as const,
+        source: "scene-instances-schema" as const,
+        code: String(candidate.code ?? "schema-invalid"),
+        path: schemaPath(candidate.path ?? []),
+        message: String(candidate.message ?? "Schema validation failed."),
+      };
+    });
   }
 
   return [
@@ -65,8 +58,7 @@ const schemaDiagnostics = (error: unknown): readonly CliDiagnostic[] => {
       source: "scene-instances-schema",
       code: "schema-invalid",
       path: "$",
-      message:
-        error instanceof Error ? error.message : "Schema validation failed.",
+      message: error instanceof Error ? error.message : "Schema validation failed.",
     },
   ];
 };
@@ -82,9 +74,7 @@ const loadManifestFile = async (path: string): Promise<SceneInstanceManifest> =>
         source: "scene-instances-file",
         code: errorCode(error) ?? "read-failed",
         path,
-        message: `Unable to read '${path}': ${
-          error instanceof Error ? error.message : String(error)
-        }`,
+        message: `Unable to read '${path}': ${error instanceof Error ? error.message : String(error)}`,
       },
     ]);
   }
@@ -99,9 +89,7 @@ const loadManifestFile = async (path: string): Promise<SceneInstanceManifest> =>
         source: "scene-instances-file",
         code: "invalid-json",
         path,
-        message: `Invalid JSON in '${path}': ${
-          error instanceof Error ? error.message : String(error)
-        }`,
+        message: `Invalid JSON in '${path}': ${error instanceof Error ? error.message : String(error)}`,
       },
     ]);
   }
@@ -145,12 +133,10 @@ export const loadSceneInstances = async (
       source: "scene-instances-semantics" as const,
     })),
     ...(assetManifest
-      ? validateCompiledObjectVisualMappings(manifest, assetManifest).map(
-          (issue) => ({
-            ...issue,
-            source: "scene-instances-semantics" as const,
-          }),
-        )
+      ? validateCompiledObjectVisualMappings(manifest, assetManifest).map((issue) => ({
+          ...issue,
+          source: "scene-instances-semantics" as const,
+        }))
       : []),
   ];
 

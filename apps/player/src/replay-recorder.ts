@@ -1,9 +1,9 @@
 import type { Point } from "@evavo/adventure-project-schema";
 import {
   createReplayLog,
-  serializeReplayLog,
   type ReplayEvent,
   type ReplayLog,
+  serializeReplayLog,
 } from "@evavo/adventure-replay";
 import type { RuntimeBundle } from "@evavo/adventure-runtime-bundle";
 import { loadSaveGame, type SaveGame } from "@evavo/adventure-save-game";
@@ -35,9 +35,7 @@ export interface PlayerReplayRecorder {
   status(): ReplayRecordingStatus;
 }
 
-export const createPlayerReplayRecorder = (
-  bundle: RuntimeBundle,
-): PlayerReplayRecorder => {
+export const createPlayerReplayRecorder = (bundle: RuntimeBundle): PlayerReplayRecorder => {
   let initialSave: SaveGame | null = null;
   let events: ReplayEvent[] = [];
   let nextSequence = 0;

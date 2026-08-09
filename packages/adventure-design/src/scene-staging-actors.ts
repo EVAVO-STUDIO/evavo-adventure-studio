@@ -1,15 +1,12 @@
 import type { AdventureProject, Scene } from "@evavo/adventure-project-schema";
 import { pointInsideSceneCanvas } from "./scene-readability-geometry.js";
+import { addSceneStagingFinding } from "./scene-staging-findings.js";
 import {
   adventurePointDistance,
   rectangleIntersectionRatio,
   rectangleOutsideFraction,
 } from "./scene-staging-geometry.js";
-import { addSceneStagingFinding } from "./scene-staging-findings.js";
-import type {
-  AdventureActorStagingMarker,
-  AdventureSceneStagingFinding,
-} from "./scene-staging-types.js";
+import type { AdventureActorStagingMarker, AdventureSceneStagingFinding } from "./scene-staging-types.js";
 
 const actorPairFindings = (
   actors: readonly AdventureActorStagingMarker[],
@@ -105,11 +102,7 @@ export const evaluateSceneStagedActors = (
           "Provide a matching animation clip and a valid first sprite frame before staging review.",
       });
     } else {
-      const outside = rectangleOutsideFraction(
-        actor.bounds,
-        scene.width,
-        scene.height,
-      );
+      const outside = rectangleOutsideFraction(actor.bounds, scene.width, scene.height);
       if (outside > 0.6) {
         addSceneStagingFinding(findings, {
           id: `actor-mostly-outside-canvas-${actor.instanceId}`,
@@ -158,10 +151,8 @@ export const evaluateSceneStagedActors = (
           impact: 6,
           path: `${path}.position`,
           message:
-            `Actor '${actor.actorName}' occupies entrance '${entrance.id}' at ` +
-            "initial control handoff.",
-          recommendation:
-            "Protect enough arrival clearance for the entering actor and first readable pose.",
+            `Actor '${actor.actorName}' occupies entrance '${entrance.id}' at ` + "initial control handoff.",
+          recommendation: "Protect enough arrival clearance for the entering actor and first readable pose.",
         });
       }
     }

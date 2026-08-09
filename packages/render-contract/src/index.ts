@@ -1,9 +1,4 @@
-import type {
-  Id,
-  Point,
-  Rectangle,
-  Size,
-} from "@evavo/adventure-project-schema";
+import type { Id, Point, Rectangle, Size } from "@evavo/adventure-project-schema";
 
 export type RenderLayer =
   | "sky"
@@ -146,13 +141,9 @@ export interface RenderFrameIssue {
   readonly message: string;
 }
 
-const isFinitePoint = (point: Point): boolean =>
-  Number.isFinite(point.x) && Number.isFinite(point.y);
+const isFinitePoint = (point: Point): boolean => Number.isFinite(point.x) && Number.isFinite(point.y);
 
-const validateMaskCycles = (
-  nodesById: ReadonlyMap<string, RenderNode>,
-  node: RenderNode,
-): boolean => {
+const validateMaskCycles = (nodesById: ReadonlyMap<string, RenderNode>, node: RenderNode): boolean => {
   const visited = new Set<string>();
   let current: RenderNode | undefined = node;
 
@@ -167,9 +158,7 @@ const validateMaskCycles = (
   return true;
 };
 
-export const validateResolvedFrame = (
-  frame: ResolvedFrame,
-): readonly RenderFrameIssue[] => {
+export const validateResolvedFrame = (frame: ResolvedFrame): readonly RenderFrameIssue[] => {
   const issues: RenderFrameIssue[] = [];
   const nodesById = new Map<string, RenderNode>();
 
@@ -199,11 +188,7 @@ export const validateResolvedFrame = (
       nodesById.set(node.id, node);
     }
 
-    if (
-      !Number.isFinite(node.opacity) ||
-      node.opacity < 0 ||
-      node.opacity > 1
-    ) {
+    if (!Number.isFinite(node.opacity) || node.opacity < 0 || node.opacity > 1) {
       issues.push({
         severity: "error",
         code: "invalid-opacity",
@@ -228,9 +213,7 @@ export const validateResolvedFrame = (
 
     if (
       node.kind === "dither-fade" &&
-      (!Number.isFinite(node.progress) ||
-        node.progress < 0 ||
-        node.progress > 1)
+      (!Number.isFinite(node.progress) || node.progress < 0 || node.progress > 1)
     ) {
       issues.push({
         severity: "error",
@@ -280,12 +263,8 @@ export const validateResolvedFrame = (
   return issues;
 };
 
-export const compareRenderOrder = (
-  left: RenderOrder,
-  right: RenderOrder,
-): number => {
-  const layerDifference =
-    renderLayerOrder[left.layer] - renderLayerOrder[right.layer];
+export const compareRenderOrder = (left: RenderOrder, right: RenderOrder): number => {
+  const layerDifference = renderLayerOrder[left.layer] - renderLayerOrder[right.layer];
   if (layerDifference !== 0) {
     return layerDifference;
   }
@@ -301,9 +280,7 @@ export const compareRenderOrder = (
   return left.stableId.localeCompare(right.stableId);
 };
 
-export const orderRenderNodes = (
-  nodes: readonly RenderNode[],
-): readonly RenderNode[] =>
+export const orderRenderNodes = (nodes: readonly RenderNode[]): readonly RenderNode[] =>
   [...nodes].sort((left, right) => compareRenderOrder(left.order, right.order));
 
 export interface RendererHost {

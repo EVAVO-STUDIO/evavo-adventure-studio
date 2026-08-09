@@ -1,10 +1,4 @@
-import type {
-  Action,
-  Id,
-  Point,
-  Scalar,
-  Size,
-} from "@evavo/adventure-project-schema";
+import type { Action, Id, Point, Scalar, Size } from "@evavo/adventure-project-schema";
 import type {
   AdventureChapter,
   AdventureChapterMode,
@@ -106,36 +100,23 @@ const nonnegativeIntegerAt = (value: unknown, path: string): number => {
   return number;
 };
 
-const enumAt = <T extends string>(
-  value: unknown,
-  path: string,
-  allowed: readonly T[],
-): T => {
+const enumAt = <T extends string>(value: unknown, path: string, allowed: readonly T[]): T => {
   const string = stringAt(value, path);
   if (!allowed.includes(string as T)) {
-    throw new AdventureDesignParseError(
-      path,
-      `Expected one of: ${allowed.join(", ")}.`,
-    );
+    throw new AdventureDesignParseError(path, `Expected one of: ${allowed.join(", ")}.`);
   }
   return string as T;
 };
 
-const idAt = <T extends string>(
-  value: unknown,
-  path: string,
-): AdventureDesignId<T> => stringAt(value, path) as AdventureDesignId<T>;
+const idAt = <T extends string>(value: unknown, path: string): AdventureDesignId<T> =>
+  stringAt(value, path) as AdventureDesignId<T>;
 
-const projectIdAt = <T extends string>(value: unknown, path: string): Id<T> =>
-  stringAt(value, path) as Id<T>;
+const projectIdAt = <T extends string>(value: unknown, path: string): Id<T> => stringAt(value, path) as Id<T>;
 
 const stringArrayAt = (value: unknown, path: string): readonly string[] =>
   arrayAt(value, path).map((entry, index) => stringAt(entry, `${path}[${index}]`));
 
-const idArrayAt = <T extends string>(
-  value: unknown,
-  path: string,
-): readonly AdventureDesignId<T>[] =>
+const idArrayAt = <T extends string>(value: unknown, path: string): readonly AdventureDesignId<T>[] =>
   arrayAt(value, path).map((entry, index) => idAt<T>(entry, `${path}[${index}]`));
 
 const pointAt = (value: unknown, path: string): Point => {
@@ -193,66 +174,25 @@ const compositionModes: readonly AdventureCompositionMode[] = [
   "travel",
 ];
 
-const parseCreativeDirection = (
-  value: unknown,
-  path: string,
-): AdventureCreativeDirection => {
+const parseCreativeDirection = (value: unknown, path: string): AdventureCreativeDirection => {
   const record = recordAt(value, path);
   return {
     nativeSize: sizeAt(record["nativeSize"], `${path}.nativeSize`),
-    productionMode: enumAt(
-      record["productionMode"],
-      `${path}.productionMode`,
-      productionModes,
-    ),
-    compositionMode: enumAt(
-      record["compositionMode"],
-      `${path}.compositionMode`,
-      compositionModes,
-    ),
+    productionMode: enumAt(record["productionMode"], `${path}.productionMode`, productionModes),
+    compositionMode: enumAt(record["compositionMode"], `${path}.compositionMode`, compositionModes),
     palette: parsePalette(record["palette"], `${path}.palette`),
     perspective: stringAt(record["perspective"], `${path}.perspective`),
     lighting: stringAt(record["lighting"], `${path}.lighting`),
-    materialLanguage: stringAt(
-      record["materialLanguage"],
-      `${path}.materialLanguage`,
-    ),
-    actorSilhouette: stringAt(
-      record["actorSilhouette"],
-      `${path}.actorSilhouette`,
-    ),
-    backgroundHierarchy: stringAt(
-      record["backgroundHierarchy"],
-      `${path}.backgroundHierarchy`,
-    ),
-    portraitTreatment: stringAt(
-      record["portraitTreatment"],
-      `${path}.portraitTreatment`,
-    ),
-    animationCadence: stringAt(
-      record["animationCadence"],
-      `${path}.animationCadence`,
-    ),
-    interfaceTreatment: stringAt(
-      record["interfaceTreatment"],
-      `${path}.interfaceTreatment`,
-    ),
-    musicDirection: stringAt(
-      record["musicDirection"],
-      `${path}.musicDirection`,
-    ),
-    ambienceDirection: stringAt(
-      record["ambienceDirection"],
-      `${path}.ambienceDirection`,
-    ),
-    authenticityRules: stringArrayAt(
-      record["authenticityRules"],
-      `${path}.authenticityRules`,
-    ),
-    prohibitedShortcuts: stringArrayAt(
-      record["prohibitedShortcuts"],
-      `${path}.prohibitedShortcuts`,
-    ),
+    materialLanguage: stringAt(record["materialLanguage"], `${path}.materialLanguage`),
+    actorSilhouette: stringAt(record["actorSilhouette"], `${path}.actorSilhouette`),
+    backgroundHierarchy: stringAt(record["backgroundHierarchy"], `${path}.backgroundHierarchy`),
+    portraitTreatment: stringAt(record["portraitTreatment"], `${path}.portraitTreatment`),
+    animationCadence: stringAt(record["animationCadence"], `${path}.animationCadence`),
+    interfaceTreatment: stringAt(record["interfaceTreatment"], `${path}.interfaceTreatment`),
+    musicDirection: stringAt(record["musicDirection"], `${path}.musicDirection`),
+    ambienceDirection: stringAt(record["ambienceDirection"], `${path}.ambienceDirection`),
+    authenticityRules: stringArrayAt(record["authenticityRules"], `${path}.authenticityRules`),
+    prohibitedShortcuts: stringArrayAt(record["prohibitedShortcuts"], `${path}.prohibitedShortcuts`),
   };
 };
 
@@ -276,10 +216,7 @@ const parseLocation = (value: unknown, path: string): AdventureMapLocation => {
     position: pointAt(record["position"], `${path}.position`),
     ...(sceneId ? { sceneId: sceneId as Id<"scene"> } : {}),
     chapterIds: idArrayAt<"chapter">(record["chapterIds"], `${path}.chapterIds`),
-    unlockedByPuzzleIds: idArrayAt<"puzzle">(
-      record["unlockedByPuzzleIds"],
-      `${path}.unlockedByPuzzleIds`,
-    ),
+    unlockedByPuzzleIds: idArrayAt<"puzzle">(record["unlockedByPuzzleIds"], `${path}.unlockedByPuzzleIds`),
     artBrief: stringAt(record["artBrief"], `${path}.artBrief`),
     arrivalBeat: stringAt(record["arrivalBeat"], `${path}.arrivalBeat`),
     ...(musicCue ? { musicCue } : {}),
@@ -290,21 +227,12 @@ const parseRoute = (value: unknown, path: string): AdventureMapRoute => {
   const record = recordAt(value, path);
   return {
     id: idAt<"route">(record["id"], `${path}.id`),
-    fromLocationId: idAt<"location">(
-      record["fromLocationId"],
-      `${path}.fromLocationId`,
-    ),
-    toLocationId: idAt<"location">(
-      record["toLocationId"],
-      `${path}.toLocationId`,
-    ),
+    fromLocationId: idAt<"location">(record["fromLocationId"], `${path}.fromLocationId`),
+    toLocationId: idAt<"location">(record["toLocationId"], `${path}.toLocationId`),
     bidirectional: booleanAt(record["bidirectional"], `${path}.bidirectional`),
     travelMode: stringAt(record["travelMode"], `${path}.travelMode`),
     transition: stringAt(record["transition"], `${path}.transition`),
-    requiredPuzzleIds: idArrayAt<"puzzle">(
-      record["requiredPuzzleIds"],
-      `${path}.requiredPuzzleIds`,
-    ),
+    requiredPuzzleIds: idArrayAt<"puzzle">(record["requiredPuzzleIds"], `${path}.requiredPuzzleIds`),
   };
 };
 
@@ -322,55 +250,24 @@ const parseWorldMap = (value: unknown, path: string): AdventureWorldMap => {
   };
 };
 
-const chapterModes: readonly AdventureChapterMode[] = [
-  "act",
-  "day",
-  "mission",
-  "era",
-  "open-phase",
-];
+const chapterModes: readonly AdventureChapterMode[] = ["act", "day", "mission", "era", "open-phase"];
 
 const parseChapter = (value: unknown, path: string): AdventureChapter => {
   const record = recordAt(value, path);
-  const openingCutsceneId = optionalStringAt(
-    record["openingCutsceneId"],
-    `${path}.openingCutsceneId`,
-  );
-  const closingCutsceneId = optionalStringAt(
-    record["closingCutsceneId"],
-    `${path}.closingCutsceneId`,
-  );
+  const openingCutsceneId = optionalStringAt(record["openingCutsceneId"], `${path}.openingCutsceneId`);
+  const closingCutsceneId = optionalStringAt(record["closingCutsceneId"], `${path}.closingCutsceneId`);
   return {
     id: idAt<"chapter">(record["id"], `${path}.id`),
     name: stringAt(record["name"], `${path}.name`),
     mode: enumAt(record["mode"], `${path}.mode`, chapterModes),
     ordinal: positiveIntegerAt(record["ordinal"], `${path}.ordinal`),
-    playerObjective: stringAt(
-      record["playerObjective"],
-      `${path}.playerObjective`,
-    ),
-    startLocationId: idAt<"location">(
-      record["startLocationId"],
-      `${path}.startLocationId`,
-    ),
-    requiredPuzzleIds: idArrayAt<"puzzle">(
-      record["requiredPuzzleIds"],
-      `${path}.requiredPuzzleIds`,
-    ),
-    optionalPuzzleIds: idArrayAt<"puzzle">(
-      record["optionalPuzzleIds"],
-      `${path}.optionalPuzzleIds`,
-    ),
-    unlockedLocationIds: idArrayAt<"location">(
-      record["unlockedLocationIds"],
-      `${path}.unlockedLocationIds`,
-    ),
-    ...(openingCutsceneId
-      ? { openingCutsceneId: openingCutsceneId as AdventureDesignId<"cutscene"> }
-      : {}),
-    ...(closingCutsceneId
-      ? { closingCutsceneId: closingCutsceneId as AdventureDesignId<"cutscene"> }
-      : {}),
+    playerObjective: stringAt(record["playerObjective"], `${path}.playerObjective`),
+    startLocationId: idAt<"location">(record["startLocationId"], `${path}.startLocationId`),
+    requiredPuzzleIds: idArrayAt<"puzzle">(record["requiredPuzzleIds"], `${path}.requiredPuzzleIds`),
+    optionalPuzzleIds: idArrayAt<"puzzle">(record["optionalPuzzleIds"], `${path}.optionalPuzzleIds`),
+    unlockedLocationIds: idArrayAt<"location">(record["unlockedLocationIds"], `${path}.unlockedLocationIds`),
+    ...(openingCutsceneId ? { openingCutsceneId: openingCutsceneId as AdventureDesignId<"cutscene"> } : {}),
+    ...(closingCutsceneId ? { closingCutsceneId: closingCutsceneId as AdventureDesignId<"cutscene"> } : {}),
     completionBeat: stringAt(record["completionBeat"], `${path}.completionBeat`),
   };
 };
@@ -392,18 +289,11 @@ const parseClue = (value: unknown, path: string): AdventureClue => {
     id: idAt<"clue">(record["id"], `${path}.id`),
     name: stringAt(record["name"], `${path}.name`),
     delivery: enumAt(record["delivery"], `${path}.delivery`, clueDeliveries),
-    ...(locationId
-      ? { locationId: locationId as AdventureDesignId<"location"> }
-      : {}),
-    ...(chapterId
-      ? { chapterId: chapterId as AdventureDesignId<"chapter"> }
-      : {}),
+    ...(locationId ? { locationId: locationId as AdventureDesignId<"location"> } : {}),
+    ...(chapterId ? { chapterId: chapterId as AdventureDesignId<"chapter"> } : {}),
     text: stringAt(record["text"], `${path}.text`),
     guaranteed: booleanAt(record["guaranteed"], `${path}.guaranteed`),
-    supportsPuzzleIds: idArrayAt<"puzzle">(
-      record["supportsPuzzleIds"],
-      `${path}.supportsPuzzleIds`,
-    ),
+    supportsPuzzleIds: idArrayAt<"puzzle">(record["supportsPuzzleIds"], `${path}.supportsPuzzleIds`),
   };
 };
 
@@ -420,10 +310,7 @@ const parsePuzzleStep = (value: unknown, path: string): AdventurePuzzleStep => {
   };
 };
 
-const parsePuzzleSolution = (
-  value: unknown,
-  path: string,
-): AdventurePuzzleSolution => {
+const parsePuzzleSolution = (value: unknown, path: string): AdventurePuzzleSolution => {
   const record = recordAt(value, path);
   const steps = arrayAt(record["steps"], `${path}.steps`).map((entry, index) =>
     parsePuzzleStep(entry, `${path}.steps[${index}]`),
@@ -446,17 +333,9 @@ const parseHint = (value: unknown, path: string): AdventureHint => {
   };
 };
 
-const failureModes: readonly AdventureFailureMode[] = [
-  "none",
-  "setback",
-  "death",
-  "alternate-branch",
-];
+const failureModes: readonly AdventureFailureMode[] = ["none", "setback", "death", "alternate-branch"];
 
-const parseFailurePolicy = (
-  value: unknown,
-  path: string,
-): AdventureFailurePolicy => {
+const parseFailurePolicy = (value: unknown, path: string): AdventureFailurePolicy => {
   const record = recordAt(value, path);
   return {
     mode: enumAt(record["mode"], `${path}.mode`, failureModes),
@@ -467,14 +346,11 @@ const parseFailurePolicy = (
 
 const parsePuzzle = (value: unknown, path: string): AdventurePuzzle => {
   const record = recordAt(value, path);
-  const solutions = arrayAt(record["solutions"], `${path}.solutions`).map(
-    (entry, index) => parsePuzzleSolution(entry, `${path}.solutions[${index}]`),
+  const solutions = arrayAt(record["solutions"], `${path}.solutions`).map((entry, index) =>
+    parsePuzzleSolution(entry, `${path}.solutions[${index}]`),
   );
   if (solutions.length === 0) {
-    throw new AdventureDesignParseError(
-      `${path}.solutions`,
-      "Expected at least one solution.",
-    );
+    throw new AdventureDesignParseError(`${path}.solutions`, "Expected at least one solution.");
   }
   return {
     id: idAt<"puzzle">(record["id"], `${path}.id`),
@@ -487,10 +363,7 @@ const parsePuzzle = (value: unknown, path: string): AdventurePuzzle => {
       record["problemIntroducedBeforeSolution"],
       `${path}.problemIntroducedBeforeSolution`,
     ),
-    dependencyIds: idArrayAt<"puzzle">(
-      record["dependencyIds"],
-      `${path}.dependencyIds`,
-    ),
+    dependencyIds: idArrayAt<"puzzle">(record["dependencyIds"], `${path}.dependencyIds`),
     clueIds: idArrayAt<"clue">(record["clueIds"], `${path}.clueIds`),
     solutions,
     hints: arrayAt(record["hints"], `${path}.hints`).map((entry, index) =>
@@ -503,10 +376,7 @@ const parsePuzzle = (value: unknown, path: string): AdventurePuzzle => {
   };
 };
 
-const parseTrigger = (
-  value: unknown,
-  path: string,
-): AdventureCutsceneTrigger => {
+const parseTrigger = (value: unknown, path: string): AdventureCutsceneTrigger => {
   const record = recordAt(value, path);
   const kind = enumAt(record["kind"], `${path}.kind`, [
     "chapter-open",
@@ -550,10 +420,7 @@ const parseShot = (value: unknown, path: string): AdventureCutsceneShot => {
   return {
     id: idAt<"cutscene-shot">(record["id"], `${path}.id`),
     order: nonnegativeIntegerAt(record["order"], `${path}.order`),
-    durationTicks: positiveIntegerAt(
-      record["durationTicks"],
-      `${path}.durationTicks`,
-    ),
+    durationTicks: positiveIntegerAt(record["durationTicks"], `${path}.durationTicks`),
     framing: stringAt(record["framing"], `${path}.framing`),
     camera: stringAt(record["camera"], `${path}.camera`),
     staging: stringAt(record["staging"], `${path}.staging`),
@@ -607,37 +474,25 @@ const parseAction = (value: unknown, path: string): Action => {
     case "award-score":
       return {
         kind,
-        awardId: projectIdAt<"score-award">(
-          record["awardId"],
-          `${path}.awardId`,
-        ),
+        awardId: projectIdAt<"score-award">(record["awardId"], `${path}.awardId`),
         points: integerAt(record["points"], `${path}.points`),
       };
     case "change-scene":
       return {
         kind,
         sceneId: projectIdAt<"scene">(record["sceneId"], `${path}.sceneId`),
-        entranceId: projectIdAt<"entrance">(
-          record["entranceId"],
-          `${path}.entranceId`,
-        ),
+        entranceId: projectIdAt<"entrance">(record["entranceId"], `${path}.entranceId`),
       };
     case "play-sequence":
       return {
         kind,
-        sequenceId: projectIdAt<"sequence">(
-          record["sequenceId"],
-          `${path}.sequenceId`,
-        ),
+        sequenceId: projectIdAt<"sequence">(record["sequenceId"], `${path}.sequenceId`),
       };
     case "start-dialogue": {
       const nodeId = optionalStringAt(record["nodeId"], `${path}.nodeId`);
       return {
         kind,
-        dialogueId: projectIdAt<"dialogue">(
-          record["dialogueId"],
-          `${path}.dialogueId`,
-        ),
+        dialogueId: projectIdAt<"dialogue">(record["dialogueId"], `${path}.dialogueId`),
         ...(nodeId ? { nodeId: nodeId as Id<"dialogue-node"> } : {}),
       };
     }
@@ -664,10 +519,7 @@ const parseCutscene = (value: unknown, path: string): AdventureCutscene => {
     chapterId: idAt<"chapter">(record["chapterId"], `${path}.chapterId`),
     trigger: parseTrigger(record["trigger"], `${path}.trigger`),
     skippable: booleanAt(record["skippable"], `${path}.skippable`),
-    completionActions: arrayAt(
-      record["completionActions"],
-      `${path}.completionActions`,
-    ).map((entry, index) =>
+    completionActions: arrayAt(record["completionActions"], `${path}.completionActions`).map((entry, index) =>
       parseAction(entry, `${path}.completionActions[${index}]`),
     ),
     shots,
@@ -683,15 +535,10 @@ const parseReviewItem = (value: unknown, path: string): AdventureReviewItem => {
   };
 };
 
-export const parseAdventureDesignDocument = (
-  input: unknown,
-): AdventureDesignDocument => {
-  const record = recordAt(input, "$" );
+export const parseAdventureDesignDocument = (input: unknown): AdventureDesignDocument => {
+  const record = recordAt(input, "$");
   if (record["documentVersion"] !== 1) {
-    throw new AdventureDesignParseError(
-      "$.documentVersion",
-      "Expected document version 1.",
-    );
+    throw new AdventureDesignParseError("$.documentVersion", "Expected document version 1.");
   }
   return {
     documentVersion: 1,
@@ -699,27 +546,19 @@ export const parseAdventureDesignDocument = (
     title: stringAt(record["title"], "$.title"),
     pitch: stringAt(record["pitch"], "$.pitch"),
     playerPromise: stringAt(record["playerPromise"], "$.playerPromise"),
-    creativeDirection: parseCreativeDirection(
-      record["creativeDirection"],
-      "$.creativeDirection",
-    ),
+    creativeDirection: parseCreativeDirection(record["creativeDirection"], "$.creativeDirection"),
     map: parseWorldMap(record["map"], "$.map"),
     chapters: arrayAt(record["chapters"], "$.chapters").map((entry, index) =>
       parseChapter(entry, `$.chapters[${index}]`),
     ),
-    clues: arrayAt(record["clues"], "$.clues").map((entry, index) =>
-      parseClue(entry, `$.clues[${index}]`),
-    ),
+    clues: arrayAt(record["clues"], "$.clues").map((entry, index) => parseClue(entry, `$.clues[${index}]`)),
     puzzles: arrayAt(record["puzzles"], "$.puzzles").map((entry, index) =>
       parsePuzzle(entry, `$.puzzles[${index}]`),
     ),
     cutscenes: arrayAt(record["cutscenes"], "$.cutscenes").map((entry, index) =>
       parseCutscene(entry, `$.cutscenes[${index}]`),
     ),
-    reviewChecklist: arrayAt(
-      record["reviewChecklist"],
-      "$.reviewChecklist",
-    ).map((entry, index) =>
+    reviewChecklist: arrayAt(record["reviewChecklist"], "$.reviewChecklist").map((entry, index) =>
       parseReviewItem(entry, `$.reviewChecklist[${index}]`),
     ),
   };

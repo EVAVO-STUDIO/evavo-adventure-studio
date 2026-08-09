@@ -1,13 +1,7 @@
-import type {
-  AssetBuildManifest,
-  CompiledAssetRecord,
-} from "@evavo/adventure-asset-contract";
+import type { AssetBuildManifest, CompiledAssetRecord } from "@evavo/adventure-asset-contract";
 import type { RuntimeAssetRecord } from "@evavo/adventure-asset-contract/runtime-asset";
 import type { Rectangle } from "@evavo/adventure-project-schema";
-import type {
-  BitmapFontManifest,
-  BitmapGlyph,
-} from "./index.js";
+import type { BitmapFontManifest, BitmapGlyph } from "./index.js";
 
 export type BitmapFontCompiledIssueCode =
   | "compiled-font-asset-missing"
@@ -25,10 +19,7 @@ export interface BitmapFontCompiledIssue {
 
 type FontAssetRecord = CompiledAssetRecord | RuntimeAssetRecord;
 type ImageFontAsset = Extract<FontAssetRecord, { readonly kind: "image" }>;
-type SpritesheetFontAsset = Extract<
-  FontAssetRecord,
-  { readonly kind: "spritesheet" }
->;
+type SpritesheetFontAsset = Extract<FontAssetRecord, { readonly kind: "spritesheet" }>;
 
 export interface BitmapFontAssetCollection {
   readonly assets: readonly FontAssetRecord[];
@@ -44,18 +35,10 @@ const addIssue = (
 };
 
 const sameRectangle = (left: Rectangle, right: Rectangle): boolean =>
-  left.x === right.x &&
-  left.y === right.y &&
-  left.width === right.width &&
-  left.height === right.height;
+  left.x === right.x && left.y === right.y && left.width === right.width && left.height === right.height;
 
-const rectangleInside = (
-  rectangle: Rectangle,
-  width: number,
-  height: number,
-): boolean =>
-  rectangle.x + rectangle.width <= width &&
-  rectangle.y + rectangle.height <= height;
+const rectangleInside = (rectangle: Rectangle, width: number, height: number): boolean =>
+  rectangle.x + rectangle.width <= width && rectangle.y + rectangle.height <= height;
 
 const validateImageGlyph = (
   issues: BitmapFontCompiledIssue[],
@@ -63,13 +46,7 @@ const validateImageGlyph = (
   glyph: BitmapGlyph,
   path: string,
 ): void => {
-  if (
-    !rectangleInside(
-      glyph.sourceRect,
-      asset.metadata.width,
-      asset.metadata.height,
-    )
-  ) {
+  if (!rectangleInside(glyph.sourceRect, asset.metadata.width, asset.metadata.height)) {
     addIssue(
       issues,
       "compiled-font-image-bounds",
@@ -94,9 +71,7 @@ const validateSpritesheetGlyph = (
     );
     return;
   }
-  const frame = asset.metadata.frames.find(
-    (candidate) => candidate.frameId === glyph.frameId,
-  );
+  const frame = asset.metadata.frames.find((candidate) => candidate.frameId === glyph.frameId);
   if (!frame) {
     addIssue(
       issues,
@@ -121,9 +96,7 @@ export const validateCompiledBitmapFontMappings = (
   compiled: BitmapFontAssetCollection | Pick<AssetBuildManifest, "assets">,
 ): readonly BitmapFontCompiledIssue[] => {
   const issues: BitmapFontCompiledIssue[] = [];
-  const assets = new Map(
-    compiled.assets.map((asset) => [asset.assetId as string, asset] as const),
-  );
+  const assets = new Map(compiled.assets.map((asset) => [asset.assetId as string, asset] as const));
 
   fonts.fonts.forEach((font, fontIndex) => {
     const asset = assets.get(font.atlasAssetId);

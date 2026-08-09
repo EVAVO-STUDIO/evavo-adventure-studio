@@ -1,7 +1,4 @@
-import {
-  advanceAdventureMotion,
-  createAdventureMotionState,
-} from "./kinematics.js";
+import { advanceAdventureMotion, createAdventureMotionState } from "./kinematics.js";
 import { adventurePlayFeelProfileById } from "./presets.js";
 import type {
   AdventureKinematicRoute,
@@ -27,25 +24,13 @@ const fnv1a64 = (value: string): string => {
   return `fnv1a64:${hash.toString(16).padStart(16, "0")}`;
 };
 
-export const adventureKinematicRouteFingerprint = (
-  route: AdventureKinematicRoute,
-): string =>
-  fnv1a64(
-    route.points
-      .map((point) => `${canonicalNumber(point.x)},${canonicalNumber(point.y)}`)
-      .join(";"),
-  );
+export const adventureKinematicRouteFingerprint = (route: AdventureKinematicRoute): string =>
+  fnv1a64(route.points.map((point) => `${canonicalNumber(point.x)},${canonicalNumber(point.y)}`).join(";"));
 
 export class AdventureMotionRuntimeExtensionError extends Error {
-  readonly code:
-    | "unsupported-extension-version"
-    | "route-fingerprint-mismatch"
-    | "profile-mismatch";
+  readonly code: "unsupported-extension-version" | "route-fingerprint-mismatch" | "profile-mismatch";
 
-  constructor(
-    code: AdventureMotionRuntimeExtensionError["code"],
-    message: string,
-  ) {
+  constructor(code: AdventureMotionRuntimeExtensionError["code"], message: string) {
     super(message);
     this.name = "AdventureMotionRuntimeExtensionError";
     this.code = code;
@@ -98,13 +83,7 @@ export const advanceAdventureMotionRuntimeExtension = (
 } => {
   const profile = adventurePlayFeelProfileById(extension.profileId);
   assertExtensionCompatible(extension, route, profile);
-  const advanced = advanceAdventureMotion(
-    extension.motion,
-    route,
-    profile,
-    ticks,
-    tuning,
-  );
+  const advanced = advanceAdventureMotion(extension.motion, route, profile, ticks, tuning);
   return {
     ...advanced,
     extension: { ...extension, motion: advanced.state },

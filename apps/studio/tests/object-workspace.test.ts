@@ -40,13 +40,9 @@ describe("object state workspace", () => {
     const definition = selectedObjectDefinition(state)!;
     const initial = selectedObjectState(state)!;
 
-    expect(() => removeSelectedObjectStateCommand(state)).toThrow(
-      "Choose a different initial state",
-    );
+    expect(() => removeSelectedObjectStateCommand(state)).toThrow("Choose a different initial state");
 
-    const alternative = definition.states.find(
-      (candidate) => candidate.id !== initial.id,
-    );
+    const alternative = definition.states.find((candidate) => candidate.id !== initial.id);
     if (!alternative) throw new Error("Expected an alternative object state.");
     state = objectWorkspaceReducer(state, {
       type: "select-state",
@@ -67,9 +63,9 @@ describe("object state workspace", () => {
       stateId: removal.nextStateId,
     });
 
-    expect(selectedObjectDefinition(state)?.states.some(
-      (candidate) => candidate.id === initial.id,
-    )).toBe(false);
+    expect(selectedObjectDefinition(state)?.states.some((candidate) => candidate.id === initial.id)).toBe(
+      false,
+    );
   });
 
   it("adds, edits and removes state-specific interactions", () => {
@@ -103,9 +99,9 @@ describe("object state workspace", () => {
       interactionId: null,
     });
     expect(selectedObjectInteraction(state)).toBeNull();
-    expect(selectedObjectState(state)?.interactions.some(
-      (candidate) => candidate.id === addition.interactionId,
-    )).toBe(false);
+    expect(
+      selectedObjectState(state)?.interactions.some((candidate) => candidate.id === addition.interactionId),
+    ).toBe(false);
   });
 
   it("keeps unique IDs across new states and verbs", () => {

@@ -1,8 +1,5 @@
 import { describe, expect, it } from "vitest";
-import {
-  parseRuntimeBundle,
-  runtimePlayFeelProfileIdSchema,
-} from "../src/index.js";
+import { parseRuntimeBundle, runtimePlayFeelProfileIdSchema } from "../src/index.js";
 
 const hash = "0".repeat(64);
 
@@ -101,9 +98,7 @@ describe("runtime play-feel profile contract", () => {
         playFeelProfileId,
       });
       expect(bundle.playFeelProfileId).toBe(playFeelProfileId);
-      expect(runtimePlayFeelProfileIdSchema.parse(playFeelProfileId)).toBe(
-        playFeelProfileId,
-      );
+      expect(runtimePlayFeelProfileIdSchema.parse(playFeelProfileId)).toBe(playFeelProfileId);
     }
   });
 

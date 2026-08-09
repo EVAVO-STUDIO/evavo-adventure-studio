@@ -77,23 +77,16 @@ const withoutLastCodePoint = (value: string): string => {
   return characters.join("");
 };
 
-const withoutLastWord = (value: string): string =>
-  value.trimEnd().replace(/\S+\s*$/u, "");
+const withoutLastWord = (value: string): string => value.trimEnd().replace(/\S+\s*$/u, "");
 
-const withText = (
-  state: ParserBufferState,
-  text: string,
-): ParserBufferState => ({
+const withText = (state: ParserBufferState, text: string): ParserBufferState => ({
   ...state,
   text: [...text].slice(0, MAXIMUM_PARSER_LENGTH).join(""),
   historyIndex: null,
   draftBeforeHistory: "",
 });
 
-export const editParserBuffer = (
-  state: ParserBufferState,
-  input: ParserKeyInput,
-): ParserEditResult => {
+export const editParserBuffer = (state: ParserBufferState, input: ParserKeyInput): ParserEditResult => {
   if (input.kind === "focus") {
     return { state: { ...state, focused: true }, submitted: null, handled: true };
   }
@@ -130,16 +123,13 @@ export const editParserBuffer = (
         return { state, submitted: null, handled: true };
       }
       const historyIndex =
-        state.historyIndex === null
-          ? state.history.length - 1
-          : Math.max(0, state.historyIndex - 1);
+        state.historyIndex === null ? state.history.length - 1 : Math.max(0, state.historyIndex - 1);
       return {
         state: {
           ...state,
           text: state.history[historyIndex] ?? state.text,
           historyIndex,
-          draftBeforeHistory:
-            state.historyIndex === null ? state.text : state.draftBeforeHistory,
+          draftBeforeHistory: state.historyIndex === null ? state.text : state.draftBeforeHistory,
         },
         submitted: null,
         handled: true,
@@ -177,10 +167,9 @@ export const editParserBuffer = (
       if (!submitted) {
         return { state: withText(state, ""), submitted: null, handled: true };
       }
-      const history = [
-        ...state.history.filter((entry) => entry !== submitted),
-        submitted,
-      ].slice(-MAXIMUM_HISTORY);
+      const history = [...state.history.filter((entry) => entry !== submitted), submitted].slice(
+        -MAXIMUM_HISTORY,
+      );
       return {
         state: {
           ...state,
@@ -199,9 +188,6 @@ export const editParserBuffer = (
         submitted: null,
         handled: true,
       };
-    case "focus":
-    case "blur":
-      return { state, submitted: null, handled: true };
   }
 };
 
@@ -211,9 +197,7 @@ export const parserKeyInputFromKeyboardEvent = (
   if (event.key === "Enter") return { kind: "submit" };
   if (event.key === "Escape") return { kind: "clear" };
   if (event.key === "Backspace") {
-    return event.ctrlKey || event.metaKey
-      ? { kind: "delete-word" }
-      : { kind: "backspace" };
+    return event.ctrlKey || event.metaKey ? { kind: "delete-word" } : { kind: "backspace" };
   }
   if (event.key === "ArrowUp") return { kind: "history-previous" };
   if (event.key === "ArrowDown") return { kind: "history-next" };
@@ -229,10 +213,11 @@ const normalizePhrase = (value: string): string =>
     .replace(/\s+/gu, " ")
     .trim();
 
-const withoutArticle = (value: string): string =>
-  value.replace(/^(?:the|a|an)\s+/u, "");
+const withoutArticle = (value: string): string => value.replace(/^(?:the|a|an)\s+/u, "");
 
-const verbAliases = (skin: UiSkin): readonly {
+const verbAliases = (
+  skin: UiSkin,
+): readonly {
   readonly alias: string;
   readonly verb: string;
 }[] => {
@@ -316,9 +301,7 @@ export const resolveParserCommand = (
   targetPhrase = targetPhrase.replace(/^(?:at|to)\s+/u, "");
   if (!targetPhrase) {
     if (matchedVerb.verb === "look") {
-      const scene = bundle.scenes.find(
-        (candidate) => candidate.id === world.story.currentSceneId,
-      );
+      const scene = bundle.scenes.find((candidate) => candidate.id === world.story.currentSceneId);
       return {
         kind: "scene-look",
         text: scene ? scene.name.toUpperCase() : "NOTHING SPECIAL",

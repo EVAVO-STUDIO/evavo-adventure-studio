@@ -63,7 +63,9 @@
   border: 1px solid color-mix(in srgb, var(--cc-accent) 70%, white);
   background: var(--cc-accent);
   color: var(--cc-ink);
-  font: 900 19px/1 ui-monospace, monospace;
+  font:
+    900 19px / 1 ui-monospace,
+    monospace;
   box-shadow: 0 0 0 4px color-mix(in srgb, var(--cc-accent) 12%, transparent);
 }
 
@@ -135,7 +137,9 @@
 
 .cc-readiness em {
   margin-left: auto;
-  font: normal 800 12px/1 ui-monospace, monospace;
+  font:
+    normal 800 12px / 1 ui-monospace,
+    monospace;
 }
 
 .cc-readiness.is-ready > span {
@@ -224,7 +228,9 @@
   color: var(--cc-text);
   text-align: left;
   cursor: pointer;
-  transition: border-color 120ms ease, transform 120ms ease;
+  transition:
+    border-color 120ms ease,
+    transform 120ms ease;
 }
 
 .cc-project-button::before {
@@ -275,7 +281,9 @@
 
 .cc-scene-stack > header strong {
   color: var(--cc-warm);
-  font: 800 11px/1 ui-monospace, monospace;
+  font:
+    800 11px / 1 ui-monospace,
+    monospace;
 }
 
 .cc-scene-stack > button {
@@ -324,6 +332,8 @@
   padding: 5px 7px;
   border: 1px solid var(--cc-line);
   color: var(--cc-muted);
-  font: 700 9px/1 ui-monospace, monospace;
+  font:
+    700 9px / 1 ui-monospace,
+    monospace;
   text-transform: uppercase;
 }

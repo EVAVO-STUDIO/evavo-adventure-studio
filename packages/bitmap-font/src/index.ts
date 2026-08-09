@@ -1,10 +1,5 @@
+import { type AdventureProject, type Id, idSchema, rectangleSchema } from "@evavo/adventure-project-schema";
 import { z } from "zod";
-import {
-  idSchema,
-  rectangleSchema,
-  type AdventureProject,
-  type Id,
-} from "@evavo/adventure-project-schema";
 
 const metricPointSchema = z
   .object({
@@ -48,9 +43,7 @@ export const bitmapFontDefinitionSchema = z
     kernings: z.array(bitmapKerningSchema).default([]),
   })
   .strict();
-export type BitmapFontDefinition = z.infer<
-  typeof bitmapFontDefinitionSchema
->;
+export type BitmapFontDefinition = z.infer<typeof bitmapFontDefinitionSchema>;
 
 export const bitmapFontManifestSchema = z
   .object({
@@ -94,8 +87,7 @@ const addIssue = (
   issues.push({ severity: "error", code, path, message });
 };
 
-const pairKey = (left: number, right: number): string =>
-  `${left.toString(16)}:${right.toString(16)}`;
+const pairKey = (left: number, right: number): string => `${left.toString(16)}:${right.toString(16)}`;
 
 export const validateBitmapFontManifest = (
   project: Pick<AdventureProject, "id" | "assets">,
@@ -111,21 +103,14 @@ export const validateBitmapFontManifest = (
     );
   }
 
-  const assets = new Map(
-    project.assets.map((asset) => [asset.id as string, asset] as const),
-  );
+  const assets = new Map(project.assets.map((asset) => [asset.id as string, asset] as const));
   const fontIds = new Set<string>();
   const globalGlyphIds = new Set<string>();
 
   manifest.fonts.forEach((font, fontIndex) => {
     const fontPath = `fonts[${fontIndex}]`;
     if (fontIds.has(font.id)) {
-      addIssue(
-        issues,
-        "duplicate-font-id",
-        `${fontPath}.id`,
-        `Bitmap font '${font.id}' is duplicated.`,
-      );
+      addIssue(issues, "duplicate-font-id", `${fontPath}.id`, `Bitmap font '${font.id}' is duplicated.`);
     }
     fontIds.add(font.id);
 
@@ -172,9 +157,7 @@ export const validateBitmapFontManifest = (
           issues,
           "duplicate-code-point",
           `${glyphPath}.codePoint`,
-          `Font '${font.id}' declares U+${glyph.codePoint
-            .toString(16)
-            .toUpperCase()} more than once.`,
+          `Font '${font.id}' declares U+${glyph.codePoint.toString(16).toUpperCase()} more than once.`,
         );
       }
       codePoints.add(glyph.codePoint);
@@ -202,9 +185,7 @@ export const validateBitmapFontManifest = (
         issues,
         "missing-fallback-glyph",
         `${fontPath}.fallbackCodePoint`,
-        `Font '${font.id}' fallback U+${font.fallbackCodePoint
-          .toString(16)
-          .toUpperCase()} is not present.`,
+        `Font '${font.id}' fallback U+${font.fallbackCodePoint.toString(16).toUpperCase()} is not present.`,
       );
     }
 
@@ -213,18 +194,10 @@ export const validateBitmapFontManifest = (
       const kerningPath = `${fontPath}.kernings[${kerningIndex}]`;
       const key = pairKey(kerning.leftCodePoint, kerning.rightCodePoint);
       if (kerningPairs.has(key)) {
-        addIssue(
-          issues,
-          "duplicate-kerning-pair",
-          kerningPath,
-          `Kerning pair '${key}' is duplicated.`,
-        );
+        addIssue(issues, "duplicate-kerning-pair", kerningPath, `Kerning pair '${key}' is duplicated.`);
       }
       kerningPairs.add(key);
-      if (
-        !codePoints.has(kerning.leftCodePoint) ||
-        !codePoints.has(kerning.rightCodePoint)
-      ) {
+      if (!codePoints.has(kerning.leftCodePoint) || !codePoints.has(kerning.rightCodePoint)) {
         addIssue(
           issues,
           "kerning-glyph-missing",
@@ -247,15 +220,10 @@ export const bitmapFontById = (
   return font;
 };
 
-export const glyphByCodePoint = (
-  font: BitmapFontDefinition,
-  codePoint: number,
-): BitmapGlyph => {
+export const glyphByCodePoint = (font: BitmapFontDefinition, codePoint: number): BitmapGlyph => {
   const glyph =
     font.glyphs.find((candidate) => candidate.codePoint === codePoint) ??
-    font.glyphs.find(
-      (candidate) => candidate.codePoint === font.fallbackCodePoint,
-    );
+    font.glyphs.find((candidate) => candidate.codePoint === font.fallbackCodePoint);
   if (!glyph) {
     throw new Error(`Bitmap font '${font.id}' has no fallback glyph.`);
   }

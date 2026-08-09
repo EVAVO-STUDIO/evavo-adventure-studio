@@ -1,13 +1,8 @@
 import {
-  useEffect,
-  useMemo,
-  useState,
-  type ChangeEvent,
-} from "react";
-import {
-  createAdventureSceneStagingReports,
   type AdventureSceneStagingSeverity,
+  createAdventureSceneStagingReports,
 } from "@evavo/adventure-design/scene-staging";
+import { type ChangeEvent, useEffect, useMemo, useState } from "react";
 import { studioProject, studioSceneInstances } from "./fixture.js";
 import {
   FindingsPanel,
@@ -16,19 +11,16 @@ import {
   Metric,
   StageOverlay,
   StagingButton,
-  StatusPip,
   type StagingFindingFilter,
   type StagingView,
+  StatusPip,
 } from "./scene-staging-components.js";
 import "./scene-staging.css";
 
 const shortId = (value: string): string => value.split(".").at(-1) ?? value;
 
 export const SceneStagingApp = () => {
-  const reports = useMemo(
-    () => createAdventureSceneStagingReports(studioProject, studioSceneInstances),
-    [],
-  );
+  const reports = useMemo(() => createAdventureSceneStagingReports(studioProject, studioSceneInstances), []);
   const [sceneIndex, setSceneIndex] = useState(0);
   const [view, setView] = useState<StagingView>("stage");
   const [filter, setFilter] = useState<StagingFindingFilter>("all");
@@ -77,10 +69,7 @@ export const SceneStagingApp = () => {
           <StagingButton active={view === "stage"} onClick={() => setView("stage")}>
             Initial stage
           </StagingButton>
-          <StagingButton
-            active={view === "findings"}
-            onClick={() => setView("findings")}
-          >
+          <StagingButton active={view === "findings"} onClick={() => setView("findings")}>
             Findings
           </StagingButton>
           <StagingButton active={view === "layers"} onClick={() => setView("layers")}>
@@ -120,9 +109,18 @@ export const SceneStagingApp = () => {
             </div>
           </section>
           <section className="stg-severity-summary">
-            <div className="is-error"><span>Errors</span><strong>{count("error")}</strong></div>
-            <div className="is-warning"><span>Warnings</span><strong>{count("warning")}</strong></div>
-            <div className="is-note"><span>Notes</span><strong>{count("note")}</strong></div>
+            <div className="is-error">
+              <span>Errors</span>
+              <strong>{count("error")}</strong>
+            </div>
+            <div className="is-warning">
+              <span>Warnings</span>
+              <strong>{count("warning")}</strong>
+            </div>
+            <div className="is-note">
+              <span>Notes</span>
+              <strong>{count("note")}</strong>
+            </div>
           </section>
         </aside>
 
@@ -144,9 +142,9 @@ export const SceneStagingApp = () => {
                 : `${report.metrics.walkableActorCount} walkable candidates`}
             </h2>
             <p>
-              Packaged gameplay selects one implicit actor only when the start scene has
-              exactly one walkable instance. Ambiguity produces a view-only runtime unless
-              launch configuration requests an actor explicitly.
+              Packaged gameplay selects one implicit actor only when the start scene has exactly one walkable
+              instance. Ambiguity produces a view-only runtime unless launch configuration requests an actor
+              explicitly.
             </p>
           </section>
           <section>

@@ -1,9 +1,9 @@
 import type { RuntimeEvent, RuntimeState } from "@evavo/adventure-core";
 import {
   chooseDialogueOption,
-  resolveDialogueView,
   type DialogueOperation,
   type DialogueView,
+  resolveDialogueView,
 } from "@evavo/adventure-dialogue";
 import type { Id } from "@evavo/adventure-project-schema";
 import type { RuntimeBundle } from "@evavo/adventure-runtime-bundle";
@@ -15,10 +15,7 @@ export interface DialogueRuntimeWorld {
   readonly story: RuntimeState;
 }
 
-export type DialogueRuntimeRejectionReason =
-  | "dialogue-not-active"
-  | "dialogue-missing"
-  | "choice-rejected";
+export type DialogueRuntimeRejectionReason = "dialogue-not-active" | "dialogue-missing" | "choice-rejected";
 
 export type DialogueChoiceResult<T extends DialogueRuntimeWorld> =
   | {
@@ -39,15 +36,10 @@ export type DialogueChoiceResult<T extends DialogueRuntimeWorld> =
       readonly state: T;
     };
 
-const graphById = (
-  bundle: Pick<RuntimeBundle, "dialogues">,
-  dialogueId: Id<"dialogue">,
-) => bundle.dialogues.find((dialogue) => dialogue.id === dialogueId) ?? null;
+const graphById = (bundle: Pick<RuntimeBundle, "dialogues">, dialogueId: Id<"dialogue">) =>
+  bundle.dialogues.find((dialogue) => dialogue.id === dialogueId) ?? null;
 
-const withStory = <T extends DialogueRuntimeWorld>(
-  state: T,
-  story: RuntimeState,
-): T => ({ ...state, story });
+const withStory = <T extends DialogueRuntimeWorld>(state: T, story: RuntimeState): T => ({ ...state, story });
 
 const applyOperation = <T extends DialogueRuntimeWorld>(
   state: T,
@@ -76,8 +68,7 @@ const applyOperation = <T extends DialogueRuntimeWorld>(
   };
 };
 
-type DialogueNarrativeBundle = Pick<RuntimeBundle, "dialogues"> &
-  Partial<Pick<RuntimeBundle, "sequences">>;
+type DialogueNarrativeBundle = Pick<RuntimeBundle, "dialogues"> & Partial<Pick<RuntimeBundle, "sequences">>;
 
 const narrativeBundle = (
   bundle: DialogueNarrativeBundle,
@@ -91,11 +82,7 @@ const applyNarrativeResult = <T extends DialogueRuntimeWorld>(
   result: DialogueChoiceResult<T>,
 ): DialogueChoiceResult<T> => {
   if (result.kind === "rejected") return result;
-  const narrative = applyRuntimeNarrativeRequestEvents(
-    narrativeBundle(bundle),
-    result.state,
-    result.events,
-  );
+  const narrative = applyRuntimeNarrativeRequestEvents(narrativeBundle(bundle), result.state, result.events);
   if (result.kind === "ended") {
     return {
       kind: "ended",
@@ -125,9 +112,7 @@ export const resolveActiveRuntimeDialogue = (
   const active = state.story.activeDialogue;
   if (!active) return null;
   const graph = graphById(bundle, active.dialogueId);
-  return graph
-    ? resolveDialogueView(state.story, graph, active.nodeId)
-    : null;
+  return graph ? resolveDialogueView(state.story, graph, active.nodeId) : null;
 };
 
 export const applyDialogueRequestEvents = <T extends DialogueRuntimeWorld>(
@@ -139,11 +124,7 @@ export const applyDialogueRequestEvents = <T extends DialogueRuntimeWorld>(
   readonly events: readonly RuntimeEvent[];
   readonly view: DialogueView | null;
 } => {
-  const narrative = applyRuntimeNarrativeRequestEvents(
-    narrativeBundle(bundle),
-    state,
-    events,
-  );
+  const narrative = applyRuntimeNarrativeRequestEvents(narrativeBundle(bundle), state, events);
   return {
     state: narrative.state,
     events: narrative.events,
@@ -151,9 +132,7 @@ export const applyDialogueRequestEvents = <T extends DialogueRuntimeWorld>(
   };
 };
 
-export const chooseActiveRuntimeDialogueOption = <
-  T extends DialogueRuntimeWorld,
->(
+export const chooseActiveRuntimeDialogueOption = <T extends DialogueRuntimeWorld>(
   bundle: DialogueNarrativeBundle,
   state: T,
   choiceId: Id<"dialogue-choice">,
@@ -178,9 +157,6 @@ export const chooseActiveRuntimeDialogueOption = <
   }
   return applyNarrativeResult(
     bundle,
-    applyOperation(
-      state,
-      chooseDialogueOption(state.story, graph, choiceId),
-    ),
+    applyOperation(state, chooseDialogueOption(state.story, graph, choiceId)),
   );
 };

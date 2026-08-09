@@ -1,13 +1,12 @@
-import type { AdventurePlayFeelProfile } from "./types.js";
 import { baseProfile, sharedInput, sharedPresentation } from "./preset-factory.js";
+import type { AdventurePlayFeelProfile } from "./types.js";
 
 export const foundationPlayFeelProfiles: readonly AdventurePlayFeelProfile[] = [
   baseProfile({
     id: "classic-balanced",
     label: "Classic Balanced",
     summary:
-      "Neutral deterministic point-and-click timing for projects without " +
-      "a selected production family.",
+      "Neutral deterministic point-and-click timing for projects without " + "a selected production family.",
     logicalTicksPerSecond: 60,
     movement: {
       topSpeedPixelsPerSecond: 48,

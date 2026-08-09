@@ -1,17 +1,17 @@
-import { describe, expect, it } from "vitest";
 import type { Id } from "@evavo/adventure-project-schema";
 import { parseSceneInstanceManifest } from "@evavo/adventure-scene-instances";
+import { describe, expect, it } from "vitest";
 import {
-  EditorCommandError,
   applyEditorCommand,
   canonicalEditorJson,
   createEditorHistory,
+  type EditorCommand,
+  EditorCommandError,
   executeEditorCommand,
   isEditorDocumentDirty,
   markEditorHistorySaved,
   redoEditorCommand,
   undoEditorCommand,
-  type EditorCommand,
 } from "../src/index.js";
 
 const id = <T extends string>(value: string) => value as Id<T>;
@@ -92,25 +92,19 @@ describe("scene editor history", () => {
       instance: { ...actor, position: { x: 120, y: 166 } },
     });
 
-    expect(
-      history.document.manifest.scenes[0]?.actorInstances[0]?.position,
-    ).toEqual({ x: 120, y: 166 });
+    expect(history.document.manifest.scenes[0]?.actorInstances[0]?.position).toEqual({ x: 120, y: 166 });
     expect(history.document.operationRevision).toBe(2);
     expect(isEditorDocumentDirty(history.document)).toBe(true);
 
     history = undoEditorCommand(history);
-    expect(
-      history.document.manifest.scenes[0]?.actorInstances[0]?.position,
-    ).toEqual({ x: 40, y: 160 });
+    expect(history.document.manifest.scenes[0]?.actorInstances[0]?.position).toEqual({ x: 40, y: 160 });
     history = undoEditorCommand(history);
     expect(history.document.manifest.scenes[0]?.actorInstances).toEqual([]);
     expect(isEditorDocumentDirty(history.document)).toBe(false);
 
     history = redoEditorCommand(history);
     history = redoEditorCommand(history);
-    expect(
-      history.document.manifest.scenes[0]?.actorInstances[0]?.position,
-    ).toEqual({ x: 120, y: 166 });
+    expect(history.document.manifest.scenes[0]?.actorInstances[0]?.position).toEqual({ x: 120, y: 166 });
   });
 
   it("applies multi-entity scene edits as one reversible batch", () => {
@@ -139,15 +133,9 @@ describe("scene editor history", () => {
     };
     let history = executeEditorCommand(createEditorHistory(manifest), command);
     const composition = history.document.manifest.scenes[0];
-    expect(composition?.actorInstances.map((instance) => instance.id)).toEqual([
-      "actor-instance.detective",
-    ]);
-    expect(composition?.objectInstances.map((instance) => instance.id)).toEqual([
-      "object.office.door",
-    ]);
-    expect(composition?.navigationPortals.map((entry) => entry.id)).toEqual([
-      "portal.office.stairs",
-    ]);
+    expect(composition?.actorInstances.map((instance) => instance.id)).toEqual(["actor-instance.detective"]);
+    expect(composition?.objectInstances.map((instance) => instance.id)).toEqual(["object.office.door"]);
+    expect(composition?.navigationPortals.map((entry) => entry.id)).toEqual(["portal.office.stairs"]);
     expect(history.undoStack).toHaveLength(1);
 
     history = undoEditorCommand(history);
@@ -175,9 +163,7 @@ describe("scene editor history", () => {
       ],
     };
 
-    expect(() => applyEditorCommand(manifest, command)).toThrow(
-      EditorCommandError,
-    );
+    expect(() => applyEditorCommand(manifest, command)).toThrow(EditorCommandError);
     expect(manifest.scenes[0]?.actorInstances).toEqual([]);
   });
 

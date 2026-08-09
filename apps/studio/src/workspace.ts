@@ -1,20 +1,14 @@
 import {
   createEditorHistory,
+  type EditorCommand,
+  type EditorHistoryState,
   executeEditorCommand,
   isEditorDocumentDirty,
   markEditorHistorySaved,
   redoEditorCommand,
   undoEditorCommand,
-  type EditorCommand,
-  type EditorHistoryState,
 } from "@evavo/adventure-editor-core";
-import type {
-  Actor,
-  AdventureProject,
-  Id,
-  Point,
-  Scene,
-} from "@evavo/adventure-project-schema";
+import type { Actor, AdventureProject, Id, Point, Scene } from "@evavo/adventure-project-schema";
 import type {
   ObjectDefinition,
   SceneActorInstance,
@@ -175,18 +169,14 @@ export const workspaceIsDirty = (state: StudioWorkspaceState): boolean =>
   isEditorDocumentDirty(state.history.document);
 
 export const activeProjectScene = (state: StudioWorkspaceState): Scene => {
-  const scene = state.project.scenes.find(
-    (candidate) => candidate.id === state.activeSceneId,
-  );
+  const scene = state.project.scenes.find((candidate) => candidate.id === state.activeSceneId);
   if (!scene) {
     throw new Error(`Scene '${state.activeSceneId}' does not exist.`);
   }
   return scene;
 };
 
-export const activeSceneComposition = (
-  state: StudioWorkspaceState,
-): SceneComposition => {
+export const activeSceneComposition = (state: StudioWorkspaceState): SceneComposition => {
   const composition = state.history.document.manifest.scenes.find(
     (candidate) => candidate.sceneId === state.activeSceneId,
   );
@@ -214,21 +204,15 @@ export const selectedEntity = (state: StudioWorkspaceState): SelectedEntity => {
   const composition = activeSceneComposition(state);
   switch (selection.kind) {
     case "actor": {
-      const value = composition.actorInstances.find(
-        (candidate) => candidate.id === selection.id,
-      );
+      const value = composition.actorInstances.find((candidate) => candidate.id === selection.id);
       return value ? { kind: "actor", value } : null;
     }
     case "object": {
-      const value = composition.objectInstances.find(
-        (candidate) => candidate.id === selection.id,
-      );
+      const value = composition.objectInstances.find((candidate) => candidate.id === selection.id);
       return value ? { kind: "object", value } : null;
     }
     case "portal": {
-      const value = composition.navigationPortals.find(
-        (candidate) => candidate.id === selection.id,
-      );
+      const value = composition.navigationPortals.find((candidate) => candidate.id === selection.id);
       return value ? { kind: "portal", value } : null;
     }
   }
@@ -268,10 +252,7 @@ export const replaceSelectedPositionCommand = (
   }
 };
 
-const uniqueId = (
-  existing: ReadonlySet<string>,
-  prefix: string,
-): string => {
+const uniqueId = (existing: ReadonlySet<string>, prefix: string): string => {
   let index = 1;
   while (existing.has(`${prefix}-${index}`)) {
     index += 1;
@@ -324,9 +305,7 @@ export const insertActorCommand = (
   if (!animation) {
     throw new Error(`Actor '${actor.id}' has no animations.`);
   }
-  const id = asId<"actor-instance">(
-    uniqueId(manifestIds(manifest), `actor-instance.${state.activeSceneId}`),
-  );
+  const id = asId<"actor-instance">(uniqueId(manifestIds(manifest), `actor-instance.${state.activeSceneId}`));
   const composition = activeSceneComposition(state);
   const instance: SceneActorInstance = {
     id,
@@ -355,9 +334,7 @@ export const insertObjectCommand = (
 ): { readonly command: EditorCommand; readonly selection: WorkspaceSelection } => {
   const manifest = state.history.document.manifest;
   const definition = firstDefinition(manifest);
-  const id = asId<"object">(
-    uniqueId(manifestIds(manifest), `object.${state.activeSceneId}`),
-  );
+  const id = asId<"object">(uniqueId(manifestIds(manifest), `object.${state.activeSceneId}`));
   const composition = activeSceneComposition(state);
   const instance: SceneObjectInstance = {
     id,
@@ -380,9 +357,7 @@ export const insertObjectCommand = (
   };
 };
 
-export const deleteSelectionCommand = (
-  state: StudioWorkspaceState,
-): EditorCommand | null => {
+export const deleteSelectionCommand = (state: StudioWorkspaceState): EditorCommand | null => {
   const selection = state.selection;
   if (!selection) {
     return null;
@@ -416,9 +391,7 @@ export const selectionTitle = (state: StudioWorkspaceState): string => {
   }
   switch (entity.kind) {
     case "actor": {
-      const actor = state.project.actors.find(
-        (candidate) => candidate.id === entity.value.actorId,
-      );
+      const actor = state.project.actors.find((candidate) => candidate.id === entity.value.actorId);
       return actor?.name ?? entity.value.id;
     }
     case "object": {

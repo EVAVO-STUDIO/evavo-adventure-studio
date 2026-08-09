@@ -1,9 +1,6 @@
-import { describe, expect, it } from "vitest";
 import type { Id } from "@evavo/adventure-project-schema";
-import type {
-  BitmapTextRenderNode,
-  ResolvedFrame,
-} from "@evavo/adventure-render-contract";
+import type { BitmapTextRenderNode, ResolvedFrame } from "@evavo/adventure-render-contract";
+import { describe, expect, it } from "vitest";
 import { bitmapFontManifestSchema } from "../src/index.js";
 import {
   BitmapFontResolutionError,
@@ -69,9 +66,7 @@ const manifest = bitmapFontManifestSchema.parse({
   ],
 });
 
-const textNode = (
-  overrides: Partial<BitmapTextRenderNode> = {},
-): BitmapTextRenderNode => ({
+const textNode = (overrides: Partial<BitmapTextRenderNode> = {}): BitmapTextRenderNode => ({
   kind: "bitmap-text",
   id: id<"render-node">("text.dialogue"),
   order: {
@@ -101,10 +96,7 @@ const textNode = (
 
 describe("bitmap font render resolution", () => {
   it("expands a glyph into a nearest-sampled atlas sprite", () => {
-    const sprites = resolveBitmapTextNode(
-      textNode(),
-      createBitmapFontResolver(manifest),
-    );
+    const sprites = resolveBitmapTextNode(textNode(), createBitmapFontResolver(manifest));
 
     expect(sprites).toHaveLength(1);
     expect(sprites[0]).toMatchObject({
@@ -124,9 +116,7 @@ describe("bitmap font render resolution", () => {
     );
 
     expect(sprites).toHaveLength(9);
-    expect(sprites.slice(0, 8).every((sprite) => sprite.order.zOffset === -1)).toBe(
-      true,
-    );
+    expect(sprites.slice(0, 8).every((sprite) => sprite.order.zOffset === -1)).toBe(true);
     expect(sprites[0]?.tintRgba).toEqual([0, 0, 0, 255]);
     expect(sprites.at(-1)?.order.zOffset).toBe(0);
   });
@@ -171,19 +161,13 @@ describe("bitmap font render resolution", () => {
   it("requires an explicit font ID when an atlas is ambiguous", () => {
     const ambiguous = bitmapFontManifestSchema.parse({
       ...manifest,
-      fonts: [
-        manifest.fonts[0],
-        { ...manifest.fonts[0], id: "bitmap-font.dialogue.compact" },
-      ],
+      fonts: [manifest.fonts[0], { ...manifest.fonts[0], id: "bitmap-font.dialogue.compact" }],
     });
     const { fontId: _fontId, ...atlasOnlyNode } = textNode();
 
-    expect(() =>
-      resolveBitmapTextNode(
-        atlasOnlyNode,
-        createBitmapFontResolver(ambiguous),
-      ),
-    ).toThrow(BitmapFontResolutionError);
+    expect(() => resolveBitmapTextNode(atlasOnlyNode, createBitmapFontResolver(ambiguous))).toThrow(
+      BitmapFontResolutionError,
+    );
   });
 
   it("expands bitmap nodes while preserving ordinary render nodes", () => {
@@ -222,13 +206,7 @@ describe("bitmap font render resolution", () => {
       ],
     };
 
-    const expanded = expandBitmapTextFrame(
-      frame,
-      createBitmapFontResolver(manifest),
-    );
-    expect(expanded.nodes.map((node) => node.kind)).toEqual([
-      "sprite",
-      "solid-rectangle",
-    ]);
+    const expanded = expandBitmapTextFrame(frame, createBitmapFontResolver(manifest));
+    expect(expanded.nodes.map((node) => node.kind)).toEqual(["sprite", "solid-rectangle"]);
   });
 });

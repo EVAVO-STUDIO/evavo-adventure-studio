@@ -16,11 +16,7 @@ export class DialogueEditorCommandError extends Error {
     | "empty-batch";
   readonly path: string;
 
-  constructor(
-    code: DialogueEditorCommandError["code"],
-    path: string,
-    message: string,
-  ) {
+  constructor(code: DialogueEditorCommandError["code"], path: string, message: string) {
     super(message);
     this.name = "DialogueEditorCommandError";
     this.code = code;
@@ -112,9 +108,7 @@ const canonicalize = (value: unknown): unknown => {
   if (value && typeof value === "object") {
     const source = value as Readonly<Record<string, unknown>>;
     const output: Record<string, unknown> = {};
-    for (const key of Object.keys(source).sort((left, right) =>
-      left.localeCompare(right),
-    )) {
+    for (const key of Object.keys(source).sort((left, right) => left.localeCompare(right))) {
       const child = source[key];
       if (child !== undefined) output[key] = canonicalize(child);
     }
@@ -131,12 +125,7 @@ export const canonicalDialogueEditorJson = (value: unknown): string => {
   return output;
 };
 
-const insertAt = <T>(
-  values: readonly T[],
-  index: number,
-  value: T,
-  path: string,
-): T[] => {
+const insertAt = <T>(values: readonly T[], index: number, value: T, path: string): T[] => {
   if (!Number.isSafeInteger(index) || index < 0 || index > values.length) {
     throw new DialogueEditorCommandError(
       "invalid-index",
@@ -144,11 +133,7 @@ const insertAt = <T>(
       `Insert index ${index} is outside 0 to ${values.length}.`,
     );
   }
-  return [
-    ...values.slice(0, index).map(cloneJson),
-    cloneJson(value),
-    ...values.slice(index).map(cloneJson),
-  ];
+  return [...values.slice(0, index).map(cloneJson), cloneJson(value), ...values.slice(index).map(cloneJson)];
 };
 
 const removeAt = <T>(values: readonly T[], index: number): T[] => [
@@ -170,20 +155,12 @@ const findIndexOrThrow = <T>(
 ): number => {
   const index = values.findIndex(predicate);
   if (index < 0) {
-    throw new DialogueEditorCommandError(
-      "missing-entity",
-      path,
-      `${label} does not exist.`,
-    );
+    throw new DialogueEditorCommandError("missing-entity", path, `${label} does not exist.`);
   }
   return index;
 };
 
-const assertStableIdentity = (
-  expected: string,
-  actual: string,
-  path: string,
-): void => {
+const assertStableIdentity = (expected: string, actual: string, path: string): void => {
   if (expected !== actual) {
     throw new DialogueEditorCommandError(
       "identity-change",
@@ -249,19 +226,12 @@ const getNode = (
   return { index, node };
 };
 
-const updateNode = (
-  graph: DialogueGraph,
-  index: number,
-  node: DialogueNode,
-): DialogueGraph => ({
+const updateNode = (graph: DialogueGraph, index: number, node: DialogueNode): DialogueGraph => ({
   ...graph,
   nodes: replaceAt(graph.nodes, index, node),
 });
 
-const nodeIsReferenced = (
-  graph: DialogueGraph,
-  nodeId: Id<"dialogue-node">,
-): string | null => {
+const nodeIsReferenced = (graph: DialogueGraph, nodeId: Id<"dialogue-node">): string | null => {
   for (const node of graph.nodes) {
     if (node.autoNextNodeId === nodeId) return `${node.id}.autoNextNodeId`;
     for (const choice of node.choices) {
@@ -298,11 +268,7 @@ export const applyDialogueEditorCommand = (
     }
     case "replace-graph":
       assertStableIdentity(graph.id, command.graph.id, "graph.id");
-      if (
-        !command.graph.nodes.some(
-          (node) => node.id === command.graph.startNodeId,
-        )
-      ) {
+      if (!command.graph.nodes.some((node) => node.id === command.graph.startNodeId)) {
         throw new DialogueEditorCommandError(
           "protected-entity",
           "graph.startNodeId",
@@ -353,12 +319,7 @@ export const applyDialogueEditorCommand = (
     case "replace-node": {
       const { index, node: previous } = getNode(graph, command.nodeId);
       assertStableIdentity(command.nodeId, command.node.id, "node.id");
-      assertUniqueIds(
-        graph,
-        nodeIds(command.node),
-        "node",
-        new Set(nodeIds(previous)),
-      );
+      assertUniqueIds(graph, nodeIds(command.node), "node", new Set(nodeIds(previous)));
       return {
         graph: updateNode(graph, index, command.node),
         inverse: {
@@ -436,12 +397,7 @@ export const applyDialogueEditorCommand = (
       return {
         graph: updateNode(graph, index, {
           ...node,
-          choices: insertAt(
-            node.choices,
-            command.index,
-            command.choice,
-            "index",
-          ),
+          choices: insertAt(node.choices, command.index, command.choice, "index"),
         }),
         inverse: {
           kind: "remove-choice",
@@ -500,9 +456,7 @@ export const applyDialogueEditorCommand = (
   }
 };
 
-export const createDialogueEditorDocument = (
-  graph: DialogueGraph,
-): DialogueEditorDocumentState => {
+export const createDialogueEditorDocument = (graph: DialogueGraph): DialogueEditorDocumentState => {
   const snapshot = cloneJson(graph);
   return {
     graph: snapshot,
@@ -511,15 +465,10 @@ export const createDialogueEditorDocument = (
   };
 };
 
-export const isDialogueEditorDocumentDirty = (
-  document: DialogueEditorDocumentState,
-): boolean =>
-  canonicalDialogueEditorJson(document.graph) !==
-  canonicalDialogueEditorJson(document.savedGraph);
+export const isDialogueEditorDocumentDirty = (document: DialogueEditorDocumentState): boolean =>
+  canonicalDialogueEditorJson(document.graph) !== canonicalDialogueEditorJson(document.savedGraph);
 
-export const createDialogueEditorHistory = (
-  graph: DialogueGraph,
-): DialogueEditorHistoryState => ({
+export const createDialogueEditorHistory = (graph: DialogueGraph): DialogueEditorHistoryState => ({
   document: createDialogueEditorDocument(graph),
   undoStack: [],
   redoStack: [],
@@ -550,10 +499,7 @@ export const executeDialogueEditorCommand = (
   const applied = applyToDocument(history.document, command);
   return {
     document: applied.document,
-    undoStack: [
-      ...history.undoStack,
-      { undo: applied.inverse, redo: cloneJson(command) },
-    ],
+    undoStack: [...history.undoStack, { undo: applied.inverse, redo: cloneJson(command) }],
     redoStack: [],
   };
 };

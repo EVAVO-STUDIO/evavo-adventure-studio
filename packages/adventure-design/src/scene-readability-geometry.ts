@@ -1,12 +1,5 @@
-import type {
-  Point,
-  Polygon,
-  Size,
-} from "@evavo/adventure-project-schema";
-import type {
-  AdventureScene,
-  AdventureSceneReadabilityOverlay,
-} from "./scene-readability-types.js";
+import type { Point, Polygon, Size } from "@evavo/adventure-project-schema";
+import type { AdventureScene, AdventureSceneReadabilityOverlay } from "./scene-readability-types.js";
 
 const pointOnSegment = (point: Point, start: Point, end: Point): boolean => {
   const deltaX = end.x - start.x;
@@ -17,24 +10,16 @@ const pointOnSegment = (point: Point, start: Point, end: Point): boolean => {
     const pointDeltaY = point.y - start.y;
     return pointDeltaX * pointDeltaX + pointDeltaY * pointDeltaY <= 0.000001;
   }
-  const cross =
-    (point.y - start.y) * deltaX - (point.x - start.x) * deltaY;
+  const cross = (point.y - start.y) * deltaX - (point.x - start.x) * deltaY;
   if (Math.abs(cross) > 0.000001) return false;
   const dot = (point.x - start.x) * deltaX + (point.y - start.y) * deltaY;
   return dot >= 0 && dot <= lengthSquared;
 };
 
-export const pointInAdventurePolygon = (
-  point: Point,
-  polygon: Pick<Polygon, "points">,
-): boolean => {
+export const pointInAdventurePolygon = (point: Point, polygon: Pick<Polygon, "points">): boolean => {
   let inside = false;
   const points = polygon.points;
-  for (
-    let index = 0, previous = points.length - 1;
-    index < points.length;
-    previous = index, index += 1
-  ) {
+  for (let index = 0, previous = points.length - 1; index < points.length; previous = index, index += 1) {
     const currentPoint = points[index];
     const previousPoint = points[previous];
     if (!currentPoint || !previousPoint) continue;
@@ -53,14 +38,10 @@ export const pointInAdventurePolygon = (
 export const pointInsideSceneCanvas = (point: Point, size: Size): boolean =>
   point.x >= 0 && point.y >= 0 && point.x <= size.width && point.y <= size.height;
 
-export const polygonInsideSceneCanvas = (
-  polygon: Pick<Polygon, "points">,
-  size: Size,
-): boolean => polygon.points.every((point) => pointInsideSceneCanvas(point, size));
+export const polygonInsideSceneCanvas = (polygon: Pick<Polygon, "points">, size: Size): boolean =>
+  polygon.points.every((point) => pointInsideSceneCanvas(point, size));
 
-export const adventurePolygonArea = (
-  polygon: Pick<Polygon, "points">,
-): number => {
+export const adventurePolygonArea = (polygon: Pick<Polygon, "points">): number => {
   let area = 0;
   for (
     let index = 0, previous = polygon.points.length - 1;
@@ -102,9 +83,7 @@ export const adventurePolygonVerticalSpanPercent = (
   polygons: readonly Pick<Polygon, "points">[],
   height: number,
 ): number => {
-  const values = polygons.flatMap((polygon) =>
-    polygon.points.map((point) => point.y),
-  );
+  const values = polygons.flatMap((polygon) => polygon.points.map((point) => point.y));
   if (values.length === 0 || height <= 0) return 0;
   const minimum = Math.min(...values);
   const maximum = Math.max(...values);
@@ -112,18 +91,10 @@ export const adventurePolygonVerticalSpanPercent = (
   return Math.round(Math.max(0, Math.min(100, percent)) * 10) / 10;
 };
 
-export const pointInsideSceneNavigation = (
-  scene: AdventureScene,
-  point: Point,
-): boolean =>
-  scene.navigationAreas.some((area) =>
-    pointInAdventurePolygon(point, area.shape),
-  );
+export const pointInsideSceneNavigation = (scene: AdventureScene, point: Point): boolean =>
+  scene.navigationAreas.some((area) => pointInAdventurePolygon(point, area.shape));
 
-export const hotspotChangesScene = (
-  scene: AdventureScene,
-  hotspotIndex: number,
-): boolean => {
+export const hotspotChangesScene = (scene: AdventureScene, hotspotIndex: number): boolean => {
   const hotspot = scene.hotspots[hotspotIndex];
   return (
     hotspot?.interactions.some((interaction) =>
@@ -132,9 +103,7 @@ export const hotspotChangesScene = (
   );
 };
 
-export const createAdventureSceneOverlay = (
-  scene: AdventureScene,
-): AdventureSceneReadabilityOverlay => ({
+export const createAdventureSceneOverlay = (scene: AdventureScene): AdventureSceneReadabilityOverlay => ({
   nativeSize: { width: scene.width, height: scene.height },
   navigationAreas: scene.navigationAreas.map((area) => ({
     id: area.id,
@@ -165,8 +134,6 @@ export const createAdventureSceneOverlay = (
     id: occluder.id,
     position: { ...occluder.position },
     baselineY: occluder.baselineY,
-    ...(occluder.mask
-      ? { mask: occluder.mask.points.map((point) => ({ ...point })) }
-      : {}),
+    ...(occluder.mask ? { mask: occluder.mask.points.map((point) => ({ ...point })) } : {}),
   })),
 });

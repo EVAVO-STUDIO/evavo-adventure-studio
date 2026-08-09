@@ -1,8 +1,8 @@
-import type { AdventureDesignId, AdventureReviewItem } from "./types.js";
 import type {
   AdventureProductionProfile,
   AdventureProductionProfileSeed,
 } from "./production-profile-types.js";
+import type { AdventureDesignId, AdventureReviewItem } from "./types.js";
 
 export const createAdventureProductionProfileSeed = (
   profile: AdventureProductionProfile,

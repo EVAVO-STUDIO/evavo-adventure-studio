@@ -56,9 +56,7 @@ export class SaveGameCompatibilityError extends Error {
   readonly issues: readonly SaveGameCompatibilityIssue[];
 
   constructor(issues: readonly SaveGameCompatibilityIssue[]) {
-    super(
-      `Save game is incompatible with this runtime bundle (${issues.length} issue(s)).`,
-    );
+    super(`Save game is incompatible with this runtime bundle (${issues.length} issue(s)).`);
     this.name = "SaveGameCompatibilityError";
     this.issues = issues;
   }

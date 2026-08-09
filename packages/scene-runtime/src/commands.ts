@@ -8,11 +8,11 @@ import {
   type SceneObjectCommandExecution,
 } from "./interactions.js";
 import {
+  type ActorMovementEvent,
   advanceNavigableRuntimeWorld,
+  type BeginActorMovementResult,
   beginActorMovement,
   createInitialNavigableRuntimeWorldState,
-  type ActorMovementEvent,
-  type BeginActorMovementResult,
   type NavigableRuntimeWorldState,
 } from "./movement.js";
 
@@ -24,11 +24,8 @@ export interface PendingSceneObjectCommand {
   readonly itemId: Id<"item"> | null;
 }
 
-export interface InteractiveRuntimeWorldState
-  extends NavigableRuntimeWorldState {
-  readonly pendingObjectCommands: Readonly<
-    Record<string, PendingSceneObjectCommand>
-  >;
+export interface InteractiveRuntimeWorldState extends NavigableRuntimeWorldState {
+  readonly pendingObjectCommands: Readonly<Record<string, PendingSceneObjectCommand>>;
 }
 
 export type SceneCommandEvent =
@@ -68,9 +65,7 @@ export type SceneCommandEvent =
 
 export interface InteractiveRuntimeWorldTransition {
   readonly state: InteractiveRuntimeWorldState;
-  readonly animationEvents: ReturnType<
-    typeof advanceNavigableRuntimeWorld
-  >["animationEvents"];
+  readonly animationEvents: ReturnType<typeof advanceNavigableRuntimeWorld>["animationEvents"];
   readonly movementEvents: readonly ActorMovementEvent[];
   readonly commandEvents: readonly SceneCommandEvent[];
 }
@@ -80,22 +75,15 @@ export type QueueSceneObjectCommandResult =
       readonly kind: "queued";
       readonly state: InteractiveRuntimeWorldState;
       readonly movement: Extract<BeginActorMovementResult, { readonly kind: "started" }>;
-      readonly event: Extract<
-        SceneCommandEvent,
-        { readonly kind: "object-command-queued" }
-      >;
+      readonly event: Extract<SceneCommandEvent, { readonly kind: "object-command-queued" }>;
     }
   | {
       readonly kind: "resolved";
       readonly state: InteractiveRuntimeWorldState;
-      readonly execution: Exclude<
-        SceneObjectCommandExecution,
-        { readonly kind: "missing-target" }
-      >;
+      readonly execution: Exclude<SceneObjectCommandExecution, { readonly kind: "missing-target" }>;
       readonly event: Exclude<
         SceneCommandEvent,
-        | { readonly kind: "object-command-queued" }
-        | { readonly kind: "object-command-aborted" }
+        { readonly kind: "object-command-queued" } | { readonly kind: "object-command-aborted" }
       >;
     }
   | {
@@ -112,8 +100,7 @@ export type QueueSceneObjectCommandResult =
       >;
     };
 
-const pendingKey = (actorInstanceId: Id<"actor-instance">): string =>
-  actorInstanceId;
+const pendingKey = (actorInstanceId: Id<"actor-instance">): string => actorInstanceId;
 
 const mergeRuntimeWorld = (
   state: InteractiveRuntimeWorldState,
@@ -132,8 +119,7 @@ const commandEventFromExecution = (
   >,
 ): Extract<
   SceneCommandEvent,
-  | { readonly kind: "object-command-fallback" }
-  | { readonly kind: "object-command-rejected" }
+  { readonly kind: "object-command-fallback" } | { readonly kind: "object-command-rejected" }
 > => {
   switch (execution.kind) {
     case "fallback":
@@ -185,11 +171,7 @@ const executePendingCommand = (
 
   const merged = mergeRuntimeWorld(state, execution.state);
   if (execution.kind === "executed") {
-    const dialogue = applyDialogueRequestEvents(
-      bundle,
-      merged,
-      execution.execution.result.transition.events,
-    );
+    const dialogue = applyDialogueRequestEvents(bundle, merged, execution.execution.result.transition.events);
     return {
       state: dialogue.state,
       execution,
@@ -264,18 +246,12 @@ export const queueSceneObjectCommand = (
       execution: resolved.execution,
       event: resolved.event as Exclude<
         SceneCommandEvent,
-        | { readonly kind: "object-command-queued" }
-        | { readonly kind: "object-command-aborted" }
+        { readonly kind: "object-command-queued" } | { readonly kind: "object-command-aborted" }
       >,
     };
   }
 
-  const movement = beginActorMovement(
-    bundle,
-    state,
-    actorInstanceId,
-    destination,
-  );
+  const movement = beginActorMovement(bundle, state, actorInstanceId, destination);
   if (movement.kind === "already-there") {
     const resolved = executePendingCommand(bundle, state, pending);
     if (resolved.execution.kind === "missing-target") {
@@ -287,8 +263,7 @@ export const queueSceneObjectCommand = (
       execution: resolved.execution,
       event: resolved.event as Exclude<
         SceneCommandEvent,
-        | { readonly kind: "object-command-queued" }
-        | { readonly kind: "object-command-aborted" }
+        { readonly kind: "object-command-queued" } | { readonly kind: "object-command-aborted" }
       >,
     };
   }

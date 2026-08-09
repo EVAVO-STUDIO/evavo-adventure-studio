@@ -1,7 +1,7 @@
-import { describe, expect, it } from "vitest";
 import { createInitialState, type RuntimeEvent } from "@evavo/adventure-core";
 import { parseAdventureProject } from "@evavo/adventure-project-schema";
 import type { RuntimeBundle } from "@evavo/adventure-runtime-bundle";
+import { describe, expect, it } from "vitest";
 import {
   applyDialogueRequestEvents,
   chooseActiveRuntimeDialogueOption,
@@ -106,9 +106,7 @@ const project = parseAdventureProject({
     },
   ],
   sequences: [],
-  assets: [
-    { id: "asset.office", path: "art/office.png", kind: "image" },
-  ],
+  assets: [{ id: "asset.office", path: "art/office.png", kind: "image" }],
   inventoryItems: [],
 });
 
@@ -134,9 +132,7 @@ describe("dialogue runtime world bridge", () => {
       dialogueId: "dialogue.clerk",
       nodeId: "dialogue-node.clerk.opening",
     });
-    expect(started.view?.lines[0]?.text).toBe(
-      "The ledger left before the rain.",
-    );
+    expect(started.view?.lines[0]?.text).toBe("The ledger left before the rain.");
     expect(started.events.map((event) => event.kind)).toEqual([
       "dialogue-requested",
       "dialogue-node-entered",
@@ -144,17 +140,13 @@ describe("dialogue runtime world bridge", () => {
   });
 
   it("applies choice actions, consumes once choices and changes nodes", () => {
-    const started = applyDialogueRequestEvents(
-      bundle,
-      { story: createInitialState(project) },
-      [
-        {
-          kind: "dialogue-requested",
-          dialogueId: project.dialogues[0]!.id,
-          nodeId: null,
-        },
-      ],
-    );
+    const started = applyDialogueRequestEvents(bundle, { story: createInitialState(project) }, [
+      {
+        kind: "dialogue-requested",
+        dialogueId: project.dialogues[0]!.id,
+        nodeId: null,
+      },
+    ]);
 
     const chosen = chooseActiveRuntimeDialogueOption(
       bundle,
@@ -165,9 +157,7 @@ describe("dialogue runtime world bridge", () => {
     expect(chosen.kind).toBe("active");
     if (chosen.kind !== "active") return;
     expect(chosen.state.story.flags["clerk.asked-about-ledger"]).toBe(true);
-    expect(chosen.state.story.consumedDialogueChoiceIds).toContain(
-      "dialogue-choice.clerk.ledger",
-    );
+    expect(chosen.state.story.consumedDialogueChoiceIds).toContain("dialogue-choice.clerk.ledger");
     expect(chosen.view.nodeId).toBe("dialogue-node.clerk.answer");
     expect(resolveActiveRuntimeDialogue(bundle, chosen.state)?.lines[0]?.text).toBe(
       "A man in a grey hat signed for it.",
@@ -175,17 +165,13 @@ describe("dialogue runtime world bridge", () => {
   });
 
   it("closes active dialogue through a close choice", () => {
-    const started = applyDialogueRequestEvents(
-      bundle,
-      { story: createInitialState(project) },
-      [
-        {
-          kind: "dialogue-requested",
-          dialogueId: project.dialogues[0]!.id,
-          nodeId: "dialogue-node.clerk.answer",
-        },
-      ],
-    );
+    const started = applyDialogueRequestEvents(bundle, { story: createInitialState(project) }, [
+      {
+        kind: "dialogue-requested",
+        dialogueId: project.dialogues[0]!.id,
+        nodeId: project.dialogues[0]!.nodes[1]!.id,
+      },
+    ]);
     const ended = chooseActiveRuntimeDialogueOption(
       bundle,
       started.state,
@@ -193,6 +179,9 @@ describe("dialogue runtime world bridge", () => {
     );
 
     expect(ended.kind).toBe("ended");
+    if (ended.kind !== "ended") {
+      throw new Error("Expected the close choice to end the active dialogue.");
+    }
     expect(ended.state.story.activeDialogue).toBeNull();
     expect(ended.events.map((event) => event.kind)).toContain("dialogue-ended");
   });

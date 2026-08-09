@@ -12,11 +12,7 @@
 
 .cc-audit-card {
   background:
-    radial-gradient(
-      circle at 80% 20%,
-      color-mix(in srgb, var(--cc-accent) 20%, transparent),
-      transparent 40%
-    ),
+    radial-gradient(circle at 80% 20%, color-mix(in srgb, var(--cc-accent) 20%, transparent), transparent 40%),
     var(--cc-panel-soft);
 }
 
@@ -35,7 +31,9 @@
 
 .cc-score-ring strong {
   color: var(--cc-paper);
-  font: 800 28px/1 ui-monospace, monospace;
+  font:
+    800 28px / 1 ui-monospace,
+    monospace;
 }
 
 .cc-score-ring span {
@@ -68,7 +66,9 @@
 .cc-detail-list dd {
   margin: 4px 0 0;
   color: var(--cc-paper);
-  font: 800 11px/1.2 ui-monospace, monospace;
+  font:
+    800 11px / 1.2 ui-monospace,
+    monospace;
   text-transform: capitalize;
 }
 
@@ -113,7 +113,9 @@
   padding: 5px;
   border: 1px solid var(--cc-line);
   color: var(--cc-warm);
-  font: 800 10px/1 ui-monospace, monospace;
+  font:
+    800 10px / 1 ui-monospace,
+    monospace;
   text-align: center;
 }
 
@@ -144,7 +146,9 @@
 
 .cc-layer-list article > span {
   color: var(--cc-accent);
-  font: 800 9px/1 ui-monospace, monospace;
+  font:
+    800 9px / 1 ui-monospace,
+    monospace;
 }
 
 .cc-layer-list article div {
@@ -164,7 +168,9 @@
 
 .cc-layer-list em {
   color: var(--cc-warm);
-  font: normal 700 8px/1 ui-monospace, monospace;
+  font:
+    normal 700 8px / 1 ui-monospace,
+    monospace;
   text-transform: uppercase;
 }
 
@@ -204,7 +210,9 @@
 
 .cc-entity-list small {
   color: var(--cc-warm);
-  font: 700 9px/1 ui-monospace, monospace;
+  font:
+    700 9px / 1 ui-monospace,
+    monospace;
 }
 
 .cc-selected-entity h2,

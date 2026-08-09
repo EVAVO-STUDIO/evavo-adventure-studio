@@ -1,19 +1,11 @@
 import type { RuntimeEvent } from "@evavo/adventure-core";
-import type {
-  AdventureCameraState,
-  AdventurePlayFeelProfileId,
-} from "@evavo/adventure-play-feel";
+import type { AdventureCameraState, AdventurePlayFeelProfileId } from "@evavo/adventure-play-feel";
 import type { Id, Point } from "@evavo/adventure-project-schema";
 import type { ResolvedCamera } from "@evavo/adventure-render-contract";
 import type { RuntimeBundle } from "@evavo/adventure-runtime-bundle";
 import type { InteractiveRuntimeWorldState } from "@evavo/adventure-scene-runtime/commands";
 
-export type ProfiledRuntimeCameraEasing =
-  | "step"
-  | "linear"
-  | "ease-in"
-  | "ease-out"
-  | "ease-in-out";
+export type ProfiledRuntimeCameraEasing = "step" | "linear" | "ease-in" | "ease-out" | "ease-in-out";
 
 export interface ProfiledRuntimeCameraShotState {
   readonly sequenceId: Id<"sequence">;
@@ -49,8 +41,7 @@ export interface AdvanceProfiledRuntimeCameraInput {
   readonly runtimeEvents?: readonly RuntimeEvent[];
 }
 
-export interface RestoreProfiledRuntimeCameraInput
-  extends CreateProfiledRuntimeCameraInput {
+export interface RestoreProfiledRuntimeCameraInput extends CreateProfiledRuntimeCameraInput {
   readonly savedState: unknown | null;
 }
 

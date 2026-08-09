@@ -1,10 +1,8 @@
 import {
-  createClassicAdventureCreatorProject,
   type ClassicAdventureCreatorRecipe,
+  createClassicAdventureCreatorProject,
 } from "./classic-game-creator-factory.js";
-import type {
-  ClassicAdventureCreatorProject,
-} from "./classic-game-creator-types.js";
+import type { ClassicAdventureCreatorProject } from "./classic-game-creator-types.js";
 
 const storybookRecipe: ClassicAdventureCreatorRecipe = {
   id: "creator.the-glass-finch",
@@ -25,8 +23,7 @@ const storybookRecipe: ClassicAdventureCreatorRecipe = {
     portraitSlots: 2,
     scoreVisible: true,
     statusPlacement: "narrator panel or short room-preserving subtitle",
-    cursorDoctrine:
-      "Large symbolic cursors switch only after the player commits an action.",
+    cursorDoctrine: "Large symbolic cursors switch only after the player commits an action.",
   },
   timing: {
     logicalTicksPerSecond: 60,
@@ -49,10 +46,7 @@ const storybookRecipe: ClassicAdventureCreatorRecipe = {
       grammar: "environmental-state",
       setupSceneId: "scene.creator.the-glass-finch.gameplay",
       resolutionSceneId: "scene.creator.the-glass-finch.system",
-      requiredPropIds: [
-        "prop.glass-finch.pin",
-        "prop.glass-finch.rope",
-      ],
+      requiredPropIds: ["prop.glass-finch.pin", "prop.glass-finch.rope"],
       steps: [
         "Inspect the frayed rope and establish that the bell cannot ring.",
         "Recover the clapper pin from the orchard floor.",
@@ -75,10 +69,7 @@ const storybookRecipe: ClassicAdventureCreatorRecipe = {
       mode: "storybook-exchange",
       openingLine: "A bell remembers who rang it last.",
       topics: ["the broken bell", "the frost", "the remembered note"],
-      stateChanges: [
-        "reveal the note rune",
-        "change the bird from warning pose to waiting pose",
-      ],
+      stateChanges: ["reveal the note rune", "change the bird from warning pose to waiting pose"],
     },
   ],
   productionPromise:
@@ -199,17 +190,7 @@ const verbPanelRecipe: ClassicAdventureCreatorRecipe = {
     chromeHeight: 56,
     overlayHeight: 0,
     openBehaviour: "persistent",
-    verbs: [
-      "give",
-      "pick up",
-      "use",
-      "open",
-      "look at",
-      "push",
-      "close",
-      "talk to",
-      "pull",
-    ],
+    verbs: ["give", "pick up", "use", "open", "look at", "push", "close", "talk to", "pull"],
     inventorySlots: 8,
     sentenceLine: true,
     topicRows: 0,
@@ -267,18 +248,9 @@ const verbPanelRecipe: ClassicAdventureCreatorRecipe = {
       id: "creator-dialogue.saltwake.master",
       sceneId: "scene.creator.saltwake-island.dialogue",
       mode: "in-scene-choices",
-      openingLine:
-        "I only accept forms stamped by someone less qualified than me.",
-      topics: [
-        "the tide chart",
-        "the obsolete permit",
-        "the council vote",
-        "the lighthouse bells",
-      ],
-      stateChanges: [
-        "reveal the stamp requirement",
-        "change the harbour master reaction pose",
-      ],
+      openingLine: "I only accept forms stamped by someone less qualified than me.",
+      topics: ["the tide chart", "the obsolete permit", "the council vote", "the lighthouse bells"],
+      stateChanges: ["reveal the stamp requirement", "change the harbour master reaction pose"],
     },
   ],
   productionPromise:
@@ -296,12 +268,8 @@ export const classicAdventureCreatorProjects: readonly ClassicAdventureCreatorPr
   createClassicAdventureCreatorProject(verbPanelRecipe),
 ];
 
-export const classicAdventureCreatorProjectById = (
-  id: string,
-): ClassicAdventureCreatorProject => {
-  const project = classicAdventureCreatorProjects.find(
-    (candidate) => candidate.id === id,
-  );
+export const classicAdventureCreatorProjectById = (id: string): ClassicAdventureCreatorProject => {
+  const project = classicAdventureCreatorProjects.find((candidate) => candidate.id === id);
   if (!project) {
     throw new Error(`Classic adventure creator project '${id}' is missing.`);
   }
@@ -311,9 +279,7 @@ export const classicAdventureCreatorProjectById = (
 export const classicAdventureCreatorProjectByFamily = (
   family: ClassicAdventureCreatorProject["family"],
 ): ClassicAdventureCreatorProject => {
-  const project = classicAdventureCreatorProjects.find(
-    (candidate) => candidate.family === family,
-  );
+  const project = classicAdventureCreatorProjects.find((candidate) => candidate.family === family);
   if (!project) {
     throw new Error(`Classic adventure creator family '${family}' is missing.`);
   }

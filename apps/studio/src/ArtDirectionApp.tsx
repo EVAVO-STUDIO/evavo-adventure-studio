@@ -1,22 +1,17 @@
 import {
-  useCallback,
-  useEffect,
-  useMemo,
-  useReducer,
-  useState,
-  type Dispatch,
-  type ReactNode,
-} from "react";
-import {
-  applyArtDirectionEditorCommand,
   type ArtAssetRole,
   type ArtAssetRule,
   type ArtDirectionEditorCommand,
   type ArtDirectionProfile,
   type ArtPreset,
+  applyArtDirectionEditorCommand,
 } from "@evavo/adventure-art-direction";
 import type { Id } from "@evavo/adventure-project-schema";
+import { type Dispatch, type ReactNode, useCallback, useEffect, useMemo, useReducer, useState } from "react";
+import { studioArtDirectionManifest, studioCompiledArtEvidence } from "./art-fixture.js";
 import {
+  type ArtDirectionWorkspaceAction,
+  type ArtDirectionWorkspaceState,
   artDirectionIssuesForAsset,
   artDirectionWorkspaceIsDirty,
   artDirectionWorkspaceIssues,
@@ -25,13 +20,7 @@ import {
   replaceArtPresetCommand,
   replaceSelectedArtRuleCommand,
   selectedArtDirectionRule,
-  type ArtDirectionWorkspaceAction,
-  type ArtDirectionWorkspaceState,
 } from "./art-workspace.js";
-import {
-  studioArtDirectionManifest,
-  studioCompiledArtEvidence,
-} from "./art-fixture.js";
 import { studioProject } from "./fixture.js";
 import "./art-direction.css";
 
@@ -68,27 +57,16 @@ const Button = ({
   readonly disabled?: boolean;
   readonly className?: string;
 }) => (
-  <button
-    type="button"
-    className={`button ${className}`}
-    disabled={disabled}
-    onClick={onClick}
-  >
+  <button type="button" className={`button ${className}`} disabled={disabled} onClick={onClick}>
     {children}
   </button>
 );
 
-const Field = ({
-  label,
-  children,
-}: {
-  readonly label: string;
-  readonly children: ReactNode;
-}) => (
-  <label className="field">
+const Field = ({ label, children }: { readonly label: string; readonly children: ReactNode }) => (
+  <div className="field">
     <span>{label}</span>
     {children}
-  </label>
+  </div>
 );
 
 const NumberInput = ({
@@ -200,9 +178,7 @@ const paletteSwatches = (profile: ArtDirectionProfile): readonly string[] => {
   }
   return Array.from(
     { length: count },
-    (_, index) => `hsl(${Math.round((index * 330) / Math.max(1, count - 1))} 62% ${
-      24 + (index % 4) * 13
-    }%)`,
+    (_, index) => `hsl(${Math.round((index * 330) / Math.max(1, count - 1))} 62% ${24 + (index % 4) * 13}%)`,
   );
 };
 
@@ -210,9 +186,7 @@ const evidenceSummary = (
   state: ArtDirectionWorkspaceState,
   assetId: Id<"asset">,
 ): readonly { readonly label: string; readonly value: string }[] => {
-  const asset = state.compiledEvidence?.assets.find(
-    (candidate) => candidate.assetId === assetId,
-  );
+  const asset = state.compiledEvidence?.assets.find((candidate) => candidate.assetId === assetId);
   if (!asset) return [{ label: "Evidence", value: "missing" }];
   if (asset.kind === "image") {
     return [
@@ -229,18 +203,14 @@ const evidenceSummary = (
     ];
   }
   if (asset.kind === "spritesheet") {
-    const minimumPadding = Math.min(
-      ...asset.metadata.frames.map((frame) => frame.padding),
-    );
+    const minimumPadding = Math.min(...asset.metadata.frames.map((frame) => frame.padding));
     return [
       { label: "Atlas pages", value: String(asset.metadata.pages.length) },
       { label: "Frames", value: String(asset.metadata.frames.length) },
       { label: "Min padding", value: `${minimumPadding}px` },
       {
         label: "Page size",
-        value: `${asset.metadata.pages[0]?.width ?? 0} × ${
-          asset.metadata.pages[0]?.height ?? 0
-        }`,
+        value: `${asset.metadata.pages[0]?.width ?? 0} × ${asset.metadata.pages[0]?.height ?? 0}`,
       },
     ];
   }
@@ -255,16 +225,11 @@ const RuleInspector = ({
   execute,
 }: {
   readonly state: ArtDirectionWorkspaceState;
-  readonly execute: (
-    command: ArtDirectionEditorCommand,
-    notice?: string,
-  ) => void;
+  readonly execute: (command: ArtDirectionEditorCommand, notice?: string) => void;
 }) => {
   const rule = selectedArtDirectionRule(state);
   const profile = state.history.document.manifest.profile;
-  const projectAsset = state.project.assets.find(
-    (asset) => asset.id === rule.assetId,
-  );
+  const projectAsset = state.project.assets.find((asset) => asset.id === rule.assetId);
   const issues = artDirectionIssuesForAsset(state, rule.assetId);
 
   const replaceRule = (next: ArtAssetRule, notice: string): void =>
@@ -329,8 +294,7 @@ const RuleInspector = ({
                 replaceRule(
                   {
                     ...rule,
-                    transparency:
-                      event.currentTarget.value as ArtAssetRule["transparency"],
+                    transparency: event.currentTarget.value as ArtAssetRule["transparency"],
                   },
                   "Updated transparency policy.",
                 )
@@ -385,17 +349,11 @@ const RuleInspector = ({
               min={2}
               max={
                 rule.outputMode === "rgba" ||
-                (rule.outputMode === "inherit" &&
-                  profile.palette.mode === "rgba")
+                (rule.outputMode === "inherit" && profile.palette.mode === "rgba")
                   ? 16_777_216
                   : 256
               }
-              onChange={(maxColours) =>
-                replaceRule(
-                  { ...rule, maxColours },
-                  "Updated asset colour budget.",
-                )
-              }
+              onChange={(maxColours) => replaceRule({ ...rule, maxColours }, "Updated asset colour budget.")}
             />
           </Field>
           <label className="toggle-row">
@@ -405,9 +363,7 @@ const RuleInspector = ({
               checked={rule.dither === undefined}
               onChange={(event) =>
                 replaceRule(
-                  event.currentTarget.checked
-                    ? withoutDither(rule)
-                    : { ...rule, dither: resolvedDither },
+                  event.currentTarget.checked ? withoutDither(rule) : { ...rule, dither: resolvedDither },
                   "Updated dithering inheritance.",
                 )
               }
@@ -436,8 +392,7 @@ const RuleInspector = ({
             <select
               value={rule.sizePolicy}
               onChange={(event) => {
-                const policy =
-                  event.currentTarget.value as ArtAssetRule["sizePolicy"];
+                const policy = event.currentTarget.value as ArtAssetRule["sizePolicy"];
                 replaceRule(
                   policy === "any"
                     ? withoutExpectedSize({ ...rule, sizePolicy: policy })
@@ -468,8 +423,7 @@ const RuleInspector = ({
                         ...rule,
                         expectedSize: {
                           width,
-                          height:
-                            rule.expectedSize?.height ?? profile.nativeSize.height,
+                          height: rule.expectedSize?.height ?? profile.nativeSize.height,
                         },
                       },
                       "Updated expected width.",
@@ -487,8 +441,7 @@ const RuleInspector = ({
                       {
                         ...rule,
                         expectedSize: {
-                          width:
-                            rule.expectedSize?.width ?? profile.nativeSize.width,
+                          width: rule.expectedSize?.width ?? profile.nativeSize.width,
                           height,
                         },
                       },
@@ -531,10 +484,7 @@ const RuleInspector = ({
               min={0}
               max={64}
               onChange={(atlasPaddingMinimum) =>
-                replaceRule(
-                  { ...rule, atlasPaddingMinimum },
-                  "Updated atlas padding requirement.",
-                )
+                replaceRule({ ...rule, atlasPaddingMinimum }, "Updated atlas padding requirement.")
               }
             />
           </Field>
@@ -546,9 +496,7 @@ const RuleInspector = ({
             value={rule.notes ?? ""}
             onCommit={(value) =>
               replaceRule(
-                value.trim()
-                  ? { ...rule, notes: value }
-                  : withoutNotes(rule),
+                value.trim() ? { ...rule, notes: value } : withoutNotes(rule),
                 "Updated art-direction notes.",
               )
             }
@@ -572,11 +520,7 @@ const RuleInspector = ({
 export const ArtDirectionApp = () => {
   const [state, dispatch] = useReducer(
     artDirectionWorkspaceReducer,
-    createArtDirectionWorkspace(
-      studioProject,
-      studioCompiledArtEvidence,
-      studioArtDirectionManifest,
-    ),
+    createArtDirectionWorkspace(studioProject, studioCompiledArtEvidence, studioArtDirectionManifest),
   );
   const manifest = state.history.document.manifest;
   const profile = manifest.profile;
@@ -584,9 +528,7 @@ export const ArtDirectionApp = () => {
   const issues = artDirectionWorkspaceIssues(state);
   const dirty = artDirectionWorkspaceIsDirty(state);
   const errorCount = issues.filter((entry) => entry.severity === "error").length;
-  const warningCount = issues.filter(
-    (entry) => entry.severity === "warning",
-  ).length;
+  const warningCount = issues.filter((entry) => entry.severity === "warning").length;
   const evidence = evidenceSummary(state, rule.assetId);
   const swatches = useMemo(() => paletteSwatches(profile), [profile]);
 
@@ -596,9 +538,7 @@ export const ArtDirectionApp = () => {
         applyArtDirectionEditorCommand(state.project, manifest, command);
         dispatch({ type: "execute", command, ...(notice ? { notice } : {}) });
       } catch (error) {
-        window.alert(
-          error instanceof Error ? error.message : "Art direction edit failed.",
-        );
+        window.alert(error instanceof Error ? error.message : "Art direction edit failed.");
       }
     },
     [manifest, state.project],
@@ -651,16 +591,10 @@ export const ArtDirectionApp = () => {
 
       <div className="toolbar art-toolbar">
         <div className="toolbar-group">
-          <Button
-            onClick={() => dispatch({ type: "undo" })}
-            disabled={state.history.undoStack.length === 0}
-          >
+          <Button onClick={() => dispatch({ type: "undo" })} disabled={state.history.undoStack.length === 0}>
             ↶
           </Button>
-          <Button
-            onClick={() => dispatch({ type: "redo" })}
-            disabled={state.history.redoStack.length === 0}
-          >
+          <Button onClick={() => dispatch({ type: "redo" })} disabled={state.history.redoStack.length === 0}>
             ↷
           </Button>
         </div>
@@ -671,10 +605,7 @@ export const ArtDirectionApp = () => {
               key={preset.id}
               className={profile.preset === preset.id ? "is-active" : ""}
               onClick={() =>
-                execute(
-                  replaceArtPresetCommand(state, preset.id),
-                  `Applied ${preset.label} art profile.`,
-                )
+                execute(replaceArtPresetCommand(state, preset.id), `Applied ${preset.label} art profile.`)
               }
             >
               {preset.label}
@@ -682,12 +613,8 @@ export const ArtDirectionApp = () => {
           ))}
         </div>
         <div className="toolbar-group art-health">
-          <span className={errorCount > 0 ? "has-errors" : "is-clear"}>
-            {errorCount} errors
-          </span>
-          <span className={warningCount > 0 ? "has-warnings" : "is-clear"}>
-            {warningCount} warnings
-          </span>
+          <span className={errorCount > 0 ? "has-errors" : "is-clear"}>{errorCount} errors</span>
+          <span className={warningCount > 0 ? "has-warnings" : "is-clear"}>{warningCount} warnings</span>
         </div>
       </div>
 
@@ -701,24 +628,15 @@ export const ArtDirectionApp = () => {
           </div>
           <div className="art-asset-list">
             {manifest.assets.map((candidate) => {
-              const assetIssues = artDirectionIssuesForAsset(
-                state,
-                candidate.assetId,
-              );
-              const errors = assetIssues.filter(
-                (entry) => entry.severity === "error",
-              ).length;
+              const assetIssues = artDirectionIssuesForAsset(state, candidate.assetId);
+              const errors = assetIssues.filter((entry) => entry.severity === "error").length;
               const warnings = assetIssues.length - errors;
-              const projectAsset = state.project.assets.find(
-                (asset) => asset.id === candidate.assetId,
-              );
+              const projectAsset = state.project.assets.find((asset) => asset.id === candidate.assetId);
               return (
                 <button
                   type="button"
                   key={candidate.assetId}
-                  className={`art-asset-row ${
-                    candidate.assetId === rule.assetId ? "is-active" : ""
-                  }`}
+                  className={`art-asset-row ${candidate.assetId === rule.assetId ? "is-active" : ""}`}
                   onClick={() =>
                     dispatch({
                       type: "select-asset",
@@ -726,24 +644,14 @@ export const ArtDirectionApp = () => {
                     })
                   }
                 >
-                  <span className={`asset-role role-${candidate.role}`}>
-                    {candidate.role.slice(0, 2)}
-                  </span>
+                  <span className={`asset-role role-${candidate.role}`}>{candidate.role.slice(0, 2)}</span>
                   <span>
                     <strong>{shortId(candidate.assetId)}</strong>
                     <small>
                       {projectAsset?.kind ?? "unknown"} · {candidate.outputMode}
                     </small>
                   </span>
-                  <em
-                    className={
-                      errors > 0
-                        ? "has-errors"
-                        : warnings > 0
-                          ? "has-warnings"
-                          : "is-clear"
-                    }
-                  >
+                  <em className={errors > 0 ? "has-errors" : warnings > 0 ? "has-warnings" : "is-clear"}>
                     {errors > 0 ? errors : warnings > 0 ? warnings : "✓"}
                   </em>
                 </button>
@@ -762,8 +670,8 @@ export const ArtDirectionApp = () => {
               <span className="eyebrow">ERA PROFILE</span>
               <h1>{profile.name}</h1>
               <p>
-                {profile.nativeSize.width} × {profile.nativeSize.height} ·{" "}
-                {profile.pixelAspect} pixels · fixed logical ticks
+                {profile.nativeSize.width} × {profile.nativeSize.height} · {profile.pixelAspect} pixels ·
+                fixed logical ticks
               </p>
             </div>
             <div className="art-profile-metrics">
@@ -834,11 +742,7 @@ export const ArtDirectionApp = () => {
                 <h2>{issues.length} diagnostics</h2>
               </div>
               <span>
-                {errorCount > 0
-                  ? "compile blocked"
-                  : warningCount > 0
-                    ? "review required"
-                    : "ready"}
+                {errorCount > 0 ? "compile blocked" : warningCount > 0 ? "review required" : "ready"}
               </span>
             </div>
             <div className="art-diagnostics-list">

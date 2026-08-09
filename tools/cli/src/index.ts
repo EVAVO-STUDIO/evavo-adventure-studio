@@ -2,10 +2,7 @@
 
 import { REPLAY_EXECUTE_HELP, runReplayExecuteCli } from "./replay-execute.js";
 import { runCli } from "./runner.js";
-import {
-  RUNTIME_ARTIFACT_HELP,
-  runRuntimeArtifactCli,
-} from "./runtime-artifacts.js";
+import { RUNTIME_ARTIFACT_HELP, runRuntimeArtifactCli } from "./runtime-artifacts.js";
 
 const argv = process.argv.slice(2);
 const replayExecuteExitCode = await runReplayExecuteCli(argv);

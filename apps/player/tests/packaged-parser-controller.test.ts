@@ -1,6 +1,6 @@
-import { describe, expect, it } from "vitest";
 import { createReplayLog, executeReplay } from "@evavo/adventure-replay";
 import { parseRuntimeBundle } from "@evavo/adventure-runtime-bundle";
+import { describe, expect, it } from "vitest";
 import { createPackagedRuntimeController } from "../src/packaged-controller.js";
 
 const hash = "0".repeat(64);
@@ -88,7 +88,6 @@ const bundle = parseRuntimeBundle({
         },
       ],
       fallbackText: "Nothing happens.",
-      interactionIndex: {},
     },
   ],
   dialogues: [],
@@ -135,7 +134,29 @@ const bundle = parseRuntimeBundle({
           padding: 2,
           panel: { fill: 0, border: 0xffffff, borderWidth: 1 },
         },
-        verbs: [],
+        verbs: [
+          {
+            id: "ui-verb.look",
+            verb: "look",
+            label: "LOOK",
+            cursorId: "look",
+            primary: true,
+          },
+          {
+            id: "ui-verb.open",
+            verb: "open",
+            label: "OPEN",
+            cursorId: "open",
+            primary: false,
+          },
+          {
+            id: "ui-verb.use",
+            verb: "use",
+            label: "USE",
+            cursorId: "use",
+            primary: false,
+          },
+        ],
         parser: {
           region: {
             id: "ui-region.parser",
@@ -172,9 +193,7 @@ describe("packaged parser controller", () => {
     expect(controller.handleKey({ kind: "text", text: "help" })).toBe(true);
 
     const editingFrame = controller.createFrame(0);
-    expect(
-      editingFrame.nodes.find((node) => node.id === "runtime.ui.parser.text"),
-    ).toMatchObject({
+    expect(editingFrame.nodes.find((node) => node.id === "runtime.ui.parser.text")).toMatchObject({
       kind: "bitmap-text",
       text: "> help_",
     });
@@ -257,11 +276,7 @@ describe("packaged parser controller", () => {
       expectedFinalSaveFingerprint: expected.saveFingerprint,
     });
 
-    const replayed = executeReplay(
-      bundle,
-      replay,
-      createPackagedRuntimeController(bundle),
-    );
+    const replayed = executeReplay(bundle, replay, createPackagedRuntimeController(bundle));
 
     expect(replayed.finalSaveFingerprint).toBe(expected.saveFingerprint);
     expect(replayed.finalSave).toEqual(expected);

@@ -1,11 +1,7 @@
-import { describe, expect, it } from "vitest";
-import type { Id, Sequence } from "@evavo/adventure-project-schema";
 import type { RuntimeState } from "@evavo/adventure-core";
-import {
-  advanceSequence,
-  skipSequence,
-  startSequence,
-} from "../src/index.js";
+import type { Id, Sequence } from "@evavo/adventure-project-schema";
+import { describe, expect, it } from "vitest";
+import { advanceSequence, skipSequence, startSequence } from "../src/index.js";
 
 const id = <T extends string>(value: string) => value as Id<T>;
 
@@ -70,12 +66,8 @@ describe("sequence completion equivalence", () => {
       throw new Error("Expected both completion paths to succeed.");
     }
 
-    expect(watched.transition.state.flags).toEqual(
-      skipped.transition.state.flags,
-    );
-    expect(watched.transition.state.objectStates).toEqual(
-      skipped.transition.state.objectStates,
-    );
+    expect(watched.transition.state.flags).toEqual(skipped.transition.state.flags);
+    expect(watched.transition.state.objectStates).toEqual(skipped.transition.state.objectStates);
     expect(watched.transition.state.activeSequences).toEqual([]);
     expect(skipped.transition.state.activeSequences).toEqual([]);
   });

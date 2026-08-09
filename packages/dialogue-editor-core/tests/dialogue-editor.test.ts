@@ -1,15 +1,17 @@
+import { dialogueGraphSchema, type Id } from "@evavo/adventure-project-schema";
 import { describe, expect, it } from "vitest";
-import { dialogueGraphSchema } from "@evavo/adventure-project-schema";
+import { parseDialogueEditorCommand } from "../src/command-schema.js";
 import {
   createDialogueEditorHistory,
-  DialogueEditorCommandError,
+  type DialogueEditorCommandError,
   executeDialogueEditorCommand,
   isDialogueEditorDocumentDirty,
   markDialogueEditorHistorySaved,
   redoDialogueEditorCommand,
   undoDialogueEditorCommand,
 } from "../src/index.js";
-import { parseDialogueEditorCommand } from "../src/command-schema.js";
+
+const id = <T extends string>(value: string) => value as Id<T>;
 
 const graph = dialogueGraphSchema.parse({
   id: "dialogue.detective.receptionist",
@@ -65,21 +67,15 @@ describe("dialogue editor history", () => {
       line: { ...line, text: "You took your time, detective." },
     });
 
-    expect(history.document.graph.nodes[0]?.lines[0]?.text).toBe(
-      "You took your time, detective.",
-    );
+    expect(history.document.graph.nodes[0]?.lines[0]?.text).toBe("You took your time, detective.");
     expect(isDialogueEditorDocumentDirty(history.document)).toBe(true);
 
     history = undoDialogueEditorCommand(history);
-    expect(history.document.graph.nodes[0]?.lines[0]?.text).toBe(
-      "You are late, detective.",
-    );
+    expect(history.document.graph.nodes[0]?.lines[0]?.text).toBe("You are late, detective.");
     expect(isDialogueEditorDocumentDirty(history.document)).toBe(false);
 
     history = redoDialogueEditorCommand(history);
-    expect(history.document.graph.nodes[0]?.lines[0]?.text).toBe(
-      "You took your time, detective.",
-    );
+    expect(history.document.graph.nodes[0]?.lines[0]?.text).toBe("You took your time, detective.");
 
     history = markDialogueEditorHistorySaved(history);
     expect(isDialogueEditorDocumentDirty(history.document)).toBe(false);
@@ -122,6 +118,7 @@ describe("dialogue editor history", () => {
         line: {
           id: graph.nodes[0]!.lines[0]!.id,
           text: "Duplicate line.",
+          interruptible: true,
         },
       }),
     ).toThrowError(
@@ -138,6 +135,8 @@ describe("dialogue editor history", () => {
         choice: {
           id: graph.nodes[0]!.choices[0]!.id,
           text: "Duplicate choice.",
+          once: false,
+          actions: [],
           closeDialogue: true,
         },
       }),
@@ -150,34 +149,34 @@ describe("dialogue editor history", () => {
 
   it("applies atomic line and choice batches", () => {
     const node = graph.nodes[1]!;
-    const history = executeDialogueEditorCommand(
-      createDialogueEditorHistory(graph),
-      {
-        kind: "batch",
-        commands: [
-          {
-            kind: "insert-line",
-            nodeId: node.id,
-            index: node.lines.length,
-            line: {
-              id: "dialogue-line.receptionist.warning",
-              speakerId: "actor.detective",
-              text: "Then somebody used the blackout.",
-            },
+    const history = executeDialogueEditorCommand(createDialogueEditorHistory(graph), {
+      kind: "batch",
+      commands: [
+        {
+          kind: "insert-line",
+          nodeId: node.id,
+          index: node.lines.length,
+          line: {
+            id: id<"dialogue-line">("dialogue-line.receptionist.warning"),
+            speakerId: id<"actor">("actor.detective"),
+            text: "Then somebody used the blackout.",
+            interruptible: true,
           },
-          {
-            kind: "insert-choice",
-            nodeId: node.id,
-            index: node.choices.length,
-            choice: {
-              id: "dialogue-choice.receptionist.press",
-              text: "Press for a name.",
-              closeDialogue: true,
-            },
+        },
+        {
+          kind: "insert-choice",
+          nodeId: node.id,
+          index: node.choices.length,
+          choice: {
+            id: id<"dialogue-choice">("dialogue-choice.receptionist.press"),
+            text: "Press for a name.",
+            once: false,
+            actions: [],
+            closeDialogue: true,
           },
-        ],
-      },
-    );
+        },
+      ],
+    });
 
     expect(history.document.graph.nodes[1]?.lines).toHaveLength(2);
     expect(history.document.graph.nodes[1]?.choices).toHaveLength(2);
@@ -206,8 +205,6 @@ describe("dialogue editor command schema", () => {
   });
 
   it("rejects empty dialogue batches", () => {
-    expect(() =>
-      parseDialogueEditorCommand({ kind: "batch", commands: [] }),
-    ).toThrow();
+    expect(() => parseDialogueEditorCommand({ kind: "batch", commands: [] })).toThrow();
   });
 });

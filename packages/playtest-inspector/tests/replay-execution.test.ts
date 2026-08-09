@@ -1,7 +1,7 @@
-import { describe, expect, it } from "vitest";
 import { createReplayLog } from "@evavo/adventure-replay";
 import { parseRuntimeBundle } from "@evavo/adventure-runtime-bundle";
 import { createPackagedRuntimeController } from "@evavo/adventure-runtime-controller";
+import { describe, expect, it } from "vitest";
 import { executeInspectedReplay } from "../src/replay-execution.js";
 
 const hash = "0".repeat(64);
@@ -170,7 +170,6 @@ const bundle = parseRuntimeBundle({
         },
       ],
       fallbackText: "Nothing happens.",
-      interactionIndex: {},
     },
   ],
   dialogues: [],

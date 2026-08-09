@@ -1,9 +1,7 @@
 import { adventurePlayFeelProfileById } from "@evavo/adventure-play-feel";
 import type { Point } from "@evavo/adventure-project-schema";
-import {
-  parseProfiledRuntimeCameraState,
-} from "./profiled-camera-save.js";
 import { createProfiledRuntimeCamera } from "./profiled-camera-runtime.js";
+import { parseProfiledRuntimeCameraState } from "./profiled-camera-save.js";
 import {
   clampProfiledCameraPoint,
   PROFILED_CAMERA_POSITION_EPSILON,
@@ -26,10 +24,7 @@ const compatibilityIssue = (
   issues.push({ severity: "error", code, path, message });
 };
 
-const pointInsideCameraBounds = (
-  point: Point,
-  maximum: Point,
-): boolean =>
+const pointInsideCameraBounds = (point: Point, maximum: Point): boolean =>
   point.x >= -PROFILED_CAMERA_POSITION_EPSILON &&
   point.y >= -PROFILED_CAMERA_POSITION_EPSILON &&
   point.x <= maximum.x + PROFILED_CAMERA_POSITION_EPSILON &&
@@ -58,10 +53,7 @@ export const validateProfiledRuntimeCameraCompatibility = (
     );
   }
   const profile = adventurePlayFeelProfileById(state.profileId);
-  if (
-    profile.logicalTicksPerSecond !==
-    input.bundle.presentation.logicalTicksPerSecond
-  ) {
+  if (profile.logicalTicksPerSecond !== input.bundle.presentation.logicalTicksPerSecond) {
     compatibilityIssue(
       issues,
       "logical-tick-rate-mismatch",
@@ -77,9 +69,7 @@ export const validateProfiledRuntimeCameraCompatibility = (
       "Saved camera scene does not match the current runtime scene.",
     );
   }
-  const scene = input.bundle.scenes.find(
-    (candidate) => candidate.id === state.sceneId,
-  );
+  const scene = input.bundle.scenes.find((candidate) => candidate.id === state.sceneId);
   if (!scene) {
     compatibilityIssue(
       issues,
@@ -113,8 +103,7 @@ export const validateProfiledRuntimeCameraCompatibility = (
   }
   if (
     profile.camera.quantization === "native-pixel" &&
-    (!Number.isInteger(state.camera.position.x) ||
-      !Number.isInteger(state.camera.position.y))
+    (!Number.isInteger(state.camera.position.x) || !Number.isInteger(state.camera.position.y))
   ) {
     compatibilityIssue(
       issues,
@@ -126,9 +115,7 @@ export const validateProfiledRuntimeCameraCompatibility = (
 
   const shot = state.activeShot;
   if (shot) {
-    const sequence = input.bundle.sequences.find(
-      (candidate) => candidate.id === shot.sequenceId,
-    );
+    const sequence = input.bundle.sequences.find((candidate) => candidate.id === shot.sequenceId);
     if (!sequence) {
       compatibilityIssue(
         issues,
@@ -148,9 +135,7 @@ export const validateProfiledRuntimeCameraCompatibility = (
           "Saved camera shot belongs to a sequence that is no longer active.",
         );
       }
-      const track = sequence.tracks.find(
-        (candidate) => candidate.id === shot.trackId,
-      );
+      const track = sequence.tracks.find((candidate) => candidate.id === shot.trackId);
       if (!track) {
         compatibilityIssue(
           issues,
@@ -168,11 +153,7 @@ export const validateProfiledRuntimeCameraCompatibility = (
             "Saved camera cue is missing or is not a camera-shot cue.",
           );
         } else {
-          const expectedTo = clampProfiledCameraPoint(
-            cue.position,
-            input.bundle,
-            scene,
-          );
+          const expectedTo = clampProfiledCameraPoint(cue.position, input.bundle, scene);
           if (
             cue.durationTicks !== shot.durationTicks ||
             cue.easing !== shot.easing ||
@@ -212,8 +193,7 @@ export const validateProfiledRuntimeCameraCompatibility = (
   }
 
   return issues.sort(
-    (left, right) =>
-      left.path.localeCompare(right.path) || left.code.localeCompare(right.code),
+    (left, right) => left.path.localeCompare(right.path) || left.code.localeCompare(right.code),
   );
 };
 

@@ -1,5 +1,5 @@
-import { describe, expect, it } from "vitest";
 import { parseAdventureProject } from "@evavo/adventure-project-schema";
+import { describe, expect, it } from "vitest";
 import { validateProjectSemantics } from "../src/index.js";
 
 const baseProject = {
@@ -54,9 +54,7 @@ const baseProject = {
     },
   ],
   actors: [],
-  assets: [
-    { id: "asset.background", path: "office.png", kind: "image" },
-  ],
+  assets: [{ id: "asset.background", path: "office.png", kind: "image" }],
   inventoryItems: [],
 } as const;
 
@@ -114,11 +112,7 @@ describe("narrative validation", () => {
       ],
     });
 
-    expect(
-      validateProjectSemantics(project).filter(
-        (issue) => issue.severity === "error",
-      ),
-    ).toEqual([]);
+    expect(validateProjectSemantics(project).filter((issue) => issue.severity === "error")).toEqual([]);
   });
 
   it("reports broken graph, actor, palette, timing, and skip references", () => {

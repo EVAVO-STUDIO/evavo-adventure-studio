@@ -2,8 +2,8 @@ import type {
   ClassicAdventureCreatorProject,
   ClassicAdventureCreatorScene,
 } from "@evavo/adventure-design/classic-game-creator";
-import { CreatorNativePreview } from "./classic-game-creator-preview.js";
 import { RangeField, timingControls } from "./classic-game-creator-controls.js";
+import { CreatorNativePreview } from "./classic-game-creator-preview.js";
 
 export const InterfaceSurface = ({
   project,
@@ -118,17 +118,14 @@ export const TimingSurface = ({ project }: { readonly project: ClassicAdventureC
       <span>CANONICAL LOGICAL CLOCK</span>
       <strong>{project.timing.logicalTicksPerSecond} ticks per second</strong>
       <p>
-        Authored holds change the rhythm. Browser refresh rate never changes puzzle,
-        movement, dialogue or camera consequences.
+        Authored holds change the rhythm. Browser refresh rate never changes puzzle, movement, dialogue or
+        camera consequences.
       </p>
     </header>
     <div className="cc-timing-chart">
       {timingControls.map((control) => {
         const value = project.timing[control.field];
-        const width = Math.max(
-          4,
-          ((value - control.minimum) / (control.maximum - control.minimum)) * 100,
-        );
+        const width = Math.max(4, ((value - control.minimum) / (control.maximum - control.minimum)) * 100);
         return (
           <article key={control.field}>
             <div>

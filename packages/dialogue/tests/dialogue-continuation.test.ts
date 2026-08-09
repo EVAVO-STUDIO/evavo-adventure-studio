@@ -1,10 +1,7 @@
-import { describe, expect, it } from "vitest";
-import type { DialogueGraph, Id } from "@evavo/adventure-project-schema";
 import type { RuntimeState } from "@evavo/adventure-core";
-import {
-  beginDialogue,
-  continueDialogue,
-} from "../src/index.js";
+import type { DialogueGraph, Id } from "@evavo/adventure-project-schema";
+import { describe, expect, it } from "vitest";
+import { beginDialogue, continueDialogue } from "../src/index.js";
 
 const id = <T extends string>(value: string) => value as Id<T>;
 
@@ -44,15 +41,11 @@ const automaticDialogue: DialogueGraph = {
       ],
       choices: [],
       autoNextNodeId: id<"dialogue-node">("node.second"),
-      exitActions: [
-        { kind: "set-flag", flag: "firstLineComplete", value: true },
-      ],
+      exitActions: [{ kind: "set-flag", flag: "firstLineComplete", value: true }],
     },
     {
       id: id<"dialogue-node">("node.second"),
-      enterActions: [
-        { kind: "set-flag", flag: "secondLineStarted", value: true },
-      ],
+      enterActions: [{ kind: "set-flag", flag: "secondLineStarted", value: true }],
       lines: [
         {
           id: id<"dialogue-line">("line.second"),
@@ -61,9 +54,7 @@ const automaticDialogue: DialogueGraph = {
         },
       ],
       choices: [],
-      exitActions: [
-        { kind: "set-flag", flag: "exchangeComplete", value: true },
-      ],
+      exitActions: [{ kind: "set-flag", flag: "exchangeComplete", value: true }],
     },
   ],
 };
@@ -75,10 +66,7 @@ describe("automatic dialogue continuation", () => {
       throw new Error("Expected dialogue to start.");
     }
 
-    const continued = continueDialogue(
-      started.transition.state,
-      automaticDialogue,
-    );
+    const continued = continueDialogue(started.transition.state, automaticDialogue);
     expect(continued.kind).toBe("active");
     if (continued.kind !== "active") {
       throw new Error("Expected the second node to become active.");
@@ -90,13 +78,10 @@ describe("automatic dialogue continuation", () => {
       secondLineStarted: true,
     });
 
-    const ended = continueDialogue(
-      continued.transition.state,
-      automaticDialogue,
-    );
+    const ended = continueDialogue(continued.transition.state, automaticDialogue);
     expect(ended.kind).toBe("ended");
     if (ended.kind === "ended") {
-      expect(ended.transition.state.flags.exchangeComplete).toBe(true);
+      expect(ended.transition.state.flags["exchangeComplete"]).toBe(true);
       expect(ended.transition.state.activeDialogue).toBeNull();
     }
   });

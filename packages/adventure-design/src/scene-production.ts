@@ -1,9 +1,5 @@
 import type { Size } from "@evavo/adventure-project-schema";
-import type {
-  AdventureDesignDocument,
-  AdventureDesignId,
-  AdventureMapLocation,
-} from "./types.js";
+import type { AdventureDesignDocument, AdventureDesignId, AdventureMapLocation } from "./types.js";
 
 export interface AdventureSceneProductionBrief {
   readonly locationId: AdventureDesignId<"location">;
@@ -24,10 +20,7 @@ export interface AdventureSceneProductionBrief {
   readonly reviewQuestions: readonly string[];
 }
 
-const interactionLaneFor = (
-  document: AdventureDesignDocument,
-  location: AdventureMapLocation,
-): string =>
+const interactionLaneFor = (document: AdventureDesignDocument, location: AdventureMapLocation): string =>
   location.kind === "close-up"
     ? "Reserve the centre and lower third for the object, hands and reaction poses."
     : document.creativeDirection.compositionMode === "stage"
@@ -36,9 +29,7 @@ const interactionLaneFor = (
         ? "Use a readable path between actor, obstacle and exit."
         : "Lead the eye from entrance to obstacle, focal prop and exit without overlays.";
 
-const layerPlanFor = (
-  document: AdventureDesignDocument,
-): readonly string[] => [
+const layerPlanFor = (document: AdventureDesignDocument): readonly string[] => [
   "Background value mass and architecture",
   "Rear atmosphere and restrained palette motion",
   "Walkable world and consequential props",

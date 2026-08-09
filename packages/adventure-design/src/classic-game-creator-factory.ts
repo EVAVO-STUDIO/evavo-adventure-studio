@@ -1,17 +1,4 @@
 import type {
-  AdventureProductionProfile,
-  AdventureProductionProfileId,
-} from "./production-profile-types.js";
-import { adventureProductionProfiles } from "./production-profile-presets.js";
-import type {
-  AdventureProductionShowcase,
-  AdventureProductionShowcaseId,
-  AdventureShowcaseActorBeat,
-  AdventureShowcasePlate,
-  AdventureShowcasePropBeat,
-} from "./production-showcase-types.js";
-import { adventureProductionShowcases } from "./production-showcase-presets.js";
-import type {
   ClassicAdventureCreatorActor,
   ClassicAdventureCreatorDialogue,
   ClassicAdventureCreatorFamily,
@@ -23,6 +10,16 @@ import type {
   ClassicAdventureCreatorScene,
   ClassicAdventureCreatorTiming,
 } from "./classic-game-creator-types.js";
+import { adventureProductionProfiles } from "./production-profile-presets.js";
+import type { AdventureProductionProfile, AdventureProductionProfileId } from "./production-profile-types.js";
+import { adventureProductionShowcases } from "./production-showcase-presets.js";
+import type {
+  AdventureProductionShowcase,
+  AdventureProductionShowcaseId,
+  AdventureShowcaseActorBeat,
+  AdventureShowcasePlate,
+  AdventureShowcasePropBeat,
+} from "./production-showcase-types.js";
 
 export interface ClassicAdventureCreatorRecipe {
   readonly id: string;
@@ -38,24 +35,16 @@ export interface ClassicAdventureCreatorRecipe {
   readonly originalityStatement: string;
 }
 
-const productionProfile = (
-  id: AdventureProductionProfileId,
-): AdventureProductionProfile => {
-  const profile = adventureProductionProfiles.find(
-    (candidate) => candidate.id === id,
-  );
+const productionProfile = (id: AdventureProductionProfileId): AdventureProductionProfile => {
+  const profile = adventureProductionProfiles.find((candidate) => candidate.id === id);
   if (!profile) {
     throw new Error(`Adventure production profile '${id}' is missing.`);
   }
   return profile;
 };
 
-const productionShowcase = (
-  id: AdventureProductionShowcaseId,
-): AdventureProductionShowcase => {
-  const showcase = adventureProductionShowcases.find(
-    (candidate) => candidate.id === id,
-  );
+const productionShowcase = (id: AdventureProductionShowcaseId): AdventureProductionShowcase => {
+  const showcase = adventureProductionShowcases.find((candidate) => candidate.id === id);
   if (!showcase) {
     throw new Error(`Adventure production showcase '${id}' is missing.`);
   }
@@ -82,18 +71,11 @@ const actorFromBeat = (
   height: Math.max(1, Math.round(beat.height * verticalScale)),
   facing: beat.facing,
   pose: beat.pose,
-  animationState:
-    beat.role === "player"
-      ? "idle"
-      : beat.role === "threat"
-        ? "threaten"
-        : "observe",
+  animationState: beat.role === "player" ? "idle" : beat.role === "threat" ? "threaten" : "observe",
   silhouetteNote: beat.silhouetteNote,
 });
 
-const propVerbs = (
-  beat: AdventureShowcasePropBeat,
-): readonly string[] => {
+const propVerbs = (beat: AdventureShowcasePropBeat): readonly string[] => {
   if (!beat.interactive) return [];
   switch (beat.role) {
     case "clue":
@@ -130,9 +112,7 @@ const propFromBeat = (
     "readable at one-times native scale.",
 });
 
-const layersForPlate = (
-  plate: AdventureShowcasePlate,
-): readonly ClassicAdventureCreatorLayer[] => [
+const layersForPlate = (plate: AdventureShowcasePlate): readonly ClassicAdventureCreatorLayer[] => [
   {
     id: `${plate.id}.layer.backdrop`,
     role: "backdrop",
@@ -183,10 +163,7 @@ const layersForPlate = (
   },
 ];
 
-const lightingBrief = (
-  family: ClassicAdventureCreatorFamily,
-  plate: AdventureShowcasePlate,
-): string => {
+const lightingBrief = (family: ClassicAdventureCreatorFamily, plate: AdventureShowcasePlate): string => {
   switch (family) {
     case "storybook-icon":
       return (
@@ -236,9 +213,7 @@ const sceneFromPlate = (
   const usesGameplayChrome =
     recipe.interface.openBehaviour === "persistent" &&
     (plate.kind === "gameplay" || plate.kind === "dialogue");
-  const viewportHeight = usesGameplayChrome
-    ? recipe.interface.gameplayViewportHeight
-    : 200;
+  const viewportHeight = usesGameplayChrome ? recipe.interface.gameplayViewportHeight : 200;
   const verticalScale = viewportHeight / 200;
   const horizonY = Math.round(plate.horizonY * verticalScale);
   const focalPoint = {
@@ -257,9 +232,7 @@ const sceneFromPlate = (
     motif: showcase.motif,
     name: plate.name,
     playerGoal: plate.playerGoal,
-    artBrief:
-      `${showcase.title}: ${plate.name}. ${showcase.titleTreatment} ` +
-      plate.visualProofs.join(" "),
+    artBrief: `${showcase.title}: ${plate.name}. ${showcase.titleTreatment} ` + plate.visualProofs.join(" "),
     lightingBrief: lightingBrief(recipe.family, plate),
     statusText: plate.statusText,
     horizonY,
@@ -267,10 +240,9 @@ const sceneFromPlate = (
     walkLane: {
       top: laneTop,
       bottom: laneBottom,
-      note:
-        gameplay
-          ? "Keep a continuous actor route below the focal puzzle."
-          : "Reserve a stable presentation lane for the selected scene mode.",
+      note: gameplay
+        ? "Keep a continuous actor route below the focal puzzle."
+        : "Reserve a stable presentation lane for the selected scene mode.",
     },
     interfaceSafeRect: {
       x: 0,
@@ -279,9 +251,7 @@ const sceneFromPlate = (
       height: viewportHeight,
     },
     layers: layersForPlate(plate),
-    actors: plate.actors.map((beat) =>
-      actorFromBeat(beat, verticalScale),
-    ),
+    actors: plate.actors.map((beat) => actorFromBeat(beat, verticalScale)),
     props: plate.props.map((beat) => propFromBeat(beat, verticalScale)),
     musicCue: musicCue(recipe.family),
     ambienceCue: ambienceCue(recipe.family),
@@ -295,9 +265,7 @@ export const createClassicAdventureCreatorProject = (
   const profile = productionProfile(recipe.profileId);
   const showcase = productionShowcase(recipe.showcaseId);
   if (showcase.profileId !== profile.id) {
-    throw new Error(
-      `Creator recipe '${recipe.id}' combines incompatible profile and showcase data.`,
-    );
+    throw new Error(`Creator recipe '${recipe.id}' combines incompatible profile and showcase data.`);
   }
   return {
     creatorVersion: 1,
@@ -315,9 +283,7 @@ export const createClassicAdventureCreatorProject = (
     },
     interface: recipe.interface,
     timing: recipe.timing,
-    scenes: showcase.plates.map((plate) =>
-      sceneFromPlate(plate, showcase, recipe),
-    ),
+    scenes: showcase.plates.map((plate) => sceneFromPlate(plate, showcase, recipe)),
     puzzles: recipe.puzzles,
     dialogues: recipe.dialogues,
     productionPromise: recipe.productionPromise,

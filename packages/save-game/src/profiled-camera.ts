@@ -1,13 +1,9 @@
 import { adventurePlayFeelProfileById } from "@evavo/adventure-play-feel";
+import { idSchema, type Point, pointSchema } from "@evavo/adventure-project-schema";
 import {
-  idSchema,
-  pointSchema,
-  type Point,
-} from "@evavo/adventure-project-schema";
-import {
-  runtimePlayFeelProfileIdSchema,
   type RuntimeBundle,
   type RuntimePlayFeelProfileId,
+  runtimePlayFeelProfileIdSchema,
 } from "@evavo/adventure-runtime-bundle";
 import type { InteractiveRuntimeWorldState } from "@evavo/adventure-scene-runtime/commands";
 import { z } from "zod";
@@ -19,9 +15,7 @@ export const saveGameProfiledCameraEasingSchema = z.enum([
   "ease-out",
   "ease-in-out",
 ]);
-export type SaveGameProfiledCameraEasing = z.infer<
-  typeof saveGameProfiledCameraEasingSchema
->;
+export type SaveGameProfiledCameraEasing = z.infer<typeof saveGameProfiledCameraEasingSchema>;
 
 export const saveGameProfiledCameraShotSchema = z
   .object({
@@ -35,9 +29,7 @@ export const saveGameProfiledCameraShotSchema = z
     easing: saveGameProfiledCameraEasingSchema,
   })
   .strict();
-export type SaveGameProfiledCameraShot = z.infer<
-  typeof saveGameProfiledCameraShotSchema
->;
+export type SaveGameProfiledCameraShot = z.infer<typeof saveGameProfiledCameraShotSchema>;
 
 export const saveGameProfiledRuntimeCameraStateSchema = z
   .object({
@@ -57,9 +49,7 @@ export const saveGameProfiledRuntimeCameraStateSchema = z
     activeShot: saveGameProfiledCameraShotSchema.nullable(),
   })
   .strict();
-export type SaveGameProfiledRuntimeCameraState = z.infer<
-  typeof saveGameProfiledRuntimeCameraStateSchema
->;
+export type SaveGameProfiledRuntimeCameraState = z.infer<typeof saveGameProfiledRuntimeCameraStateSchema>;
 
 export type SaveGameProfiledCameraIssueCode =
   | "camera-not-supported"
@@ -116,8 +106,7 @@ const clampPoint = (point: Point, maximum: Point): Point => ({
 });
 
 const samePoint = (left: Point, right: Point): boolean =>
-  Math.abs(left.x - right.x) <= EPSILON &&
-  Math.abs(left.y - right.y) <= EPSILON;
+  Math.abs(left.x - right.x) <= EPSILON && Math.abs(left.y - right.y) <= EPSILON;
 
 const validateShot = (
   bundle: RuntimeBundle,
@@ -129,9 +118,7 @@ const validateShot = (
   const shot = state.activeShot;
   if (!shot) return;
 
-  const sequence = bundle.sequences.find(
-    (candidate) => candidate.id === shot.sequenceId,
-  );
+  const sequence = bundle.sequences.find((candidate) => candidate.id === shot.sequenceId);
   if (!sequence) {
     addIssue(
       issues,
@@ -140,11 +127,7 @@ const validateShot = (
       `Saved camera sequence '${shot.sequenceId}' does not exist.`,
     );
   } else {
-    if (
-      !world.story.activeSequences.some(
-        (candidate) => candidate.sequenceId === shot.sequenceId,
-      )
-    ) {
+    if (!world.story.activeSequences.some((candidate) => candidate.sequenceId === shot.sequenceId)) {
       addIssue(
         issues,
         "inactive-shot-sequence",
@@ -152,9 +135,7 @@ const validateShot = (
         "Saved camera shot belongs to a sequence that is no longer active.",
       );
     }
-    const track = sequence.tracks.find(
-      (candidate) => candidate.id === shot.trackId,
-    );
+    const track = sequence.tracks.find((candidate) => candidate.id === shot.trackId);
     if (!track) {
       addIssue(
         issues,
@@ -223,8 +204,7 @@ export const validateSaveGameProfiledCamera = (
 ): readonly SaveGameProfiledCameraIssue[] => {
   const issues: SaveGameProfiledCameraIssue[] = [];
   const state = saveGameProfiledRuntimeCameraStateSchema.parse(input.state);
-  const selectedProfileId: RuntimePlayFeelProfileId | undefined =
-    input.bundle.playFeelProfileId;
+  const selectedProfileId: RuntimePlayFeelProfileId | undefined = input.bundle.playFeelProfileId;
   if (!selectedProfileId) {
     addIssue(
       issues,
@@ -244,10 +224,7 @@ export const validateSaveGameProfiledCamera = (
   }
 
   const profile = adventurePlayFeelProfileById(state.profileId);
-  if (
-    profile.logicalTicksPerSecond !==
-    input.bundle.presentation.logicalTicksPerSecond
-  ) {
+  if (profile.logicalTicksPerSecond !== input.bundle.presentation.logicalTicksPerSecond) {
     addIssue(
       issues,
       "logical-tick-rate-mismatch",
@@ -264,9 +241,7 @@ export const validateSaveGameProfiledCamera = (
     );
   }
 
-  const scene = input.bundle.scenes.find(
-    (candidate) => candidate.id === state.sceneId,
-  );
+  const scene = input.bundle.scenes.find((candidate) => candidate.id === state.sceneId);
   if (!scene) {
     addIssue(
       issues,
@@ -288,10 +263,7 @@ export const validateSaveGameProfiledCamera = (
   const maximum = cameraMaximum(input.bundle, scene);
   for (const [path, point] of [
     ["interface.profiledCamera.camera.position", state.camera.position],
-    [
-      "interface.profiledCamera.camera.unquantizedPosition",
-      state.camera.unquantizedPosition,
-    ],
+    ["interface.profiledCamera.camera.unquantizedPosition", state.camera.unquantizedPosition],
   ] as const) {
     if (!pointInsideBounds(point, maximum)) {
       addIssue(
@@ -330,8 +302,6 @@ export const validateSaveGameProfiledCamera = (
 
   validateShot(input.bundle, input.world, state, maximum, issues);
   return issues.sort(
-    (left, right) =>
-      left.path.localeCompare(right.path) || left.code.localeCompare(right.code),
+    (left, right) => left.path.localeCompare(right.path) || left.code.localeCompare(right.code),
   );
 };
-

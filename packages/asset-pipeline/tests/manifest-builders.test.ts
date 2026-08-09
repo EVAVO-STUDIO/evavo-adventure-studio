@@ -1,22 +1,13 @@
+import { validateAssetBuildManifest } from "@evavo/adventure-asset-contract";
+import { type Id, parseAdventureProject } from "@evavo/adventure-project-schema";
 import { describe, expect, it } from "vitest";
-import {
-  validateAssetBuildManifest,
-} from "@evavo/adventure-asset-contract";
-import {
-  parseAdventureProject,
-  type Id,
-} from "@evavo/adventure-project-schema";
 import { compileAtlas } from "../src/atlas-compiler.js";
+import { compileImage, encodeRgbaPng, sha256Hex } from "../src/index.js";
 import {
   createAssetBuildManifest,
   createImageAssetRecord,
   createSpritesheetAssetRecord,
 } from "../src/manifest-builders.js";
-import {
-  compileImage,
-  encodeRgbaPng,
-  sha256Hex,
-} from "../src/index.js";
 import type { RgbaImage } from "../src/rgba.js";
 
 const id = <T extends string>(value: string) => value as Id<T>;
@@ -94,9 +85,7 @@ const authoredAsset = (assetId: string) => {
 };
 
 const buildRecords = async () => {
-  const officeSource = await encodeRgbaPng(
-    solid(4, 4, [28, 30, 42, 255]),
-  );
+  const officeSource = await encodeRgbaPng(solid(4, 4, [28, 30, 42, 255]));
   const officeCompiled = await compileImage(officeSource, {
     assetId: id<"asset">("asset.office"),
     trim: { mode: "none" },
@@ -126,20 +115,16 @@ const buildRecords = async () => {
     },
   );
   const sourceBytes = new TextEncoder().encode("aseprite-source-fixture");
-  const detectiveRecord = createSpritesheetAssetRecord(
-    authoredAsset("asset.detective"),
-    atlas,
-    {
-      sourceFiles: [
-        {
-          path: "source/detective.aseprite",
-          sha256: await sha256Hex(sourceBytes),
-          byteLength: sourceBytes.byteLength,
-        },
-      ],
-      runtimeDirectory: "assets/detective",
-    },
-  );
+  const detectiveRecord = createSpritesheetAssetRecord(authoredAsset("asset.detective"), atlas, {
+    sourceFiles: [
+      {
+        path: "source/detective.aseprite",
+        sha256: await sha256Hex(sourceBytes),
+        byteLength: sourceBytes.byteLength,
+      },
+    ],
+    runtimeDirectory: "assets/detective",
+  });
 
   return { officeRecord, detectiveRecord };
 };
@@ -147,23 +132,14 @@ const buildRecords = async () => {
 describe("compiled asset manifest builders", () => {
   it("builds a complete manifest from image and atlas artifacts", async () => {
     const { officeRecord, detectiveRecord } = await buildRecords();
-    const manifest = await createAssetBuildManifest(project.id, [
-      detectiveRecord,
-      officeRecord,
-    ]);
+    const manifest = await createAssetBuildManifest(project.id, [detectiveRecord, officeRecord]);
 
     expect(validateAssetBuildManifest(project, manifest)).toEqual([]);
-    expect(manifest.assets.map((asset) => asset.assetId)).toEqual([
-      "asset.detective",
-      "asset.office",
-    ]);
+    expect(manifest.assets.map((asset) => asset.assetId)).toEqual(["asset.detective", "asset.office"]);
     expect(manifest.fingerprint).toHaveLength(64);
 
     const detective = manifest.assets[0]!;
-    expect(detective.outputFiles.map((output) => output.role)).toEqual([
-      "atlas-manifest",
-      "page-000",
-    ]);
+    expect(detective.outputFiles.map((output) => output.role)).toEqual(["atlas-manifest", "page-000"]);
     expect(detective.outputFiles.map((output) => output.runtimePath)).toEqual([
       "assets/detective/asset.detective.atlas.json",
       "assets/detective/detective-000.png",
@@ -172,14 +148,8 @@ describe("compiled asset manifest builders", () => {
 
   it("fingerprints the same build identically regardless of record order", async () => {
     const { officeRecord, detectiveRecord } = await buildRecords();
-    const left = await createAssetBuildManifest(project.id, [
-      officeRecord,
-      detectiveRecord,
-    ]);
-    const right = await createAssetBuildManifest(project.id, [
-      detectiveRecord,
-      officeRecord,
-    ]);
+    const left = await createAssetBuildManifest(project.id, [officeRecord, detectiveRecord]);
+    const right = await createAssetBuildManifest(project.id, [detectiveRecord, officeRecord]);
 
     expect(left).toEqual(right);
   });

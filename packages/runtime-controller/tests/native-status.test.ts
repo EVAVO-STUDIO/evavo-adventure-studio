@@ -1,7 +1,7 @@
-import { describe, expect, it } from "vitest";
 import { bitmapFontManifestSchema } from "@evavo/adventure-bitmap-font";
 import type { Id } from "@evavo/adventure-project-schema";
 import type { ResolvedFrame } from "@evavo/adventure-render-contract";
+import { describe, expect, it } from "vitest";
 import { appendNativeStatusPanel } from "../src/native-status.js";
 
 const id = <T extends string>(value: string): Id<T> => value as Id<T>;
@@ -89,11 +89,7 @@ const fonts = bitmapFontManifestSchema.parse({
 
 describe("native bitmap status rail", () => {
   it("uses the deterministic dialogue font and appends native UI nodes", () => {
-    const composed = appendNativeStatusPanel(
-      frame,
-      { bitmapFonts: fonts },
-      "Nothing useful happens.",
-    );
+    const composed = appendNativeStatusPanel(frame, { bitmapFonts: fonts }, "Nothing useful happens.");
 
     expect(composed.nodes).toHaveLength(4);
     expect(composed.nodes.at(-1)).toMatchObject({
@@ -103,7 +99,7 @@ describe("native bitmap status rail", () => {
       text: "Nothing useful happens.",
       maximumWidth: 304,
       lineHeight: 10,
-      outlineColor: 0,
+      outlineColor: 0x05060a,
     });
     expect(composed.nodes[1]).toMatchObject({
       kind: "solid-rectangle",
@@ -114,8 +110,6 @@ describe("native bitmap status rail", () => {
 
   it("returns the original frame when fonts or text are absent", () => {
     expect(appendNativeStatusPanel(frame, {}, "STATUS")).toBe(frame);
-    expect(appendNativeStatusPanel(frame, { bitmapFonts: fonts }, "   ")).toBe(
-      frame,
-    );
+    expect(appendNativeStatusPanel(frame, { bitmapFonts: fonts }, "   ")).toBe(frame);
   });
 });

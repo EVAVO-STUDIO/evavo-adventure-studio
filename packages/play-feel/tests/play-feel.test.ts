@@ -1,24 +1,24 @@
 import { describe, expect, it } from "vitest";
 import {
+  type AdventurePlayFeelProfile,
+  advanceAdventureCamera,
+  advanceAdventureFramePacing,
+  advanceAdventureMotion,
+  advanceAdventureMotionRuntimeExtension,
   adventurePlayFeelProfileById,
   adventurePlayFeelProfileForProductionProfile,
   adventurePlayFeelProfileIds,
   adventurePlayFeelProfiles,
-  advanceAdventureCamera,
-  advanceAdventureFramePacing,
-  advanceAdventureMotion,
   auditAdventureMotionTrace,
   auditAdventurePlayFeelProfile,
   createAdventureCameraState,
   createAdventureFramePacingState,
-  interpolateAdventureCameraPresentation,
   createAdventureKinematicRoute,
-  createAdventureMotionState,
   createAdventureMotionRuntimeExtension,
-  advanceAdventureMotionRuntimeExtension,
+  createAdventureMotionState,
+  interpolateAdventureCameraPresentation,
   simulateAdventureMotion,
   validateAdventurePlayFeelProfile,
-  type AdventurePlayFeelProfile,
 } from "../src/index.js";
 
 const routePoints = [
@@ -42,20 +42,14 @@ describe("adventure play feel", () => {
       "cinematic-directed",
       "noir-restrained",
     ]);
-    expect(
-      adventurePlayFeelProfiles.flatMap((profile) =>
-        validateAdventurePlayFeelProfile(profile),
-      ),
-    ).toEqual([]);
-    expect(
-      adventurePlayFeelProfileForProductionProfile("storybook-icon-vga").id,
-    ).toBe("storybook-deliberate");
-    expect(
-      adventurePlayFeelProfileForProductionProfile("cinematic-pulp-vga").id,
-    ).toBe("cinematic-directed");
-    expect(
-      adventurePlayFeelProfileForProductionProfile("neo-noir-lowres").id,
-    ).toBe("noir-restrained");
+    expect(adventurePlayFeelProfiles.flatMap((profile) => validateAdventurePlayFeelProfile(profile))).toEqual(
+      [],
+    );
+    expect(adventurePlayFeelProfileForProductionProfile("storybook-icon-vga").id).toBe(
+      "storybook-deliberate",
+    );
+    expect(adventurePlayFeelProfileForProductionProfile("cinematic-pulp-vga").id).toBe("cinematic-directed");
+    expect(adventurePlayFeelProfileForProductionProfile("neo-noir-lowres").id).toBe("noir-restrained");
 
     const runtimeData = JSON.stringify(adventurePlayFeelProfiles).toLocaleLowerCase("en-US");
     for (const term of [
@@ -92,23 +86,14 @@ describe("adventure play feel", () => {
     const profile = adventurePlayFeelProfileById("gothic-measured");
     const route = createAdventureKinematicRoute(routePoints);
     const extension = createAdventureMotionRuntimeExtension(route, profile);
-    const chunked = advanceAdventureMotionRuntimeExtension(
-      extension,
-      route,
-      90,
-    );
+    const chunked = advanceAdventureMotionRuntimeExtension(extension, route, 90);
     let stepped = extension;
     for (let tick = 0; tick < 90; tick += 1) {
       stepped = advanceAdventureMotionRuntimeExtension(stepped, route).extension;
     }
     expect(chunked.extension).toEqual(stepped);
-    const changedRoute = createAdventureKinematicRoute([
-      ...routePoints.slice(0, -1),
-      { x: 304, y: 128 },
-    ]);
-    expect(() =>
-      advanceAdventureMotionRuntimeExtension(extension, changedRoute),
-    ).toThrow(/fingerprint/u);
+    const changedRoute = createAdventureKinematicRoute([...routePoints.slice(0, -1), { x: 304, y: 128 }]);
+    expect(() => advanceAdventureMotionRuntimeExtension(extension, changedRoute)).toThrow(/fingerprint/u);
   });
 
   it("arrives exactly without overshoot and preserves native-pixel output when required", () => {
@@ -125,9 +110,7 @@ describe("adventure play feel", () => {
       if (profile.movement.quantization === "native-pixel") {
         expect(
           trace.samples.every(
-            (sample) =>
-              Number.isInteger(sample.position.x) &&
-              Number.isInteger(sample.position.y),
+            (sample) => Number.isInteger(sample.position.x) && Number.isInteger(sample.position.y),
           ),
         ).toBe(true);
       }
@@ -147,9 +130,9 @@ describe("adventure play feel", () => {
     const cornerSamples = trace.samples.filter(
       (sample) => sample.distancePixels >= 96 && sample.distancePixels <= 104,
     );
-    expect(
-      Math.min(...cornerSamples.map((sample) => sample.velocityPixelsPerSecond)),
-    ).toBeLessThan(profile.movement.topSpeedPixelsPerSecond);
+    expect(Math.min(...cornerSamples.map((sample) => sample.velocityPixelsPerSecond))).toBeLessThan(
+      profile.movement.topSpeedPixelsPerSecond,
+    );
     expect(trace.samples.some((sample) => sample.phase === "cornering")).toBe(true);
     expect(trace.samples.filter((sample) => sample.footfall !== null).length).toBeGreaterThan(4);
   });
@@ -163,23 +146,10 @@ describe("adventure play feel", () => {
       velocityPixelsPerSecond: { x: 47, y: 12 },
     };
     const initial = createAdventureCameraState();
-    const chunked = advanceAdventureCamera(
-      initial,
-      target,
-      viewport,
-      world,
-      profile,
-      240,
-    ).state;
+    const chunked = advanceAdventureCamera(initial, target, viewport, world, profile, 240).state;
     let stepped = initial;
     for (let tick = 0; tick < 240; tick += 1) {
-      stepped = advanceAdventureCamera(
-        stepped,
-        target,
-        viewport,
-        world,
-        profile,
-      ).state;
+      stepped = advanceAdventureCamera(stepped, target, viewport, world, profile).state;
     }
     expect(chunked).toEqual(stepped);
     expect(chunked.position.x).toBeGreaterThan(0);
@@ -188,7 +158,6 @@ describe("adventure play feel", () => {
     expect(Number.isInteger(chunked.position.x)).toBe(true);
     expect(Number.isInteger(chunked.position.y)).toBe(true);
   });
-
 
   it("interpolates only camera presentation authorized by the selected family", () => {
     const previous = {
@@ -228,40 +197,23 @@ describe("adventure play feel", () => {
   it("uses fixed-step simulation and exposes only profile-authorized interpolation", () => {
     const strictProfile = adventurePlayFeelProfileById("storybook-deliberate");
     const cameraProfile = adventurePlayFeelProfileById("pulp-grounded");
-    const strict = advanceAdventureFramePacing(
-      createAdventureFramePacingState(),
-      17,
-      strictProfile,
-    );
-    const camera = advanceAdventureFramePacing(
-      createAdventureFramePacingState(),
-      17,
-      cameraProfile,
-    );
+    const strict = advanceAdventureFramePacing(createAdventureFramePacingState(), 17, strictProfile);
+    const camera = advanceAdventureFramePacing(createAdventureFramePacingState(), 17, cameraProfile);
     expect(strict.ticksToRun).toBe(1);
     expect(strict.interpolationAlpha).toBe(0);
     expect(camera.ticksToRun).toBe(1);
     expect(camera.interpolationAlpha).toBeGreaterThan(0);
 
-    const clamped = advanceAdventureFramePacing(
-      createAdventureFramePacingState(),
-      2_000,
-      strictProfile,
-    );
-    expect(clamped.ticksToRun).toBe(
-      strictProfile.presentation.maximumCatchUpTicks,
-    );
+    const clamped = advanceAdventureFramePacing(createAdventureFramePacingState(), 2_000, strictProfile);
+    expect(clamped.ticksToRun).toBe(strictProfile.presentation.maximumCatchUpTicks);
     expect(clamped.droppedMilliseconds).toBeGreaterThan(0);
   });
-
 
   it("rejects unsafe route units and invalid runtime tuning", () => {
     const profile = adventurePlayFeelProfileById("classic-balanced");
     const route = createAdventureKinematicRoute(routePoints);
     const state = createAdventureMotionState(route, profile);
-    expect(() => createAdventureKinematicRoute([{ x: 0, y: 0 }])).toThrow(
-      /at least two/u,
-    );
+    expect(() => createAdventureKinematicRoute([{ x: 0, y: 0 }])).toThrow(/at least two/u);
     expect(() =>
       createAdventureKinematicRoute([
         { x: 0, y: 0 },

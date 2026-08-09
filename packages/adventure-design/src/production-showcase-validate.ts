@@ -1,7 +1,4 @@
-import {
-  adventureProductionProfileById,
-  adventureProductionProfiles,
-} from "./production-profiles.js";
+import { adventureProductionProfileById, adventureProductionProfiles } from "./production-profiles.js";
 import type {
   AdventureProductionShowcase,
   AdventureProductionShowcaseIssue,
@@ -9,10 +6,7 @@ import type {
 
 const requiredPlateKinds = ["title", "gameplay", "dialogue", "system"] as const;
 
-const issue = (
-  issues: AdventureProductionShowcaseIssue[],
-  input: AdventureProductionShowcaseIssue,
-): void => {
+const issue = (issues: AdventureProductionShowcaseIssue[], input: AdventureProductionShowcaseIssue): void => {
   issues.push(input);
 };
 
@@ -52,9 +46,7 @@ export const validateAdventureProductionShowcase = (
 ): readonly AdventureProductionShowcaseIssue[] => {
   const issues: AdventureProductionShowcaseIssue[] = [];
   const ids = new Map<string, string>();
-  const profile = adventureProductionProfiles.find(
-    (candidate) => candidate.id === showcase.profileId,
-  );
+  const profile = adventureProductionProfiles.find((candidate) => candidate.id === showcase.profileId);
   registerId(ids, issues, showcase.id, "id");
 
   if (!profile) {
@@ -73,8 +65,7 @@ export const validateAdventureProductionShowcase = (
       code: "profile-showcase-mismatch",
       path: "title",
       message:
-        `Showcase title '${showcase.title}' does not match profile brief ` +
-        `'${profile.showcase.title}'.`,
+        `Showcase title '${showcase.title}' does not match profile brief ` + `'${profile.showcase.title}'.`,
     });
   }
 
@@ -84,13 +75,7 @@ export const validateAdventureProductionShowcase = (
     registerId(ids, issues, plate.id, `${platePath}.id`);
     plateIds.add(plate.id);
 
-    if (
-      !pointInside(
-        plate.focalPoint,
-        profile.nativeSize.width,
-        profile.nativeSize.height,
-      )
-    ) {
+    if (!pointInside(plate.focalPoint, profile.nativeSize.width, profile.nativeSize.height)) {
       issue(issues, {
         severity: "error",
         code: "invalid-focal-point",
@@ -114,13 +99,7 @@ export const validateAdventureProductionShowcase = (
     plate.actors.forEach((actor, actorIndex) => {
       const actorPath = `${platePath}.actors[${actorIndex}]`;
       registerId(ids, issues, actor.id, `${actorPath}.id`);
-      if (
-        !pointInside(
-          actor.position,
-          profile.nativeSize.width,
-          profile.nativeSize.height,
-        )
-      ) {
+      if (!pointInside(actor.position, profile.nativeSize.width, profile.nativeSize.height)) {
         issue(issues, {
           severity: "error",
           code: "invalid-actor-position",
@@ -128,11 +107,7 @@ export const validateAdventureProductionShowcase = (
           message: `Actor beat '${actor.id}' is outside the native canvas.`,
         });
       }
-      if (
-        !Number.isFinite(actor.height) ||
-        actor.height <= 0 ||
-        actor.height > profile.nativeSize.height
-      ) {
+      if (!Number.isFinite(actor.height) || actor.height <= 0 || actor.height > profile.nativeSize.height) {
         issue(issues, {
           severity: "error",
           code: "invalid-actor-height",
@@ -142,10 +117,7 @@ export const validateAdventureProductionShowcase = (
       }
     });
 
-    if (
-      plate.kind === "gameplay" &&
-      !plate.actors.some((actor) => actor.role === "player")
-    ) {
+    if (plate.kind === "gameplay" && !plate.actors.some((actor) => actor.role === "player")) {
       issue(issues, {
         severity: "error",
         code: "missing-player-actor",
@@ -166,16 +138,8 @@ export const validateAdventureProductionShowcase = (
         !Number.isFinite(prop.size.height) ||
         prop.size.width <= 0 ||
         prop.size.height <= 0 ||
-        !pointInside(
-          prop.position,
-          profile.nativeSize.width,
-          profile.nativeSize.height,
-        ) ||
-        !pointInside(
-          lowerRight,
-          profile.nativeSize.width,
-          profile.nativeSize.height,
-        )
+        !pointInside(prop.position, profile.nativeSize.width, profile.nativeSize.height) ||
+        !pointInside(lowerRight, profile.nativeSize.width, profile.nativeSize.height)
       ) {
         issue(issues, {
           severity: "error",
@@ -223,17 +187,12 @@ export const validateAdventureProductionShowcase = (
         severity: "error",
         code: "unsupported-puzzle-grammar",
         path: `${beatPath}.grammar`,
-        message:
-          `Puzzle grammar '${beat.grammar}' is not enabled by profile ` +
-          `'${profile.id}'.`,
+        message: `Puzzle grammar '${beat.grammar}' is not enabled by profile ` + `'${profile.id}'.`,
       });
     }
   });
 
-  if (
-    showcase.originalAssetsOnly !== true ||
-    showcase.originalityStatement.trim().length < 32
-  ) {
+  if (showcase.originalAssetsOnly !== true || showcase.originalityStatement.trim().length < 32) {
     issue(issues, {
       severity: "error",
       code: "missing-originality-boundary",
@@ -243,8 +202,7 @@ export const validateAdventureProductionShowcase = (
   }
 
   return issues.sort(
-    (left, right) =>
-      left.path.localeCompare(right.path) || left.code.localeCompare(right.code),
+    (left, right) => left.path.localeCompare(right.path) || left.code.localeCompare(right.code),
   );
 };
 

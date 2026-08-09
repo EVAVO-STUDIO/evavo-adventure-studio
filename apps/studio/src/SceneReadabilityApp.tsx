@@ -1,17 +1,9 @@
 import {
-  useEffect,
-  useMemo,
-  useState,
-  type ChangeEvent,
-} from "react";
-import {
-  createAdventureSceneReadabilityReports,
   type AdventureSceneReadabilitySeverity,
+  createAdventureSceneReadabilityReports,
 } from "@evavo/adventure-design/scene-readability";
-import {
-  showcaseAdventureDesigns,
-  showcaseProjectShells,
-} from "@evavo/adventure-design/showcases";
+import { showcaseAdventureDesigns, showcaseProjectShells } from "@evavo/adventure-design/showcases";
+import { type ChangeEvent, useEffect, useMemo, useState } from "react";
 import { Button, Metric, StatusPip } from "./scene-readability-components.js";
 import {
   FindingsView,
@@ -31,10 +23,7 @@ export const SceneReadabilityApp = () => {
   const [filter, setFilter] = useState<SceneReadabilityFindingFilter>("all");
   const project = showcaseProjectShells[projectIndex] ?? showcaseProjectShells[0]!;
   const design = showcaseAdventureDesigns[projectIndex] ?? showcaseAdventureDesigns[0]!;
-  const reports = useMemo(
-    () => createAdventureSceneReadabilityReports(project, design),
-    [project, design],
-  );
+  const reports = useMemo(() => createAdventureSceneReadabilityReports(project, design), [project, design]);
   const report = reports[sceneIndex] ?? reports[0]!;
 
   useEffect(() => {
@@ -149,9 +138,7 @@ export const SceneReadabilityApp = () => {
 
         <section className="cmp-canvas">
           {view === "overlay" ? <OverlayView report={report} /> : null}
-          {view === "findings" ? (
-            <FindingsView report={report} filter={filter} onFilter={setFilter} />
-          ) : null}
+          {view === "findings" ? <FindingsView report={report} filter={filter} onFilter={setFilter} /> : null}
           {view === "handoff" ? <HandoffView report={report} /> : null}
         </section>
 
@@ -162,7 +149,7 @@ export const SceneReadabilityApp = () => {
             <p>
               {report.designLink?.arrivalBeat ??
                 "Link this canonical scene to an Adventure Design location before " +
-                "final art and level review."}
+                  "final art and level review."}
             </p>
           </section>
           <section>
@@ -178,13 +165,11 @@ export const SceneReadabilityApp = () => {
           </section>
           <section className="cmp-next-action">
             <span className="cmp-eyebrow">NEXT ACTION</span>
-            <h2>
-              {report.findings[0]?.message ?? "Review final pixels over this geometry"}
-            </h2>
+            <h2>{report.findings[0]?.message ?? "Review final pixels over this geometry"}</h2>
             <p>
               {report.findings[0]?.recommendation ??
                 "Load the finished background, actor and interface in the Player and " +
-                "inspect the scene at 1× native scale."}
+                  "inspect the scene at 1× native scale."}
             </p>
           </section>
           <footer>

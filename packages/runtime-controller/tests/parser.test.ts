@@ -1,8 +1,8 @@
-import { describe, expect, it } from "vitest";
 import type { Id } from "@evavo/adventure-project-schema";
 import type { RuntimeBundle } from "@evavo/adventure-runtime-bundle";
 import type { InteractiveRuntimeWorldState } from "@evavo/adventure-scene-runtime/commands";
 import type { UiSkin } from "@evavo/adventure-ui-skin";
+import { describe, expect, it } from "vitest";
 import {
   createParserBufferState,
   editParserBuffer,
@@ -72,10 +72,14 @@ const skin = {
 } as UiSkin;
 
 const bundle = {
+  presentation: {
+    pixelMotionPolicy: "strict",
+  },
   scenes: [
     {
       id: id<"scene">("scene.office"),
       name: "Rainy Office",
+      depthBands: [],
     },
   ],
   inventoryItems: [
@@ -93,10 +97,19 @@ const bundle = {
       {
         id: id<"object-definition">("object-definition.office-door"),
         name: "Office Door",
-        initialState: "closed",
+        initialStateId: id<"object-state">("object-state.office-door.closed"),
         states: [
           {
-            id: "closed",
+            id: id<"object-state">("object-state.office-door.closed"),
+            visible: true,
+            interactionShape: {
+              points: [
+                { x: -12, y: -48 },
+                { x: 12, y: -48 },
+                { x: 12, y: 0 },
+                { x: -12, y: 0 },
+              ],
+            },
             interactions: [],
           },
         ],
@@ -111,6 +124,11 @@ const bundle = {
             id: id<"object">("object.office-door"),
             definitionId: id<"object-definition">("object-definition.office-door"),
             position: { x: 250, y: 130 },
+            layer: "world",
+            elevation: 0,
+            zOffset: 0,
+            scaleMultiplier: 1,
+            mirrored: false,
           },
         ],
         navigationPortals: [],
@@ -189,14 +207,7 @@ describe("parser command resolution", () => {
   });
 
   it("resolves carried items in USE item ON object phrases", () => {
-    expect(
-      resolveParserCommand(
-        bundle,
-        world,
-        skin,
-        "use office key on office door",
-      ),
-    ).toMatchObject({
+    expect(resolveParserCommand(bundle, world, skin, "use office key on office door")).toMatchObject({
       kind: "object-command",
       verb: "use",
       objectInstanceId: "object.office-door",

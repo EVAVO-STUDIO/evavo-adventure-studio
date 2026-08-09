@@ -1,3 +1,4 @@
+import type { Id } from "@evavo/adventure-project-schema";
 import { describe, expect, it } from "vitest";
 import { studioDialogueGraph } from "../src/dialogue-fixture.js";
 import {
@@ -28,16 +29,12 @@ describe("dialogue studio workspace", () => {
       choiceId: null,
     });
 
-    expect(dialogueGraph(state).nodes).toHaveLength(
-      studioDialogueGraph.nodes.length + 1,
-    );
+    expect(dialogueGraph(state).nodes).toHaveLength(studioDialogueGraph.nodes.length + 1);
     expect(selectedDialogueNode(state).id).toBe(addition.nodeId);
     expect(dialogueWorkspaceIsDirty(state)).toBe(true);
 
     state = dialogueWorkspaceReducer(state, { type: "undo" });
-    expect(dialogueGraph(state).nodes).toHaveLength(
-      studioDialogueGraph.nodes.length,
-    );
+    expect(dialogueGraph(state).nodes).toHaveLength(studioDialogueGraph.nodes.length);
     expect(dialogueWorkspaceIsDirty(state)).toBe(false);
   });
 
@@ -57,7 +54,7 @@ describe("dialogue studio workspace", () => {
       type: "execute",
       command: replaceSelectedDialogueLineCommand(state, {
         ...line,
-        speakerId: "actor.detective",
+        speakerId: id<"actor">("actor.detective"),
         text: "Let us begin again.",
       }),
     });
@@ -113,9 +110,8 @@ describe("dialogue studio workspace", () => {
       nodeId: studioDialogueGraph.nodes[2]!.id,
     });
 
-    expect(selectedDialogueNode(state).id).toBe(
-      studioDialogueGraph.nodes[2]!.id,
-    );
+    expect(selectedDialogueNode(state).id).toBe(studioDialogueGraph.nodes[2]!.id);
     expect(JSON.stringify(studioDialogueGraph)).toBe(original);
   });
 });
+const id = <T extends string>(value: string): Id<T> => value as Id<T>;

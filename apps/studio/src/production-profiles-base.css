@@ -60,8 +60,7 @@
   border: 1px solid var(--ppf-accent);
   color: var(--ppf-paper);
   background:
-    linear-gradient(135deg, color-mix(in srgb, var(--ppf-accent) 32%, transparent), transparent),
-    #11131a;
+    linear-gradient(135deg, color-mix(in srgb, var(--ppf-accent) 32%, transparent), transparent), #11131a;
   font-family: "Courier New", monospace;
   font-size: 17px;
   font-weight: 900;
@@ -256,8 +255,7 @@
 .ppf-profile-button.is-selected {
   border-color: var(--ppf-profile-line);
   background:
-    linear-gradient(90deg, color-mix(in srgb, var(--ppf-accent) 14%, transparent), transparent 78%),
-    #181b24;
+    linear-gradient(90deg, color-mix(in srgb, var(--ppf-accent) 14%, transparent), transparent 78%), #181b24;
   box-shadow: inset 2px 0 0 var(--ppf-accent);
 }
 

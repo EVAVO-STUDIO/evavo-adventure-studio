@@ -21,11 +21,7 @@ export class AdventureDesignCommandError extends Error {
     | "empty-batch";
   readonly path: string;
 
-  constructor(
-    code: AdventureDesignCommandError["code"],
-    path: string,
-    message: string,
-  ) {
+  constructor(code: AdventureDesignCommandError["code"], path: string, message: string) {
     super(message);
     this.name = "AdventureDesignCommandError";
     this.code = code;
@@ -156,9 +152,7 @@ const canonicalize = (value: unknown): unknown => {
   if (value && typeof value === "object") {
     const source = value as Readonly<Record<string, unknown>>;
     const output: Record<string, unknown> = {};
-    for (const key of Object.keys(source).sort((left, right) =>
-      left.localeCompare(right),
-    )) {
+    for (const key of Object.keys(source).sort((left, right) => left.localeCompare(right))) {
       const child = source[key];
       if (child !== undefined) output[key] = canonicalize(child);
     }
@@ -175,12 +169,7 @@ export const canonicalAdventureDesignJson = (value: unknown): string => {
   return serialized;
 };
 
-const insertAt = <T>(
-  values: readonly T[],
-  index: number,
-  value: T,
-  path: string,
-): readonly T[] => {
+const insertAt = <T>(values: readonly T[], index: number, value: T, path: string): readonly T[] => {
   if (!Number.isSafeInteger(index) || index < 0 || index > values.length) {
     throw new AdventureDesignCommandError(
       "invalid-index",
@@ -188,18 +177,10 @@ const insertAt = <T>(
       `Insert index ${index} is outside 0 to ${values.length}.`,
     );
   }
-  return [
-    ...values.slice(0, index).map(cloneJson),
-    cloneJson(value),
-    ...values.slice(index).map(cloneJson),
-  ];
+  return [...values.slice(0, index).map(cloneJson), cloneJson(value), ...values.slice(index).map(cloneJson)];
 };
 
-const replaceAt = <T>(
-  values: readonly T[],
-  index: number,
-  value: T,
-): readonly T[] => [
+const replaceAt = <T>(values: readonly T[], index: number, value: T): readonly T[] => [
   ...values.slice(0, index).map(cloneJson),
   cloneJson(value),
   ...values.slice(index + 1).map(cloneJson),
@@ -217,11 +198,7 @@ const indexById = <T extends { readonly id: string }>(
 ): number => {
   const index = values.findIndex((value) => value.id === id);
   if (index < 0) {
-    throw new AdventureDesignCommandError(
-      "missing-entity",
-      path,
-      `Entity '${id}' does not exist.`,
-    );
+    throw new AdventureDesignCommandError("missing-entity", path, `Entity '${id}' does not exist.`);
   }
   return index;
 };
@@ -240,11 +217,7 @@ const assertInsertId = <T extends { readonly id: string }>(
   }
 };
 
-const assertStableIdentity = (
-  expected: string,
-  actual: string,
-  path: string,
-): void => {
+const assertStableIdentity = (expected: string, actual: string, path: string): void => {
   if (expected !== actual) {
     throw new AdventureDesignCommandError(
       "identity-change",
@@ -263,8 +236,7 @@ const assertLocationRemovable = (
   id: AdventureDesignId<"location">,
 ): void => {
   const route = document.map.routes.find(
-    (candidate) =>
-      candidate.fromLocationId === id || candidate.toLocationId === id,
+    (candidate) => candidate.fromLocationId === id || candidate.toLocationId === id,
   );
   if (route) {
     protectedError(
@@ -273,9 +245,7 @@ const assertLocationRemovable = (
     );
   }
   const chapter = document.chapters.find(
-    (candidate) =>
-      candidate.startLocationId === id ||
-      candidate.unlockedLocationIds.includes(id),
+    (candidate) => candidate.startLocationId === id || candidate.unlockedLocationIds.includes(id),
   );
   if (chapter) {
     protectedError("id", `Location '${id}' is used by chapter '${chapter.id}'.`);
@@ -287,15 +257,10 @@ const assertLocationRemovable = (
     protectedError("id", `Location '${id}' is used by puzzle '${puzzle.id}'.`);
   }
   const cutscene = document.cutscenes.find(
-    (candidate) =>
-      candidate.trigger.kind === "location-enter" &&
-      candidate.trigger.locationId === id,
+    (candidate) => candidate.trigger.kind === "location-enter" && candidate.trigger.locationId === id,
   );
   if (cutscene) {
-    protectedError(
-      "id",
-      `Location '${id}' triggers cutscene '${cutscene.id}'.`,
-    );
+    protectedError("id", `Location '${id}' triggers cutscene '${cutscene.id}'.`);
   }
 };
 
@@ -303,9 +268,7 @@ const assertChapterRemovable = (
   document: AdventureDesignDocument,
   id: AdventureDesignId<"chapter">,
 ): void => {
-  const location = document.map.locations.find((candidate) =>
-    candidate.chapterIds.includes(id),
-  );
+  const location = document.map.locations.find((candidate) => candidate.chapterIds.includes(id));
   if (location) {
     protectedError("id", `Chapter '${id}' is assigned to location '${location.id}'.`);
   }
@@ -318,8 +281,7 @@ const assertChapterRemovable = (
   const cutscene = document.cutscenes.find(
     (candidate) =>
       candidate.chapterId === id ||
-      ((candidate.trigger.kind === "chapter-open" ||
-        candidate.trigger.kind === "chapter-close") &&
+      ((candidate.trigger.kind === "chapter-open" || candidate.trigger.kind === "chapter-close") &&
         candidate.trigger.chapterId === id),
   );
   if (cutscene) {
@@ -327,10 +289,7 @@ const assertChapterRemovable = (
   }
 };
 
-const assertClueRemovable = (
-  document: AdventureDesignDocument,
-  id: AdventureDesignId<"clue">,
-): void => {
+const assertClueRemovable = (document: AdventureDesignDocument, id: AdventureDesignId<"clue">): void => {
   for (const puzzle of document.puzzles) {
     if (puzzle.clueIds.includes(id)) {
       protectedError("id", `Clue '${id}' is used by puzzle '${puzzle.id}'.`);
@@ -338,51 +297,33 @@ const assertClueRemovable = (
     for (const solution of puzzle.solutions) {
       const step = solution.steps.find((candidate) => candidate.clueIds.includes(id));
       if (step) {
-        protectedError(
-          "id",
-          `Clue '${id}' is used by puzzle step '${step.id}'.`,
-        );
+        protectedError("id", `Clue '${id}' is used by puzzle step '${step.id}'.`);
       }
     }
   }
 };
 
-const assertPuzzleRemovable = (
-  document: AdventureDesignDocument,
-  id: AdventureDesignId<"puzzle">,
-): void => {
-  const location = document.map.locations.find((candidate) =>
-    candidate.unlockedByPuzzleIds.includes(id),
-  );
+const assertPuzzleRemovable = (document: AdventureDesignDocument, id: AdventureDesignId<"puzzle">): void => {
+  const location = document.map.locations.find((candidate) => candidate.unlockedByPuzzleIds.includes(id));
   if (location) {
     protectedError("id", `Puzzle '${id}' unlocks location '${location.id}'.`);
   }
-  const route = document.map.routes.find((candidate) =>
-    candidate.requiredPuzzleIds.includes(id),
-  );
+  const route = document.map.routes.find((candidate) => candidate.requiredPuzzleIds.includes(id));
   if (route) protectedError("id", `Puzzle '${id}' gates route '${route.id}'.`);
   const chapter = document.chapters.find(
-    (candidate) =>
-      candidate.requiredPuzzleIds.includes(id) ||
-      candidate.optionalPuzzleIds.includes(id),
+    (candidate) => candidate.requiredPuzzleIds.includes(id) || candidate.optionalPuzzleIds.includes(id),
   );
   if (chapter) {
     protectedError("id", `Puzzle '${id}' is assigned to chapter '${chapter.id}'.`);
   }
-  const clue = document.clues.find((candidate) =>
-    candidate.supportsPuzzleIds.includes(id),
-  );
+  const clue = document.clues.find((candidate) => candidate.supportsPuzzleIds.includes(id));
   if (clue) protectedError("id", `Puzzle '${id}' is supported by clue '${clue.id}'.`);
-  const dependent = document.puzzles.find((candidate) =>
-    candidate.dependencyIds.includes(id),
-  );
+  const dependent = document.puzzles.find((candidate) => candidate.dependencyIds.includes(id));
   if (dependent) {
     protectedError("id", `Puzzle '${dependent.id}' depends on '${id}'.`);
   }
   const cutscene = document.cutscenes.find(
-    (candidate) =>
-      candidate.trigger.kind === "puzzle-complete" &&
-      candidate.trigger.puzzleId === id,
+    (candidate) => candidate.trigger.kind === "puzzle-complete" && candidate.trigger.puzzleId === id,
   );
   if (cutscene) {
     protectedError("id", `Puzzle '${id}' triggers cutscene '${cutscene.id}'.`);
@@ -394,8 +335,7 @@ const assertCutsceneRemovable = (
   id: AdventureDesignId<"cutscene">,
 ): void => {
   const chapter = document.chapters.find(
-    (candidate) =>
-      candidate.openingCutsceneId === id || candidate.closingCutsceneId === id,
+    (candidate) => candidate.openingCutsceneId === id || candidate.closingCutsceneId === id,
   );
   if (chapter) {
     protectedError("id", `Cutscene '${id}' is used by chapter '${chapter.id}'.`);
@@ -447,12 +387,7 @@ export const applyAdventureDesignCommand = (
           ...document,
           map: {
             ...document.map,
-            locations: insertAt(
-              document.map.locations,
-              command.index,
-              command.value,
-              "index",
-            ),
+            locations: insertAt(document.map.locations, command.index, command.value, "index"),
           },
         },
         inverse: { kind: "remove-location", id: command.value.id },
@@ -494,12 +429,7 @@ export const applyAdventureDesignCommand = (
           ...document,
           map: {
             ...document.map,
-            routes: insertAt(
-              document.map.routes,
-              command.index,
-              command.value,
-              "index",
-            ),
+            routes: insertAt(document.map.routes, command.index, command.value, "index"),
           },
         },
         inverse: { kind: "remove-route", id: command.value.id },
@@ -538,12 +468,7 @@ export const applyAdventureDesignCommand = (
       return {
         document: {
           ...document,
-          chapters: insertAt(
-            document.chapters,
-            command.index,
-            command.value,
-            "index",
-          ),
+          chapters: insertAt(document.chapters, command.index, command.value, "index"),
         },
         inverse: { kind: "remove-chapter", id: command.value.id },
       };
@@ -630,12 +555,7 @@ export const applyAdventureDesignCommand = (
       return {
         document: {
           ...document,
-          cutscenes: insertAt(
-            document.cutscenes,
-            command.index,
-            command.value,
-            "index",
-          ),
+          cutscenes: insertAt(document.cutscenes, command.index, command.value, "index"),
         },
         inverse: { kind: "remove-cutscene", id: command.value.id },
       };
@@ -724,8 +644,5 @@ export const markAdventureDesignSaved = (
   savedDocument: cloneJson(state.document),
 });
 
-export const adventureDesignHistoryIsDirty = (
-  state: AdventureDesignHistoryState,
-): boolean =>
-  canonicalAdventureDesignJson(state.document) !==
-  canonicalAdventureDesignJson(state.savedDocument);
+export const adventureDesignHistoryIsDirty = (state: AdventureDesignHistoryState): boolean =>
+  canonicalAdventureDesignJson(state.document) !== canonicalAdventureDesignJson(state.savedDocument);

@@ -6,9 +6,9 @@ import {
   findAlphaBounds,
   fullImageBounds,
   normalizeTransparentRgb,
-  transparentPixelImage,
   type PixelBounds,
   type RgbaImage,
+  transparentPixelImage,
 } from "./rgba.js";
 
 export type ImageTrimRecipe =
@@ -33,9 +33,7 @@ export interface ImageCompileRecipe {
 export interface NormalizedImageCompileRecipe {
   readonly assetId: Id<"asset">;
   readonly resize: Size | null;
-  readonly trim:
-    | { readonly mode: "none" }
-    | { readonly mode: "alpha"; readonly threshold: number };
+  readonly trim: { readonly mode: "none" } | { readonly mode: "alpha"; readonly threshold: number };
   readonly output: ImageOutputRecipe;
 }
 
@@ -101,9 +99,7 @@ const validateSize = (size: Size, label: string): void => {
   }
 };
 
-const normalizeRecipe = (
-  recipe: ImageCompileRecipe,
-): NormalizedImageCompileRecipe => {
+const normalizeRecipe = (recipe: ImageCompileRecipe): NormalizedImageCompileRecipe => {
   if (!recipe.assetId.trim()) {
     throw new RangeError("Compiled image asset ID cannot be empty.");
   }
@@ -127,11 +123,7 @@ const normalizeRecipe = (
     ) {
       throw new RangeError("Indexed PNG colour limit must be an integer from 2 to 256.");
     }
-    if (
-      !Number.isFinite(recipe.output.dither) ||
-      recipe.output.dither < 0 ||
-      recipe.output.dither > 1
-    ) {
+    if (!Number.isFinite(recipe.output.dither) || recipe.output.dither < 0 || recipe.output.dither > 1) {
       throw new RangeError("Indexed PNG dither must be a finite number from 0 to 1.");
     }
   }
@@ -139,10 +131,7 @@ const normalizeRecipe = (
   return {
     assetId: recipe.assetId,
     resize: recipe.resize ?? null,
-    trim:
-      trim.mode === "none"
-        ? { mode: "none" }
-        : { mode: "alpha", threshold: trim.threshold ?? 0 },
+    trim: trim.mode === "none" ? { mode: "none" } : { mode: "alpha", threshold: trim.threshold ?? 0 },
     output: recipe.output,
   };
 };
@@ -154,9 +143,7 @@ const canonicalize = (value: unknown): unknown => {
   if (value && typeof value === "object") {
     const source = value as Readonly<Record<string, unknown>>;
     const result: Record<string, unknown> = {};
-    for (const key of Object.keys(source).sort((left, right) =>
-      left.localeCompare(right),
-    )) {
+    for (const key of Object.keys(source).sort((left, right) => left.localeCompare(right))) {
       const child = source[key];
       if (child !== undefined) {
         result[key] = canonicalize(child);
@@ -181,9 +168,7 @@ export const sha256Hex = async (bytes: Uint8Array): Promise<string> => {
   }
   const copy = new Uint8Array(bytes);
   const digest = await globalThis.crypto.subtle.digest("SHA-256", copy);
-  return [...new Uint8Array(digest)]
-    .map((value) => value.toString(16).padStart(2, "0"))
-    .join("");
+  return [...new Uint8Array(digest)].map((value) => value.toString(16).padStart(2, "0")).join("");
 };
 
 const metadataSnapshot = (
@@ -198,10 +183,7 @@ const metadataSnapshot = (
   orientation: metadata.orientation ?? null,
 });
 
-const decodeRawRgba = async (
-  source: Uint8Array,
-  resize: Size | null,
-): Promise<RgbaImage> => {
+const decodeRawRgba = async (source: Uint8Array, resize: Size | null): Promise<RgbaImage> => {
   let pipeline = sharp(new Uint8Array(source), { failOn: "error" })
     .autoOrient()
     .ensureAlpha()
@@ -218,9 +200,7 @@ const decodeRawRgba = async (
 
   const raw = await pipeline.raw().toBuffer({ resolveWithObject: true });
   if (raw.info.channels !== 4) {
-    throw new Error(
-      `Canonical image decode produced ${raw.info.channels} channels instead of RGBA.`,
-    );
+    throw new Error(`Canonical image decode produced ${raw.info.channels} channels instead of RGBA.`);
   }
 
   return normalizeTransparentRgb({
@@ -240,18 +220,13 @@ export const prepareImage = async (
 
   const recipe = normalizeRecipe(inputRecipe);
   const sourceCopy = new Uint8Array(source);
-  const sourceMetadata = metadataSnapshot(
-    await sharp(sourceCopy, { failOn: "error" }).metadata(),
-  );
+  const sourceMetadata = metadataSnapshot(await sharp(sourceCopy, { failOn: "error" }).metadata());
   const decoded = await decodeRawRgba(sourceCopy, recipe.resize);
   const untrimmedSize = { width: decoded.width, height: decoded.height };
   const detectedBounds =
-    recipe.trim.mode === "none"
-      ? fullImageBounds(decoded)
-      : findAlphaBounds(decoded, recipe.trim.threshold);
+    recipe.trim.mode === "none" ? fullImageBounds(decoded) : findAlphaBounds(decoded, recipe.trim.threshold);
   const empty = detectedBounds === null;
-  const trimBounds =
-    detectedBounds ?? { x: 0, y: 0, width: 1, height: 1 };
+  const trimBounds = detectedBounds ?? { x: 0, y: 0, width: 1, height: 1 };
   const image = empty ? transparentPixelImage() : cropRgba(decoded, trimBounds);
 
   return {
@@ -265,10 +240,7 @@ export const prepareImage = async (
   };
 };
 
-const encodePng = async (
-  image: RgbaImage,
-  output: ImageOutputRecipe,
-): Promise<Uint8Array> => {
+const encodePng = async (image: RgbaImage, output: ImageOutputRecipe): Promise<Uint8Array> => {
   const pipeline = sharp(new Uint8Array(image.data), {
     raw: {
       width: image.width,

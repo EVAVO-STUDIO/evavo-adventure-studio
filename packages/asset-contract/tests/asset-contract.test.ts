@@ -1,10 +1,10 @@
-import { describe, expect, it } from "vitest";
 import { parseAdventureProject } from "@evavo/adventure-project-schema";
+import { describe, expect, it } from "vitest";
 import {
-  assetBuildManifestSchema,
-  validateAssetBuildManifest,
   type AssetBuildManifest,
+  assetBuildManifestSchema,
   type CompiledAssetRecord,
+  validateAssetBuildManifest,
 } from "../src/index.js";
 
 const hash = "0".repeat(64);
@@ -70,9 +70,7 @@ const manifest = assetBuildManifestSchema.parse({
     {
       assetId: "asset.office",
       kind: "image",
-      sourceFiles: [
-        { path: "art/office.png", sha256: hash, byteLength: 1024 },
-      ],
+      sourceFiles: [{ path: "art/office.png", sha256: hash, byteLength: 1024 }],
       outputFiles: [
         {
           role: "primary",
@@ -142,13 +140,8 @@ const imageAsset = (): Extract<CompiledAssetRecord, { readonly kind: "image" }> 
   return asset;
 };
 
-const spritesheetAsset = (): Extract<
-  CompiledAssetRecord,
-  { readonly kind: "spritesheet" }
-> => {
-  const asset = manifest.assets.find(
-    (candidate) => candidate.kind === "spritesheet",
-  );
+const spritesheetAsset = (): Extract<CompiledAssetRecord, { readonly kind: "spritesheet" }> => {
+  const asset = manifest.assets.find((candidate) => candidate.kind === "spritesheet");
   if (!asset || asset.kind !== "spritesheet") {
     throw new Error("Spritesheet fixture is missing.");
   }
@@ -182,9 +175,7 @@ describe("compiled asset manifest", () => {
         assets: [
           {
             ...image,
-            outputFiles: [
-              { ...primary, runtimePath: "assets\\office.png" },
-            ],
+            outputFiles: [{ ...primary, runtimePath: "assets\\office.png" }],
           },
           spritesheetAsset(),
         ],
@@ -197,9 +188,7 @@ describe("compiled asset manifest", () => {
     const brokenSpritesheet: typeof spritesheet = {
       ...spritesheet,
       outputFiles: spritesheet.outputFiles.map((output) =>
-        output.role === "page-000"
-          ? { ...output, runtimePath: "assets/shared.png" }
-          : output,
+        output.role === "page-000" ? { ...output, runtimePath: "assets/shared.png" } : output,
       ),
       metadata: {
         ...spritesheet.metadata,
@@ -214,10 +203,7 @@ describe("compiled asset manifest", () => {
       assetId: "asset.unexpected" as typeof spritesheet.assetId,
       outputFiles: spritesheet.outputFiles.map((output) => ({
         ...output,
-        runtimePath:
-          output.role === "page-000"
-            ? "assets/shared.png"
-            : "assets/unexpected.atlas.json",
+        runtimePath: output.role === "page-000" ? "assets/shared.png" : "assets/unexpected.atlas.json",
       })),
     };
     const broken: AssetBuildManifest = {
@@ -225,9 +211,7 @@ describe("compiled asset manifest", () => {
       assets: [brokenSpritesheet, unexpected],
     };
 
-    const codes = validateAssetBuildManifest(project, broken).map(
-      (issue) => issue.code,
-    );
+    const codes = validateAssetBuildManifest(project, broken).map((issue) => issue.code);
     expect(codes).toEqual(
       expect.arrayContaining([
         "missing-asset",

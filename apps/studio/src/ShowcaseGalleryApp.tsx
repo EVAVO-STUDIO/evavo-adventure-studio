@@ -1,26 +1,20 @@
-import { useEffect, useMemo, useState } from "react";
 import {
-  adventureProductionProfiles,
   type AdventureProductionProfile,
+  adventureProductionProfiles,
 } from "@evavo/adventure-design/production-profiles";
 import {
   adventureProductionShowcaseByProfileId,
   adventureProductionShowcases,
   validateAdventureProductionShowcase,
 } from "@evavo/adventure-design/production-showcases";
-import {
-  NativeShowcasePlate,
-  PlateButton,
-  ShowcaseFamilyButton,
-} from "./showcase-gallery-components.js";
+import { useEffect, useMemo, useState } from "react";
 import { profileStyle } from "./production-profile-preview.js";
+import { NativeShowcasePlate, PlateButton, ShowcaseFamilyButton } from "./showcase-gallery-components.js";
 import "./showcase-gallery.css";
 import "./showcase-gallery-native.css";
 
 const profileById = new Map(
-  adventureProductionProfiles.map(
-    (profile) => [profile.id as string, profile] as const,
-  ),
+  adventureProductionProfiles.map((profile) => [profile.id as string, profile] as const),
 );
 
 const selectedProfile = (profileId: string): AdventureProductionProfile => {
@@ -32,20 +26,12 @@ const selectedProfile = (profileId: string): AdventureProductionProfile => {
 export const ShowcaseGalleryApp = () => {
   const [showcaseIndex, setShowcaseIndex] = useState(0);
   const [plateIndex, setPlateIndex] = useState(1);
-  const showcase =
-    adventureProductionShowcases[showcaseIndex] ?? adventureProductionShowcases[0]!;
+  const showcase = adventureProductionShowcases[showcaseIndex] ?? adventureProductionShowcases[0]!;
   const profile = selectedProfile(showcase.profileId);
   const plate = showcase.plates[plateIndex] ?? showcase.plates[0]!;
-  const issues = useMemo(
-    () => validateAdventureProductionShowcase(showcase),
-    [showcase],
-  );
+  const issues = useMemo(() => validateAdventureProductionShowcase(showcase), [showcase]);
   const profileShowcase = useMemo(
-    () =>
-      adventureProductionShowcaseByProfileId(
-        profile.id,
-        adventureProductionShowcases,
-      ),
+    () => adventureProductionShowcaseByProfileId(profile.id, adventureProductionShowcases),
     [profile.id],
   );
 
@@ -65,7 +51,9 @@ export const ShowcaseGalleryApp = () => {
         </div>
         <div className="scg-topbar-meta">
           <span>{profile.label}</span>
-          <strong>{profile.nativeSize.width} × {profile.nativeSize.height}</strong>
+          <strong>
+            {profile.nativeSize.width} × {profile.nativeSize.height}
+          </strong>
         </div>
         <div className={`scg-ready-state${issues.length === 0 ? " is-ready" : " is-blocked"}`}>
           <span />
@@ -79,8 +67,8 @@ export const ShowcaseGalleryApp = () => {
             <span className="scg-eyebrow">ORIGINAL NATIVE PROTOTYPES</span>
             <h1>Seven visibly different games.</h1>
             <p>
-              Every example carries its own screen composition, actor language, interface,
-              puzzle grammar, splash and system treatment.
+              Every example carries its own screen composition, actor language, interface, puzzle grammar,
+              splash and system treatment.
             </p>
           </header>
           <div className="scg-family-list">
@@ -125,11 +113,7 @@ export const ShowcaseGalleryApp = () => {
           </nav>
 
           <section className="scg-native-stage">
-            <NativeShowcasePlate
-              showcase={profileShowcase}
-              plate={plate}
-              profile={profile}
-            />
+            <NativeShowcasePlate showcase={profileShowcase} plate={plate} profile={profile} />
             <div className="scg-native-caption">
               <span>1× native construction plate</span>
               <code>{plate.id}</code>
@@ -156,11 +140,28 @@ export const ShowcaseGalleryApp = () => {
           <section>
             <span className="scg-eyebrow">PLATE METRICS</span>
             <dl>
-              <div><dt>Actors</dt><dd>{plate.actors.length}</dd></div>
-              <div><dt>Props</dt><dd>{plate.props.length}</dd></div>
-              <div><dt>Interactive</dt><dd>{plate.props.filter((prop) => prop.interactive).length}</dd></div>
-              <div><dt>Horizon</dt><dd>{plate.horizonY}px</dd></div>
-              <div><dt>Focus</dt><dd>{plate.focalPoint.x},{plate.focalPoint.y}</dd></div>
+              <div>
+                <dt>Actors</dt>
+                <dd>{plate.actors.length}</dd>
+              </div>
+              <div>
+                <dt>Props</dt>
+                <dd>{plate.props.length}</dd>
+              </div>
+              <div>
+                <dt>Interactive</dt>
+                <dd>{plate.props.filter((prop) => prop.interactive).length}</dd>
+              </div>
+              <div>
+                <dt>Horizon</dt>
+                <dd>{plate.horizonY}px</dd>
+              </div>
+              <div>
+                <dt>Focus</dt>
+                <dd>
+                  {plate.focalPoint.x},{plate.focalPoint.y}
+                </dd>
+              </div>
             </dl>
           </section>
 
@@ -188,9 +189,18 @@ export const ShowcaseGalleryApp = () => {
                   </header>
                   <p>{beat.prompt}</p>
                   <dl>
-                    <div><dt>Action</dt><dd>{beat.playerAction}</dd></div>
-                    <div><dt>Result</dt><dd>{beat.result}</dd></div>
-                    <div><dt>Recovery</dt><dd>{beat.recovery}</dd></div>
+                    <div>
+                      <dt>Action</dt>
+                      <dd>{beat.playerAction}</dd>
+                    </div>
+                    <div>
+                      <dt>Result</dt>
+                      <dd>{beat.result}</dd>
+                    </div>
+                    <div>
+                      <dt>Recovery</dt>
+                      <dd>{beat.recovery}</dd>
+                    </div>
                   </dl>
                 </article>
               ))}

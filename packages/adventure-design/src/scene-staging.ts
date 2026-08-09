@@ -1,32 +1,25 @@
 import type { AdventureProject, Id, Scene } from "@evavo/adventure-project-schema";
 import {
-  validateSceneInstanceManifest,
   type ObjectDefinition,
   type SceneComposition,
   type SceneInstanceIssue,
   type SceneInstanceManifest,
+  validateSceneInstanceManifest,
 } from "@evavo/adventure-scene-instances";
 import { evaluateSceneStagedActors } from "./scene-staging-actors.js";
-import {
-  addSceneStagingFinding,
-  uniqueSortedSceneStagingFindings,
-} from "./scene-staging-findings.js";
-import {
-  actorStagingMarker,
-  objectStagingMarker,
-  stageLayerOrder,
-} from "./scene-staging-geometry.js";
+import { addSceneStagingFinding, uniqueSortedSceneStagingFindings } from "./scene-staging-findings.js";
+import { actorStagingMarker, objectStagingMarker, stageLayerOrder } from "./scene-staging-geometry.js";
 import {
   evaluateSceneStagedLayers,
   evaluateSceneStagedObjects,
   evaluateSceneStagedPortals,
 } from "./scene-staging-objects.js";
 import {
-  AdventureSceneStagingError,
   type AdventureActorStagingMarker,
   type AdventureObjectStagingMarker,
   type AdventurePortalStagingMarker,
   type AdventureSceneStagingDesignLink,
+  AdventureSceneStagingError,
   type AdventureSceneStagingFinding,
   type AdventureSceneStagingOverlay,
   type AdventureSceneStagingReport,
@@ -46,9 +39,7 @@ const designLinkFor = (
   design: AdventureDesignDocument | undefined,
   sceneId: Id<"scene">,
 ): AdventureSceneStagingDesignLink | null => {
-  const location = design?.map.locations.find(
-    (candidate) => candidate.sceneId === sceneId,
-  );
+  const location = design?.map.locations.find((candidate) => candidate.sceneId === sceneId);
   return location
     ? {
         locationId: location.id,
@@ -91,9 +82,7 @@ const appendCanonicalIssues = (
   compositionIndex: number,
   findings: AdventureSceneStagingFinding[],
 ): void => {
-  const definitionIds = new Set(
-    composition?.objectInstances.map((instance) => instance.definitionId) ?? [],
-  );
+  const definitionIds = new Set(composition?.objectInstances.map((instance) => instance.definitionId) ?? []);
   const definitionIndexes = new Set<number>();
   manifest.objectDefinitions.forEach((definition, index) => {
     if (definitionIds.has(definition.id)) definitionIndexes.add(index);
@@ -114,9 +103,7 @@ const appendCanonicalIssues = (
   }
 };
 
-const portalMarkers = (
-  composition: SceneComposition | null,
-): readonly AdventurePortalStagingMarker[] =>
+const portalMarkers = (composition: SceneComposition | null): readonly AdventurePortalStagingMarker[] =>
   composition?.navigationPortals.map((portal) => ({
     id: portal.id,
     fromAreaId: portal.fromAreaId,
@@ -148,7 +135,10 @@ const createOverlay = (
   actors,
   objects,
   portals,
-  layerOrder: stageLayerOrder(actors, objects.filter((object) => object.visible)),
+  layerOrder: stageLayerOrder(
+    actors,
+    objects.filter((object) => object.visible),
+  ),
 });
 
 export const evaluateAdventureSceneStaging = (
@@ -159,19 +149,12 @@ export const evaluateAdventureSceneStaging = (
 ): AdventureSceneStagingReport => {
   const scene = project.scenes.find((candidate) => candidate.id === sceneId);
   if (!scene) throw new AdventureSceneStagingError(sceneId);
-  const compositionIndex = manifest.scenes.findIndex(
-    (candidate) => candidate.sceneId === sceneId,
-  );
-  const composition =
-    compositionIndex >= 0 ? (manifest.scenes[compositionIndex] ?? null) : null;
+  const compositionIndex = manifest.scenes.findIndex((candidate) => candidate.sceneId === sceneId);
+  const composition = compositionIndex >= 0 ? (manifest.scenes[compositionIndex] ?? null) : null;
   const definitions = new Map<string, ObjectDefinition>(
-    manifest.objectDefinitions.map(
-      (definition) => [definition.id as string, definition] as const,
-    ),
+    manifest.objectDefinitions.map((definition) => [definition.id as string, definition] as const),
   );
-  const actorDefinitions = new Map(
-    project.actors.map((actor) => [actor.id as string, actor] as const),
-  );
+  const actorDefinitions = new Map(project.actors.map((actor) => [actor.id as string, actor] as const));
   const actors =
     composition?.actorInstances.map((instance) =>
       actorStagingMarker(scene, actorDefinitions.get(instance.actorId), instance),
@@ -183,13 +166,7 @@ export const evaluateAdventureSceneStaging = (
   const portals = portalMarkers(composition);
   const findings: AdventureSceneStagingFinding[] = [];
 
-  appendCanonicalIssues(
-    project,
-    manifest,
-    composition,
-    compositionIndex,
-    findings,
-  );
+  appendCanonicalIssues(project, manifest, composition, compositionIndex, findings);
   if (!composition) {
     addSceneStagingFinding(findings, {
       id: "manifest-scene-composition-missing",
@@ -226,10 +203,7 @@ export const evaluateAdventureSceneStaging = (
     });
   }
 
-  const designLink =
-    design && design.projectId === project.id
-      ? designLinkFor(design, scene.id)
-      : null;
+  const designLink = design && design.projectId === project.id ? designLinkFor(design, scene.id) : null;
   if (design && !designLink) {
     addSceneStagingFinding(findings, {
       id: "manifest-scene-without-design-location",
@@ -238,19 +212,13 @@ export const evaluateAdventureSceneStaging = (
       impact: 3,
       path: "design.map.locations",
       message: `Scene '${scene.name}' is not linked to an Adventure Design location.`,
-      recommendation:
-        "Link the room to its visual promise and arrival beat before final staging review.",
+      recommendation: "Link the room to its visual promise and arrival beat before final staging review.",
     });
   }
 
   const sorted = uniqueSortedSceneStagingFindings(findings);
-  const score = Math.max(
-    0,
-    100 - sorted.reduce((total, finding) => total + finding.impact, 0),
-  );
-  const status: AdventureSceneStagingStatus = sorted.some(
-    (finding) => finding.severity === "error",
-  )
+  const score = Math.max(0, 100 - sorted.reduce((total, finding) => total + finding.impact, 0));
+  const status: AdventureSceneStagingStatus = sorted.some((finding) => finding.severity === "error")
     ? "blocked"
     : sorted.some((finding) => finding.severity === "warning") || score < 90
       ? "attention"
@@ -271,8 +239,7 @@ export const evaluateAdventureSceneStaging = (
     status,
     metrics: {
       actorCount: actors.length,
-      walkableActorCount: actors.filter((actor) => actor.mobility === "walkable")
-        .length,
+      walkableActorCount: actors.filter((actor) => actor.mobility === "walkable").length,
       fixedActorCount: actors.filter((actor) => actor.mobility === "fixed").length,
       objectCount: objects.length,
       visibleObjectCount: visibleObjects.length,
@@ -294,6 +261,4 @@ export const createAdventureSceneStagingReports = (
   manifest: SceneInstanceManifest,
   design?: AdventureDesignDocument,
 ): readonly AdventureSceneStagingReport[] =>
-  project.scenes.map((scene) =>
-    evaluateAdventureSceneStaging(project, manifest, scene.id, design),
-  );
+  project.scenes.map((scene) => evaluateAdventureSceneStaging(project, manifest, scene.id, design));

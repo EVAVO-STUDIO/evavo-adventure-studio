@@ -1,3 +1,4 @@
+import type { Id } from "@evavo/adventure-project-schema";
 import { parseAdventureProject } from "@evavo/adventure-project-schema";
 import {
   parseUiSkinManifest,
@@ -6,6 +7,8 @@ import {
   type UiTextStyle,
 } from "@evavo/adventure-ui-skin";
 import { studioBitmapFonts, studioFontProject } from "./font-fixture.js";
+
+const id = <T extends string>(value: string): Id<T> => value as Id<T>;
 
 export const studioUiProject = parseAdventureProject({
   ...studioFontProject,
@@ -78,7 +81,7 @@ const BUTTON_DISABLED: UiPanelStyle = {
 };
 
 const STATUS_TEXT: UiTextStyle = {
-  fontId: "bitmap-font.dialogue",
+  fontId: id<"bitmap-font">("bitmap-font.dialogue"),
   color: 0xf3f4f7,
   outlineColor: 0x040508,
   align: "left",
@@ -118,13 +121,7 @@ const inventoryRegion = (id: string, y: number, height: number) => ({
   selected: BUTTON_HOVER,
 });
 
-const verb = (
-  prefix: string,
-  id: string,
-  label: string,
-  shortcut: string,
-  primary = false,
-) => ({
+const verb = (prefix: string, id: string, label: string, shortcut: string, primary = false) => ({
   id: `ui-verb.${prefix}.${id}`,
   verb: id,
   label,
@@ -204,13 +201,7 @@ export const studioUiSkins: UiSkinManifest = parseUiSkinManifest({
         verb("list", "open", "OPEN", "O"),
         verb("list", "push", "PUSH", "P"),
       ],
-      verbBar: bar(
-        "ui-region.verb-list.verbs",
-        { x: 0, y: 146, width: 178, height: 54 },
-        "grid",
-        20,
-        3,
-      ),
+      verbBar: bar("ui-region.verb-list.verbs", { x: 0, y: 146, width: 178, height: 54 }, "grid", 20, 3),
       inventory: {
         ...inventoryRegion("ui-region.verb-list.inventory", 146, 54),
         region: {
@@ -252,12 +243,7 @@ export const studioUiSkins: UiSkinManifest = parseUiSkinManifest({
           iconAssetId: "asset.ui.icons",
         },
       ],
-      verbBar: bar(
-        "ui-region.icon.verbs",
-        { x: 0, y: 16, width: 320, height: 38 },
-        "horizontal",
-        30,
-      ),
+      verbBar: bar("ui-region.icon.verbs", { x: 0, y: 16, width: 320, height: 38 }, "horizontal", 30),
       inventory: inventoryRegion("ui-region.icon.inventory", 164, 36),
       fonts: {
         ...commonFonts,
@@ -272,16 +258,8 @@ export const studioUiSkins: UiSkinManifest = parseUiSkinManifest({
       nativeSize: { width: 320, height: 200 },
       status: statusRegion("ui-region.two-button.status"),
       score: scoreRegion("ui-region.two-button.score"),
-      verbs: [
-        verb("two", "look", "LOOK", "L", true),
-        verb("two", "use", "USE", "U", true),
-      ],
-      verbBar: bar(
-        "ui-region.two-button.verbs",
-        { x: 0, y: 164, width: 116, height: 36 },
-        "horizontal",
-        28,
-      ),
+      verbs: [verb("two", "look", "LOOK", "L", true), verb("two", "use", "USE", "U", true)],
+      verbBar: bar("ui-region.two-button.verbs", { x: 0, y: 164, width: 116, height: 36 }, "horizontal", 28),
       inventory: {
         ...inventoryRegion("ui-region.two-button.inventory", 164, 36),
         region: {

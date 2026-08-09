@@ -1,8 +1,4 @@
-import {
-  Component,
-  type ErrorInfo,
-  type ReactNode,
-} from "react";
+import { Component, type ErrorInfo, type ReactNode } from "react";
 import "./failure.css";
 
 export interface StudioErrorBoundaryProps {
@@ -13,17 +9,14 @@ export interface StudioErrorBoundaryState {
   readonly error: Error | null;
 }
 
-export class StudioErrorBoundary extends Component<
-  StudioErrorBoundaryProps,
-  StudioErrorBoundaryState
-> {
-  state: StudioErrorBoundaryState = { error: null };
+export class StudioErrorBoundary extends Component<StudioErrorBoundaryProps, StudioErrorBoundaryState> {
+  override state: StudioErrorBoundaryState = { error: null };
 
   static getDerivedStateFromError(error: Error): StudioErrorBoundaryState {
     return { error };
   }
 
-  componentDidCatch(error: Error, info: ErrorInfo): void {
+  override componentDidCatch(error: Error, info: ErrorInfo): void {
     console.error("Adventure Studio workspace failure", error, info);
   }
 
@@ -31,7 +24,7 @@ export class StudioErrorBoundary extends Component<
     window.location.reload();
   };
 
-  render(): ReactNode {
+  override render(): ReactNode {
     if (!this.state.error) {
       return this.props.children;
     }
@@ -43,15 +36,11 @@ export class StudioErrorBoundary extends Component<
           <span className="eyebrow">WORKSPACE RECOVERY</span>
           <h1>The scene editor stopped safely.</h1>
           <p>
-            The document was not exported or overwritten. Reload the workspace,
-            then reopen the last valid scene composition file.
+            The document was not exported or overwritten. Reload the workspace, then reopen the last valid
+            scene composition file.
           </p>
           <pre>{this.state.error.message}</pre>
-          <button
-            type="button"
-            className="button primary-button"
-            onClick={this.reload}
-          >
+          <button type="button" className="button primary-button" onClick={this.reload}>
             Reload workspace
           </button>
         </div>

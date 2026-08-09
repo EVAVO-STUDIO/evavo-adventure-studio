@@ -1,13 +1,5 @@
-import type {
-  BitmapFontDefinition,
-  BitmapFontManifest,
-} from "@evavo/adventure-bitmap-font";
-import type {
-  Id,
-  Point,
-  Rectangle,
-  Size,
-} from "@evavo/adventure-project-schema";
+import type { BitmapFontDefinition, BitmapFontManifest } from "@evavo/adventure-bitmap-font";
+import type { Id, Point, Rectangle, Size } from "@evavo/adventure-project-schema";
 import type {
   BitmapTextRenderNode,
   RenderNode,
@@ -15,14 +7,7 @@ import type {
   SolidRectangleRenderNode,
   SpriteRenderNode,
 } from "@evavo/adventure-render-contract";
-import type {
-  UiColor,
-  UiPanelStyle,
-  UiRegion,
-  UiSkin,
-  UiTextStyle,
-  UiVerb,
-} from "./index.js";
+import type { UiColor, UiPanelStyle, UiRegion, UiSkin, UiTextStyle, UiVerb } from "./index.js";
 
 export interface UiSpriteGeometry {
   readonly sourceRect: Rectangle;
@@ -31,10 +16,7 @@ export interface UiSpriteGeometry {
 }
 
 export interface UiAssetGeometryResolver {
-  resolve(
-    assetId: Id<"asset">,
-    frameId: Id<"sprite-frame"> | null,
-  ): UiSpriteGeometry | null;
+  resolve(assetId: Id<"asset">, frameId: Id<"sprite-frame"> | null): UiSpriteGeometry | null;
 }
 
 export interface UiInventoryEntry {
@@ -73,17 +55,10 @@ export interface UiComposeOptions {
 }
 
 export class UiSkinCompositionError extends Error {
-  readonly code:
-    | "font-missing"
-    | "icon-geometry-missing"
-    | "inventory-geometry-missing";
+  readonly code: "font-missing" | "icon-geometry-missing" | "inventory-geometry-missing";
   readonly path: string;
 
-  constructor(
-    code: UiSkinCompositionError["code"],
-    path: string,
-    message: string,
-  ) {
+  constructor(code: UiSkinCompositionError["code"], path: string, message: string) {
     super(message);
     this.name = "UiSkinCompositionError";
     this.code = code;
@@ -91,15 +66,11 @@ export class UiSkinCompositionError extends Error {
   }
 }
 
-const renderNodeId = (value: string): Id<"render-node"> =>
-  value as Id<"render-node">;
+const renderNodeId = (value: string): Id<"render-node"> => value as Id<"render-node">;
 
-const rgbaAlpha = (color: UiColor): number =>
-  typeof color === "number" ? 1 : color[3] / 255;
+const rgbaAlpha = (color: UiColor): number => (typeof color === "number" ? 1 : color[3] / 255);
 
-const fontsById = (
-  manifest: BitmapFontManifest,
-): ReadonlyMap<string, BitmapFontDefinition> =>
+const fontsById = (manifest: BitmapFontManifest): ReadonlyMap<string, BitmapFontDefinition> =>
   new Map(manifest.fonts.map((font) => [font.id as string, font] as const));
 
 const requireFont = (
@@ -143,10 +114,7 @@ const rectangleNode = (
   opacity: rgbaAlpha(color),
   visible: true,
   size: { width: rect.width, height: rect.height },
-  color:
-    typeof color === "number"
-      ? color
-      : [color[0], color[1], color[2], 255],
+  color: typeof color === "number" ? color : [color[0], color[1], color[2], 255],
 });
 
 const panelNodes = (
@@ -155,14 +123,8 @@ const panelNodes = (
   panel: UiPanelStyle,
   zOffset: number,
 ): readonly SolidRectangleRenderNode[] => {
-  const nodes: SolidRectangleRenderNode[] = [
-    rectangleNode(`${prefix}.fill`, rect, panel.fill, zOffset),
-  ];
-  const border = Math.min(
-    panel.borderWidth,
-    Math.floor(rect.width / 2),
-    Math.floor(rect.height / 2),
-  );
+  const nodes: SolidRectangleRenderNode[] = [rectangleNode(`${prefix}.fill`, rect, panel.fill, zOffset)];
+  const border = Math.min(panel.borderWidth, Math.floor(rect.width / 2), Math.floor(rect.height / 2));
   if (border > 0) {
     nodes.push(
       rectangleNode(
@@ -251,9 +213,7 @@ const textNode = (
   lineHeight: font.lineHeight,
   align: style.align,
   color: style.color,
-  ...(style.outlineColor === undefined
-    ? {}
-    : { outlineColor: style.outlineColor }),
+  ...(style.outlineColor === undefined ? {} : { outlineColor: style.outlineColor }),
 });
 
 const contentRect = (region: UiRegion): Rectangle => ({
@@ -263,11 +223,7 @@ const contentRect = (region: UiRegion): Rectangle => ({
   height: Math.max(1, region.rect.height - region.padding * 2),
 });
 
-const buttonPanel = (
-  skin: UiSkin,
-  verb: UiVerb,
-  state: UiRuntimeState,
-): UiPanelStyle => {
+const buttonPanel = (skin: UiSkin, verb: UiVerb, state: UiRuntimeState): UiPanelStyle => {
   const bar = skin.verbBar;
   if (!bar) {
     throw new Error("Persistent verb button requested without a verb bar.");
@@ -297,23 +253,15 @@ const buttonRects = (skin: UiSkin): readonly Rectangle[] => {
   }
 
   const columns =
-    bar.orientation === "grid"
-      ? Math.max(1, bar.columns ?? Math.ceil(Math.sqrt(count)))
-      : count;
+    bar.orientation === "grid" ? Math.max(1, bar.columns ?? Math.ceil(Math.sqrt(count))) : count;
   const rows = Math.ceil(count / columns);
-  const width = Math.max(
-    1,
-    Math.floor((content.width - Math.max(0, columns - 1) * bar.gap) / columns),
-  );
+  const width = Math.max(1, Math.floor((content.width - Math.max(0, columns - 1) * bar.gap) / columns));
   const height =
     bar.orientation === "horizontal"
       ? Math.min(content.height, bar.buttonHeight)
       : Math.max(
           1,
-          Math.min(
-            bar.buttonHeight,
-            Math.floor((content.height - Math.max(0, rows - 1) * bar.gap) / rows),
-          ),
+          Math.min(bar.buttonHeight, Math.floor((content.height - Math.max(0, rows - 1) * bar.gap) / rows)),
         );
   return skin.verbs.map((_, index) => ({
     x: content.x + (index % columns) * (width + bar.gap),
@@ -371,14 +319,7 @@ const composeStatus = (
   const font = requireFont(fonts, style, "fonts.status");
   return [
     ...panelNodes(`${prefix}.status`, region.rect, region.panel, 0),
-    textNode(
-      `${prefix}.status.text`,
-      contentRect(region),
-      state.statusText,
-      style,
-      font,
-      3,
-    ),
+    textNode(`${prefix}.status.text`, contentRect(region), state.statusText, style, font, 3),
   ];
 };
 
@@ -390,20 +331,10 @@ const composeScore = (
 ): readonly RenderNode[] => {
   if (!skin.score || !skin.fonts.score || state.score === undefined) return [];
   const font = requireFont(fonts, skin.fonts.score, "fonts.score");
-  const suffix =
-    state.maximumScore === undefined
-      ? `${state.score}`
-      : `${state.score}/${state.maximumScore}`;
+  const suffix = state.maximumScore === undefined ? `${state.score}` : `${state.score}/${state.maximumScore}`;
   return [
     ...panelNodes(`${prefix}.score`, skin.score.rect, skin.score.panel, 10),
-    textNode(
-      `${prefix}.score.text`,
-      contentRect(skin.score),
-      suffix,
-      skin.fonts.score,
-      font,
-      13,
-    ),
+    textNode(`${prefix}.score.text`, contentRect(skin.score), suffix, skin.fonts.score, font, 13),
   ];
 };
 
@@ -414,33 +345,19 @@ const composeVerbBar = (
   assets: UiAssetGeometryResolver | undefined,
   prefix: string,
 ): readonly RenderNode[] => {
-  if (!skin.verbBar || !skin.fonts.verb) return [];
+  const verbTextStyle = skin.fonts.verb;
+  if (!skin.verbBar || !verbTextStyle) return [];
   const nodes: RenderNode[] = [
-    ...panelNodes(
-      `${prefix}.verbs`,
-      skin.verbBar.region.rect,
-      skin.verbBar.region.panel,
-      20,
-    ),
+    ...panelNodes(`${prefix}.verbs`, skin.verbBar.region.rect, skin.verbBar.region.panel, 20),
   ];
-  const font = requireFont(fonts, skin.fonts.verb, "fonts.verb");
+  const font = requireFont(fonts, verbTextStyle, "fonts.verb");
   const rects = buttonRects(skin);
   skin.verbs.forEach((verb, index) => {
     const rect = rects[index];
     if (!rect) return;
-    nodes.push(
-      ...panelNodes(
-        `${prefix}.verb.${verb.id}`,
-        rect,
-        buttonPanel(skin, verb, state),
-        23,
-      ),
-    );
+    nodes.push(...panelNodes(`${prefix}.verb.${verb.id}`, rect, buttonPanel(skin, verb, state), 23));
     if (verb.iconAssetId) {
-      const geometry = assets?.resolve(
-        verb.iconAssetId,
-        verb.iconFrameId ?? null,
-      );
+      const geometry = assets?.resolve(verb.iconAssetId, verb.iconFrameId ?? null);
       if (!geometry) {
         throw new UiSkinCompositionError(
           "icon-geometry-missing",
@@ -469,7 +386,7 @@ const composeVerbBar = (
             height: font.lineHeight,
           },
           verb.label,
-          skin.fonts.verb,
+          verbTextStyle,
           font,
           26,
         ),
@@ -488,12 +405,7 @@ const composeInventory = (
   if (!skin.inventory) return [];
   const inventory = skin.inventory;
   const nodes: RenderNode[] = [
-    ...panelNodes(
-      `${prefix}.inventory`,
-      inventory.region.rect,
-      inventory.region.panel,
-      30,
-    ),
+    ...panelNodes(`${prefix}.inventory`, inventory.region.rect, inventory.region.panel, 30),
   ];
   const entries = (state.inventory ?? []).slice(0, inventory.visibleSlots);
   const content = contentRect(inventory.region);
@@ -509,17 +421,12 @@ const composeInventory = (
       ...panelNodes(
         `${prefix}.inventory.slot.${index}`,
         rect,
-        entry && state.selectedItemId === entry.itemId
-          ? inventory.selected
-          : inventory.slot,
+        entry && state.selectedItemId === entry.itemId ? inventory.selected : inventory.slot,
         33,
       ),
     );
     if (!entry) continue;
-    const geometry = assets?.resolve(
-      entry.iconAssetId,
-      entry.iconFrameId ?? null,
-    );
+    const geometry = assets?.resolve(entry.iconAssetId, entry.iconFrameId ?? null);
     if (!geometry) {
       throw new UiSkinCompositionError(
         "inventory-geometry-missing",
@@ -549,16 +456,9 @@ const composeParser = (
 ): readonly RenderNode[] => {
   if (!skin.parser || !skin.fonts.parser) return [];
   const font = requireFont(fonts, skin.fonts.parser, "fonts.parser");
-  const cursor = state.parserCursorVisible === false
-    ? ""
-    : skin.parser.cursorCharacter;
+  const cursor = state.parserCursorVisible === false ? "" : skin.parser.cursorCharacter;
   return [
-    ...panelNodes(
-      `${prefix}.parser`,
-      skin.parser.region.rect,
-      skin.parser.region.panel,
-      40,
-    ),
+    ...panelNodes(`${prefix}.parser`, skin.parser.region.rect, skin.parser.region.panel, 40),
     textNode(
       `${prefix}.parser.text`,
       contentRect(skin.parser.region),
@@ -576,49 +476,33 @@ const composeDialogueChoices = (
   state: UiRuntimeState,
   prefix: string,
 ): readonly RenderNode[] => {
-  if (!skin.dialogueChoices || !skin.fonts.dialogue) return [];
-  const choices = (state.dialogueChoices ?? []).slice(
-    0,
-    skin.dialogueChoices.maximumChoices,
-  );
+  const dialogueChoices = skin.dialogueChoices;
+  const dialogueTextStyle = skin.fonts.dialogue;
+  if (!dialogueChoices || !dialogueTextStyle) return [];
+  const choices = (state.dialogueChoices ?? []).slice(0, dialogueChoices.maximumChoices);
   if (choices.length === 0) return [];
-  const font = requireFont(fonts, skin.fonts.dialogue, "fonts.dialogue");
-  const region = skin.dialogueChoices.region;
+  const font = requireFont(fonts, dialogueTextStyle, "fonts.dialogue");
+  const region = dialogueChoices.region;
   const content = contentRect(region);
   const height = Math.max(
     font.lineHeight + 4,
-    Math.floor(
-      (content.height - (choices.length - 1) * skin.dialogueChoices.gap) /
-        choices.length,
-    ),
+    Math.floor((content.height - (choices.length - 1) * dialogueChoices.gap) / choices.length),
   );
-  const nodes: RenderNode[] = [
-    ...panelNodes(
-      `${prefix}.dialogue`,
-      region.rect,
-      region.panel,
-      50,
-    ),
-  ];
+  const nodes: RenderNode[] = [...panelNodes(`${prefix}.dialogue`, region.rect, region.panel, 50)];
   choices.forEach((choice, index) => {
     const rect = {
       x: content.x,
-      y: content.y + index * (height + skin.dialogueChoices!.gap),
+      y: content.y + index * (height + dialogueChoices.gap),
       width: content.width,
       height,
     };
     const panel = !choice.enabled
-      ? skin.dialogueChoices!.disabled
+      ? dialogueChoices.disabled
       : state.hoveredDialogueChoiceId === choice.choiceId
-        ? skin.dialogueChoices!.hover
-        : skin.dialogueChoices!.normal;
+        ? dialogueChoices.hover
+        : dialogueChoices.normal;
     nodes.push(
-      ...panelNodes(
-        `${prefix}.dialogue.choice.${choice.choiceId}`,
-        rect,
-        panel,
-        53,
-      ),
+      ...panelNodes(`${prefix}.dialogue.choice.${choice.choiceId}`, rect, panel, 53),
       textNode(
         `${prefix}.dialogue.choice.${choice.choiceId}.text`,
         {
@@ -628,7 +512,7 @@ const composeDialogueChoices = (
           height: Math.max(1, rect.height - 4),
         },
         choice.text,
-        skin.fonts.dialogue!,
+        dialogueTextStyle,
         font,
         56,
       ),
@@ -643,32 +527,26 @@ const composeVerbCoin = (
   state: UiRuntimeState,
   prefix: string,
 ): readonly RenderNode[] => {
-  if (!skin.verbCoin || !skin.fonts.verb || !state.verbCoinPosition) return [];
-  const font = requireFont(fonts, skin.fonts.verb, "fonts.verb");
+  const verbCoin = skin.verbCoin;
+  const verbTextStyle = skin.fonts.verb;
+  const position = state.verbCoinPosition;
+  if (!verbCoin || !verbTextStyle || !position) return [];
+  const font = requireFont(fonts, verbTextStyle, "fonts.verb");
   const nodes: RenderNode[] = [];
   const count = skin.verbs.length;
   skin.verbs.forEach((verb, index) => {
     const angle = -Math.PI / 2 + (index / Math.max(1, count)) * Math.PI * 2;
-    const centerX = Math.round(
-      state.verbCoinPosition!.x + Math.cos(angle) * skin.verbCoin!.radius,
-    );
-    const centerY = Math.round(
-      state.verbCoinPosition!.y + Math.sin(angle) * skin.verbCoin!.radius,
-    );
-    const size = skin.verbCoin!.itemRadius * 2;
+    const centerX = Math.round(position.x + Math.cos(angle) * verbCoin.radius);
+    const centerY = Math.round(position.y + Math.sin(angle) * verbCoin.radius);
+    const size = verbCoin.itemRadius * 2;
     const rect = {
-      x: centerX - skin.verbCoin!.itemRadius,
-      y: centerY - skin.verbCoin!.itemRadius,
+      x: centerX - verbCoin.itemRadius,
+      y: centerY - verbCoin.itemRadius,
       width: size,
       height: size,
     };
     nodes.push(
-      ...panelNodes(
-        `${prefix}.coin.${verb.id}`,
-        rect,
-        skin.verbCoin!.panel,
-        60,
-      ),
+      ...panelNodes(`${prefix}.coin.${verb.id}`, rect, verbCoin.panel, 60),
       textNode(
         `${prefix}.coin.${verb.id}.text`,
         {
@@ -678,7 +556,7 @@ const composeVerbCoin = (
           height: font.lineHeight,
         },
         verb.label,
-        skin.fonts.verb!,
+        verbTextStyle,
         font,
         63,
       ),
@@ -714,8 +592,5 @@ export const appendUiSkinFrame = (
   options: UiComposeOptions = {},
 ): ResolvedFrame => ({
   ...frame,
-  nodes: [
-    ...frame.nodes,
-    ...composeUiSkinNodes(skin, bitmapFonts, state, options),
-  ],
+  nodes: [...frame.nodes, ...composeUiSkinNodes(skin, bitmapFonts, state, options)],
 });

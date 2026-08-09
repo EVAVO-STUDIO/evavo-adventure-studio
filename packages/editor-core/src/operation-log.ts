@@ -1,24 +1,14 @@
 import type { Id } from "@evavo/adventure-project-schema";
 import type { SceneInstanceManifest } from "@evavo/adventure-scene-instances";
-import {
-  createEditorHistory,
-  type EditorHistoryState,
-} from "./index.js";
 import type { EditorOperationLog } from "./command-schema.js";
+import { createEditorHistory, type EditorHistoryState } from "./index.js";
 import { executeValidatedEditorCommand } from "./validated-history.js";
 
 export class EditorOperationLogError extends Error {
-  readonly code:
-    | "project-mismatch"
-    | "revision-mismatch"
-    | "duplicate-operation";
+  readonly code: "project-mismatch" | "revision-mismatch" | "duplicate-operation";
   readonly path: string;
 
-  constructor(
-    code: EditorOperationLogError["code"],
-    path: string,
-    message: string,
-  ) {
+  constructor(code: EditorOperationLogError["code"], path: string, message: string) {
     super(message);
     this.name = "EditorOperationLogError";
     this.code = code;

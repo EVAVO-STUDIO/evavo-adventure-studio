@@ -1,9 +1,7 @@
-import { describe, expect, it } from "vitest";
-import {
-  assetBuildManifestSchema,
-  type AssetBuildManifest,
-} from "@evavo/adventure-asset-contract";
+import { type AssetBuildManifest, assetBuildManifestSchema } from "@evavo/adventure-asset-contract";
 import { parseAdventureProject } from "@evavo/adventure-project-schema";
+import { describe, expect, it } from "vitest";
+import { parseArtDirectionEditorCommand } from "../src/command-schema.js";
 import {
   createArtDirectionEditorHistory,
   createArtDirectionManifest,
@@ -15,7 +13,6 @@ import {
   undoArtDirectionEditorCommand,
   validateArtDirectionManifest,
 } from "../src/index.js";
-import { parseArtDirectionEditorCommand } from "../src/command-schema.js";
 
 const hash = "0".repeat(64);
 
@@ -126,9 +123,7 @@ const compiledManifest = (
       {
         assetId: "asset.background.office",
         kind: "image",
-        sourceFiles: [
-          { path: "art/office.png", sha256: hash, byteLength: 100 },
-        ],
+        sourceFiles: [{ path: "art/office.png", sha256: hash, byteLength: 100 }],
         outputFiles: [
           {
             role: "primary",
@@ -190,9 +185,7 @@ const compiledManifest = (
       {
         assetId: "asset.audio.rain",
         kind: "audio",
-        sourceFiles: [
-          { path: "audio/rain.ogg", sha256: hash, byteLength: 200 },
-        ],
+        sourceFiles: [{ path: "audio/rain.ogg", sha256: hash, byteLength: 200 }],
         outputFiles: [
           {
             role: "primary",
@@ -271,11 +264,7 @@ describe("art direction inference", () => {
       }),
     };
 
-    expect(
-      validateArtDirectionManifest(brokenProject, brokenManifest).map(
-        (entry) => entry.code,
-      ),
-    ).toEqual(
+    expect(validateArtDirectionManifest(brokenProject, brokenManifest).map((entry) => entry.code)).toEqual(
       expect.arrayContaining([
         "sampling-policy-mismatch",
         "integer-scale-policy-mismatch",
@@ -292,9 +281,7 @@ describe("compiled art evidence", () => {
     const issues = evaluateCompiledArtDirection(project, art, compiledManifest());
 
     expect(issues.filter((entry) => entry.severity === "error")).toEqual([]);
-    expect(issues.map((entry) => entry.code)).toContain(
-      "compiled-palette-unverified",
-    );
+    expect(issues.map((entry) => entry.code)).toContain("compiled-palette-unverified");
   });
 
   it("reports dimensions, output mode, colour budget and atlas padding", () => {
@@ -325,9 +312,7 @@ describe("compiled art evidence", () => {
 describe("art direction editor history", () => {
   it("edits per-asset budgets with undo, redo and save tracking", () => {
     const manifest = createArtDirectionManifest(project, "vga-256-320x200");
-    const background = manifest.assets.find(
-      (rule) => rule.assetId === "asset.background.office",
-    )!;
+    const background = manifest.assets.find((rule) => rule.assetId === "asset.background.office")!;
     let history = createArtDirectionEditorHistory(project, manifest);
 
     history = executeArtDirectionEditorCommand(project, history, {
@@ -337,25 +322,19 @@ describe("art direction editor history", () => {
     });
 
     expect(
-      history.document.manifest.assets.find(
-        (rule) => rule.assetId === background.assetId,
-      ),
+      history.document.manifest.assets.find((rule) => rule.assetId === background.assetId),
     ).toMatchObject({ maxColours: 96, dither: 0.15 });
     expect(isArtDirectionEditorDocumentDirty(history.document)).toBe(true);
 
     history = undoArtDirectionEditorCommand(project, history);
     expect(
-      history.document.manifest.assets.find(
-        (rule) => rule.assetId === background.assetId,
-      )?.maxColours,
+      history.document.manifest.assets.find((rule) => rule.assetId === background.assetId)?.maxColours,
     ).toBeUndefined();
     expect(isArtDirectionEditorDocumentDirty(history.document)).toBe(false);
 
     history = redoArtDirectionEditorCommand(project, history);
     expect(
-      history.document.manifest.assets.find(
-        (rule) => rule.assetId === background.assetId,
-      )?.maxColours,
+      history.document.manifest.assets.find((rule) => rule.assetId === background.assetId)?.maxColours,
     ).toBe(96);
 
     history = markArtDirectionEditorHistorySaved(history);
@@ -382,8 +361,6 @@ describe("art direction command schema", () => {
   });
 
   it("rejects empty art-direction batches", () => {
-    expect(() =>
-      parseArtDirectionEditorCommand({ kind: "batch", commands: [] }),
-    ).toThrow();
+    expect(() => parseArtDirectionEditorCommand({ kind: "batch", commands: [] })).toThrow();
   });
 });

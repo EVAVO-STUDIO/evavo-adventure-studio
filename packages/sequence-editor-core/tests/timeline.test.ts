@@ -1,5 +1,5 @@
-import { describe, expect, it } from "vitest";
 import { sequenceSchema } from "@evavo/adventure-project-schema";
+import { describe, expect, it } from "vitest";
 import {
   cueDurationTicks,
   insertionIndexForTick,

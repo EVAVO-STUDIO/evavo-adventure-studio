@@ -1,12 +1,12 @@
 import {
   createEditorHistory,
+  type EditorCommand,
+  type EditorHistoryState,
   executeEditorCommand,
   isEditorDocumentDirty,
   markEditorHistorySaved,
   redoEditorCommand,
   undoEditorCommand,
-  type EditorCommand,
-  type EditorHistoryState,
 } from "@evavo/adventure-editor-core";
 import type { AdventureProject, Id, Interaction } from "@evavo/adventure-project-schema";
 import type {
@@ -45,9 +45,8 @@ export type ObjectWorkspaceAction =
   | { readonly type: "redo" }
   | { readonly type: "mark-saved" };
 
-const firstDefinition = (
-  manifest: SceneInstanceManifest,
-): ObjectDefinition | null => manifest.objectDefinitions[0] ?? null;
+const firstDefinition = (manifest: SceneInstanceManifest): ObjectDefinition | null =>
+  manifest.objectDefinitions[0] ?? null;
 
 const firstState = (definition: ObjectDefinition | null): ObjectStateDefinition | null =>
   definition?.states[0] ?? null;
@@ -99,10 +98,7 @@ export const objectWorkspaceReducer = (
         ...state,
         history: executeEditorCommand(state.history, action.command),
         stateId: action.stateId === undefined ? state.stateId : action.stateId,
-        interactionId:
-          action.interactionId === undefined
-            ? state.interactionId
-            : action.interactionId,
+        interactionId: action.interactionId === undefined ? state.interactionId : action.interactionId,
         notice: action.notice ?? null,
       };
     case "undo":
@@ -128,37 +124,22 @@ export const objectWorkspaceReducer = (
   }
 };
 
-export const objectManifest = (
-  state: ObjectWorkspaceState,
-): SceneInstanceManifest => state.history.document.manifest;
+export const objectManifest = (state: ObjectWorkspaceState): SceneInstanceManifest =>
+  state.history.document.manifest;
 
 export const objectWorkspaceIsDirty = (state: ObjectWorkspaceState): boolean =>
   isEditorDocumentDirty(state.history.document);
 
-export const selectedObjectDefinition = (
-  state: ObjectWorkspaceState,
-): ObjectDefinition | null =>
-  objectManifest(state).objectDefinitions.find(
-    (candidate) => candidate.id === state.definitionId,
-  ) ?? null;
+export const selectedObjectDefinition = (state: ObjectWorkspaceState): ObjectDefinition | null =>
+  objectManifest(state).objectDefinitions.find((candidate) => candidate.id === state.definitionId) ?? null;
 
-export const selectedObjectState = (
-  state: ObjectWorkspaceState,
-): ObjectStateDefinition | null =>
-  selectedObjectDefinition(state)?.states.find(
-    (candidate) => candidate.id === state.stateId,
-  ) ?? null;
+export const selectedObjectState = (state: ObjectWorkspaceState): ObjectStateDefinition | null =>
+  selectedObjectDefinition(state)?.states.find((candidate) => candidate.id === state.stateId) ?? null;
 
-export const selectedObjectInteraction = (
-  state: ObjectWorkspaceState,
-): Interaction | null =>
-  selectedObjectState(state)?.interactions.find(
-    (candidate) => candidate.id === state.interactionId,
-  ) ?? null;
+export const selectedObjectInteraction = (state: ObjectWorkspaceState): Interaction | null =>
+  selectedObjectState(state)?.interactions.find((candidate) => candidate.id === state.interactionId) ?? null;
 
-const replaceDefinitionCommand = (
-  definition: ObjectDefinition,
-): EditorCommand => ({
+const replaceDefinitionCommand = (definition: ObjectDefinition): EditorCommand => ({
   kind: "replace-object-definition",
   definitionId: definition.id,
   definition,
@@ -204,9 +185,7 @@ export const replaceSelectedObjectStateCommand = (
   }
   return replaceDefinitionCommand({
     ...definition,
-    states: definition.states.map((candidate) =>
-      candidate.id === nextState.id ? nextState : candidate,
-    ),
+    states: definition.states.map((candidate) => (candidate.id === nextState.id ? nextState : candidate)),
   });
 };
 
@@ -221,10 +200,7 @@ export const insertObjectStateCommand = (
     throw new Error("Select an object definition before adding a state.");
   }
   const stateId = asId<"object-state">(
-    uniqueId(
-      manifestIds(objectManifest(state)),
-      `object-state.${definition.id}.state`,
-    ),
+    uniqueId(manifestIds(objectManifest(state)), `object-state.${definition.id}.state`),
   );
   const nextState: ObjectStateDefinition = {
     id: stateId,
@@ -293,10 +269,7 @@ export const insertStateInteractionCommand = (
     throw new Error("Select an object state before adding an interaction.");
   }
   const interactionId = asId<"interaction">(
-    uniqueId(
-      manifestIds(objectManifest(state)),
-      `interaction.${objectState.id}.verb`,
-    ),
+    uniqueId(manifestIds(objectManifest(state)), `interaction.${objectState.id}.verb`),
   );
   const interaction: Interaction = {
     id: interactionId,
@@ -331,17 +304,13 @@ export const replaceSelectedInteractionCommand = (
   });
 };
 
-export const removeSelectedInteractionCommand = (
-  state: ObjectWorkspaceState,
-): EditorCommand => {
+export const removeSelectedInteractionCommand = (state: ObjectWorkspaceState): EditorCommand => {
   const objectState = selectedObjectState(state);
   if (!objectState || !state.interactionId) {
     throw new Error("Select an interaction before removing it.");
   }
   return replaceSelectedObjectStateCommand(state, {
     ...objectState,
-    interactions: objectState.interactions.filter(
-      (candidate) => candidate.id !== state.interactionId,
-    ),
+    interactions: objectState.interactions.filter((candidate) => candidate.id !== state.interactionId),
   });
 };

@@ -1,8 +1,5 @@
 import { describe, expect, it } from "vitest";
-import {
-  parseRuntimeBundle,
-  RuntimeBitmapFontValidationError,
-} from "../src/index.js";
+import { parseRuntimeBundle, RuntimeBitmapFontValidationError } from "../src/index.js";
 
 const hash = "0".repeat(64);
 
@@ -136,19 +133,13 @@ describe("runtime bitmap fonts", () => {
       height: 8,
     };
 
-    expect(() => parseRuntimeBundle(input)).toThrow(
-      RuntimeBitmapFontValidationError,
-    );
+    expect(() => parseRuntimeBundle(input)).toThrow(RuntimeBitmapFontValidationError);
   });
 
   it("rejects font atlases removed from the packaged assets", () => {
     const input = runtimeBundle();
-    input.assets = input.assets.filter(
-      (asset) => asset.assetId !== "asset.font.dialogue",
-    );
+    input.assets = input.assets.filter((asset) => asset.assetId !== "asset.font.dialogue");
 
-    expect(() => parseRuntimeBundle(input)).toThrow(
-      RuntimeBitmapFontValidationError,
-    );
+    expect(() => parseRuntimeBundle(input)).toThrow(RuntimeBitmapFontValidationError);
   });
 });

@@ -1,15 +1,11 @@
 import {
-  applyActions,
   type ActiveSequenceState,
+  applyActions,
   type RuntimeEvent,
   type RuntimeState,
   type RuntimeTransition,
 } from "@evavo/adventure-core";
-import type {
-  Id,
-  Sequence,
-  SequenceCue,
-} from "@evavo/adventure-project-schema";
+import type { Id, Sequence, SequenceCue } from "@evavo/adventure-project-schema";
 
 interface ScheduledCue {
   readonly trackId: Id<"sequence-track">;
@@ -49,9 +45,7 @@ const buildSchedule = (sequence: Sequence): readonly ScheduledCue[] =>
         return left.cue.atTick - right.cue.atTick;
       }
       const trackDifference = left.trackId.localeCompare(right.trackId);
-      return trackDifference !== 0
-        ? trackDifference
-        : left.cueIndex - right.cueIndex;
+      return trackDifference !== 0 ? trackDifference : left.cueIndex - right.cueIndex;
     });
 
 const findActiveSequence = (
@@ -60,30 +54,19 @@ const findActiveSequence = (
 ): ActiveSequenceState | undefined =>
   state.activeSequences.find((active) => active.sequenceId === sequenceId);
 
-const replaceActiveSequence = (
-  state: RuntimeState,
-  active: ActiveSequenceState,
-): RuntimeState => ({
+const replaceActiveSequence = (state: RuntimeState, active: ActiveSequenceState): RuntimeState => ({
   ...state,
   activeSequences: state.activeSequences.map((candidate) =>
     candidate.sequenceId === active.sequenceId ? active : candidate,
   ),
 });
 
-const removeActiveSequence = (
-  state: RuntimeState,
-  sequenceId: Id<"sequence">,
-): RuntimeState => ({
+const removeActiveSequence = (state: RuntimeState, sequenceId: Id<"sequence">): RuntimeState => ({
   ...state,
-  activeSequences: state.activeSequences.filter(
-    (active) => active.sequenceId !== sequenceId,
-  ),
+  activeSequences: state.activeSequences.filter((active) => active.sequenceId !== sequenceId),
 });
 
-const cueCursorsAtTick = (
-  sequence: Sequence,
-  elapsedTicks: number,
-): Readonly<Record<string, number>> => {
+const cueCursorsAtTick = (sequence: Sequence, elapsedTicks: number): Readonly<Record<string, number>> => {
   const cursors: Record<string, number> = {};
   for (const track of sequence.tracks) {
     let count = 0;
@@ -113,10 +96,7 @@ const processWindow = (
   const events: RuntimeEvent[] = [...initialEvents];
 
   for (const scheduled of buildSchedule(sequence)) {
-    if (
-      scheduled.cue.atTick <= fromExclusive ||
-      scheduled.cue.atTick > toInclusive
-    ) {
+    if (scheduled.cue.atTick <= fromExclusive || scheduled.cue.atTick > toInclusive) {
       continue;
     }
 
@@ -138,21 +118,14 @@ const processWindow = (
   return { state: nextState, events };
 };
 
-const activeAt = (
-  sequence: Sequence,
-  elapsedTicks: number,
-  iteration: number,
-): ActiveSequenceState => ({
+const activeAt = (sequence: Sequence, elapsedTicks: number, iteration: number): ActiveSequenceState => ({
   sequenceId: sequence.id,
   elapsedTicks,
   iteration,
   nextCueIndexByTrack: cueCursorsAtTick(sequence, elapsedTicks),
 });
 
-const assertValidActiveState = (
-  active: ActiveSequenceState,
-  sequence: Sequence,
-): void => {
+const assertValidActiveState = (active: ActiveSequenceState, sequence: Sequence): void => {
   if (
     !Number.isSafeInteger(active.elapsedTicks) ||
     active.elapsedTicks < 0 ||
@@ -166,10 +139,7 @@ const assertValidActiveState = (
   }
 };
 
-export const startSequence = (
-  state: RuntimeState,
-  sequence: Sequence,
-): SequenceOperation => {
+export const startSequence = (state: RuntimeState, sequence: Sequence): SequenceOperation => {
   if (findActiveSequence(state, sequence.id)) {
     return { kind: "rejected", reason: "already-active", state };
   }
@@ -186,10 +156,7 @@ export const startSequence = (
   return {
     kind: "active",
     transition: {
-      state: replaceActiveSequence(
-        processed.state,
-        activeAt(sequence, 0, 0),
-      ),
+      state: replaceActiveSequence(processed.state, activeAt(sequence, 0, 0)),
       events: processed.events,
     },
   };
@@ -223,12 +190,7 @@ export const advanceSequence = (
     const available = sequence.durationTicks - current.elapsedTicks;
     const step = Math.min(remaining, available);
     const target = current.elapsedTicks + step;
-    const processed = processWindow(
-      nextState,
-      sequence,
-      current.elapsedTicks,
-      target,
-    );
+    const processed = processWindow(nextState, sequence, current.elapsedTicks, target);
     events.push(...processed.events);
     nextState = processed.state;
     remaining -= step;
@@ -240,15 +202,9 @@ export const advanceSequence = (
     }
 
     if (!sequence.loop) {
-      const completed = applyActions(
-        nextState,
-        sequence.skip.completionActions,
-      );
+      const completed = applyActions(nextState, sequence.skip.completionActions);
       nextState = removeActiveSequence(completed.state, sequence.id);
-      events.push(
-        ...completed.events,
-        { kind: "sequence-completed", sequenceId: sequence.id },
-      );
+      events.push(...completed.events, { kind: "sequence-completed", sequenceId: sequence.id });
       return {
         kind: "completed",
         transition: { state: nextState, events },
@@ -281,10 +237,7 @@ export const advanceSequence = (
   };
 };
 
-export const skipSequence = (
-  state: RuntimeState,
-  sequence: Sequence,
-): SequenceOperation => {
+export const skipSequence = (state: RuntimeState, sequence: Sequence): SequenceOperation => {
   const active = findActiveSequence(state, sequence.id);
   if (!active) {
     return { kind: "rejected", reason: "not-active", state };

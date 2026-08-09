@@ -1,9 +1,9 @@
-import type { ReactNode } from "react";
 import type {
   AdventureSceneStagingFinding,
   AdventureSceneStagingReport,
   AdventureSceneStagingSeverity,
 } from "@evavo/adventure-design/scene-staging";
+import type { ReactNode } from "react";
 
 export type StagingView = "stage" | "findings" | "layers" | "handoff";
 export type StagingFindingFilter = "all" | AdventureSceneStagingSeverity;
@@ -17,11 +17,7 @@ export const StagingButton = ({
   readonly active?: boolean;
   readonly onClick: () => void;
 }) => (
-  <button
-    type="button"
-    className={`stg-button${active ? " is-active" : ""}`}
-    onClick={onClick}
-  >
+  <button type="button" className={`stg-button${active ? " is-active" : ""}`} onClick={onClick}>
     {children}
   </button>
 );
@@ -30,27 +26,20 @@ export const StatusPip = ({ status }: { readonly status: string }) => (
   <span className={`stg-status-pip is-${status}`} aria-hidden="true" />
 );
 
-export const Metric = ({
-  label,
-  value,
-}: {
-  readonly label: string;
-  readonly value: string | number;
-}) => (
+export const Metric = ({ label, value }: { readonly label: string; readonly value: string | number }) => (
   <div>
     <dt>{label}</dt>
     <dd>{value}</dd>
   </div>
 );
 
-const polygonPoints = (
-  points: readonly { readonly x: number; readonly y: number }[],
-): string => points.map((point) => `${point.x},${point.y}`).join(" ");
+const polygonPoints = (points: readonly { readonly x: number; readonly y: number }[]): string =>
+  points.map((point) => `${point.x},${point.y}`).join(" ");
 
 const actorLabel = (value: string): string => value.split(".").at(-1) ?? value;
 
 const StageLegend = () => (
-  <div className="stg-legend" aria-label="Stage overlay legend">
+  <div className="stg-legend" role="img" aria-label="Stage overlay legend">
     <span className="is-navigation">Navigation</span>
     <span className="is-portal">Portal</span>
     <span className="is-actor">Actor</span>
@@ -94,10 +83,7 @@ export const StageOverlay = ({ report }: { readonly report: AdventureSceneStagin
 
         {report.overlay.navigationAreas.map((area) => (
           <g key={area.id}>
-            <polygon
-              className="stg-navigation"
-              points={polygonPoints(area.points)}
-            />
+            <polygon className="stg-navigation" points={polygonPoints(area.points)} />
             <text
               className="stg-navigation-label"
               x={area.points[0]?.x ?? 0}
@@ -207,7 +193,9 @@ export const StageOverlay = ({ report }: { readonly report: AdventureSceneStagin
       </svg>
       <footer>
         <span>1× native construction overlay</span>
-        <strong>{report.overlay.nativeSize.width} × {report.overlay.nativeSize.height}</strong>
+        <strong>
+          {report.overlay.nativeSize.width} × {report.overlay.nativeSize.height}
+        </strong>
       </footer>
     </div>
     <section className="stg-stage-notes">
@@ -254,9 +242,7 @@ export const FindingsPanel = ({
   readonly filter: StagingFindingFilter;
   readonly onFilter: (filter: StagingFindingFilter) => void;
 }) => {
-  const visible = report.findings.filter(
-    (finding) => filter === "all" || finding.severity === filter,
-  );
+  const visible = report.findings.filter((finding) => filter === "all" || finding.severity === filter);
   return (
     <div className="stg-findings-view">
       <header>
@@ -274,7 +260,9 @@ export const FindingsPanel = ({
       </header>
       {visible.length > 0 ? (
         <div className="stg-finding-list">
-          {visible.map((finding) => <FindingCard key={`${finding.id}-${finding.path}`} finding={finding} />)}
+          {visible.map((finding) => (
+            <FindingCard key={`${finding.id}-${finding.path}`} finding={finding} />
+          ))}
         </div>
       ) : (
         <div className="stg-empty-state">
@@ -292,8 +280,8 @@ export const LayerOrderPanel = ({ report }: { readonly report: AdventureSceneSta
       <span className="stg-eyebrow">DETERMINISTIC DRAW ORDER</span>
       <h1>{report.overlay.layerOrder.length} staged nodes</h1>
       <p>
-        Layer, elevation, baseline, z-offset and stable ID decide the initial visual stack.
-        Ties are deterministic but should still be deliberate when silhouettes overlap.
+        Layer, elevation, baseline, z-offset and stable ID decide the initial visual stack. Ties are
+        deterministic but should still be deliberate when silhouettes overlap.
       </p>
     </header>
     <ol className="stg-layer-list">
@@ -305,10 +293,22 @@ export const LayerOrderPanel = ({ report }: { readonly report: AdventureSceneSta
             <code>{node.id}</code>
           </div>
           <dl>
-            <div><dt>Layer</dt><dd>{node.layer}</dd></div>
-            <div><dt>Elevation</dt><dd>{node.elevation}</dd></div>
-            <div><dt>Baseline</dt><dd>{Math.round(node.baselineY)}</dd></div>
-            <div><dt>Z</dt><dd>{node.zOffset}</dd></div>
+            <div>
+              <dt>Layer</dt>
+              <dd>{node.layer}</dd>
+            </div>
+            <div>
+              <dt>Elevation</dt>
+              <dd>{node.elevation}</dd>
+            </div>
+            <div>
+              <dt>Baseline</dt>
+              <dd>{Math.round(node.baselineY)}</dd>
+            </div>
+            <div>
+              <dt>Z</dt>
+              <dd>{node.zOffset}</dd>
+            </div>
           </dl>
         </li>
       ))}
@@ -361,8 +361,8 @@ export const HandoffPanel = ({ report }: { readonly report: AdventureSceneStagin
         <span className="stg-eyebrow">MULTI-DISCIPLINE HANDOFF</span>
         <h1>Turn the initial scene graph into finished production</h1>
         <p>
-          The staging report is a shared contract. It does not replace final pixels, animation,
-          interaction feedback, audio or deterministic runtime testing.
+          The staging report is a shared contract. It does not replace final pixels, animation, interaction
+          feedback, audio or deterministic runtime testing.
         </p>
       </header>
       <section className="stg-handoff-grid">

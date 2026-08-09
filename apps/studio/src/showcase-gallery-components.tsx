@@ -1,7 +1,6 @@
-import type { CSSProperties, ReactNode } from "react";
 import type {
-  AdventureProductionProfile,
   AdventureInterfaceFamily,
+  AdventureProductionProfile,
 } from "@evavo/adventure-design/production-profiles";
 import type {
   AdventureProductionShowcase,
@@ -10,6 +9,7 @@ import type {
   AdventureShowcasePropBeat,
   AdventureShowcaseVisualMotif,
 } from "@evavo/adventure-design/production-showcases";
+import type { CSSProperties, ReactNode } from "react";
 import { profileStyle } from "./production-profile-preview.js";
 
 export const ShowcaseButton = ({
@@ -21,11 +21,7 @@ export const ShowcaseButton = ({
   readonly active?: boolean;
   readonly onClick: () => void;
 }) => (
-  <button
-    type="button"
-    className={`scg-button${active ? " is-active" : ""}`}
-    onClick={onClick}
-  >
+  <button type="button" className={`scg-button${active ? " is-active" : ""}`} onClick={onClick}>
     {children}
   </button>
 );
@@ -47,9 +43,7 @@ export const ShowcaseFamilyButton = ({
     onClick={onClick}
     style={profileStyle(profile)}
   >
-    <span className="scg-family-number">
-      {String(showcase.plates.length).padStart(2, "0")}
-    </span>
+    <span className="scg-family-number">{String(showcase.plates.length).padStart(2, "0")}</span>
     <span>
       <strong>{showcase.title}</strong>
       <small>{profile.label}</small>
@@ -69,11 +63,17 @@ const Background = ({ motif }: { readonly motif: AdventureShowcaseVisualMotif })
         <g className="scg-scene-art is-enchanted-belltower">
           <rect width="320" height="200" className="scg-sky" />
           <path d="M0 92L46 55L84 83L130 42L176 82L228 50L320 95V200H0Z" className="scg-far" />
-          <path d="M0 112C48 96 75 106 116 94C155 83 198 103 238 90C270 80 297 86 320 94V200H0Z" className="scg-mid" />
+          <path
+            d="M0 112C48 96 75 106 116 94C155 83 198 103 238 90C270 80 297 86 320 94V200H0Z"
+            className="scg-mid"
+          />
           <path d="M226 48H268V134H222V66Z" className="scg-architecture" />
           <path d="M219 64L245 38L274 64Z" className="scg-roof" />
           <rect x="238" y="72" width="10" height="14" className="scg-light" />
-          <path d="M0 135C50 123 91 139 131 127C176 115 214 137 257 122C282 113 304 118 320 124V200H0Z" className="scg-ground" />
+          <path
+            d="M0 135C50 123 91 139 131 127C176 115 214 137 257 122C282 113 304 118 320 124V200H0Z"
+            className="scg-ground"
+          />
           <path d="M24 111C25 80 39 58 54 46C62 69 65 92 61 119Z" className="scg-foreground" />
           <path d="M54 55L28 79M56 68L77 84M48 76L22 98" className="scg-branch" />
         </g>
@@ -180,7 +180,10 @@ const Background = ({ motif }: { readonly motif: AdventureShowcaseVisualMotif })
           </g>
           <path d="M0 144H320V200H0Z" className="scg-ground" />
           <path d="M220 76H310V82H220M220 82V154M252 82V154M284 82V154" className="scg-fire-escape" />
-          <path d="M14 10L28 40M54 8L66 42M112 12L126 48M176 8L190 40M238 12L252 46M294 8L308 40" className="scg-rain-streak" />
+          <path
+            d="M14 10L28 40M54 8L66 42M112 12L126 48M176 8L190 40M238 12L252 46M294 8L308 40"
+            className="scg-rain-streak"
+          />
         </g>
       );
   }
@@ -201,28 +204,29 @@ const ActorShape = ({ actor }: { readonly actor: AdventureShowcaseActorBeat }) =
       <path
         d={`M${-width / 2} ${-bodyHeight} L${width / 2} ${-bodyHeight} L${width * 0.42} -8 L${width * 0.2} 0 L${-width * 0.16} 0 L${-width * 0.44} -8Z`}
       />
-      <path d={`M${width * 0.28} ${-bodyHeight + 6}L${width * 0.68} ${-bodyHeight / 2}`} className="scg-actor-arm" />
-      <title>{actor.pose}: {actor.silhouetteNote}</title>
+      <path
+        d={`M${width * 0.28} ${-bodyHeight + 6}L${width * 0.68} ${-bodyHeight / 2}`}
+        className="scg-actor-arm"
+      />
+      <title>
+        {actor.pose}: {actor.silhouetteNote}
+      </title>
     </g>
   );
 };
 
 const PropShape = ({ prop }: { readonly prop: AdventureShowcasePropBeat }) => (
   <g className={`scg-prop is-${prop.role}${prop.interactive ? " is-interactive" : ""}`}>
-    <rect
-      x={prop.position.x}
-      y={prop.position.y}
-      width={prop.size.width}
-      height={prop.size.height}
-      rx="1"
-    />
+    <rect x={prop.position.x} y={prop.position.y} width={prop.size.width} height={prop.size.height} rx="1" />
     {prop.interactive ? (
       <path
         d={`M${prop.position.x + 3} ${prop.position.y + 3}H${prop.position.x + prop.size.width - 3}`}
         className="scg-prop-accent"
       />
     ) : null}
-    <title>{prop.label}: {prop.state}</title>
+    <title>
+      {prop.label}: {prop.state}
+    </title>
   </g>
 );
 
@@ -250,14 +254,7 @@ const VerbChrome = () => (
   <div className="scg-chrome scg-verb-chrome">
     <div className="scg-sentence">USE evidence WITH mechanism</div>
     <div className="scg-verbs">
-      {[
-        "OPEN",
-        "WALK TO",
-        "USE",
-        "PICK UP",
-        "LOOK AT",
-        "TALK TO",
-      ].map((verb) => (
+      {["OPEN", "WALK TO", "USE", "PICK UP", "LOOK AT", "TALK TO"].map((verb) => (
         <span key={verb}>{verb}</span>
       ))}
     </div>

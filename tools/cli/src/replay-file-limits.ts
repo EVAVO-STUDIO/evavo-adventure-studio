@@ -6,14 +6,8 @@ export class ReplayInputFileTooLargeError extends Error {
   readonly actualBytes: number;
   readonly maximumBytes: number;
 
-  constructor(
-    path: string,
-    actualBytes: number,
-    maximumBytes: number,
-  ) {
-    super(
-      `Input '${path}' is ${actualBytes} byte(s); the maximum is ${maximumBytes}.`,
-    );
+  constructor(path: string, actualBytes: number, maximumBytes: number) {
+    super(`Input '${path}' is ${actualBytes} byte(s); the maximum is ${maximumBytes}.`);
     this.name = "ReplayInputFileTooLargeError";
     this.path = path;
     this.actualBytes = actualBytes;
@@ -21,11 +15,7 @@ export class ReplayInputFileTooLargeError extends Error {
   }
 }
 
-export const assertReplayInputFileSize = (
-  path: string,
-  actualBytes: number,
-  maximumBytes: number,
-): void => {
+export const assertReplayInputFileSize = (path: string, actualBytes: number, maximumBytes: number): void => {
   if (!Number.isSafeInteger(actualBytes) || actualBytes < 0) {
     throw new RangeError("actualBytes must be a non-negative safe integer.");
   }
@@ -33,10 +23,6 @@ export const assertReplayInputFileSize = (
     throw new RangeError("maximumBytes must be a positive safe integer.");
   }
   if (actualBytes > maximumBytes) {
-    throw new ReplayInputFileTooLargeError(
-      path,
-      actualBytes,
-      maximumBytes,
-    );
+    throw new ReplayInputFileTooLargeError(path, actualBytes, maximumBytes);
   }
 };

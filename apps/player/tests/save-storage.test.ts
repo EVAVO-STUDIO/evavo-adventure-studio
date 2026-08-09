@@ -1,15 +1,15 @@
-import { describe, expect, it } from "vitest";
-import { createSaveGame } from "@evavo/adventure-save-game";
 import { parseRuntimeBundle } from "@evavo/adventure-runtime-bundle";
+import { createSaveGame } from "@evavo/adventure-save-game";
 import { createInitialInteractiveRuntimeWorldState } from "@evavo/adventure-scene-runtime/commands";
+import { describe, expect, it } from "vitest";
 import {
   hasSaveGameSlot,
   readSaveGameSlot,
   removeSaveGameSlot,
-  saveGameStorageKey,
   SaveGameSlotMissingError,
-  writeSaveGameSlot,
   type SaveGameStorage,
+  saveGameStorageKey,
+  writeSaveGameSlot,
 } from "../src/save-storage.js";
 
 const hash = "0".repeat(64);
@@ -76,7 +76,6 @@ const bundle = parseRuntimeBundle({
         },
       ],
       fallbackText: "Nothing happens.",
-      interactionIndex: {},
     },
   ],
   dialogues: [],
@@ -121,9 +120,7 @@ describe("browser save slots", () => {
 
     removeSaveGameSlot(storage, bundle, 3);
     expect(hasSaveGameSlot(storage, bundle, 3)).toBe(false);
-    expect(() => readSaveGameSlot(storage, bundle, 3)).toThrow(
-      SaveGameSlotMissingError,
-    );
+    expect(() => readSaveGameSlot(storage, bundle, 3)).toThrow(SaveGameSlotMissingError);
   });
 
   it("rejects invalid slots and malformed stored JSON", () => {

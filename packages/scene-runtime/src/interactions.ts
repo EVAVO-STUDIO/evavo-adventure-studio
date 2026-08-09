@@ -1,26 +1,14 @@
 import { evaluateCondition } from "@evavo/adventure-core";
 import {
   defaultInteractionPolicy,
-  executeHotspotCommand,
   type ExecutedInteraction,
+  executeHotspotCommand,
   type InteractionPolicy,
 } from "@evavo/adventure-interaction";
-import type {
-  Hotspot,
-  Id,
-  Point,
-  Polygon,
-} from "@evavo/adventure-project-schema";
-import {
-  compareRenderOrder,
-  type RenderOrder,
-} from "@evavo/adventure-render-contract";
+import type { Hotspot, Id, Point, Polygon } from "@evavo/adventure-project-schema";
+import { compareRenderOrder, type RenderOrder } from "@evavo/adventure-render-contract";
 import type { RuntimeBundle } from "@evavo/adventure-runtime-bundle";
-import {
-  pointInPolygon,
-  quantizeNativePoint,
-  resolveScaleAtY,
-} from "@evavo/adventure-scene";
+import { pointInPolygon, quantizeNativePoint, resolveScaleAtY } from "@evavo/adventure-scene";
 import type {
   ObjectDefinition,
   ObjectStateDefinition,
@@ -68,24 +56,17 @@ export type SceneObjectCommandExecution =
       readonly objectInstanceId: Id<"object">;
     };
 
-const objectDefinitionsById = (
-  bundle: RuntimeBundle,
-): ReadonlyMap<string, ObjectDefinition> =>
+const objectDefinitionsById = (bundle: RuntimeBundle): ReadonlyMap<string, ObjectDefinition> =>
   new Map(
     (bundle.sceneInstances?.objectDefinitions ?? []).map(
       (definition) => [definition.id as string, definition] as const,
     ),
   );
 
-const objectStateFor = (
-  definition: ObjectDefinition,
-  stateId: string,
-): ObjectStateDefinition => {
+const objectStateFor = (definition: ObjectDefinition, stateId: string): ObjectStateDefinition => {
   const state = definition.states.find((candidate) => candidate.id === stateId);
   if (!state) {
-    throw new Error(
-      `Object definition '${definition.id}' has no state '${stateId}'.`,
-    );
+    throw new Error(`Object definition '${definition.id}' has no state '${stateId}'.`);
   }
   return state;
 };
@@ -97,13 +78,10 @@ const activeObjectState = (
 ): ObjectStateDefinition =>
   objectStateFor(
     definition,
-    world.story.objectStates[instance.id] ??
-      instance.initialStateId ??
-      definition.initialStateId,
+    world.story.objectStates[instance.id] ?? instance.initialStateId ?? definition.initialStateId,
   );
 
-const localShapePivot = (state: ObjectStateDefinition): Point =>
-  state.visual?.pivot ?? { x: 0, y: 0 };
+const localShapePivot = (state: ObjectStateDefinition): Point => state.visual?.pivot ?? { x: 0, y: 0 };
 
 const transformLocalPoint = (
   point: Point,
@@ -123,15 +101,10 @@ const transformPolygon = (
   scale: number,
   mirrored: boolean,
 ): Polygon => ({
-  points: polygon.points.map((point) =>
-    transformLocalPoint(point, anchor, pivot, scale, mirrored),
-  ),
+  points: polygon.points.map((point) => transformLocalPoint(point, anchor, pivot, scale, mirrored)),
 });
 
-const hotspotId = (
-  instance: SceneObjectInstance,
-  state: ObjectStateDefinition,
-): Id<"hotspot"> =>
+const hotspotId = (instance: SceneObjectInstance, state: ObjectStateDefinition): Id<"hotspot"> =>
   `hotspot.object.${instance.id}.${state.id}` as Id<"hotspot">;
 
 const objectOrder = (
@@ -158,50 +131,31 @@ export const resolveSceneObjectHotspots = (
   if (!scene) {
     throw new Error(`Runtime scene '${sceneId}' does not exist.`);
   }
-  const composition = bundle.sceneInstances?.scenes.find(
-    (candidate) => candidate.sceneId === sceneId,
-  );
+  const composition = bundle.sceneInstances?.scenes.find((candidate) => candidate.sceneId === sceneId);
   const definitions = objectDefinitionsById(bundle);
   const resolved: ResolvedSceneObjectHotspot[] = [];
 
   for (const instance of composition?.objectInstances ?? []) {
-    if (
-      instance.visibleWhen &&
-      !evaluateCondition(instance.visibleWhen, world.story)
-    ) {
+    if (instance.visibleWhen && !evaluateCondition(instance.visibleWhen, world.story)) {
       continue;
     }
     const definition = definitions.get(instance.definitionId);
     if (!definition) {
-      throw new Error(
-        `Object instance '${instance.id}' definition '${instance.definitionId}' is missing.`,
-      );
+      throw new Error(`Object instance '${instance.id}' definition '${instance.definitionId}' is missing.`);
     }
     const state = activeObjectState(world, instance, definition);
     if (!state.visible || !state.interactionShape) {
       continue;
     }
 
-    const anchor = quantizeNativePoint(
-      instance.position,
-      bundle.presentation.pixelMotionPolicy,
-      "entity",
-    );
+    const anchor = quantizeNativePoint(instance.position, bundle.presentation.pixelMotionPolicy, "entity");
     const perspective = resolveScaleAtY(scene.depthBands, anchor.y);
     const scale = (perspective?.scale ?? 1) * instance.scaleMultiplier;
     const pivot = localShapePivot(state);
-    const shape = transformPolygon(
-      state.interactionShape,
-      anchor,
-      pivot,
-      scale,
-      instance.mirrored,
-    );
+    const shape = transformPolygon(state.interactionShape, anchor, pivot, scale, instance.mirrored);
     const walkTo = state.walkToOffset
       ? {
-          x:
-            anchor.x +
-            state.walkToOffset.x * scale * (instance.mirrored ? -1 : 1),
+          x: anchor.x + state.walkToOffset.x * scale * (instance.mirrored ? -1 : 1),
           y: anchor.y + state.walkToOffset.y * scale,
         }
       : undefined;
@@ -223,9 +177,7 @@ export const resolveSceneObjectHotspots = (
     });
   }
 
-  return resolved.sort((left, right) =>
-    compareRenderOrder(left.order, right.order),
-  );
+  return resolved.sort((left, right) => compareRenderOrder(left.order, right.order));
 };
 
 export const hitTestSceneObject = (
@@ -250,9 +202,7 @@ export const executeSceneObjectCommand = (
   command: SceneObjectCommand,
   policy: InteractionPolicy = defaultInteractionPolicy,
 ): SceneObjectCommandExecution => {
-  const scene = bundle.scenes.find(
-    (candidate) => candidate.id === world.story.currentSceneId,
-  );
+  const scene = bundle.scenes.find((candidate) => candidate.id === world.story.currentSceneId);
   if (!scene) {
     throw new Error(`Runtime scene '${world.story.currentSceneId}' does not exist.`);
   }
@@ -292,8 +242,17 @@ export const executeSceneObjectCommand = (
     };
   }
 
+  if (execution.kind === "fallback") {
+    return {
+      kind: "fallback",
+      target,
+      execution,
+      state: world,
+    };
+  }
+
   return {
-    kind: execution.kind,
+    kind: "rejected",
     target,
     execution,
     state: world,

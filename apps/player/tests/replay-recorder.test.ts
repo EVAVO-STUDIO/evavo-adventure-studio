@@ -1,11 +1,8 @@
-import { describe, expect, it } from "vitest";
 import { parseRuntimeBundle } from "@evavo/adventure-runtime-bundle";
 import { createSaveGame } from "@evavo/adventure-save-game";
 import { createInitialInteractiveRuntimeWorldState } from "@evavo/adventure-scene-runtime/commands";
-import {
-  createPlayerReplayRecorder,
-  ReplayRecordingStateError,
-} from "../src/replay-recorder.js";
+import { describe, expect, it } from "vitest";
+import { createPlayerReplayRecorder, ReplayRecordingStateError } from "../src/replay-recorder.js";
 
 const hash = "0".repeat(64);
 const bundle = parseRuntimeBundle({
@@ -71,7 +68,6 @@ const bundle = parseRuntimeBundle({
         },
       ],
       fallbackText: "Nothing happens.",
-      interactionIndex: {},
     },
   ],
   dialogues: [],
@@ -181,13 +177,9 @@ describe("player replay recorder", () => {
   it("rejects events before the recording start or previous event", () => {
     const recorder = createPlayerReplayRecorder(bundle);
     recorder.start(saveAt(10));
-    expect(() => recorder.recordActivation(9, { x: 0, y: 0 })).toThrow(
-      ReplayRecordingStateError,
-    );
+    expect(() => recorder.recordActivation(9, { x: 0, y: 0 })).toThrow(ReplayRecordingStateError);
     recorder.recordActivation(12, { x: 0, y: 0 });
-    expect(() => recorder.recordActivation(11, { x: 1, y: 1 })).toThrow(
-      ReplayRecordingStateError,
-    );
+    expect(() => recorder.recordActivation(11, { x: 1, y: 1 })).toThrow(ReplayRecordingStateError);
   });
 
   it("cancels an in-progress recording without discarding the latest replay", () => {

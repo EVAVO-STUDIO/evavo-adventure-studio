@@ -1,15 +1,6 @@
+import type { DepthBand, Id, PresentationProfile, SpriteFrame } from "@evavo/adventure-project-schema";
 import { describe, expect, it } from "vitest";
-import type {
-  DepthBand,
-  Id,
-  PresentationProfile,
-  SpriteFrame,
-} from "@evavo/adventure-project-schema";
-import {
-  buildResolvedFrame,
-  resolveActorSprite,
-  resolveCamera,
-} from "../src/index.js";
+import { buildResolvedFrame, resolveActorSprite, resolveCamera } from "../src/index.js";
 
 const id = <T extends string>(value: string) => value as Id<T>;
 
@@ -127,9 +118,6 @@ describe("resolved frame composition", () => {
     });
 
     expect(result.issues).toEqual([]);
-    expect(result.frame.nodes.map((node) => node.id)).toEqual([
-      "render.actor.far",
-      "render.actor.near",
-    ]);
+    expect(result.frame.nodes.map((node) => node.id)).toEqual(["render.actor.far", "render.actor.near"]);
   });
 });

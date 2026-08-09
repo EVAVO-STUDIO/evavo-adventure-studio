@@ -1,26 +1,19 @@
-import { z } from "zod";
-import {
-  idSchema,
-  pointSchema,
-  scalarSchema,
-  type Id,
-} from "@evavo/adventure-project-schema";
-import {
-  parseProfiledNavigationMovementState,
-  type ProfiledNavigationMovementState,
-} from "@evavo/adventure-scene-runtime/profiled-movement";
+import { type Id, idSchema, pointSchema, scalarSchema } from "@evavo/adventure-project-schema";
 import type { InteractiveRuntimeWorldState } from "@evavo/adventure-scene-runtime/commands";
 import {
-  saveGameProfiledRuntimeCameraStateSchema,
+  type ProfiledNavigationMovementState,
+  parseProfiledNavigationMovementState,
+} from "@evavo/adventure-scene-runtime/profiled-movement";
+import { z } from "zod";
+import {
   type SaveGameProfiledRuntimeCameraState,
+  saveGameProfiledRuntimeCameraStateSchema,
 } from "./profiled-camera.js";
 
 const fnvFingerprintSchema = z
   .string()
   .regex(/^fnv1a64:[0-9a-f]{16}$/u, "Expected an FNV-1a 64-bit fingerprint.");
-const sha256Schema = z
-  .string()
-  .regex(/^[0-9a-f]{64}$/u, "Expected a lowercase SHA-256 digest.");
+const sha256Schema = z.string().regex(/^[0-9a-f]{64}$/u, "Expected a lowercase SHA-256 digest.");
 
 const animationPlaybackSchema = z
   .object({
@@ -57,10 +50,7 @@ const activeSequenceSchema = z
     sequenceId: idSchema("sequence"),
     elapsedTicks: z.number().int().nonnegative(),
     iteration: z.number().int().nonnegative(),
-    nextCueIndexByTrack: z.record(
-      z.string().min(1),
-      z.number().int().nonnegative(),
-    ),
+    nextCueIndexByTrack: z.record(z.string().min(1), z.number().int().nonnegative()),
   })
   .strict();
 
@@ -80,10 +70,7 @@ const runtimeStorySchema = z
     activeDialogue: activeDialogueSchema.nullable(),
     activeSequences: z.array(activeSequenceSchema),
     objectStates: z.record(z.string().min(1), z.string().min(1)),
-    randomStreams: z.record(
-      z.string().min(1),
-      z.number().int().nonnegative().max(0xffffffff),
-    ),
+    randomStreams: z.record(z.string().min(1), z.number().int().nonnegative().max(0xffffffff)),
     score: z.number().int(),
   })
   .strict();
@@ -111,25 +98,24 @@ const navigationRouteSchema = z
   })
   .strict();
 
-const profiledMovementStateSchema = z.unknown().transform(
-  (
-    value: unknown,
-    context: { addIssue(issue: { code: "custom"; message: string }): void },
-  ): ProfiledNavigationMovementState => {
-    try {
-      return parseProfiledNavigationMovementState(value);
-    } catch (error) {
-      context.addIssue({
-        code: "custom",
-        message:
-          error instanceof Error
-            ? error.message
-            : "Profiled movement state is invalid.",
-      });
-      return z.NEVER;
-    }
-  },
-);
+const profiledMovementStateSchema = z
+  .unknown()
+  .transform(
+    (
+      value: unknown,
+      context: { addIssue(issue: { code: "custom"; message: string }): void },
+    ): ProfiledNavigationMovementState => {
+      try {
+        return parseProfiledNavigationMovementState(value);
+      } catch (error) {
+        context.addIssue({
+          code: "custom",
+          message: error instanceof Error ? error.message : "Profiled movement state is invalid.",
+        });
+        return z.NEVER;
+      }
+    },
+  );
 
 const actorMovementSchema = z
   .object({
@@ -211,8 +197,7 @@ const saveGamePayloadObjectSchema = z
   })
   .strict();
 
-export const saveGamePayloadSchema =
-  saveGamePayloadObjectSchema as z.ZodType<SaveGamePayload>;
+export const saveGamePayloadSchema = saveGamePayloadObjectSchema as z.ZodType<SaveGamePayload>;
 
 export interface SaveGame extends SaveGamePayload {
   readonly saveFingerprint: string;

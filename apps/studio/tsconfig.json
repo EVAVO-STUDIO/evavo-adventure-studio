@@ -8,23 +8,62 @@
   },
   "include": ["src/**/*.ts", "src/**/*.tsx", "tests/**/*.ts", "tests/**/*.tsx"],
   "references": [
-    { "path": "../../packages/project-schema" },
-    { "path": "../../packages/project-editor-core" },
-    { "path": "../../packages/dialogue-editor-core" },
-    { "path": "../../packages/animation-editor-core" },
-    { "path": "../../packages/art-direction" },
-    { "path": "../../packages/asset-contract" },
-    { "path": "../../packages/bitmap-font" },
-    { "path": "../../packages/bitmap-font-editor-core" },
-    { "path": "../../packages/adventure-design" },
-    { "path": "../../packages/play-feel" },
-    { "path": "../../packages/playtest-inspector" },
-    { "path": "../../packages/replay" },
-    { "path": "../../packages/runtime-bundle" },
-    { "path": "../../packages/save-game" },
-    { "path": "../../packages/ui-skin" },
-    { "path": "../../packages/ui-skin-editor-core" },
-    { "path": "../../packages/scene-instances" },
-    { "path": "../../packages/editor-core" }
+    {
+      "path": "../../packages/project-schema"
+    },
+    {
+      "path": "../../packages/project-editor-core"
+    },
+    {
+      "path": "../../packages/dialogue-editor-core"
+    },
+    {
+      "path": "../../packages/animation-editor-core"
+    },
+    {
+      "path": "../../packages/art-direction"
+    },
+    {
+      "path": "../../packages/asset-contract"
+    },
+    {
+      "path": "../../packages/bitmap-font"
+    },
+    {
+      "path": "../../packages/bitmap-font-editor-core"
+    },
+    {
+      "path": "../../packages/adventure-design"
+    },
+    {
+      "path": "../../packages/play-feel"
+    },
+    {
+      "path": "../../packages/render-contract"
+    },
+    {
+      "path": "../../packages/playtest-inspector"
+    },
+    {
+      "path": "../../packages/replay"
+    },
+    {
+      "path": "../../packages/runtime-bundle"
+    },
+    {
+      "path": "../../packages/save-game"
+    },
+    {
+      "path": "../../packages/ui-skin"
+    },
+    {
+      "path": "../../packages/ui-skin-editor-core"
+    },
+    {
+      "path": "../../packages/scene-instances"
+    },
+    {
+      "path": "../../packages/editor-core"
+    }
   ]
 }

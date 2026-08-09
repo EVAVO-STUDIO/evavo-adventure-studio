@@ -1,28 +1,19 @@
 import {
-  useEffect,
-  useMemo,
-  useState,
-  type ChangeEvent,
-} from "react";
-import {
-  evaluateAdventureProgression,
   type AdventureProgressionSeverity,
+  evaluateAdventureProgression,
 } from "@evavo/adventure-design/progression";
+import { type ChangeEvent, useEffect, useMemo, useState } from "react";
 import {
   Metric,
   MilestonesView,
   ProgressionButton,
+  type ProgressionFindingFilter,
+  type ProgressionView,
   RisksView,
   StatusPip,
   WorldFlowView,
-  type ProgressionFindingFilter,
-  type ProgressionView,
 } from "./progression-components.js";
-import {
-  progressionDesign,
-  progressionProject,
-  progressionScenarios,
-} from "./progression-fixture.js";
+import { progressionDesign, progressionProject, progressionScenarios } from "./progression-fixture.js";
 import "./progression.css";
 
 const shortId = (value: string): string => value.split(".").at(-1) ?? value;
@@ -34,18 +25,13 @@ export const ProgressionApp = () => {
   const scenario = progressionScenarios[scenarioIndex] ?? progressionScenarios[0]!;
   const report = useMemo(
     () =>
-      evaluateAdventureProgression(
-        progressionProject,
-        progressionDesign,
-        scenario.sceneInstances,
-        {
-          maximumStates: 4096,
-          maximumDepth: 64,
-          maximumWitnessSteps: 18,
-          maximumNestedRequests: 16,
-          maximumTerminalStates: 24,
-        },
-      ),
+      evaluateAdventureProgression(progressionProject, progressionDesign, scenario.sceneInstances, {
+        maximumStates: 4096,
+        maximumDepth: 64,
+        maximumWitnessSteps: 18,
+        maximumNestedRequests: 16,
+        maximumTerminalStates: 24,
+      }),
     [scenario],
   );
 
@@ -93,10 +79,7 @@ export const ProgressionApp = () => {
           <ProgressionButton active={view === "flow"} onClick={() => setView("flow")}>
             World flow
           </ProgressionButton>
-          <ProgressionButton
-            active={view === "milestones"}
-            onClick={() => setView("milestones")}
-          >
+          <ProgressionButton active={view === "milestones"} onClick={() => setView("milestones")}>
             Milestones
           </ProgressionButton>
           <ProgressionButton active={view === "risks"} onClick={() => setView("risks")}>
@@ -162,20 +145,11 @@ export const ProgressionApp = () => {
 
         <section className="prg-canvas">
           {view === "flow" ? (
-            <WorldFlowView
-              project={progressionProject}
-              design={progressionDesign}
-              report={report}
-            />
+            <WorldFlowView project={progressionProject} design={progressionDesign} report={report} />
           ) : null}
           {view === "milestones" ? <MilestonesView report={report} /> : null}
           {view === "risks" ? (
-            <RisksView
-              project={progressionProject}
-              report={report}
-              filter={filter}
-              onFilter={setFilter}
-            />
+            <RisksView project={progressionProject} report={report} filter={filter} onFilter={setFilter} />
           ) : null}
         </section>
 

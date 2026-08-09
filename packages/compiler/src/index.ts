@@ -1,26 +1,26 @@
 import {
-  toRuntimeAssetRecord,
-  validateAssetBuildManifest,
   type AssetBuildManifest,
   type AssetManifestIssue,
+  toRuntimeAssetRecord,
+  validateAssetBuildManifest,
 } from "@evavo/adventure-asset-contract";
 import {
-  validateCompiledFrameMappings,
   type FrameAssetMappingIssue,
+  validateCompiledFrameMappings,
 } from "@evavo/adventure-asset-contract/frame-mapping";
 import {
-  validatePortableRuntimePaths,
   type PortableRuntimePathIssue,
+  validatePortableRuntimePaths,
 } from "@evavo/adventure-asset-contract/portable-path";
 import type { RuntimeAssetRecord } from "@evavo/adventure-asset-contract/runtime-asset";
 import {
-  validateBitmapFontManifest,
   type BitmapFontIssue,
   type BitmapFontManifest,
+  validateBitmapFontManifest,
 } from "@evavo/adventure-bitmap-font";
 import {
-  validateCompiledBitmapFontMappings,
   type BitmapFontCompiledIssue,
+  validateCompiledBitmapFontMappings,
 } from "@evavo/adventure-bitmap-font/compiled-mapping";
 import type {
   Actor,
@@ -32,26 +32,22 @@ import type {
   Sequence,
 } from "@evavo/adventure-project-schema";
 import {
-  parseRuntimeBundle,
   type CompiledDialogue,
   type CompiledHotspot,
   type CompiledScene,
   type CompiledSequence,
+  parseRuntimeBundle,
   type RuntimeBundle,
 } from "@evavo/adventure-runtime-bundle";
+import { type UiSkinIssue, type UiSkinManifest, validateUiSkinManifest } from "@evavo/adventure-ui-skin";
 import {
-  validateUiSkinManifest,
-  type UiSkinIssue,
-  type UiSkinManifest,
-} from "@evavo/adventure-ui-skin";
-import {
-  validateCompiledUiSkinMappings,
   type UiSkinCompiledIssue,
+  validateCompiledUiSkinMappings,
 } from "@evavo/adventure-ui-skin/compiled-mapping";
 import {
   hasValidationErrors,
-  validateProjectSemantics,
   type ValidationIssue,
+  validateProjectSemantics,
 } from "@evavo/adventure-validation";
 
 export type CompilationIssue =
@@ -84,10 +80,8 @@ export class ProjectCompilationError extends Error {
 const sortById = <T extends { readonly id: string }>(values: readonly T[]): T[] =>
   [...values].sort((left, right) => left.id.localeCompare(right.id));
 
-export const interactionIndexKey = (
-  verb: string,
-  itemId: Id<"item"> | null,
-): string => JSON.stringify([verb, itemId]);
+export const interactionIndexKey = (verb: string, itemId: Id<"item"> | null): string =>
+  JSON.stringify([verb, itemId]);
 
 const compileHotspot = (hotspot: Hotspot): CompiledHotspot => {
   const mutableIndex: Record<string, Id<"interaction">[]> = {};
@@ -130,9 +124,7 @@ const compileSequence = (sequence: Sequence): CompiledSequence => ({
   cueCount: sequence.tracks.reduce((total, track) => total + track.cues.length, 0),
 });
 
-const compileBitmapFonts = (
-  manifest: BitmapFontManifest,
-): BitmapFontManifest => ({
+const compileBitmapFonts = (manifest: BitmapFontManifest): BitmapFontManifest => ({
   ...manifest,
   fonts: [...manifest.fonts]
     .sort((left, right) => left.id.localeCompare(right.id))
@@ -140,32 +132,24 @@ const compileBitmapFonts = (
       ...font,
       glyphs: [...font.glyphs].sort((left, right) => {
         const codePointDifference = left.codePoint - right.codePoint;
-        return codePointDifference !== 0
-          ? codePointDifference
-          : left.id.localeCompare(right.id);
+        return codePointDifference !== 0 ? codePointDifference : left.id.localeCompare(right.id);
       }),
       kernings: [...font.kernings].sort((left, right) => {
         const leftDifference = left.leftCodePoint - right.leftCodePoint;
-        return leftDifference !== 0
-          ? leftDifference
-          : left.rightCodePoint - right.rightCodePoint;
+        return leftDifference !== 0 ? leftDifference : left.rightCodePoint - right.rightCodePoint;
       }),
     })),
 });
 
 const compileUiSkins = (manifest: UiSkinManifest): UiSkinManifest => ({
   ...manifest,
-  skins: [...manifest.skins].sort((left, right) =>
-    left.id.localeCompare(right.id),
-  ),
+  skins: [...manifest.skins].sort((left, right) => left.id.localeCompare(right.id)),
 });
 
 const canonicalRuntimeAsset = (asset: RuntimeAssetRecord): RuntimeAssetRecord => {
   const outputFiles = [...asset.outputFiles].sort((left, right) => {
     const roleDifference = left.role.localeCompare(right.role);
-    return roleDifference !== 0
-      ? roleDifference
-      : left.runtimePath.localeCompare(right.runtimePath);
+    return roleDifference !== 0 ? roleDifference : left.runtimePath.localeCompare(right.runtimePath);
   });
   if (asset.kind === "spritesheet") {
     return {
@@ -176,18 +160,14 @@ const canonicalRuntimeAsset = (asset: RuntimeAssetRecord): RuntimeAssetRecord =>
         pages: [...asset.metadata.pages].sort((left, right) =>
           left.outputRole.localeCompare(right.outputRole),
         ),
-        frames: [...asset.metadata.frames].sort((left, right) =>
-          left.frameId.localeCompare(right.frameId),
-        ),
+        frames: [...asset.metadata.frames].sort((left, right) => left.frameId.localeCompare(right.frameId)),
       },
     };
   }
   return { ...asset, outputFiles };
 };
 
-const compileRuntimeAssets = (
-  manifest: AssetBuildManifest,
-): readonly RuntimeAssetRecord[] =>
+const compileRuntimeAssets = (manifest: AssetBuildManifest): readonly RuntimeAssetRecord[] =>
   manifest.assets
     .map(toRuntimeAssetRecord)
     .map((asset) => canonicalRuntimeAsset(asset as RuntimeAssetRecord))
@@ -236,18 +216,12 @@ export const compileProject = (
   const assetIssues = validateAssetBuildManifest(project, assetManifest);
   const pathIssues = validatePortableRuntimePaths(assetManifest);
   const frameIssues = validateCompiledFrameMappings(project, assetManifest);
-  const bitmapFontIssues = bitmapFonts
-    ? validateBitmapFontManifest(project, bitmapFonts)
-    : [];
+  const bitmapFontIssues = bitmapFonts ? validateBitmapFontManifest(project, bitmapFonts) : [];
   const bitmapFontMappingIssues = bitmapFonts
     ? validateCompiledBitmapFontMappings(bitmapFonts, assetManifest)
     : [];
-  const uiSkinIssues = uiSkins
-    ? validateUiSkinManifest(project, bitmapFonts ?? null, uiSkins)
-    : [];
-  const uiSkinMappingIssues = uiSkins
-    ? validateCompiledUiSkinMappings(uiSkins, assetManifest)
-    : [];
+  const uiSkinIssues = uiSkins ? validateUiSkinManifest(project, bitmapFonts ?? null, uiSkins) : [];
+  const uiSkinMappingIssues = uiSkins ? validateCompiledUiSkinMappings(uiSkins, assetManifest) : [];
   const issues: CompilationIssue[] = [
     ...projectIssues,
     ...assetIssues,

@@ -1,11 +1,7 @@
-import { describe, expect, it } from "vitest";
-import sharp from "sharp";
 import type { Id } from "@evavo/adventure-project-schema";
-import {
-  compileImage,
-  encodeRgbaPng,
-  sha256Hex,
-} from "../src/index.js";
+import sharp from "sharp";
+import { describe, expect, it } from "vitest";
+import { compileImage, encodeRgbaPng, sha256Hex } from "../src/index.js";
 import type { RgbaImage } from "../src/rgba.js";
 
 const id = <T extends string>(value: string) => value as Id<T>;
@@ -83,10 +79,7 @@ describe("image asset compiler", () => {
     const source: RgbaImage = {
       width: 2,
       height: 1,
-      data: new Uint8Array([
-        255, 0, 0, 255,
-        0, 0, 255, 255,
-      ]),
+      data: new Uint8Array([255, 0, 0, 255, 0, 0, 255, 255]),
     };
     const encoded = await encodeRgbaPng(source);
     const compiled = await compileImage(encoded, {
@@ -95,19 +88,11 @@ describe("image asset compiler", () => {
       trim: { mode: "none" },
       output: { mode: "rgba-png" },
     });
-    const raw = await sharp(compiled.data)
-      .ensureAlpha()
-      .raw()
-      .toBuffer({ resolveWithObject: true });
+    const raw = await sharp(compiled.data).ensureAlpha().raw().toBuffer({ resolveWithObject: true });
 
     expect(raw.info).toMatchObject({ width: 4, height: 2, channels: 4 });
     const firstRow = [...raw.data.slice(0, 16)];
-    expect(firstRow).toEqual([
-      255, 0, 0, 255,
-      255, 0, 0, 255,
-      0, 0, 255, 255,
-      0, 0, 255, 255,
-    ]);
+    expect(firstRow).toEqual([255, 0, 0, 255, 255, 0, 0, 255, 0, 0, 255, 255, 0, 0, 255, 255]);
   });
 
   it("matches the standard SHA-256 test vector", async () => {

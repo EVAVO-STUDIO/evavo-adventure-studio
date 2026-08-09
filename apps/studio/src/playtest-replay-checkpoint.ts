@@ -1,5 +1,4 @@
-import type { ReplayInspection } from "@evavo/adventure-playtest-inspector";
-import type { SaveGameInspection } from "@evavo/adventure-playtest-inspector";
+import type { ReplayInspection, SaveGameInspection } from "@evavo/adventure-playtest-inspector";
 
 export type ReplayCheckpointComparison =
   | {

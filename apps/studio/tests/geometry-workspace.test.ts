@@ -1,5 +1,5 @@
+import type { ProjectEditorCommandError } from "@evavo/adventure-project-editor-core";
 import { describe, expect, it } from "vitest";
-import { ProjectEditorCommandError } from "@evavo/adventure-project-editor-core";
 import { studioProject } from "../src/fixture.js";
 import {
   createGeometryWorkspace,
@@ -37,9 +37,7 @@ describe("project geometry workspace", () => {
     expect(geometryWorkspaceIsDirty(state)).toBe(true);
 
     state = geometryWorkspaceReducer(state, { type: "undo" });
-    expect(geometryScene(state).navigationAreas[0]?.shape.points[0]).toEqual(
-      area.shape.points[0],
-    );
+    expect(geometryScene(state).navigationAreas[0]?.shape.points[0]).toEqual(area.shape.points[0]);
     expect(geometryWorkspaceIsDirty(state)).toBe(false);
 
     state = geometryWorkspaceReducer(state, { type: "redo" });
@@ -80,9 +78,7 @@ describe("project geometry workspace", () => {
     const command = deleteGeometrySelectionCommand(state);
     if (!command) throw new Error("Expected entrance deletion command.");
 
-    expect(() =>
-      geometryWorkspaceReducer(state, { type: "execute", command }),
-    ).toThrowError(
+    expect(() => geometryWorkspaceReducer(state, { type: "execute", command })).toThrowError(
       expect.objectContaining<Partial<ProjectEditorCommandError>>({
         code: "protected-entity",
       }),

@@ -342,8 +342,7 @@
 
 .ppf-originality {
   background:
-    linear-gradient(145deg, color-mix(in srgb, var(--ppf-accent) 12%, transparent), transparent 72%),
-    #11141a;
+    linear-gradient(145deg, color-mix(in srgb, var(--ppf-accent) 12%, transparent), transparent 72%), #11141a;
 }
 
 .ppf-originality p {

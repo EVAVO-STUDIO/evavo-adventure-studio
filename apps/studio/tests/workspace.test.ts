@@ -36,9 +36,7 @@ describe("studio workspace", () => {
     expect(state.history.undoStack).toHaveLength(1);
 
     state = studioWorkspaceReducer(state, { type: "undo" });
-    expect(activeSceneComposition(state).actorInstances[0]?.position).toEqual(
-      actor.position,
-    );
+    expect(activeSceneComposition(state).actorInstances[0]?.position).toEqual(actor.position);
     expect(workspaceIsDirty(state)).toBe(false);
 
     state = studioWorkspaceReducer(state, { type: "redo" });

@@ -1,5 +1,10 @@
-import { describe, expect, it } from "vitest";
 import type { Id } from "@evavo/adventure-project-schema";
+import { describe, expect, it } from "vitest";
+import {
+  studioArtDirectionManifest,
+  studioArtVisualEvidence,
+  studioCompiledArtEvidence,
+} from "../src/art-fixture.js";
 import {
   artDirectionIssuesForAsset,
   artDirectionWorkspaceIsDirty,
@@ -10,11 +15,6 @@ import {
   replaceSelectedArtRuleCommand,
   selectedArtDirectionRule,
 } from "../src/art-workspace.js";
-import {
-  studioArtDirectionManifest,
-  studioArtVisualEvidence,
-  studioCompiledArtEvidence,
-} from "../src/art-fixture.js";
 import { studioProject } from "../src/fixture.js";
 
 const id = <T extends string>(value: string): Id<T> => value as Id<T>;
@@ -32,12 +32,7 @@ describe("art direction workspace", () => {
     const state = createWorkspace();
 
     expect(artDirectionWorkspaceIssues(state)).toEqual([]);
-    expect(
-      artDirectionIssuesForAsset(
-        state,
-        id<"asset">("asset.actor.detective"),
-      ),
-    ).toEqual([]);
+    expect(artDirectionIssuesForAsset(state, id<"asset">("asset.actor.detective"))).toEqual([]);
   });
 
   it("selects assets without changing the document", () => {
@@ -67,9 +62,9 @@ describe("art direction workspace", () => {
     });
 
     expect(artDirectionWorkspaceIsDirty(state)).toBe(true);
-    expect(
-      artDirectionWorkspaceIssues(state).map((issue) => issue.code),
-    ).toContain("compiled-colour-budget-exceeded");
+    expect(artDirectionWorkspaceIssues(state).map((issue) => issue.code)).toContain(
+      "compiled-colour-budget-exceeded",
+    );
 
     state = artDirectionWorkspaceReducer(state, { type: "undo" });
     expect(selectedArtDirectionRule(state).maxColours).toBeUndefined();
@@ -91,13 +86,8 @@ describe("art direction workspace", () => {
       preset: "ega-16-320x200",
       palette: { maxColours: 16 },
     });
-    expect(
-      artDirectionWorkspaceIssues(state).map((issue) => issue.code),
-    ).toEqual(
-      expect.arrayContaining([
-        "compiled-colour-budget-exceeded",
-        "visual-evidence-colour-budget-exceeded",
-      ]),
+    expect(artDirectionWorkspaceIssues(state).map((issue) => issue.code)).toEqual(
+      expect.arrayContaining(["compiled-colour-budget-exceeded", "visual-evidence-colour-budget-exceeded"]),
     );
   });
 

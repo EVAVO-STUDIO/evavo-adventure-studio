@@ -1,11 +1,8 @@
-import { describe, expect, it } from "vitest";
 import { assetBuildManifestSchema } from "@evavo/adventure-asset-contract";
 import { parseAdventureProject } from "@evavo/adventure-project-schema";
-import {
-  parseSceneInstanceManifest,
-  validateSceneInstanceManifest,
-} from "../src/index.js";
+import { describe, expect, it } from "vitest";
 import { validateCompiledObjectVisualMappings } from "../src/compiled-mapping.js";
+import { parseSceneInstanceManifest, validateSceneInstanceManifest } from "../src/index.js";
 
 const hash = "0".repeat(64);
 
@@ -289,10 +286,7 @@ describe("scene instance manifests", () => {
     ).map((issue) => issue.code);
 
     expect(codes).toEqual(
-      expect.arrayContaining([
-        "invalid-actor-instance-position",
-        "missing-instance-animation",
-      ]),
+      expect.arrayContaining(["invalid-actor-instance-position", "missing-instance-animation"]),
     );
   });
 
@@ -321,10 +315,8 @@ describe("scene instance manifests", () => {
       ],
     });
 
-    expect(
-      validateCompiledObjectVisualMappings(broken, assetManifest).map(
-        (issue) => issue.code,
-      ),
-    ).toContain("compiled-object-frame-geometry-mismatch");
+    expect(validateCompiledObjectVisualMappings(broken, assetManifest).map((issue) => issue.code)).toContain(
+      "compiled-object-frame-geometry-mismatch",
+    );
   });
 });

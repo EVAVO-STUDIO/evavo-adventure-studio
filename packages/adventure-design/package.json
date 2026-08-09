@@ -72,5 +72,8 @@
     "@evavo/adventure-scene-instances": "workspace:*",
     "@evavo/adventure-ui-skin": "workspace:*",
     "@evavo/adventure-validation": "workspace:*"
+  },
+  "devDependencies": {
+    "@evavo/adventure-runtime-bundle": "workspace:*"
   }
 }

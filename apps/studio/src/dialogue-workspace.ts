@@ -1,12 +1,12 @@
 import {
   createDialogueEditorHistory,
+  type DialogueEditorCommand,
+  type DialogueEditorHistoryState,
   executeDialogueEditorCommand,
   isDialogueEditorDocumentDirty,
   markDialogueEditorHistorySaved,
   redoDialogueEditorCommand,
   undoDialogueEditorCommand,
-  type DialogueEditorCommand,
-  type DialogueEditorHistoryState,
 } from "@evavo/adventure-dialogue-editor-core";
 import type {
   DialogueChoice,
@@ -46,9 +46,7 @@ export type DialogueWorkspaceAction =
   | { readonly type: "redo" }
   | { readonly type: "mark-saved" };
 
-export const createDialogueWorkspace = (
-  graph: DialogueGraph,
-): DialogueWorkspaceState => ({
+export const createDialogueWorkspace = (graph: DialogueGraph): DialogueWorkspaceState => ({
   history: createDialogueEditorHistory(graph),
   nodeId: graph.startNodeId,
   lineId: null,
@@ -89,8 +87,7 @@ export const dialogueWorkspaceReducer = (
         history: executeDialogueEditorCommand(state.history, action.command),
         nodeId: action.nodeId ?? state.nodeId,
         lineId: action.lineId === undefined ? state.lineId : action.lineId,
-        choiceId:
-          action.choiceId === undefined ? state.choiceId : action.choiceId,
+        choiceId: action.choiceId === undefined ? state.choiceId : action.choiceId,
         notice: action.notice ?? null,
       };
     case "undo":
@@ -118,38 +115,24 @@ export const dialogueWorkspaceReducer = (
   }
 };
 
-export const dialogueGraph = (state: DialogueWorkspaceState): DialogueGraph =>
-  state.history.document.graph;
+export const dialogueGraph = (state: DialogueWorkspaceState): DialogueGraph => state.history.document.graph;
 
-export const dialogueWorkspaceIsDirty = (
-  state: DialogueWorkspaceState,
-): boolean => isDialogueEditorDocumentDirty(state.history.document);
+export const dialogueWorkspaceIsDirty = (state: DialogueWorkspaceState): boolean =>
+  isDialogueEditorDocumentDirty(state.history.document);
 
-export const selectedDialogueNode = (
-  state: DialogueWorkspaceState,
-): DialogueNode => {
-  const node = dialogueGraph(state).nodes.find(
-    (candidate) => candidate.id === state.nodeId,
-  );
+export const selectedDialogueNode = (state: DialogueWorkspaceState): DialogueNode => {
+  const node = dialogueGraph(state).nodes.find((candidate) => candidate.id === state.nodeId);
   if (!node) {
     throw new Error(`Dialogue node '${state.nodeId}' does not exist.`);
   }
   return node;
 };
 
-export const selectedDialogueLine = (
-  state: DialogueWorkspaceState,
-): DialogueLine | null =>
-  selectedDialogueNode(state).lines.find(
-    (candidate) => candidate.id === state.lineId,
-  ) ?? null;
+export const selectedDialogueLine = (state: DialogueWorkspaceState): DialogueLine | null =>
+  selectedDialogueNode(state).lines.find((candidate) => candidate.id === state.lineId) ?? null;
 
-export const selectedDialogueChoice = (
-  state: DialogueWorkspaceState,
-): DialogueChoice | null =>
-  selectedDialogueNode(state).choices.find(
-    (candidate) => candidate.id === state.choiceId,
-  ) ?? null;
+export const selectedDialogueChoice = (state: DialogueWorkspaceState): DialogueChoice | null =>
+  selectedDialogueNode(state).choices.find((candidate) => candidate.id === state.choiceId) ?? null;
 
 const graphIds = (graph: DialogueGraph): ReadonlySet<string> => {
   const ids = new Set<string>([graph.id]);
@@ -176,26 +159,24 @@ export const insertDialogueNodeCommand = (
   readonly nodeId: Id<"dialogue-node">;
 } => {
   const graph = dialogueGraph(state);
-  const nodeId = asId<"dialogue-node">(
-    uniqueId(graphIds(graph), `dialogue-node.${graph.id}.topic`),
-  );
+  const nodeId = asId<"dialogue-node">(uniqueId(graphIds(graph), `dialogue-node.${graph.id}.topic`));
   return {
     command: {
       kind: "insert-node",
       index: graph.nodes.length,
       node: {
         id: nodeId,
+        enterActions: [],
         lines: [],
         choices: [],
+        exitActions: [],
       },
     },
     nodeId,
   };
 };
 
-export const removeSelectedDialogueNodeCommand = (
-  state: DialogueWorkspaceState,
-): DialogueEditorCommand => ({
+export const removeSelectedDialogueNodeCommand = (state: DialogueWorkspaceState): DialogueEditorCommand => ({
   kind: "remove-node",
   nodeId: state.nodeId,
 });
@@ -217,9 +198,7 @@ export const insertDialogueLineCommand = (
 } => {
   const graph = dialogueGraph(state);
   const node = selectedDialogueNode(state);
-  const lineId = asId<"dialogue-line">(
-    uniqueId(graphIds(graph), `dialogue-line.${node.id}.line`),
-  );
+  const lineId = asId<"dialogue-line">(uniqueId(graphIds(graph), `dialogue-line.${node.id}.line`));
   return {
     command: {
       kind: "insert-line",
@@ -228,6 +207,7 @@ export const insertDialogueLineCommand = (
       line: {
         id: lineId,
         text: "New dialogue line.",
+        interruptible: true,
       },
     },
     lineId,
@@ -249,9 +229,7 @@ export const replaceSelectedDialogueLineCommand = (
   };
 };
 
-export const removeSelectedDialogueLineCommand = (
-  state: DialogueWorkspaceState,
-): DialogueEditorCommand => {
+export const removeSelectedDialogueLineCommand = (state: DialogueWorkspaceState): DialogueEditorCommand => {
   if (!state.lineId) {
     throw new Error("Select a dialogue line before removing it.");
   }
@@ -270,9 +248,7 @@ export const insertDialogueChoiceCommand = (
 } => {
   const graph = dialogueGraph(state);
   const node = selectedDialogueNode(state);
-  const choiceId = asId<"dialogue-choice">(
-    uniqueId(graphIds(graph), `dialogue-choice.${node.id}.choice`),
-  );
+  const choiceId = asId<"dialogue-choice">(uniqueId(graphIds(graph), `dialogue-choice.${node.id}.choice`));
   return {
     command: {
       kind: "insert-choice",
@@ -281,6 +257,8 @@ export const insertDialogueChoiceCommand = (
       choice: {
         id: choiceId,
         text: "New player choice.",
+        once: false,
+        actions: [],
         closeDialogue: true,
       },
     },
@@ -303,9 +281,7 @@ export const replaceSelectedDialogueChoiceCommand = (
   };
 };
 
-export const removeSelectedDialogueChoiceCommand = (
-  state: DialogueWorkspaceState,
-): DialogueEditorCommand => {
+export const removeSelectedDialogueChoiceCommand = (state: DialogueWorkspaceState): DialogueEditorCommand => {
   if (!state.choiceId) {
     throw new Error("Select a dialogue choice before removing it.");
   }

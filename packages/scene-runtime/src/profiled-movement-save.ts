@@ -1,9 +1,9 @@
 import {
-  adventurePlayFeelProfileById,
   type AdventureMotionPhase,
   type AdventureMotionRuntimeExtension,
   type AdventureMotionState,
   type AdventurePlayFeelProfileId,
+  adventurePlayFeelProfileById,
 } from "@evavo/adventure-play-feel";
 import type { Id } from "@evavo/adventure-project-schema";
 import type { ProfiledNavigationMovementState } from "./profiled-movement-types.js";
@@ -34,18 +34,11 @@ const record = (value: unknown, path: string): Record<string, unknown> => {
   return value as Record<string, unknown>;
 };
 
-const exactKeys = (
-  value: Record<string, unknown>,
-  keys: readonly string[],
-  path: string,
-): void => {
+const exactKeys = (value: Record<string, unknown>, keys: readonly string[], path: string): void => {
   const allowed = new Set(keys);
   const extras = Object.keys(value).filter((key) => !allowed.has(key));
   if (extras.length > 0) {
-    throw new ProfiledNavigationMovementParseError(
-      path,
-      `Unsupported field '${extras.sort()[0]}'.`,
-    );
+    throw new ProfiledNavigationMovementParseError(path, `Unsupported field '${extras.sort()[0]}'.`);
   }
 };
 
@@ -65,10 +58,7 @@ const finite = (value: unknown, path: string): number => {
 
 const safeNonnegativeInteger = (value: unknown, path: string): number => {
   if (typeof value !== "number" || !Number.isSafeInteger(value) || value < 0) {
-    throw new ProfiledNavigationMovementParseError(
-      path,
-      "Expected a non-negative safe integer.",
-    );
+    throw new ProfiledNavigationMovementParseError(path, "Expected a non-negative safe integer.");
   }
   return value;
 };
@@ -148,18 +138,12 @@ const parseMotion = (value: unknown, path: string): AdventureMotionState => {
     stateVersion: 1,
     tick: safeNonnegativeInteger(input["tick"], `${path}.tick`),
     phase: phaseValue(input["phase"], `${path}.phase`),
-    distanceMicropixels: safeNonnegativeInteger(
-      input["distanceMicropixels"],
-      `${path}.distanceMicropixels`,
-    ),
+    distanceMicropixels: safeNonnegativeInteger(input["distanceMicropixels"], `${path}.distanceMicropixels`),
     velocityMicropixelsPerSecond: safeNonnegativeInteger(
       input["velocityMicropixelsPerSecond"],
       `${path}.velocityMicropixelsPerSecond`,
     ),
-    distanceRemainder: safeNonnegativeInteger(
-      input["distanceRemainder"],
-      `${path}.distanceRemainder`,
-    ),
+    distanceRemainder: safeNonnegativeInteger(input["distanceRemainder"], `${path}.distanceRemainder`),
     segmentIndex: safeNonnegativeInteger(input["segmentIndex"], `${path}.segmentIndex`),
     distanceAlongSegmentMicropixels: safeNonnegativeInteger(
       input["distanceAlongSegmentMicropixels"],
@@ -185,9 +169,7 @@ const parseExtension = (value: unknown, path: string): AdventureMotionRuntimeExt
   };
 };
 
-export const parseProfiledNavigationMovementState = (
-  value: unknown,
-): ProfiledNavigationMovementState => {
+export const parseProfiledNavigationMovementState = (value: unknown): ProfiledNavigationMovementState => {
   const input = record(value, "movement");
   exactKeys(
     input,
@@ -239,13 +221,10 @@ export const parseProfiledNavigationMovementState = (
   };
 };
 
-export const canonicalProfiledNavigationMovementJson = (
-  value: ProfiledNavigationMovementState,
-): string => JSON.stringify(parseProfiledNavigationMovementState(value));
+export const canonicalProfiledNavigationMovementJson = (value: ProfiledNavigationMovementState): string =>
+  JSON.stringify(parseProfiledNavigationMovementState(value));
 
-export const parseProfiledNavigationMovementJson = (
-  value: string,
-): ProfiledNavigationMovementState => {
+export const parseProfiledNavigationMovementJson = (value: string): ProfiledNavigationMovementState => {
   let parsed: unknown;
   try {
     parsed = JSON.parse(value) as unknown;

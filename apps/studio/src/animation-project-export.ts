@@ -2,9 +2,7 @@ import { mergeActorsIntoProject } from "@evavo/adventure-animation-editor-core/p
 import type { Actor, AdventureProject } from "@evavo/adventure-project-schema";
 import type { AnimationWorkspaceState } from "./animation-workspace.js";
 
-export const animationWorkspaceActors = (
-  state: AnimationWorkspaceState,
-): readonly Actor[] =>
+export const animationWorkspaceActors = (state: AnimationWorkspaceState): readonly Actor[] =>
   state.actorOrder.map((actorId) => {
     const actor = state.histories[actorId]?.document.actor;
     if (!actor) {
@@ -16,8 +14,7 @@ export const animationWorkspaceActors = (
 export const projectFromAnimationWorkspace = (
   project: AdventureProject,
   state: AnimationWorkspaceState,
-): AdventureProject =>
-  mergeActorsIntoProject(project, animationWorkspaceActors(state));
+): AdventureProject => mergeActorsIntoProject(project, animationWorkspaceActors(state));
 
 export const downloadProjectFromAnimationWorkspace = (
   project: AdventureProject,

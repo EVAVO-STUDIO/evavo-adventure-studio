@@ -1,17 +1,8 @@
-import {
-  mkdir,
-  mkdtemp,
-  readFile,
-  rm,
-  writeFile,
-} from "node:fs/promises";
+import { mkdir, mkdtemp, readFile, rm, writeFile } from "node:fs/promises";
 import { tmpdir } from "node:os";
 import { join } from "node:path";
 import { afterEach, describe, expect, it } from "vitest";
-import {
-  replaceDirectoryAtomically,
-  writeFilesAtomically,
-} from "../src/filesystem.js";
+import { replaceDirectoryAtomically, writeFilesAtomically } from "../src/filesystem.js";
 
 const temporaryDirectories: string[] = [];
 
@@ -23,9 +14,7 @@ const createTemporaryDirectory = async (): Promise<string> => {
 
 afterEach(async () => {
   await Promise.all(
-    temporaryDirectories.splice(0).map((directory) =>
-      rm(directory, { recursive: true, force: true }),
-    ),
+    temporaryDirectories.splice(0).map((directory) => rm(directory, { recursive: true, force: true })),
   );
 });
 
@@ -79,12 +68,10 @@ describe("transactional release directories", () => {
       { relativePath: "assets/office.png", data: new Uint8Array([1, 2, 3]) },
     ]);
 
-    expect(await readFile(join(release, "game.bundle.json"), "utf8")).toBe(
-      "bundle\n",
+    expect(await readFile(join(release, "game.bundle.json"), "utf8")).toBe("bundle\n");
+    expect(new Uint8Array(await readFile(join(release, "assets", "office.png")))).toEqual(
+      new Uint8Array([1, 2, 3]),
     );
-    expect(
-      new Uint8Array(await readFile(join(release, "assets", "office.png"))),
-    ).toEqual(new Uint8Array([1, 2, 3]));
     await expect(readFile(join(release, "stale.txt"))).rejects.toMatchObject({
       code: "ENOENT",
     });
@@ -95,14 +82,10 @@ describe("transactional release directories", () => {
     const release = join(parent, "release");
 
     await expect(
-      replaceDirectoryAtomically(release, [
-        { relativePath: "../escape.txt", data: "bad" },
-      ]),
+      replaceDirectoryAtomically(release, [{ relativePath: "../escape.txt", data: "bad" }]),
     ).rejects.toThrow(RangeError);
     await expect(
-      replaceDirectoryAtomically(release, [
-        { relativePath: "assets\\office.png", data: "bad" },
-      ]),
+      replaceDirectoryAtomically(release, [{ relativePath: "assets\\office.png", data: "bad" }]),
     ).rejects.toThrow(RangeError);
     await expect(
       replaceDirectoryAtomically(release, [

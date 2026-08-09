@@ -1,9 +1,4 @@
-import type {
-  Id,
-  Sequence,
-  SequenceCue,
-  SequenceTrack,
-} from "@evavo/adventure-project-schema";
+import type { Id, Sequence, SequenceCue, SequenceTrack } from "@evavo/adventure-project-schema";
 
 export class SequenceEditorCommandError extends Error {
   readonly code:
@@ -19,11 +14,7 @@ export class SequenceEditorCommandError extends Error {
     | "empty-batch";
   readonly path: string;
 
-  constructor(
-    code: SequenceEditorCommandError["code"],
-    path: string,
-    message: string,
-  ) {
+  constructor(code: SequenceEditorCommandError["code"], path: string, message: string) {
     super(message);
     this.name = "SequenceEditorCommandError";
     this.code = code;
@@ -94,9 +85,7 @@ const canonicalize = (value: unknown): unknown => {
   if (value && typeof value === "object") {
     const source = value as Readonly<Record<string, unknown>>;
     const output: Record<string, unknown> = {};
-    for (const key of Object.keys(source).sort((left, right) =>
-      left.localeCompare(right),
-    )) {
+    for (const key of Object.keys(source).sort((left, right) => left.localeCompare(right))) {
       const child = source[key];
       if (child !== undefined) output[key] = canonicalize(child);
     }
@@ -113,12 +102,7 @@ export const canonicalSequenceEditorJson = (value: unknown): string => {
   return output;
 };
 
-const insertAt = <T>(
-  values: readonly T[],
-  index: number,
-  value: T,
-  path: string,
-): T[] => {
+const insertAt = <T>(values: readonly T[], index: number, value: T, path: string): T[] => {
   if (!Number.isSafeInteger(index) || index < 0 || index > values.length) {
     throw new SequenceEditorCommandError(
       "invalid-index",
@@ -126,11 +110,7 @@ const insertAt = <T>(
       `Insert index ${index} is outside 0 to ${values.length}.`,
     );
   }
-  return [
-    ...values.slice(0, index).map(cloneJson),
-    cloneJson(value),
-    ...values.slice(index).map(cloneJson),
-  ];
+  return [...values.slice(0, index).map(cloneJson), cloneJson(value), ...values.slice(index).map(cloneJson)];
 };
 
 const removeAt = <T>(values: readonly T[], index: number): T[] => [
@@ -161,11 +141,7 @@ const findTrack = (
   return { index, track };
 };
 
-const assertStableIdentity = (
-  expected: string,
-  actual: string,
-  path: string,
-): void => {
+const assertStableIdentity = (expected: string, actual: string, path: string): void => {
   if (expected !== actual) {
     throw new SequenceEditorCommandError(
       "identity-change",
@@ -175,9 +151,7 @@ const assertStableIdentity = (
   }
 };
 
-const compatibleCueKinds: Readonly<
-  Record<SequenceTrack["kind"], ReadonlySet<SequenceCue["kind"]>>
-> = {
+const compatibleCueKinds: Readonly<Record<SequenceTrack["kind"], ReadonlySet<SequenceCue["kind"]>>> = {
   actor: new Set(["actor-move", "actor-animation"]),
   camera: new Set(["camera-shot"]),
   dialogue: new Set(["speech"]),
@@ -224,11 +198,7 @@ const validateTrack = (
       );
     }
     previousTick = cue.atTick;
-    if (
-      cue.atTick < 0 ||
-      cue.atTick >= sequence.durationTicks ||
-      cueEndTick(cue) > sequence.durationTicks
-    ) {
+    if (cue.atTick < 0 || cue.atTick >= sequence.durationTicks || cueEndTick(cue) > sequence.durationTicks) {
       throw new SequenceEditorCommandError(
         "invalid-cue-time",
         cuePath,
@@ -268,11 +238,7 @@ const assertCueMatches = (
   path: string,
 ): SequenceCue => {
   if (!actual) {
-    throw new SequenceEditorCommandError(
-      "invalid-index",
-      path,
-      "The expected timeline cue does not exist.",
-    );
+    throw new SequenceEditorCommandError("invalid-index", path, "The expected timeline cue does not exist.");
   }
   if (canonicalSequenceEditorJson(actual) !== canonicalSequenceEditorJson(expected)) {
     throw new SequenceEditorCommandError(
@@ -284,11 +250,7 @@ const assertCueMatches = (
   return actual;
 };
 
-const updateTrack = (
-  sequence: Sequence,
-  index: number,
-  track: SequenceTrack,
-): Sequence => ({
+const updateTrack = (sequence: Sequence, index: number, track: SequenceTrack): Sequence => ({
   ...sequence,
   tracks: replaceAt(sequence.tracks, index, track),
 });
@@ -337,12 +299,7 @@ export const applySequenceEditorCommand = (
       return {
         sequence: {
           ...sequence,
-          tracks: insertAt(
-            sequence.tracks,
-            command.index,
-            command.track,
-            "index",
-          ),
+          tracks: insertAt(sequence.tracks, command.index, command.track, "index"),
         },
         inverse: { kind: "remove-track", trackId: command.track.id },
       };
@@ -431,9 +388,7 @@ export const applySequenceEditorCommand = (
   }
 };
 
-export const createSequenceEditorDocument = (
-  sequence: Sequence,
-): SequenceEditorDocumentState => {
+export const createSequenceEditorDocument = (sequence: Sequence): SequenceEditorDocumentState => {
   validateEditableSequence(sequence);
   const snapshot = cloneJson(sequence);
   return {
@@ -443,15 +398,10 @@ export const createSequenceEditorDocument = (
   };
 };
 
-export const isSequenceEditorDocumentDirty = (
-  document: SequenceEditorDocumentState,
-): boolean =>
-  canonicalSequenceEditorJson(document.sequence) !==
-  canonicalSequenceEditorJson(document.savedSequence);
+export const isSequenceEditorDocumentDirty = (document: SequenceEditorDocumentState): boolean =>
+  canonicalSequenceEditorJson(document.sequence) !== canonicalSequenceEditorJson(document.savedSequence);
 
-export const createSequenceEditorHistory = (
-  sequence: Sequence,
-): SequenceEditorHistoryState => ({
+export const createSequenceEditorHistory = (sequence: Sequence): SequenceEditorHistoryState => ({
   document: createSequenceEditorDocument(sequence),
   undoStack: [],
   redoStack: [],
@@ -482,10 +432,7 @@ export const executeSequenceEditorCommand = (
   const applied = applyToDocument(history.document, command);
   return {
     document: applied.document,
-    undoStack: [
-      ...history.undoStack,
-      { undo: applied.inverse, redo: cloneJson(command) },
-    ],
+    undoStack: [...history.undoStack, { undo: applied.inverse, redo: cloneJson(command) }],
     redoStack: [],
   };
 };

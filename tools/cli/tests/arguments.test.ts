@@ -1,8 +1,5 @@
 import { describe, expect, it } from "vitest";
-import {
-  CliUsageError,
-  parseCliArguments,
-} from "../src/arguments.js";
+import { CliUsageError, parseCliArguments } from "../src/arguments.js";
 
 describe("cli arguments", () => {
   it("parses complete compile commands with visual font and UI evidence", () => {
@@ -71,9 +68,7 @@ describe("cli arguments", () => {
   });
 
   it("allows project-only validation", () => {
-    expect(
-      parseCliArguments(["validate", "--project", "project.json"]),
-    ).toEqual({
+    expect(parseCliArguments(["validate", "--project", "project.json"])).toEqual({
       kind: "validate",
       projectPath: "project.json",
       assetManifestPath: null,
@@ -107,13 +102,7 @@ describe("cli arguments", () => {
 
   it("allows policy validation before compiled evidence exists", () => {
     expect(
-      parseCliArguments([
-        "validate",
-        "--project",
-        "project.json",
-        "--art-direction",
-        "art-direction.json",
-      ]),
+      parseCliArguments(["validate", "--project", "project.json", "--art-direction", "art-direction.json"]),
     ).toMatchObject({
       kind: "validate",
       artDirectionPath: "art-direction.json",
@@ -123,13 +112,7 @@ describe("cli arguments", () => {
 
   it("requires policy and asset manifests for visual evidence", () => {
     expect(() =>
-      parseCliArguments([
-        "validate",
-        "--project",
-        "project.json",
-        "--art-evidence",
-        "art-evidence.json",
-      ]),
+      parseCliArguments(["validate", "--project", "project.json", "--art-evidence", "art-evidence.json"]),
     ).toThrowError(CliUsageError);
 
     expect(() =>
@@ -146,9 +129,7 @@ describe("cli arguments", () => {
   });
 
   it("rejects missing values, duplicate aliases and command-specific options", () => {
-    expect(() => parseCliArguments(["compile", "--project"])).toThrow(
-      CliUsageError,
-    );
+    expect(() => parseCliArguments(["compile", "--project"])).toThrow(CliUsageError);
     expect(() =>
       parseCliArguments([
         "compile",
@@ -163,16 +144,10 @@ describe("cli arguments", () => {
       ]),
     ).toThrow(CliUsageError);
     expect(() =>
-      parseCliArguments([
-        "validate",
-        "--project",
-        "project.json",
-        "--out",
-        "invalid.json",
-      ]),
+      parseCliArguments(["validate", "--project", "project.json", "--out", "invalid.json"]),
     ).toThrow(CliUsageError);
-    expect(() =>
-      parseCliArguments(["validate", "--project", "project.json", "--wat"]),
-    ).toThrow(CliUsageError);
+    expect(() => parseCliArguments(["validate", "--project", "project.json", "--wat"])).toThrow(
+      CliUsageError,
+    );
   });
 });

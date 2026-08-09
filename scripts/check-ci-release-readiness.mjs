@@ -65,7 +65,7 @@ function events(source) {
   for (let index = starts[0] + 1; index < lines.length; index += 1) {
     const line = lines[index];
     if (line && !/^\s/.test(line)) break;
-    const match = line.match(/^  ([A-Za-z_][A-Za-z0-9_-]*):/);
+    const match = line.match(/^ {2}([A-Za-z_][A-Za-z0-9_-]*):/);
     if (match) values.push(match[1]);
   }
   return [...new Set(values)].sort();
@@ -81,15 +81,7 @@ function actions(source) {
 }
 
 function packageFiles(directory = ROOT) {
-  const excluded = new Set([
-    ".git",
-    ".turbo",
-    "build",
-    "coverage",
-    "dist",
-    "node_modules",
-    "reports",
-  ]);
+  const excluded = new Set([".git", ".turbo", "build", "coverage", "dist", "node_modules", "reports"]);
   const found = [];
   for (const entry of fs.readdirSync(directory, { withFileTypes: true })) {
     if (excluded.has(entry.name)) continue;
@@ -127,10 +119,8 @@ if (nodeVersion !== expected.node || nvmVersion !== expected.node) {
 
 const expectedScripts = {
   "release:check": "node scripts/check-ci-release-readiness.mjs --full",
-  "source:check":
-    "node scripts/check-ci-release-readiness.mjs --source && pnpm run check:toolchain",
-  "check:editor-expansion":
-    "pnpm run release:check && node scripts/run-editor-expansion-check.mjs",
+  "source:check": "node scripts/check-ci-release-readiness.mjs --source && pnpm run check:toolchain",
+  "check:editor-expansion": "pnpm run release:check && node scripts/run-editor-expansion-check.mjs",
   check:
     "pnpm run release:check && pnpm run check:toolchain && biome check . && tsc -b --pretty false && vitest run && pnpm run build:player && pnpm run build:studio",
   "check:ci":
@@ -151,8 +141,7 @@ requireTokens("pnpm-workspace.yaml", workspaceSource, [
   "disallowWorkspaceCycles: true",
 ]);
 
-const immutableAction =
-  /^[A-Za-z0-9_.-]+\/[A-Za-z0-9_.-]+(?:\/[A-Za-z0-9_./-]+)?@[0-9a-f]{40}$/;
+const immutableAction = /^[A-Za-z0-9_.-]+\/[A-Za-z0-9_.-]+(?:\/[A-Za-z0-9_./-]+)?@[0-9a-f]{40}$/;
 for (const [name, source, requiredScope] of [
   ["ci.yml", ciSource, "validation_scope:"],
   ["editor-expansion-ci.yml", editorSource, "check:editor-expansion"],
@@ -219,9 +208,7 @@ requireTokens("ci.yml", ciSource, [
   "pnpm source:check",
   "pnpm run check:ci",
 ]);
-requireTokens("editor-expansion-ci.yml", editorSource, [
-  "pnpm run check:editor-expansion",
-]);
+requireTokens("editor-expansion-ci.yml", editorSource, ["pnpm run check:editor-expansion"]);
 requireTokens("editor expansion runner", editorRunnerSource, [
   '"run", "check:toolchain"',
   '"exec", "tsc", "-b", "tsconfig.editor-expansion.json"',
@@ -241,12 +228,7 @@ for (const packagePath of packageFiles()) {
     sourceErrors.push(`${relativePath}: must remain valid JSON`);
     continue;
   }
-  for (const group of [
-    "dependencies",
-    "devDependencies",
-    "optionalDependencies",
-    "peerDependencies",
-  ]) {
+  for (const group of ["dependencies", "devDependencies", "optionalDependencies", "peerDependencies"]) {
     for (const [dependency, specification] of Object.entries(manifest[group] ?? {})) {
       if (specification === "latest") {
         sourceErrors.push(`${relativePath}: ${group}.${dependency} must not use latest`);

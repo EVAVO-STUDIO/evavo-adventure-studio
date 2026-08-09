@@ -1,11 +1,8 @@
-import { describe, expect, it } from "vitest";
 import { assetBuildManifestSchema } from "@evavo/adventure-asset-contract";
 import { parseAdventureProject } from "@evavo/adventure-project-schema";
+import { describe, expect, it } from "vitest";
+import { artVisualEvidenceManifestSchema, evaluateArtDirectionWithVisualEvidence } from "../src/evidence.js";
 import { createArtDirectionManifest } from "../src/index.js";
-import {
-  artVisualEvidenceManifestSchema,
-  evaluateArtDirectionWithVisualEvidence,
-} from "../src/evidence.js";
 
 const hash = "0".repeat(64);
 
@@ -98,9 +95,7 @@ const compiled = assetBuildManifestSchema.parse({
     {
       assetId: "asset.office",
       kind: "image",
-      sourceFiles: [
-        { path: "art/office.png", sha256: hash, byteLength: 10 },
-      ],
+      sourceFiles: [{ path: "art/office.png", sha256: hash, byteLength: 10 }],
       outputFiles: [
         {
           role: "primary",
@@ -188,33 +183,24 @@ const evidence = (
       {
         assetId: "asset.detective",
         kind: "spritesheet",
-        pages:
-          overrides.atlasPages ??
-          [
-            {
-              outputRole: "page-000",
-              palette: overrides.atlasPalette ?? true,
-              colourCount: overrides.atlasColours ?? 48,
-              alphaMode: overrides.atlasAlpha ?? "binary",
-            },
-          ],
+        pages: overrides.atlasPages ?? [
+          {
+            outputRole: "page-000",
+            palette: overrides.atlasPalette ?? true,
+            colourCount: overrides.atlasColours ?? 48,
+            alphaMode: overrides.atlasAlpha ?? "binary",
+          },
+        ],
       },
     ],
   });
 
 describe("compiled visual evidence evaluation", () => {
   it("proves image and atlas palette, colour and alpha compliance", () => {
-    const issues = evaluateArtDirectionWithVisualEvidence(
-      project,
-      art,
-      compiled,
-      evidence(),
-    );
+    const issues = evaluateArtDirectionWithVisualEvidence(project, art, compiled, evidence());
 
     expect(issues.filter((entry) => entry.severity === "error")).toEqual([]);
-    expect(issues.map((entry) => entry.code)).not.toContain(
-      "compiled-palette-unverified",
-    );
+    expect(issues.map((entry) => entry.code)).not.toContain("compiled-palette-unverified");
   });
 
   it("blocks palette, colour and alpha violations", () => {
@@ -257,10 +243,7 @@ describe("compiled visual evidence evaluation", () => {
     );
 
     expect(issues.map((entry) => entry.code)).toEqual(
-      expect.arrayContaining([
-        "visual-evidence-page-missing",
-        "visual-evidence-page-unexpected",
-      ]),
+      expect.arrayContaining(["visual-evidence-page-missing", "visual-evidence-page-unexpected"]),
     );
   });
 });

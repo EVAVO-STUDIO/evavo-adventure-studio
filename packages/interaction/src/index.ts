@@ -1,14 +1,10 @@
 import {
   evaluateCondition,
-  runInteraction,
   type InteractionResult,
   type RuntimeState,
+  runInteraction,
 } from "@evavo/adventure-core";
-import type {
-  Hotspot,
-  Id,
-  Interaction,
-} from "@evavo/adventure-project-schema";
+import type { Hotspot, Id, Interaction } from "@evavo/adventure-project-schema";
 
 export interface InteractionCommand {
   readonly actorId: Id<"actor">;
@@ -25,11 +21,7 @@ export const defaultInteractionPolicy: InteractionPolicy = {
   selectedItemFallback: "exact-only",
 };
 
-export type InteractionFallbackReason =
-  | "target-mismatch"
-  | "no-match"
-  | "condition-failed"
-  | "already-used";
+export type InteractionFallbackReason = "target-mismatch" | "no-match" | "condition-failed" | "already-used";
 
 export type InteractionResolution =
   | {
@@ -44,10 +36,7 @@ export type InteractionResolution =
       readonly text: string;
     };
 
-const interactionIsConsumed = (
-  state: RuntimeState,
-  interaction: Interaction,
-): boolean =>
+const interactionIsConsumed = (state: RuntimeState, interaction: Interaction): boolean =>
   interaction.once === true && state.consumedInteractionIds.includes(interaction.id);
 
 const resolveCandidateTier = (
@@ -112,15 +101,11 @@ export const resolveHotspotCommand = (
     };
   }
 
-  const verbCandidates = hotspot.interactions.filter(
-    (interaction) => interaction.verb === command.verb,
-  );
+  const verbCandidates = hotspot.interactions.filter((interaction) => interaction.verb === command.verb);
   const tiers: Interaction[][] = [];
 
   if (command.itemId) {
-    tiers.push(
-      verbCandidates.filter((interaction) => interaction.itemId === command.itemId),
-    );
+    tiers.push(verbCandidates.filter((interaction) => interaction.itemId === command.itemId));
     if (policy.selectedItemFallback === "generic-verb") {
       tiers.push(verbCandidates.filter((interaction) => interaction.itemId === undefined));
     }
@@ -177,13 +162,7 @@ export const executeHotspotCommand = (
   policy: InteractionPolicy = defaultInteractionPolicy,
   sceneFallbackText?: string,
 ): ExecutedInteraction => {
-  const resolution = resolveHotspotCommand(
-    state,
-    hotspot,
-    command,
-    policy,
-    sceneFallbackText,
-  );
+  const resolution = resolveHotspotCommand(state, hotspot, command, policy, sceneFallbackText);
 
   if (resolution.kind === "fallback") {
     return { kind: "fallback", resolution };
@@ -211,9 +190,7 @@ export interface CursorResolution {
 export const resolveCursor = (context: CursorContext): CursorResolution => {
   if (!context.hotspot) {
     return {
-      cursorId: context.selectedItemId
-        ? `inventory:${context.selectedItemId}`
-        : "walk",
+      cursorId: context.selectedItemId ? `inventory:${context.selectedItemId}` : "walk",
       valid: true,
       semanticAction: context.selectedItemId ? "use-item" : "walk",
     };
@@ -222,27 +199,20 @@ export const resolveCursor = (context: CursorContext): CursorResolution => {
   const valid = context.resolution?.kind === "matched";
   if (context.selectedItemId) {
     return {
-      cursorId: valid
-        ? `inventory:${context.selectedItemId}`
-        : `inventory:${context.selectedItemId}:invalid`,
+      cursorId: valid ? `inventory:${context.selectedItemId}` : `inventory:${context.selectedItemId}:invalid`,
       valid,
       semanticAction: "use-item",
     };
   }
 
   return {
-    cursorId:
-      context.hotspot.cursor ??
-      (valid ? context.activeVerb : `${context.activeVerb}:invalid`),
+    cursorId: context.hotspot.cursor ?? (valid ? context.activeVerb : `${context.activeVerb}:invalid`),
     valid,
     semanticAction: context.activeVerb,
   };
 };
 
-export const availableVerbs = (
-  state: RuntimeState,
-  hotspot: Hotspot,
-): readonly string[] => {
+export const availableVerbs = (state: RuntimeState, hotspot: Hotspot): readonly string[] => {
   const verbs = new Set<string>();
 
   for (const interaction of hotspot.interactions) {

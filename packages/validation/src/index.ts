@@ -62,21 +62,10 @@ const addIssue = (
   issues.push({ severity, code, path, message });
 };
 
-const registerId = (
-  ids: Map<string, string>,
-  issues: ValidationIssue[],
-  id: string,
-  path: string,
-): void => {
+const registerId = (ids: Map<string, string>, issues: ValidationIssue[], id: string, path: string): void => {
   const existing = ids.get(id);
   if (existing) {
-    addIssue(
-      issues,
-      "error",
-      "duplicate-id",
-      path,
-      `ID '${id}' is already declared at '${existing}'.`,
-    );
+    addIssue(issues, "error", "duplicate-id", path, `ID '${id}' is already declared at '${existing}'.`);
     return;
   }
   ids.set(id, path);
@@ -97,28 +86,13 @@ const signedPolygonArea = (polygon: Polygon): number => {
   return sum / 2;
 };
 
-const validatePolygon = (
-  polygon: Polygon,
-  path: string,
-  issues: ValidationIssue[],
-): void => {
+const validatePolygon = (polygon: Polygon, path: string, issues: ValidationIssue[]): void => {
   if (Math.abs(signedPolygonArea(polygon)) < 1e-6) {
-    addIssue(
-      issues,
-      "error",
-      "degenerate-polygon",
-      path,
-      "Polygon has no usable area.",
-    );
+    addIssue(issues, "error", "degenerate-polygon", path, "Polygon has no usable area.");
   }
 };
 
-const rangesOverlap = (
-  leftStart: number,
-  leftEnd: number,
-  rightStart: number,
-  rightEnd: number,
-): boolean => {
+const rangesOverlap = (leftStart: number, leftEnd: number, rightStart: number, rightEnd: number): boolean => {
   const leftMinimum = Math.min(leftStart, leftEnd);
   const leftMaximum = Math.max(leftStart, leftEnd);
   const rightMinimum = Math.min(rightStart, rightEnd);
@@ -143,19 +117,9 @@ interface ValidationContext {
   readonly scoreAwards: Map<string, { readonly points: number; readonly path: string }>;
 }
 
-const requireAsset = (
-  context: ValidationContext,
-  assetId: Id<"asset">,
-  path: string,
-): void => {
+const requireAsset = (context: ValidationContext, assetId: Id<"asset">, path: string): void => {
   if (!context.assetIds.has(assetId)) {
-    addIssue(
-      context.issues,
-      "error",
-      "missing-asset",
-      path,
-      `Asset '${assetId}' is not declared.`,
-    );
+    addIssue(context.issues, "error", "missing-asset", path, `Asset '${assetId}' is not declared.`);
   }
 };
 
@@ -204,9 +168,9 @@ const validateConditionReferences = (
       return;
     case "all":
     case "any":
-      condition.conditions.forEach((child, index) =>
-        validateConditionReferences(child, `${path}.conditions[${index}]`, context),
-      );
+      condition.conditions.forEach((child, index) => {
+        validateConditionReferences(child, `${path}.conditions[${index}]`, context);
+      });
       return;
     case "not":
       validateConditionReferences(condition.condition, `${path}.condition`, context);
@@ -329,22 +293,13 @@ const validateAction = (
   }
 };
 
-const validateScene = (
-  scene: Scene,
-  sceneIndex: number,
-  context: ValidationContext,
-): void => {
+const validateScene = (scene: Scene, sceneIndex: number, context: ValidationContext): void => {
   const scenePath = `scenes[${sceneIndex}]`;
   registerId(context.ids, context.issues, scene.id, `${scenePath}.id`);
   requireAsset(context, scene.backgroundAssetId, `${scenePath}.backgroundAssetId`);
 
   scene.entrances.forEach((entrance, entranceIndex) => {
-    registerId(
-      context.ids,
-      context.issues,
-      entrance.id,
-      `${scenePath}.entrances[${entranceIndex}].id`,
-    );
+    registerId(context.ids, context.issues, entrance.id, `${scenePath}.entrances[${entranceIndex}].id`);
   });
 
   scene.navigationAreas.forEach((area, areaIndex) => {
@@ -371,18 +326,10 @@ const validateScene = (
   });
 
   for (let leftIndex = 0; leftIndex < scene.depthBands.length; leftIndex += 1) {
-    for (
-      let rightIndex = leftIndex + 1;
-      rightIndex < scene.depthBands.length;
-      rightIndex += 1
-    ) {
+    for (let rightIndex = leftIndex + 1; rightIndex < scene.depthBands.length; rightIndex += 1) {
       const left = scene.depthBands[leftIndex];
       const right = scene.depthBands[rightIndex];
-      if (
-        left &&
-        right &&
-        rangesOverlap(left.farY, left.nearY, right.farY, right.nearY)
-      ) {
+      if (left && right && rangesOverlap(left.farY, left.nearY, right.farY, right.nearY)) {
         addIssue(
           context.issues,
           "warning",
@@ -423,12 +370,7 @@ const validateScene = (
 
     hotspot.interactions.forEach((interaction, interactionIndex) => {
       const interactionPath = `${hotspotPath}.interactions[${interactionIndex}]`;
-      registerId(
-        context.ids,
-        context.issues,
-        interaction.id,
-        `${interactionPath}.id`,
-      );
+      registerId(context.ids, context.issues, interaction.id, `${interactionPath}.id`);
 
       if (interaction.itemId && !context.itemIds.has(interaction.itemId)) {
         addIssue(
@@ -440,30 +382,17 @@ const validateScene = (
         );
       }
       if (interaction.when) {
-        validateConditionReferences(
-          interaction.when,
-          `${interactionPath}.when`,
-          context,
-        );
+        validateConditionReferences(interaction.when, `${interactionPath}.when`, context);
       }
 
-      interaction.actions.forEach((action, actionIndex) =>
-        validateAction(
-          action,
-          `${interactionPath}.actions[${actionIndex}]`,
-          scene.id,
-          context,
-        ),
-      );
+      interaction.actions.forEach((action, actionIndex) => {
+        validateAction(action, `${interactionPath}.actions[${actionIndex}]`, scene.id, context);
+      });
     });
   });
 };
 
-const validateDialogue = (
-  graph: DialogueGraph,
-  graphIndex: number,
-  context: ValidationContext,
-): void => {
+const validateDialogue = (graph: DialogueGraph, graphIndex: number, context: ValidationContext): void => {
   const graphPath = `dialogues[${graphIndex}]`;
   registerId(context.ids, context.issues, graph.id, `${graphPath}.id`);
   const nodesById = new Map(graph.nodes.map((node) => [node.id as string, node]));
@@ -482,12 +411,12 @@ const validateDialogue = (
     const nodePath = `${graphPath}.nodes[${nodeIndex}]`;
     registerId(context.ids, context.issues, node.id, `${nodePath}.id`);
 
-    node.enterActions.forEach((action, actionIndex) =>
-      validateAction(action, `${nodePath}.enterActions[${actionIndex}]`, null, context),
-    );
-    node.exitActions.forEach((action, actionIndex) =>
-      validateAction(action, `${nodePath}.exitActions[${actionIndex}]`, null, context),
-    );
+    node.enterActions.forEach((action, actionIndex) => {
+      validateAction(action, `${nodePath}.enterActions[${actionIndex}]`, null, context);
+    });
+    node.exitActions.forEach((action, actionIndex) => {
+      validateAction(action, `${nodePath}.exitActions[${actionIndex}]`, null, context);
+    });
 
     node.lines.forEach((line, lineIndex) => {
       const linePath = `${nodePath}.lines[${lineIndex}]`;
@@ -518,22 +447,14 @@ const validateDialogue = (
       registerId(context.ids, context.issues, choice.id, `${choicePath}.id`);
 
       if (choice.visibleWhen) {
-        validateConditionReferences(
-          choice.visibleWhen,
-          `${choicePath}.visibleWhen`,
-          context,
-        );
+        validateConditionReferences(choice.visibleWhen, `${choicePath}.visibleWhen`, context);
       }
       if (choice.enabledWhen) {
-        validateConditionReferences(
-          choice.enabledWhen,
-          `${choicePath}.enabledWhen`,
-          context,
-        );
+        validateConditionReferences(choice.enabledWhen, `${choicePath}.enabledWhen`, context);
       }
-      choice.actions.forEach((action, actionIndex) =>
-        validateAction(action, `${choicePath}.actions[${actionIndex}]`, null, context),
-      );
+      choice.actions.forEach((action, actionIndex) => {
+        validateAction(action, `${choicePath}.actions[${actionIndex}]`, null, context);
+      });
 
       if (choice.nextNodeId && !nodesById.has(choice.nextNodeId)) {
         addIssue(
@@ -697,11 +618,7 @@ const validateSequenceCue = (
   }
 };
 
-const validateSequence = (
-  sequence: Sequence,
-  sequenceIndex: number,
-  context: ValidationContext,
-): void => {
+const validateSequence = (sequence: Sequence, sequenceIndex: number, context: ValidationContext): void => {
   const sequencePath = `sequences[${sequenceIndex}]`;
   registerId(context.ids, context.issues, sequence.id, `${sequencePath}.id`);
 
@@ -714,26 +631,16 @@ const validateSequence = (
       `Skip boundary ${sequence.skip.safeAfterTick} exceeds sequence duration ${sequence.durationTicks}.`,
     );
   }
-  sequence.skip.completionActions.forEach((action, actionIndex) =>
-    validateAction(
-      action,
-      `${sequencePath}.skip.completionActions[${actionIndex}]`,
-      null,
-      context,
-    ),
-  );
+  sequence.skip.completionActions.forEach((action, actionIndex) => {
+    validateAction(action, `${sequencePath}.skip.completionActions[${actionIndex}]`, null, context);
+  });
 
   sequence.tracks.forEach((track, trackIndex) => {
     const trackPath = `${sequencePath}.tracks[${trackIndex}]`;
     registerId(context.ids, context.issues, track.id, `${trackPath}.id`);
-    track.cues.forEach((cue, cueIndex) =>
-      validateSequenceCue(
-        cue,
-        `${trackPath}.cues[${cueIndex}]`,
-        sequence,
-        context,
-      ),
-    );
+    track.cues.forEach((cue, cueIndex) => {
+      validateSequenceCue(cue, `${trackPath}.cues[${cueIndex}]`, sequence, context);
+    });
   });
 };
 
@@ -772,9 +679,7 @@ const validateReachability = (context: ValidationContext): void => {
   });
 };
 
-export const validateProjectSemantics = (
-  project: AdventureProject,
-): readonly ValidationIssue[] => {
+export const validateProjectSemantics = (project: AdventureProject): readonly ValidationIssue[] => {
   const issues: ValidationIssue[] = [];
   const ids = new Map<string, string>();
   const assetIds = new Set(project.assets.map((asset) => asset.id as string));
@@ -790,18 +695,12 @@ export const validateProjectSemantics = (
   );
   const dialogueChoiceIds = new Set(
     project.dialogues.flatMap((dialogue) =>
-      dialogue.nodes.flatMap((node) =>
-        node.choices.map((choice) => choice.id as string),
-      ),
+      dialogue.nodes.flatMap((node) => node.choices.map((choice) => choice.id as string)),
     ),
   );
   const scenesById = new Map(project.scenes.map((scene) => [scene.id as string, scene]));
-  const dialoguesById = new Map(
-    project.dialogues.map((dialogue) => [dialogue.id as string, dialogue]),
-  );
-  const sequencesById = new Map(
-    project.sequences.map((sequence) => [sequence.id as string, sequence]),
-  );
+  const dialoguesById = new Map(project.dialogues.map((dialogue) => [dialogue.id as string, dialogue]));
+  const sequencesById = new Map(project.sequences.map((sequence) => [sequence.id as string, sequence]));
 
   const context: ValidationContext = {
     project,
@@ -822,9 +721,9 @@ export const validateProjectSemantics = (
 
   registerId(ids, issues, project.id, "id");
 
-  project.assets.forEach((asset, assetIndex) =>
-    registerId(ids, issues, asset.id, `assets[${assetIndex}].id`),
-  );
+  project.assets.forEach((asset, assetIndex) => {
+    registerId(ids, issues, asset.id, `assets[${assetIndex}].id`);
+  });
 
   project.inventoryItems.forEach((item, itemIndex) => {
     const itemPath = `inventoryItems[${itemIndex}]`;
@@ -875,15 +774,15 @@ export const validateProjectSemantics = (
     });
   });
 
-  project.scenes.forEach((scene, sceneIndex) =>
-    validateScene(scene, sceneIndex, context),
-  );
-  project.dialogues.forEach((dialogue, dialogueIndex) =>
-    validateDialogue(dialogue, dialogueIndex, context),
-  );
-  project.sequences.forEach((sequence, sequenceIndex) =>
-    validateSequence(sequence, sequenceIndex, context),
-  );
+  project.scenes.forEach((scene, sceneIndex) => {
+    validateScene(scene, sceneIndex, context);
+  });
+  project.dialogues.forEach((dialogue, dialogueIndex) => {
+    validateDialogue(dialogue, dialogueIndex, context);
+  });
+  project.sequences.forEach((sequence, sequenceIndex) => {
+    validateSequence(sequence, sequenceIndex, context);
+  });
 
   const startScene = scenesById.get(project.startSceneId);
   if (!startScene) {
@@ -929,6 +828,5 @@ export const validateProjectSemantics = (
   return issues;
 };
 
-export const hasValidationErrors = (
-  issues: readonly ValidationIssue[],
-): boolean => issues.some((issue) => issue.severity === "error");
+export const hasValidationErrors = (issues: readonly ValidationIssue[]): boolean =>
+  issues.some((issue) => issue.severity === "error");

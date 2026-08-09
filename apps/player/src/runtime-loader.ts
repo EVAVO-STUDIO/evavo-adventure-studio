@@ -1,12 +1,6 @@
 import type { Id } from "@evavo/adventure-project-schema";
-import type {
-  ResolvedFrame,
-  SpriteRenderNode,
-} from "@evavo/adventure-render-contract";
-import {
-  parseRuntimeBundle,
-  type RuntimeBundle,
-} from "@evavo/adventure-runtime-bundle";
+import type { ResolvedFrame, SpriteRenderNode } from "@evavo/adventure-render-contract";
+import { parseRuntimeBundle, type RuntimeBundle } from "@evavo/adventure-runtime-bundle";
 
 export class RuntimeBundleFetchError extends Error {
   readonly bundleUrl: string;
@@ -27,9 +21,7 @@ export interface RuntimeBundleFetchResponse {
   json(): Promise<unknown>;
 }
 
-export type RuntimeBundleFetch = (
-  input: string,
-) => Promise<RuntimeBundleFetchResponse>;
+export type RuntimeBundleFetch = (input: string) => Promise<RuntimeBundleFetchResponse>;
 
 export const loadRuntimeBundle = async (
   bundleUrl: string,
@@ -39,10 +31,7 @@ export const loadRuntimeBundle = async (
   try {
     response = await fetchBundle(bundleUrl);
   } catch (error) {
-    throw new RuntimeBundleFetchError(
-      bundleUrl,
-      error instanceof Error ? error.message : String(error),
-    );
+    throw new RuntimeBundleFetchError(bundleUrl, error instanceof Error ? error.message : String(error));
   }
 
   if (!response.ok) {
@@ -67,24 +56,17 @@ export const loadRuntimeBundle = async (
   return parseRuntimeBundle(input);
 };
 
-const renderNodeId = (value: string): Id<"render-node"> =>
-  value as Id<"render-node">;
+const renderNodeId = (value: string): Id<"render-node"> => value as Id<"render-node">;
 
 const backgroundNode = (bundle: RuntimeBundle): SpriteRenderNode => {
-  const scene = bundle.scenes.find(
-    (candidate) => candidate.id === bundle.startSceneId,
-  );
+  const scene = bundle.scenes.find((candidate) => candidate.id === bundle.startSceneId);
   if (!scene) {
     throw new Error(`Start scene '${bundle.startSceneId}' is unavailable.`);
   }
 
-  const asset = bundle.assets.find(
-    (candidate) => candidate.assetId === scene.backgroundAssetId,
-  );
+  const asset = bundle.assets.find((candidate) => candidate.assetId === scene.backgroundAssetId);
   if (!asset) {
-    throw new Error(
-      `Start scene '${scene.id}' background '${scene.backgroundAssetId}' is unavailable.`,
-    );
+    throw new Error(`Start scene '${scene.id}' background '${scene.backgroundAssetId}' is unavailable.`);
   }
   if (asset.kind !== "image") {
     throw new Error(
@@ -126,16 +108,11 @@ const backgroundNode = (bundle: RuntimeBundle): SpriteRenderNode => {
   };
 };
 
-export const createRuntimeStartFrame = (
-  bundle: RuntimeBundle,
-  tick: number,
-): ResolvedFrame => {
+export const createRuntimeStartFrame = (bundle: RuntimeBundle, tick: number): ResolvedFrame => {
   if (!Number.isSafeInteger(tick) || tick < 0) {
     throw new RangeError("Runtime preview tick must be a non-negative safe integer.");
   }
-  const scene = bundle.scenes.find(
-    (candidate) => candidate.id === bundle.startSceneId,
-  );
+  const scene = bundle.scenes.find((candidate) => candidate.id === bundle.startSceneId);
   if (!scene) {
     throw new Error(`Start scene '${bundle.startSceneId}' is unavailable.`);
   }

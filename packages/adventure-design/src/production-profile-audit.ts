@@ -25,9 +25,7 @@ export const auditAdventureProductionProfile = (
   profile: AdventureProductionProfile,
   input: AdventureProductionProfileAuditInput = {},
 ): AdventureProductionProfileReport => {
-  const issues: AdventureProductionProfileIssue[] = [
-    ...validateAdventureProductionProfile(profile),
-  ];
+  const issues: AdventureProductionProfileIssue[] = [...validateAdventureProductionProfile(profile)];
   const { design, project } = input;
   if (design && project && design.projectId !== project.id) {
     issues.push(
@@ -187,9 +185,7 @@ export const auditAdventureProductionProfile = (
   };
 };
 
-const profilesById = new Map(
-  adventureProductionProfiles.map((profile) => [profile.id, profile] as const),
-);
+const profilesById = new Map(adventureProductionProfiles.map((profile) => [profile.id, profile] as const));
 
 export const adventureProductionProfileById = (
   profileId: AdventureProductionProfileId,

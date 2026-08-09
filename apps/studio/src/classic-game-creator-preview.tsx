@@ -1,21 +1,18 @@
-import type { KeyboardEvent as ReactKeyboardEvent, ReactNode } from "react";
 import type {
   ClassicAdventureCreatorActor,
   ClassicAdventureCreatorProject,
   ClassicAdventureCreatorProp,
   ClassicAdventureCreatorScene,
 } from "@evavo/adventure-design/classic-game-creator";
+import type { KeyboardEvent as ReactKeyboardEvent, ReactNode } from "react";
 
 export interface CreatorEntitySelection {
   readonly kind: "actor" | "prop";
   readonly id: string;
 }
 
-const colourAt = (
-  project: ClassicAdventureCreatorProject,
-  index: number,
-  fallback: string,
-): string => project.palette.anchors[index] ?? fallback;
+const colourAt = (project: ClassicAdventureCreatorProject, index: number, fallback: string): string =>
+  project.palette.anchors[index] ?? fallback;
 
 const SceneBackdrop = ({
   project,
@@ -130,6 +127,7 @@ const ActorGlyph = ({
     onNudge(delta[0] ?? 0, delta[1] ?? 0);
   };
   return (
+    // biome-ignore lint/a11y/useSemanticElements: SVG interaction nodes cannot use HTML button elements.
     <g
       className={`ccp-entity ccp-actor${selected ? " is-selected" : ""}`}
       role="button"
@@ -148,16 +146,9 @@ const ActorGlyph = ({
       <path
         d={`M${x + width * 0.2} ${y + actor.height} L${x + width * 0.32} ${
           y + headRadius * 2
-        } L${x + width * 0.68} ${y + headRadius * 2} L${x + width * 0.82} ${
-          y + actor.height
-        }Z`}
+        } L${x + width * 0.68} ${y + headRadius * 2} L${x + width * 0.82} ${y + actor.height}Z`}
       />
-      <circle
-        cx={actor.position.x}
-        cy={y + headRadius}
-        r={headRadius}
-        className="ccp-actor-head"
-      />
+      <circle cx={actor.position.x} cy={y + headRadius} r={headRadius} className="ccp-actor-head" />
       <path
         d={
           actor.facing === "right"
@@ -166,13 +157,7 @@ const ActorGlyph = ({
         }
         className="ccp-actor-facing"
       />
-      <rect
-        x={x - 3}
-        y={y - 3}
-        width={width + 6}
-        height={actor.height + 8}
-        className="ccp-selection-box"
-      />
+      <rect x={x - 3} y={y - 3} width={width + 6} height={actor.height + 8} className="ccp-selection-box" />
     </g>
   );
 };
@@ -205,6 +190,7 @@ const PropGlyph = ({
     onNudge(delta[0] ?? 0, delta[1] ?? 0);
   };
   return (
+    // biome-ignore lint/a11y/useSemanticElements: SVG interaction nodes cannot use HTML button elements.
     <g
       className={`ccp-entity ccp-prop is-${prop.role}${selected ? " is-selected" : ""}`}
       role="button"
@@ -260,11 +246,7 @@ const TemporaryIconBar = ({ project }: { readonly project: ClassicAdventureCreat
   </g>
 );
 
-const StorybookPortraitExchange = ({
-  scene,
-}: {
-  readonly scene: ClassicAdventureCreatorScene;
-}) => (
+const StorybookPortraitExchange = ({ scene }: { readonly scene: ClassicAdventureCreatorScene }) => (
   <g className="ccp-interface-preview ccp-storybook-dialogue">
     <rect x="20" y="146" width="280" height="42" rx="2" />
     <rect x="28" y="152" width="32" height="30" />
@@ -273,7 +255,9 @@ const StorybookPortraitExchange = ({
     <path d="M34 179Q44 166 54 179" />
     <circle cx="276" cy="162" r="7" />
     <path d="M266 179Q276 166 286 179" />
-    <text x="160" y="162" textAnchor="middle">{scene.statusText}</text>
+    <text x="160" y="162" textAnchor="middle">
+      {scene.statusText}
+    </text>
     <path d="M76 169H244" />
     <path d="M88 177H232" />
   </g>
@@ -304,23 +288,16 @@ const PersistentVerbPanel = ({ project }: { readonly project: ClassicAdventureCr
     <g className="ccp-interface-preview ccp-verb-panel">
       <rect x="0" y={top} width="320" height={200 - top} />
       <rect x="6" y={top + 4} width="194" height="12" className="ccp-sentence-line" />
-      <text x="10" y={top + 13}>USE STAMPED PERMIT WITH OFFICE WINDOW</text>
+      <text x="10" y={top + 13}>
+        USE STAMPED PERMIT WITH OFFICE WINDOW
+      </text>
       {project.interface.verbs.slice(0, 9).map((verb, index) => {
         const column = index % 3;
         const row = Math.floor(index / 3);
         return (
           <g key={verb}>
-            <rect
-              x={6 + column * 64}
-              y={top + 20 + row * 10}
-              width="60"
-              height="8"
-            />
-            <text
-              x={36 + column * 64}
-              y={top + 27 + row * 10}
-              textAnchor="middle"
-            >
+            <rect x={6 + column * 64} y={top + 20 + row * 10} width="60" height="8" />
+            <text x={36 + column * 64} y={top + 27 + row * 10} textAnchor="middle">
               {verb.toUpperCase()}
             </text>
           </g>
@@ -355,17 +332,16 @@ const InterfaceLayer = ({
     }
     return null;
   }
-  if (
-    project.interface.family === "portrait-topic-ledger" &&
-    scene.kind === "dialogue"
-  ) {
+  if (project.interface.family === "portrait-topic-ledger" && scene.kind === "dialogue") {
     return <TopicLedger project={project} />;
   }
   if (project.interface.family === "portrait-topic-ledger") {
     return (
       <g className="ccp-interface-preview ccp-narration-strip">
         <rect x="8" y="174" width="304" height="18" />
-        <text x="160" y="186" textAnchor="middle">{scene.statusText}</text>
+        <text x="160" y="186" textAnchor="middle">
+          {scene.statusText}
+        </text>
       </g>
     );
   }
@@ -389,11 +365,7 @@ export const CreatorNativePreview = ({
   readonly scene: ClassicAdventureCreatorScene;
   readonly selection: CreatorEntitySelection | null;
   readonly onSelect: (selection: CreatorEntitySelection) => void;
-  readonly onNudge: (
-    selection: CreatorEntitySelection,
-    deltaX: number,
-    deltaY: number,
-  ) => void;
+  readonly onNudge: (selection: CreatorEntitySelection, deltaX: number, deltaY: number) => void;
 }) => (
   <div className={`ccp-native-frame is-${project.family}`}>
     <svg
@@ -448,12 +420,8 @@ export const CreatorNativePreview = ({
       </g>
       <g className="ccp-focal-marker">
         <circle cx={scene.focalPoint.x} cy={scene.focalPoint.y} r="5" />
-        <path
-          d={`M${scene.focalPoint.x - 8} ${scene.focalPoint.y}H${scene.focalPoint.x + 8}`}
-        />
-        <path
-          d={`M${scene.focalPoint.x} ${scene.focalPoint.y - 8}V${scene.focalPoint.y + 8}`}
-        />
+        <path d={`M${scene.focalPoint.x - 8} ${scene.focalPoint.y}H${scene.focalPoint.x + 8}`} />
+        <path d={`M${scene.focalPoint.x} ${scene.focalPoint.y - 8}V${scene.focalPoint.y + 8}`} />
       </g>
       <InterfaceLayer project={project} scene={scene} />
     </svg>

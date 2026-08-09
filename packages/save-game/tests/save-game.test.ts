@@ -1,9 +1,10 @@
-import { describe, expect, it } from "vitest";
+import type { Id } from "@evavo/adventure-project-schema";
 import { parseRuntimeBundle } from "@evavo/adventure-runtime-bundle";
 import {
   createInitialInteractiveRuntimeWorldState,
   type InteractiveRuntimeWorldState,
 } from "@evavo/adventure-scene-runtime/commands";
+import { describe, expect, it } from "vitest";
 import {
   createSaveGame,
   loadSaveGame,
@@ -80,7 +81,6 @@ const bundleInput = (title = "Save Fixture") => ({
         },
       ],
       fallbackText: "Nothing happens.",
-      interactionIndex: {},
     },
   ],
   dialogues: [],
@@ -147,7 +147,7 @@ const withActiveSequence = (
     ...world.story,
     activeSequences: [
       {
-        sequenceId,
+        sequenceId: sequenceId as Id<"sequence">,
         elapsedTicks,
         iteration: 0,
         nextCueIndexByTrack: {},
@@ -216,11 +216,7 @@ describe("save-game serialization", () => {
   });
 
   it("detects payload tampering before compatibility checks", () => {
-    const save = createSaveGame(
-      bundle,
-      createInitialInteractiveRuntimeWorldState(bundle),
-      interfaceState,
-    );
+    const save = createSaveGame(bundle, createInitialInteractiveRuntimeWorldState(bundle), interfaceState);
 
     expect(() =>
       parseSaveGame({
@@ -233,24 +229,14 @@ describe("save-game serialization", () => {
 
 describe("save-game compatibility", () => {
   it("rejects a save from a different runtime bundle", () => {
-    const save = createSaveGame(
-      bundle,
-      createInitialInteractiveRuntimeWorldState(bundle),
-      interfaceState,
-    );
+    const save = createSaveGame(bundle, createInitialInteractiveRuntimeWorldState(bundle), interfaceState);
     const changedBundle = parseRuntimeBundle(bundleInput("Changed Build"));
 
-    expect(() => loadSaveGame(changedBundle, save)).toThrow(
-      SaveGameCompatibilityError,
-    );
+    expect(() => loadSaveGame(changedBundle, save)).toThrow(SaveGameCompatibilityError);
   });
 
   it("rejects incompatible selected inventory and parser history", () => {
-    const save = createSaveGame(
-      bundle,
-      createInitialInteractiveRuntimeWorldState(bundle),
-      interfaceState,
-    );
+    const save = createSaveGame(bundle, createInitialInteractiveRuntimeWorldState(bundle), interfaceState);
     const incompatible = {
       ...save,
       interface: {
@@ -263,9 +249,7 @@ describe("save-game compatibility", () => {
       },
     };
 
-    expect(() => loadSaveGame(bundle, incompatible)).toThrow(
-      SaveGameIntegrityError,
-    );
+    expect(() => loadSaveGame(bundle, incompatible)).toThrow(SaveGameIntegrityError);
   });
 });
 
@@ -287,9 +271,7 @@ describe("sequence save policy", () => {
       1,
     );
 
-    expect(() => createSaveGame(bundle, world, interfaceState)).toThrow(
-      SaveGamePolicyError,
-    );
+    expect(() => createSaveGame(bundle, world, interfaceState)).toThrow(SaveGamePolicyError);
   });
 
   it("blocks sequences that disable saving", () => {
@@ -299,8 +281,6 @@ describe("sequence save policy", () => {
       0,
     );
 
-    expect(() => createSaveGame(bundle, world, interfaceState)).toThrow(
-      SaveGamePolicyError,
-    );
+    expect(() => createSaveGame(bundle, world, interfaceState)).toThrow(SaveGamePolicyError);
   });
 });

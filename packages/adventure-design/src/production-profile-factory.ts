@@ -8,10 +8,7 @@ import type {
   AdventurePuzzleGrammar,
   AdventureSplashProfile,
 } from "./production-profile-types.js";
-import type {
-  AdventureCompositionMode,
-  AdventureProductionMode,
-} from "./types.js";
+import type { AdventureCompositionMode, AdventureProductionMode } from "./types.js";
 
 export const palette = (
   maxColours: number,
@@ -92,12 +89,12 @@ export const interfaceGrammar = (
   showScore,
 });
 
-export const audio = (
-  music: string,
-  ambience: string,
-  transitionSting: string,
-  interfaceSound: string,
-) => ({ music, ambience, transitionSting, interfaceSound });
+export const audio = (music: string, ambience: string, transitionSting: string, interfaceSound: string) => ({
+  music,
+  ambience,
+  transitionSting,
+  interfaceSound,
+});
 
 export const showcase = (
   id: string,
@@ -169,4 +166,3 @@ export const profile = (spec: ProfileSpec): AdventureProductionProfile => ({
   ],
   reviewQuestions: spec.reviewQuestions,
 });
-

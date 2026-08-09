@@ -1,5 +1,5 @@
-import type { AdventurePlayFeelProfile } from "./types.js";
 import { baseProfile, sharedInput, sharedPresentation } from "./preset-factory.js";
+import type { AdventurePlayFeelProfile } from "./types.js";
 
 export const interactionPlayFeelProfiles: readonly AdventurePlayFeelProfile[] = [
   baseProfile({

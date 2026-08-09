@@ -19,11 +19,7 @@ export class ProjectEditorCommandError extends Error {
     | "empty-batch";
   readonly path: string;
 
-  constructor(
-    code: ProjectEditorCommandError["code"],
-    path: string,
-    message: string,
-  ) {
+  constructor(code: ProjectEditorCommandError["code"], path: string, message: string) {
     super(message);
     this.name = "ProjectEditorCommandError";
     this.code = code;
@@ -147,9 +143,7 @@ const canonicalize = (value: unknown): unknown => {
   if (value && typeof value === "object") {
     const source = value as Readonly<Record<string, unknown>>;
     const output: Record<string, unknown> = {};
-    for (const key of Object.keys(source).sort((left, right) =>
-      left.localeCompare(right),
-    )) {
+    for (const key of Object.keys(source).sort((left, right) => left.localeCompare(right))) {
       const child = source[key];
       if (child !== undefined) output[key] = canonicalize(child);
     }
@@ -166,12 +160,7 @@ export const canonicalProjectEditorJson = (value: unknown): string => {
   return output;
 };
 
-const insertAt = <T>(
-  values: readonly T[],
-  index: number,
-  value: T,
-  path: string,
-): T[] => {
+const insertAt = <T>(values: readonly T[], index: number, value: T, path: string): T[] => {
   if (!Number.isSafeInteger(index) || index < 0 || index > values.length) {
     throw new ProjectEditorCommandError(
       "invalid-index",
@@ -179,11 +168,7 @@ const insertAt = <T>(
       `Insert index ${index} is outside 0 to ${values.length}.`,
     );
   }
-  return [
-    ...values.slice(0, index).map(cloneJson),
-    cloneJson(value),
-    ...values.slice(index).map(cloneJson),
-  ];
+  return [...values.slice(0, index).map(cloneJson), cloneJson(value), ...values.slice(index).map(cloneJson)];
 };
 
 const removeAt = <T>(values: readonly T[], index: number): T[] => [
@@ -205,20 +190,12 @@ const findIndexOrThrow = <T>(
 ): number => {
   const index = values.findIndex(predicate);
   if (index < 0) {
-    throw new ProjectEditorCommandError(
-      "missing-entity",
-      path,
-      `${label} does not exist.`,
-    );
+    throw new ProjectEditorCommandError("missing-entity", path, `${label} does not exist.`);
   }
   return index;
 };
 
-const assertStableIdentity = (
-  expected: string,
-  actual: string,
-  path: string,
-): void => {
+const assertStableIdentity = (expected: string, actual: string, path: string): void => {
   if (expected !== actual) {
     throw new ProjectEditorCommandError(
       "identity-change",
@@ -285,11 +262,7 @@ const assertUniqueIds = (
     }
     local.add(id);
     if (existing.has(id) && !ignored.has(id)) {
-      throw new ProjectEditorCommandError(
-        "duplicate-id",
-        path,
-        `ID '${id}' already exists in the project.`,
-      );
+      throw new ProjectEditorCommandError("duplicate-id", path, `ID '${id}' already exists in the project.`);
     }
   }
 };
@@ -309,11 +282,7 @@ const getScene = (
   return { index, scene };
 };
 
-const updateScene = (
-  project: AdventureProject,
-  index: number,
-  scene: Scene,
-): AdventureProject => ({
+const updateScene = (project: AdventureProject, index: number, scene: Scene): AdventureProject => ({
   ...project,
   scenes: replaceAt(project.scenes, index, scene),
 });
@@ -339,12 +308,7 @@ const applyNavigationArea = (
     return {
       project: updateScene(project, sceneIndex, {
         ...scene,
-        navigationAreas: insertAt(
-          scene.navigationAreas,
-          command.index,
-          command.area,
-          "index",
-        ),
+        navigationAreas: insertAt(scene.navigationAreas, command.index, command.area, "index"),
       }),
       inverse: {
         kind: "remove-navigation-area",
@@ -376,20 +340,11 @@ const applyNavigationArea = (
     };
   }
   assertStableIdentity(command.areaId, command.area.id, "area.id");
-  assertUniqueIds(
-    project,
-    navigationAreaIds(command.area),
-    "area",
-    new Set(navigationAreaIds(previous)),
-  );
+  assertUniqueIds(project, navigationAreaIds(command.area), "area", new Set(navigationAreaIds(previous)));
   return {
     project: updateScene(project, sceneIndex, {
       ...scene,
-      navigationAreas: replaceAt(
-        scene.navigationAreas,
-        entityIndex,
-        command.area,
-      ),
+      navigationAreas: replaceAt(scene.navigationAreas, entityIndex, command.area),
     }),
     inverse: {
       kind: "replace-navigation-area",
@@ -413,12 +368,7 @@ const applyDepthBand = (
     return {
       project: updateScene(project, sceneIndex, {
         ...scene,
-        depthBands: insertAt(
-          scene.depthBands,
-          command.index,
-          command.band,
-          "index",
-        ),
+        depthBands: insertAt(scene.depthBands, command.index, command.band, "index"),
       }),
       inverse: {
         kind: "remove-depth-band",
@@ -450,12 +400,7 @@ const applyDepthBand = (
     };
   }
   assertStableIdentity(command.bandId, command.band.id, "band.id");
-  assertUniqueIds(
-    project,
-    depthBandIds(command.band),
-    "band",
-    new Set(depthBandIds(previous)),
-  );
+  assertUniqueIds(project, depthBandIds(command.band), "band", new Set(depthBandIds(previous)));
   return {
     project: updateScene(project, sceneIndex, {
       ...scene,
@@ -483,12 +428,7 @@ const applyHotspot = (
     return {
       project: updateScene(project, sceneIndex, {
         ...scene,
-        hotspots: insertAt(
-          scene.hotspots,
-          command.index,
-          command.hotspot,
-          "index",
-        ),
+        hotspots: insertAt(scene.hotspots, command.index, command.hotspot, "index"),
       }),
       inverse: {
         kind: "remove-hotspot",
@@ -520,12 +460,7 @@ const applyHotspot = (
     };
   }
   assertStableIdentity(command.hotspotId, command.hotspot.id, "hotspot.id");
-  assertUniqueIds(
-    project,
-    hotspotIds(command.hotspot),
-    "hotspot",
-    new Set(hotspotIds(previous)),
-  );
+  assertUniqueIds(project, hotspotIds(command.hotspot), "hotspot", new Set(hotspotIds(previous)));
   return {
     project: updateScene(project, sceneIndex, {
       ...scene,
@@ -553,12 +488,7 @@ const applyEntrance = (
     return {
       project: updateScene(project, sceneIndex, {
         ...scene,
-        entrances: insertAt(
-          scene.entrances,
-          command.index,
-          command.entrance,
-          "index",
-        ),
+        entrances: insertAt(scene.entrances, command.index, command.entrance, "index"),
       }),
       inverse: {
         kind: "remove-entrance",
@@ -600,17 +530,8 @@ const applyEntrance = (
       },
     };
   }
-  assertStableIdentity(
-    command.entranceId,
-    command.entrance.id,
-    "entrance.id",
-  );
-  assertUniqueIds(
-    project,
-    entranceIds(command.entrance),
-    "entrance",
-    new Set(entranceIds(previous)),
-  );
+  assertStableIdentity(command.entranceId, command.entrance.id, "entrance.id");
+  assertUniqueIds(project, entranceIds(command.entrance), "entrance", new Set(entranceIds(previous)));
   return {
     project: updateScene(project, sceneIndex, {
       ...scene,
@@ -663,12 +584,7 @@ export const applyProjectEditorCommand = (
       return {
         project: {
           ...project,
-          scenes: insertAt(
-            project.scenes,
-            command.index,
-            command.scene,
-            "index",
-          ),
+          scenes: insertAt(project.scenes, command.index, command.scene, "index"),
         },
         inverse: { kind: "remove-scene", sceneId: command.scene.id },
       };
@@ -691,9 +607,7 @@ export const applyProjectEditorCommand = (
       assertStableIdentity(command.sceneId, command.scene.id, "scene.id");
       if (
         command.sceneId === project.startSceneId &&
-        !command.scene.entrances.some(
-          (entrance) => entrance.id === project.startEntranceId,
-        )
+        !command.scene.entrances.some((entrance) => entrance.id === project.startEntranceId)
       ) {
         throw new ProjectEditorCommandError(
           "protected-entity",
@@ -701,12 +615,7 @@ export const applyProjectEditorCommand = (
           `Start entrance '${project.startEntranceId}' must remain in the start scene.`,
         );
       }
-      assertUniqueIds(
-        project,
-        sceneIds(command.scene),
-        "scene",
-        new Set(sceneIds(previous)),
-      );
+      assertUniqueIds(project, sceneIds(command.scene), "scene", new Set(sceneIds(previous)));
       return {
         project: updateScene(project, index, command.scene),
         inverse: {
@@ -735,9 +644,7 @@ export const applyProjectEditorCommand = (
   }
 };
 
-export const createProjectEditorDocument = (
-  project: AdventureProject,
-): ProjectEditorDocumentState => {
+export const createProjectEditorDocument = (project: AdventureProject): ProjectEditorDocumentState => {
   const snapshot = cloneJson(project);
   return {
     project: snapshot,
@@ -753,11 +660,8 @@ export const markProjectEditorDocumentSaved = (
   savedProject: cloneJson(document.project),
 });
 
-export const isProjectEditorDocumentDirty = (
-  document: ProjectEditorDocumentState,
-): boolean =>
-  canonicalProjectEditorJson(document.project) !==
-  canonicalProjectEditorJson(document.savedProject);
+export const isProjectEditorDocumentDirty = (document: ProjectEditorDocumentState): boolean =>
+  canonicalProjectEditorJson(document.project) !== canonicalProjectEditorJson(document.savedProject);
 
 const applyToDocument = (
   document: ProjectEditorDocumentState,
@@ -777,9 +681,7 @@ const applyToDocument = (
   };
 };
 
-export const createProjectEditorHistory = (
-  project: AdventureProject,
-): ProjectEditorHistoryState => ({
+export const createProjectEditorHistory = (project: AdventureProject): ProjectEditorHistoryState => ({
   document: createProjectEditorDocument(project),
   undoStack: [],
   redoStack: [],
@@ -792,17 +694,12 @@ export const executeProjectEditorCommand = (
   const applied = applyToDocument(history.document, command);
   return {
     document: applied.document,
-    undoStack: [
-      ...history.undoStack,
-      { undo: applied.inverse, redo: cloneJson(command) },
-    ],
+    undoStack: [...history.undoStack, { undo: applied.inverse, redo: cloneJson(command) }],
     redoStack: [],
   };
 };
 
-export const undoProjectEditorCommand = (
-  history: ProjectEditorHistoryState,
-): ProjectEditorHistoryState => {
+export const undoProjectEditorCommand = (history: ProjectEditorHistoryState): ProjectEditorHistoryState => {
   const entry = history.undoStack.at(-1);
   if (!entry) return history;
   const applied = applyToDocument(history.document, entry.undo);
@@ -813,9 +710,7 @@ export const undoProjectEditorCommand = (
   };
 };
 
-export const redoProjectEditorCommand = (
-  history: ProjectEditorHistoryState,
-): ProjectEditorHistoryState => {
+export const redoProjectEditorCommand = (history: ProjectEditorHistoryState): ProjectEditorHistoryState => {
   const entry = history.redoStack.at(-1);
   if (!entry) return history;
   const applied = applyToDocument(history.document, entry.redo);

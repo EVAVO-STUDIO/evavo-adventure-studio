@@ -1,9 +1,10 @@
+import { actorSchema, type Id } from "@evavo/adventure-project-schema";
 import { describe, expect, it } from "vitest";
-import { actorSchema } from "@evavo/adventure-project-schema";
+import { parseAnimationEditorCommand } from "../src/command-schema.js";
 import {
+  type AnimationEditorCommandError,
   animationClipDurationTicks,
   animationFrameTimeline,
-  AnimationEditorCommandError,
   createAnimationEditorHistory,
   executeAnimationEditorCommand,
   frameUsage,
@@ -13,7 +14,8 @@ import {
   undoAnimationEditorCommand,
   validateEditableActor,
 } from "../src/index.js";
-import { parseAnimationEditorCommand } from "../src/command-schema.js";
+
+const id = <T extends string>(value: string) => value as Id<T>;
 
 const actor = actorSchema.parse({
   id: "actor.detective",
@@ -110,7 +112,7 @@ describe("actor animation validation", () => {
         ...actor.animations,
         {
           ...actor.animations[0]!,
-          id: "animation.detective.idle-east-duplicate",
+          id: id<"animation-clip">("animation.detective.idle-east-duplicate"),
         },
       ],
     };
@@ -178,8 +180,8 @@ describe("actor animation history", () => {
         kind: "replace-clip-frame",
         animationId: animation.id,
         frameIndex: 0,
-        expectedFrameId: "frame.detective.walk-1",
-        frameId: "frame.detective.idle-2",
+        expectedFrameId: id<"sprite-frame">("frame.detective.walk-1"),
+        frameId: id<"sprite-frame">("frame.detective.idle-2"),
       }),
     ).toThrowError(
       expect.objectContaining<Partial<AnimationEditorCommandError>>({
@@ -189,45 +191,40 @@ describe("actor animation history", () => {
   });
 
   it("supports atomic frame and clip creation", () => {
-    const history = executeAnimationEditorCommand(
-      createAnimationEditorHistory(actor),
-      {
-        kind: "batch",
-        commands: [
-          {
-            kind: "insert-frame",
-            index: actor.frames.length,
-            frame: {
-              id: "frame.detective.look-up",
-              assetId: "asset.detective",
-              sourceRect: { x: 94, y: 2, width: 20, height: 31 },
-              sourceSize: { width: 26, height: 37 },
-              trimOffset: { x: 3, y: 4 },
-              pivot: { x: 13, y: 36 },
-              footPoint: { x: 13, y: 36 },
-              durationTicks: 30,
-              mirrorEligible: true,
-            },
+    const history = executeAnimationEditorCommand(createAnimationEditorHistory(actor), {
+      kind: "batch",
+      commands: [
+        {
+          kind: "insert-frame",
+          index: actor.frames.length,
+          frame: {
+            id: id<"sprite-frame">("frame.detective.look-up"),
+            assetId: id<"asset">("asset.detective"),
+            sourceRect: { x: 94, y: 2, width: 20, height: 31 },
+            sourceSize: { width: 26, height: 37 },
+            trimOffset: { x: 3, y: 4 },
+            pivot: { x: 13, y: 36 },
+            footPoint: { x: 13, y: 36 },
+            durationTicks: 30,
+            mirrorEligible: true,
           },
-          {
-            kind: "insert-animation",
-            index: actor.animations.length,
-            animation: {
-              id: "animation.detective.look-up-east",
-              state: "look-up",
-              facing: "east",
-              frameIds: ["frame.detective.look-up"],
-              loop: false,
-              interruptible: false,
-            },
+        },
+        {
+          kind: "insert-animation",
+          index: actor.animations.length,
+          animation: {
+            id: id<"animation-clip">("animation.detective.look-up-east"),
+            state: "look-up",
+            facing: "east",
+            frameIds: [id<"sprite-frame">("frame.detective.look-up")],
+            loop: false,
+            interruptible: false,
           },
-        ],
-      },
-    );
+        },
+      ],
+    });
 
-    expect(history.document.actor.frames.at(-1)?.id).toBe(
-      "frame.detective.look-up",
-    );
+    expect(history.document.actor.frames.at(-1)?.id).toBe("frame.detective.look-up");
     expect(history.document.actor.animations.at(-1)?.state).toBe("look-up");
     expect(history.undoStack).toHaveLength(1);
   });
@@ -235,9 +232,7 @@ describe("actor animation history", () => {
 
 describe("animation timing utilities", () => {
   it("emits exact authored frame windows", () => {
-    expect(
-      animationFrameTimeline(actor, "animation.detective.idle-east"),
-    ).toEqual([
+    expect(animationFrameTimeline(actor, id<"animation-clip">("animation.detective.idle-east"))).toEqual([
       {
         frameIndex: 0,
         frameId: "frame.detective.idle-1",
@@ -248,16 +243,14 @@ describe("animation timing utilities", () => {
       },
       {
         frameIndex: 1,
-        frameId: "frame.detective.idle-2",
+        frameId: id<"sprite-frame">("frame.detective.idle-2"),
         startTick: 18,
         endTick: 26,
         durationTicks: 8,
         events: [],
       },
     ]);
-    expect(
-      animationClipDurationTicks(actor, "animation.detective.idle-east"),
-    ).toBe(26);
+    expect(animationClipDurationTicks(actor, id<"animation-clip">("animation.detective.idle-east"))).toBe(26);
   });
 });
 
@@ -279,8 +272,6 @@ describe("animation command schema", () => {
   });
 
   it("rejects empty batches", () => {
-    expect(() =>
-      parseAnimationEditorCommand({ kind: "batch", commands: [] }),
-    ).toThrow();
+    expect(() => parseAnimationEditorCommand({ kind: "batch", commands: [] })).toThrow();
   });
 });

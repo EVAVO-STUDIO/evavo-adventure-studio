@@ -17,8 +17,7 @@ body {
   height: 100%;
   margin: 0;
   overflow: hidden;
-  background:
-    radial-gradient(circle at 50% 35%, #161924 0, #0b0d14 44%, #05060a 100%);
+  background: radial-gradient(circle at 50% 35%, #161924 0, #0b0d14 44%, #05060a 100%);
 }
 
 body {
@@ -65,7 +64,6 @@ body {
 
 .player-host canvas {
   image-rendering: pixelated;
-  image-rendering: crisp-edges;
 }
 
 .player-status {

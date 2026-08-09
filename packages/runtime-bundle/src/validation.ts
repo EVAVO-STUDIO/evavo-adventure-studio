@@ -1,7 +1,4 @@
-import {
-  portablePathKey,
-  portableRelativePathError,
-} from "@evavo/adventure-asset-contract/portable-path";
+import { portablePathKey, portableRelativePathError } from "@evavo/adventure-asset-contract/portable-path";
 import type { RuntimeAssetRecord } from "@evavo/adventure-asset-contract/runtime-asset";
 import type { RuntimeBundle } from "./index.js";
 
@@ -68,9 +65,7 @@ const registerId = (
   }
 };
 
-const runtimeAssetsById = (
-  assets: readonly RuntimeAssetRecord[],
-): ReadonlyMap<string, RuntimeAssetRecord> =>
+const runtimeAssetsById = (assets: readonly RuntimeAssetRecord[]): ReadonlyMap<string, RuntimeAssetRecord> =>
   new Map(assets.map((asset) => [asset.assetId as string, asset] as const));
 
 const sameRectangle = (
@@ -87,10 +82,7 @@ const sameRectangle = (
     readonly height: number;
   },
 ): boolean =>
-  left.x === right.x &&
-  left.y === right.y &&
-  left.width === right.width &&
-  left.height === right.height;
+  left.x === right.x && left.y === right.y && left.width === right.width && left.height === right.height;
 
 const sameSize = (
   left: { readonly width: number; readonly height: number },
@@ -102,14 +94,8 @@ const samePoint = (
   right: { readonly x: number; readonly y: number },
 ): boolean => left.x === right.x && left.y === right.y;
 
-const validateRuntimeAssets = (
-  bundle: RuntimeBundle,
-  issues: RuntimeBundleIssue[],
-): void => {
-  const paths = new Map<
-    string,
-    { readonly path: string; readonly location: string }
-  >();
+const validateRuntimeAssets = (bundle: RuntimeBundle, issues: RuntimeBundleIssue[]): void => {
+  const paths = new Map<string, { readonly path: string; readonly location: string }>();
 
   bundle.assets.forEach((asset, assetIndex) => {
     const assetPath = `assets[${assetIndex}]`;
@@ -176,9 +162,7 @@ const validateRuntimeAssets = (
     }
 
     const pageRoles = new Set<string>();
-    const pageByRole = new Map(
-      asset.metadata.pages.map((page) => [page.outputRole, page] as const),
-    );
+    const pageByRole = new Map(asset.metadata.pages.map((page) => [page.outputRole, page] as const));
     asset.metadata.pages.forEach((page, pageIndex) => {
       const pagePath = `${assetPath}.metadata.pages[${pageIndex}]`;
       if (pageRoles.has(page.outputRole)) {
@@ -234,10 +218,8 @@ const validateRuntimeAssets = (
       }
 
       if (
-        frame.trimOffset.x + frame.sourceRect.width >
-          frame.originalSize.width ||
-        frame.trimOffset.y + frame.sourceRect.height >
-          frame.originalSize.height
+        frame.trimOffset.x + frame.sourceRect.width > frame.originalSize.width ||
+        frame.trimOffset.y + frame.sourceRect.height > frame.originalSize.height
       ) {
         addIssue(
           issues,
@@ -277,9 +259,7 @@ const validateActorFrames = (
       }
 
       if (asset.kind === "spritesheet") {
-        const compiledFrame = asset.metadata.frames.find(
-          (candidate) => candidate.frameId === frame.id,
-        );
+        const compiledFrame = asset.metadata.frames.find((candidate) => candidate.frameId === frame.id);
         if (!compiledFrame) {
           addIssue(
             issues,
@@ -376,12 +356,7 @@ const validateDialogues = (
         );
       }
       node.choices.forEach((choice, choiceIndex) => {
-        registerId(
-          ids,
-          issues,
-          choice.id,
-          `${nodePath}.choices[${choiceIndex}].id`,
-        );
+        registerId(ids, issues, choice.id, `${nodePath}.choices[${choiceIndex}].id`);
         if (choice.nextNodeId && !nodeIds.has(choice.nextNodeId)) {
           addIssue(
             issues,
@@ -406,22 +381,18 @@ const validateDialogues = (
   });
 };
 
-export const validateRuntimeBundleSemantics = (
-  bundle: RuntimeBundle,
-): readonly RuntimeBundleIssue[] => {
+export const validateRuntimeBundleSemantics = (bundle: RuntimeBundle): readonly RuntimeBundleIssue[] => {
   const issues: RuntimeBundleIssue[] = [];
   const ids = new Map<string, string>();
   const assetsById = runtimeAssetsById(bundle.assets);
 
   registerId(ids, issues, bundle.projectId, "projectId");
-  bundle.assets.forEach((asset, assetIndex) =>
-    registerId(ids, issues, asset.assetId, `assets[${assetIndex}].assetId`),
-  );
+  bundle.assets.forEach((asset, assetIndex) => {
+    registerId(ids, issues, asset.assetId, `assets[${assetIndex}].assetId`);
+  });
   validateRuntimeAssets(bundle, issues);
 
-  const startScene = bundle.scenes.find(
-    (scene) => scene.id === bundle.startSceneId,
-  );
+  const startScene = bundle.scenes.find((scene) => scene.id === bundle.startSceneId);
   if (!startScene) {
     addIssue(
       issues,
@@ -429,11 +400,7 @@ export const validateRuntimeBundleSemantics = (
       "startSceneId",
       `Runtime start scene '${bundle.startSceneId}' is missing.`,
     );
-  } else if (
-    !startScene.entrances.some(
-      (entrance) => entrance.id === bundle.startEntranceId,
-    )
-  ) {
+  } else if (!startScene.entrances.some((entrance) => entrance.id === bundle.startEntranceId)) {
     addIssue(
       issues,
       "missing-start-entrance",
@@ -480,10 +447,7 @@ export const validateRuntimeBundleSemantics = (
         `${scenePath}.backgroundAssetId`,
         `Scene '${scene.id}' background must be an image asset, not '${background.kind}'.`,
       );
-    } else if (
-      background.metadata.width < scene.width ||
-      background.metadata.height < scene.height
-    ) {
+    } else if (background.metadata.width < scene.width || background.metadata.height < scene.height) {
       addIssue(
         issues,
         "background-asset-too-small",
@@ -492,37 +456,17 @@ export const validateRuntimeBundleSemantics = (
       );
     }
 
-    scene.entrances.forEach((entrance, entranceIndex) =>
-      registerId(
-        ids,
-        issues,
-        entrance.id,
-        `${scenePath}.entrances[${entranceIndex}].id`,
-      ),
-    );
-    scene.navigationAreas.forEach((area, areaIndex) =>
-      registerId(
-        ids,
-        issues,
-        area.id,
-        `${scenePath}.navigationAreas[${areaIndex}].id`,
-      ),
-    );
-    scene.depthBands.forEach((band, bandIndex) =>
-      registerId(
-        ids,
-        issues,
-        band.id,
-        `${scenePath}.depthBands[${bandIndex}].id`,
-      ),
-    );
+    scene.entrances.forEach((entrance, entranceIndex) => {
+      registerId(ids, issues, entrance.id, `${scenePath}.entrances[${entranceIndex}].id`);
+    });
+    scene.navigationAreas.forEach((area, areaIndex) => {
+      registerId(ids, issues, area.id, `${scenePath}.navigationAreas[${areaIndex}].id`);
+    });
+    scene.depthBands.forEach((band, bandIndex) => {
+      registerId(ids, issues, band.id, `${scenePath}.depthBands[${bandIndex}].id`);
+    });
     scene.occluders.forEach((occluder, occluderIndex) => {
-      registerId(
-        ids,
-        issues,
-        occluder.id,
-        `${scenePath}.occluders[${occluderIndex}].id`,
-      );
+      registerId(ids, issues, occluder.id, `${scenePath}.occluders[${occluderIndex}].id`);
       const asset = assetsById.get(occluder.assetId);
       if (!asset) {
         addIssue(
@@ -543,14 +487,9 @@ export const validateRuntimeBundleSemantics = (
     scene.hotspots.forEach((hotspot, hotspotIndex) => {
       const hotspotPath = `${scenePath}.hotspots[${hotspotIndex}]`;
       registerId(ids, issues, hotspot.id, `${hotspotPath}.id`);
-      hotspot.interactions.forEach((interaction, interactionIndex) =>
-        registerId(
-          ids,
-          issues,
-          interaction.id,
-          `${hotspotPath}.interactions[${interactionIndex}].id`,
-        ),
-      );
+      hotspot.interactions.forEach((interaction, interactionIndex) => {
+        registerId(ids, issues, interaction.id, `${hotspotPath}.interactions[${interactionIndex}].id`);
+      });
     });
   });
 
@@ -560,10 +499,7 @@ export const validateRuntimeBundleSemantics = (
   bundle.sequences.forEach((sequence, sequenceIndex) => {
     const sequencePath = `sequences[${sequenceIndex}]`;
     registerId(ids, issues, sequence.id, `${sequencePath}.id`);
-    const actualCueCount = sequence.tracks.reduce(
-      (total, track) => total + track.cues.length,
-      0,
-    );
+    const actualCueCount = sequence.tracks.reduce((total, track) => total + track.cues.length, 0);
     if (sequence.cueCount !== actualCueCount) {
       addIssue(
         issues,
@@ -572,14 +508,9 @@ export const validateRuntimeBundleSemantics = (
         `Sequence '${sequence.id}' declares ${sequence.cueCount} cues but contains ${actualCueCount}.`,
       );
     }
-    sequence.tracks.forEach((track, trackIndex) =>
-      registerId(
-        ids,
-        issues,
-        track.id,
-        `${sequencePath}.tracks[${trackIndex}].id`,
-      ),
-    );
+    sequence.tracks.forEach((track, trackIndex) => {
+      registerId(ids, issues, track.id, `${sequencePath}.tracks[${trackIndex}].id`);
+    });
   });
 
   return issues;

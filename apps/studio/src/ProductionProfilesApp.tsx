@@ -1,14 +1,14 @@
-import { useMemo, useState, type ChangeEvent, type ReactNode } from "react";
 import {
   adventureProductionProfiles,
   auditAdventureProductionProfile,
   createAdventureProductionProfileSeed,
 } from "@evavo/adventure-design/production-profiles";
+import { type ChangeEvent, type ReactNode, useMemo, useState } from "react";
 import {
   InterfacePreview,
   ProfileButton,
-  SplashPreview,
   profileStyle,
+  SplashPreview,
 } from "./production-profile-preview.js";
 import "./production-profiles-base.css";
 import "./production-profiles-preview.css";
@@ -81,8 +81,8 @@ export const ProductionProfilesApp = () => {
             <span className="ppf-eyebrow">BUILT-IN PRODUCTION FAMILIES</span>
             <h1>Not one retro filter.</h1>
             <p>
-              Each family owns its canvas, palette, scene staging, actor performance,
-              interface, puzzle grammar, sound and original publisher splash.
+              Each family owns its canvas, palette, scene staging, actor performance, interface, puzzle
+              grammar, sound and original publisher splash.
             </p>
           </header>
           <div className="ppf-profile-list">
@@ -109,10 +109,24 @@ export const ProductionProfilesApp = () => {
               <p>{profile.summary}</p>
             </div>
             <dl>
-              <div><dt>Canvas</dt><dd>{profile.nativeSize.width} × {profile.nativeSize.height}</dd></div>
-              <div><dt>Palette</dt><dd>{profile.palette.maxColours} colours</dd></div>
-              <div><dt>Motion</dt><dd>{profile.pixelMotionPolicy}</dd></div>
-              <div><dt>Score</dt><dd>{profile.interface.showScore ? "visible" : "hidden"}</dd></div>
+              <div>
+                <dt>Canvas</dt>
+                <dd>
+                  {profile.nativeSize.width} × {profile.nativeSize.height}
+                </dd>
+              </div>
+              <div>
+                <dt>Palette</dt>
+                <dd>{profile.palette.maxColours} colours</dd>
+              </div>
+              <div>
+                <dt>Motion</dt>
+                <dd>{profile.pixelMotionPolicy}</dd>
+              </div>
+              <div>
+                <dt>Score</dt>
+                <dd>{profile.interface.showScore ? "visible" : "hidden"}</dd>
+              </div>
             </dl>
           </header>
 
@@ -178,10 +192,22 @@ export const ProductionProfilesApp = () => {
             <span className="ppf-eyebrow">CANONICAL SEED</span>
             <h2>{seed.presentation.interactionMode}</h2>
             <dl>
-              <div><dt>Production</dt><dd>{seed.creativeDirection.productionMode}</dd></div>
-              <div><dt>Composition</dt><dd>{seed.creativeDirection.compositionMode}</dd></div>
-              <div><dt>Sampling</dt><dd>{seed.presentation.textureSampling}</dd></div>
-              <div><dt>Scale</dt><dd>{seed.presentation.integerScale ? "integer" : "fractional"}</dd></div>
+              <div>
+                <dt>Production</dt>
+                <dd>{seed.creativeDirection.productionMode}</dd>
+              </div>
+              <div>
+                <dt>Composition</dt>
+                <dd>{seed.creativeDirection.compositionMode}</dd>
+              </div>
+              <div>
+                <dt>Sampling</dt>
+                <dd>{seed.presentation.textureSampling}</dd>
+              </div>
+              <div>
+                <dt>Scale</dt>
+                <dd>{seed.presentation.integerScale ? "integer" : "fractional"}</dd>
+              </div>
             </dl>
           </section>
 

@@ -1,28 +1,22 @@
 import {
-  assetBuildManifestSchema,
-  compiledAssetRecordSchema,
   type AssetBuildManifest,
+  assetBuildManifestSchema,
   type CompiledAssetRecord,
   type CompiledSourceFile,
+  compiledAssetRecordSchema,
 } from "@evavo/adventure-asset-contract";
 import type { Asset, Id } from "@evavo/adventure-project-schema";
 import type { CompiledAtlas } from "./atlas-compiler.js";
-import {
-  canonicalStringify,
-  sha256Hex,
-  type CompiledImage,
-} from "./index.js";
+import { type CompiledImage, canonicalStringify, sha256Hex } from "./index.js";
 
-const assertAssetKind = <T extends Asset["kind"]>(
+function assertAssetKind<T extends Asset["kind"]>(
   asset: Asset,
   kind: T,
-): asserts asset is Asset & { readonly kind: T } => {
+): asserts asset is Asset & { readonly kind: T } {
   if (asset.kind !== kind) {
-    throw new TypeError(
-      `Asset '${asset.id}' has kind '${asset.kind}', expected '${kind}'.`,
-    );
+    throw new TypeError(`Asset '${asset.id}' has kind '${asset.kind}', expected '${kind}'.`);
   }
-};
+}
 
 export const createImageAssetRecord = (
   asset: Asset,
@@ -76,8 +70,7 @@ const joinRuntimePath = (directory: string, fileName: string): string => {
   return normalizedDirectory ? `${normalizedDirectory}/${fileName}` : fileName;
 };
 
-const pageRole = (index: number): string =>
-  `page-${index.toString().padStart(3, "0")}`;
+const pageRole = (index: number): string => `page-${index.toString().padStart(3, "0")}`;
 
 export const createSpritesheetAssetRecord = (
   asset: Asset,
@@ -85,12 +78,8 @@ export const createSpritesheetAssetRecord = (
   options: SpritesheetAssetRecordOptions,
 ): Extract<CompiledAssetRecord, { readonly kind: "spritesheet" }> => {
   assertAssetKind(asset, "spritesheet");
-  const manifestFileName =
-    options.manifestFileName ?? `${asset.id}.atlas.json`;
-  const manifestRuntimePath = joinRuntimePath(
-    options.runtimeDirectory,
-    manifestFileName,
-  );
+  const manifestFileName = options.manifestFileName ?? `${asset.id}.atlas.json`;
+  const manifestRuntimePath = joinRuntimePath(options.runtimeDirectory, manifestFileName);
 
   return compiledAssetRecordSchema.parse({
     assetId: asset.id,
@@ -131,19 +120,13 @@ export const createSpritesheetAssetRecord = (
   }) as Extract<CompiledAssetRecord, { readonly kind: "spritesheet" }>;
 };
 
-const sortSourceFiles = (
-  files: readonly CompiledSourceFile[],
-): readonly CompiledSourceFile[] =>
+const sortSourceFiles = (files: readonly CompiledSourceFile[]): CompiledSourceFile[] =>
   [...files].sort((left, right) => left.path.localeCompare(right.path));
 
-const sortOutputFiles = (
-  files: CompiledAssetRecord["outputFiles"],
-): CompiledAssetRecord["outputFiles"] =>
+const sortOutputFiles = (files: CompiledAssetRecord["outputFiles"]): CompiledAssetRecord["outputFiles"] =>
   [...files].sort((left, right) => {
     const roleDifference = left.role.localeCompare(right.role);
-    return roleDifference !== 0
-      ? roleDifference
-      : left.runtimePath.localeCompare(right.runtimePath);
+    return roleDifference !== 0 ? roleDifference : left.runtimePath.localeCompare(right.runtimePath);
   });
 
 const canonicalAssetRecord = (asset: CompiledAssetRecord): CompiledAssetRecord => {
@@ -160,9 +143,7 @@ const canonicalAssetRecord = (asset: CompiledAssetRecord): CompiledAssetRecord =
         pages: [...asset.metadata.pages].sort((left, right) =>
           left.outputRole.localeCompare(right.outputRole),
         ),
-        frames: [...asset.metadata.frames].sort((left, right) =>
-          left.frameId.localeCompare(right.frameId),
-        ),
+        frames: [...asset.metadata.frames].sort((left, right) => left.frameId.localeCompare(right.frameId)),
       },
     };
   }
@@ -188,9 +169,7 @@ export const createAssetBuildManifest = async (
     compilerVersion,
     assets: canonicalAssets,
   };
-  const fingerprint = await sha256Hex(
-    new TextEncoder().encode(canonicalStringify(payload)),
-  );
+  const fingerprint = await sha256Hex(new TextEncoder().encode(canonicalStringify(payload)));
 
   return assetBuildManifestSchema.parse({ ...payload, fingerprint });
 };

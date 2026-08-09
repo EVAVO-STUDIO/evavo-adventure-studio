@@ -5,8 +5,5 @@
     "outDir": "dist"
   },
   "include": ["src/**/*.ts", "tests/**/*.ts"],
-  "references": [
-    { "path": "../bitmap-font" },
-    { "path": "../project-schema" }
-  ]
+  "references": [{ "path": "../bitmap-font" }, { "path": "../project-schema" }]
 }

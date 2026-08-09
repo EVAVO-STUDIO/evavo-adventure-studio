@@ -1,8 +1,5 @@
 import type { BitmapFontManifest } from "./index.js";
-import {
-  createBitmapFontResolver,
-  type BitmapFontResolver,
-} from "./render.js";
+import { type BitmapFontResolver, createBitmapFontResolver } from "./render.js";
 
 const resolversByAssetCollection = new WeakMap<object, BitmapFontResolver>();
 
@@ -15,7 +12,5 @@ export const registerBitmapFontsForAssetCollection = (
   return resolver;
 };
 
-export const bitmapFontResolverForAssetCollection = (
-  assetCollection: object,
-): BitmapFontResolver | null =>
+export const bitmapFontResolverForAssetCollection = (assetCollection: object): BitmapFontResolver | null =>
   resolversByAssetCollection.get(assetCollection) ?? null;

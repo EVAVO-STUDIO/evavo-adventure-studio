@@ -12,11 +12,7 @@ export type AdventureAuthenticityDimension =
 
 export type AdventureAuthenticitySeverity = "error" | "warning" | "note";
 export type AdventureAuthenticityStatus = "ready" | "attention" | "blocked";
-export type AdventureAuthenticityGrade =
-  | "production-ready"
-  | "strong"
-  | "developing"
-  | "foundation";
+export type AdventureAuthenticityGrade = "production-ready" | "strong" | "developing" | "foundation";
 
 export interface AdventureAuthenticityFinding {
   readonly id: string;

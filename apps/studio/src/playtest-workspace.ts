@@ -7,13 +7,10 @@ import {
   type SaveGameInspection,
 } from "@evavo/adventure-playtest-inspector";
 import {
-  diffCanonicalSaveGames,
   type CanonicalSaveDiff,
+  diffCanonicalSaveGames,
 } from "@evavo/adventure-playtest-inspector/canonical-diff";
-import {
-  parseRuntimeBundle,
-  type RuntimeBundle,
-} from "@evavo/adventure-runtime-bundle";
+import { parseRuntimeBundle, type RuntimeBundle } from "@evavo/adventure-runtime-bundle";
 
 export type PlaytestArtifactKind = "bundle" | "before-save" | "after-save" | "replay";
 
@@ -65,16 +62,13 @@ export const createPlaytestInspectorWorkspace = (): PlaytestInspectorWorkspaceSt
   errors: emptyErrors(),
 });
 
-const errorMessage = (error: unknown): string =>
-  error instanceof Error ? error.message : String(error);
+const errorMessage = (error: unknown): string => (error instanceof Error ? error.message : String(error));
 
 const parseJson = (text: string, label: string): unknown => {
   try {
     return JSON.parse(text) as unknown;
   } catch (error) {
-    throw new SyntaxError(
-      `${label} is not valid JSON: ${errorMessage(error)}`,
-    );
+    throw new SyntaxError(`${label} is not valid JSON: ${errorMessage(error)}`);
   }
 };
 
@@ -90,9 +84,7 @@ const artifactErrorCleared = (
       : { replay: null }),
 });
 
-const recompute = (
-  state: PlaytestInspectorWorkspaceState,
-): PlaytestInspectorWorkspaceState => {
+const recompute = (state: PlaytestInspectorWorkspaceState): PlaytestInspectorWorkspaceState => {
   const bundle = state.bundle;
   if (!bundle) {
     return {
@@ -110,12 +102,9 @@ const recompute = (
   let diff: SaveGameDiff | null = null;
   let canonicalDiff: CanonicalSaveDiff | null = null;
   let replayInspection: ReplayInspection | null = null;
-  let beforeSaveError: string | null =
-    state.beforeSaveInput === null ? state.errors.beforeSave : null;
-  let afterSaveError: string | null =
-    state.afterSaveInput === null ? state.errors.afterSave : null;
-  let replayError: string | null =
-    state.replayInput === null ? state.errors.replay : null;
+  let beforeSaveError: string | null = state.beforeSaveInput === null ? state.errors.beforeSave : null;
+  let afterSaveError: string | null = state.afterSaveInput === null ? state.errors.afterSave : null;
+  let replayError: string | null = state.replayInput === null ? state.errors.replay : null;
 
   if (state.beforeSaveInput !== null) {
     try {
@@ -138,17 +127,10 @@ const recompute = (
     afterSaveError === null
   ) {
     try {
-      const nextDiff = diffSaveGames(
-        bundle,
-        state.beforeSaveInput,
-        state.afterSaveInput,
-      );
-      const nextCanonicalDiff = diffCanonicalSaveGames(
-        bundle,
-        state.beforeSaveInput,
-        state.afterSaveInput,
-        { maxDifferences: 250 },
-      );
+      const nextDiff = diffSaveGames(bundle, state.beforeSaveInput, state.afterSaveInput);
+      const nextCanonicalDiff = diffCanonicalSaveGames(bundle, state.beforeSaveInput, state.afterSaveInput, {
+        maxDifferences: 250,
+      });
       diff = nextDiff;
       canonicalDiff = nextCanonicalDiff;
     } catch (error) {
@@ -214,10 +196,7 @@ export const loadPlaytestArtifactText = (
 
   let input: unknown;
   try {
-    input = parseJson(
-      text,
-      kind === "replay" ? "Replay" : "Save game",
-    );
+    input = parseJson(text, kind === "replay" ? "Replay" : "Save game");
   } catch (error) {
     const message = errorMessage(error);
     return {

@@ -1,13 +1,10 @@
 import { adventurePlayFeelProfileById } from "@evavo/adventure-play-feel";
 import {
   parseRuntimeBundle,
-  runtimePlayFeelProfileIdSchema,
   type RuntimePlayFeelProfileId,
+  runtimePlayFeelProfileIdSchema,
 } from "@evavo/adventure-runtime-bundle";
-import {
-  canonicalStringify,
-  type CompiledProject,
-} from "./index.js";
+import { type CompiledProject, canonicalStringify } from "./index.js";
 
 const fnv1a64 = (value: string): string => {
   const bytes = new TextEncoder().encode(value);
@@ -26,10 +23,7 @@ export const attachRuntimePlayFeelProfile = (
 ): CompiledProject => {
   const parsedProfileId = runtimePlayFeelProfileIdSchema.parse(profileId);
   const profile = adventurePlayFeelProfileById(parsedProfileId);
-  if (
-    profile.logicalTicksPerSecond !==
-    compiled.bundle.presentation.logicalTicksPerSecond
-  ) {
+  if (profile.logicalTicksPerSecond !== compiled.bundle.presentation.logicalTicksPerSecond) {
     throw new RangeError(
       `Play-feel profile '${profile.id}' requires ` +
         `${profile.logicalTicksPerSecond} logical ticks per second, but the ` +

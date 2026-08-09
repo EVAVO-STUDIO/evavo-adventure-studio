@@ -6,32 +6,18 @@ import type {
 } from "@evavo/adventure-render-contract";
 import type { RuntimeBundle } from "@evavo/adventure-runtime-bundle";
 
-const renderNodeId = (value: string): Id<"render-node"> =>
-  value as Id<"render-node">;
+const renderNodeId = (value: string): Id<"render-node"> => value as Id<"render-node">;
 
-const selectDefaultBitmapFont = (
-  bundle: Pick<RuntimeBundle, "bitmapFonts">,
-) => {
+const selectDefaultBitmapFont = (bundle: Pick<RuntimeBundle, "bitmapFonts">) => {
   const fonts = bundle.bitmapFonts?.fonts ?? [];
   const dialogue = fonts
-    .filter((font) =>
-      `${font.id} ${font.name}`.toLocaleLowerCase("en-US").includes("dialogue"),
-    )
+    .filter((font) => `${font.id} ${font.name}`.toLocaleLowerCase("en-US").includes("dialogue"))
     .sort((left, right) => left.id.localeCompare(right.id))[0];
-  return (
-    dialogue ??
-    [...fonts].sort((left, right) => left.id.localeCompare(right.id))[0] ??
-    null
-  );
+  return dialogue ?? [...fonts].sort((left, right) => left.id.localeCompare(right.id))[0] ?? null;
 };
 
 const normalizeStatusText = (value: string): string =>
-  value
-    .trim()
-    .replaceAll("•", "-")
-    .replace(/[“”]/gu, '"')
-    .replace(/[‘’]/gu, "'")
-    .replaceAll("…", "...");
+  value.trim().replaceAll("•", "-").replace(/[“”]/gu, '"').replace(/[‘’]/gu, "'").replaceAll("…", "...");
 
 const railRectangle = (
   id: string,
@@ -76,10 +62,7 @@ export const appendNativeStatusPanel = (
 
   const horizontalPadding = Math.min(8, Math.max(1, frame.canvas.width - 1));
   const verticalPadding = 4;
-  const requestedHeight = Math.max(
-    18,
-    font.lineHeight + verticalPadding * 2,
-  );
+  const requestedHeight = Math.max(18, font.lineHeight + verticalPadding * 2);
   const panelHeight = Math.min(frame.canvas.height, requestedHeight);
   const panelY = frame.canvas.height - panelHeight;
   const textY = Math.min(
@@ -118,24 +101,8 @@ export const appendNativeStatusPanel = (
     ...frame,
     nodes: [
       ...frame.nodes,
-      railRectangle(
-        "runtime.status.panel",
-        0,
-        panelY,
-        frame.canvas.width,
-        panelHeight,
-        [7, 9, 14, 238],
-        0,
-      ),
-      railRectangle(
-        "runtime.status.rule",
-        0,
-        panelY,
-        frame.canvas.width,
-        1,
-        0xff244e,
-        1,
-      ),
+      railRectangle("runtime.status.panel", 0, panelY, frame.canvas.width, panelHeight, [7, 9, 14, 238], 0),
+      railRectangle("runtime.status.rule", 0, panelY, frame.canvas.width, 1, 0xff244e, 1),
       textNode,
     ],
   };

@@ -1,17 +1,7 @@
+import { type AssetBuildManifest, assetBuildManifestSchema } from "@evavo/adventure-asset-contract";
+import { type AdventureProject, parseAdventureProject } from "@evavo/adventure-project-schema";
 import { describe, expect, it } from "vitest";
-import {
-  assetBuildManifestSchema,
-  type AssetBuildManifest,
-} from "@evavo/adventure-asset-contract";
-import {
-  parseAdventureProject,
-  type AdventureProject,
-} from "@evavo/adventure-project-schema";
-import {
-  compileProject,
-  interactionIndexKey,
-  tryCompileProject,
-} from "../src/index.js";
+import { compileProject, interactionIndexKey, tryCompileProject } from "../src/index.js";
 
 const hash = "0".repeat(64);
 
@@ -111,10 +101,7 @@ const createProject = () =>
     inventoryItems: [],
   });
 
-const createManifest = (
-  project: AdventureProject,
-  reverse = false,
-): AssetBuildManifest => {
+const createManifest = (project: AdventureProject, reverse = false): AssetBuildManifest => {
   const records = project.assets.map((asset) => ({
     assetId: asset.id,
     kind: "image" as const,
@@ -161,17 +148,11 @@ describe("project compiler", () => {
     };
 
     const left = compileProject(project, createManifest(project));
-    const right = compileProject(
-      reordered,
-      createManifest(reordered, true),
-    );
+    const right = compileProject(reordered, createManifest(reordered, true));
 
     expect(left.canonicalJson).toBe(right.canonicalJson);
     expect(left.fingerprint).toBe(right.fingerprint);
-    expect(left.bundle.assets.map((asset) => asset.assetId)).toEqual([
-      "asset.background",
-      "asset.z-unused",
-    ]);
+    expect(left.bundle.assets.map((asset) => asset.assetId)).toEqual(["asset.background", "asset.z-unused"]);
     expect(left.bundle.assetManifestFingerprint).toBe(hash);
     expect(left.canonicalJson).not.toContain("authoring/");
   });

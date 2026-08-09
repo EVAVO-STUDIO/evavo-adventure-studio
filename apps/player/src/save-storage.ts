@@ -1,10 +1,10 @@
+import type { RuntimeBundle } from "@evavo/adventure-runtime-bundle";
 import {
   loadSaveGame,
   runtimeBundleFingerprint,
-  serializeSaveGame,
   type SaveGame,
+  serializeSaveGame,
 } from "@evavo/adventure-save-game";
-import type { RuntimeBundle } from "@evavo/adventure-runtime-bundle";
 
 export interface SaveGameStorage {
   getItem(key: string): string | null;
@@ -29,10 +29,7 @@ const assertSlot = (slot: number): number => {
   return slot;
 };
 
-export const saveGameStorageKey = (
-  bundle: RuntimeBundle,
-  slot = 0,
-): string =>
+export const saveGameStorageKey = (bundle: RuntimeBundle, slot = 0): string =>
   [
     "evavo-adventure-save",
     bundle.projectId,
@@ -50,11 +47,7 @@ export const writeSaveGameSlot = (
   storage.setItem(saveGameStorageKey(bundle, slot), serializeSaveGame(validated));
 };
 
-export const readSaveGameSlot = (
-  storage: SaveGameStorage,
-  bundle: RuntimeBundle,
-  slot = 0,
-): SaveGame => {
+export const readSaveGameSlot = (storage: SaveGameStorage, bundle: RuntimeBundle, slot = 0): SaveGame => {
   const serialized = storage.getItem(saveGameStorageKey(bundle, slot));
   if (serialized === null) throw new SaveGameSlotMissingError(slot);
   let input: unknown;
@@ -70,16 +63,9 @@ export const readSaveGameSlot = (
   return loadSaveGame(bundle, input);
 };
 
-export const removeSaveGameSlot = (
-  storage: SaveGameStorage,
-  bundle: RuntimeBundle,
-  slot = 0,
-): void => {
+export const removeSaveGameSlot = (storage: SaveGameStorage, bundle: RuntimeBundle, slot = 0): void => {
   storage.removeItem(saveGameStorageKey(bundle, slot));
 };
 
-export const hasSaveGameSlot = (
-  storage: SaveGameStorage,
-  bundle: RuntimeBundle,
-  slot = 0,
-): boolean => storage.getItem(saveGameStorageKey(bundle, slot)) !== null;
+export const hasSaveGameSlot = (storage: SaveGameStorage, bundle: RuntimeBundle, slot = 0): boolean =>
+  storage.getItem(saveGameStorageKey(bundle, slot)) !== null;

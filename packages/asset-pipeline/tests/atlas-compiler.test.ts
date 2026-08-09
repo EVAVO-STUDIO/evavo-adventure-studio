@@ -1,5 +1,5 @@
-import { describe, expect, it } from "vitest";
 import type { Id } from "@evavo/adventure-project-schema";
+import { describe, expect, it } from "vitest";
 import { compileAtlas } from "../src/atlas-compiler.js";
 import type { RgbaImage } from "../src/rgba.js";
 
@@ -45,9 +45,7 @@ describe("compiled atlas artifacts", () => {
     const left = await compileAtlas(frames, options);
     const right = await compileAtlas([...frames].reverse(), options);
 
-    expect(left.pages.map((page) => page.data)).toEqual(
-      right.pages.map((page) => page.data),
-    );
+    expect(left.pages.map((page) => page.data)).toEqual(right.pages.map((page) => page.data));
     expect(left.manifest).toEqual(right.manifest);
     expect(left.manifest.sha256).toHaveLength(64);
     expect(left.pages.every((page) => page.sha256.length === 64)).toBe(true);
@@ -60,9 +58,7 @@ describe("compiled atlas artifacts", () => {
       padding: 2,
       output: { mode: "indexed-png", colours: 16, dither: 0 },
     });
-    const idle = compiled.manifest.frames.find(
-      (frame) => frame.frameId === "frame.detective.idle",
-    );
+    const idle = compiled.manifest.frames.find((frame) => frame.frameId === "frame.detective.idle");
 
     expect(idle).toMatchObject({
       pageIndex: 0,

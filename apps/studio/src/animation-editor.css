@@ -89,9 +89,7 @@
   place-items: center;
   border: 1px solid #343743;
   border-radius: 3px;
-  background:
-    linear-gradient(135deg, rgb(255 36 78 / 16%), transparent 64%),
-    #191b22;
+  background: linear-gradient(135deg, rgb(255 36 78 / 16%), transparent 64%), #191b22;
   color: #ff6c89;
   font-size: 14px;
   font-weight: 900;
@@ -240,7 +238,10 @@
     linear-gradient(rgb(255 255 255 / 2%) 1px, transparent 1px),
     linear-gradient(90deg, rgb(255 255 255 / 2%) 1px, transparent 1px),
     radial-gradient(circle at 50% 36%, #171a22 0, #090a0e 62%);
-  background-size: 16px 16px, 16px 16px, auto;
+  background-size:
+    16px 16px,
+    16px 16px,
+    auto;
 }
 
 .sprite-preview-canvas {
@@ -252,9 +253,12 @@
     linear-gradient(45deg, #171920 25%, transparent 25%),
     linear-gradient(-45deg, #171920 25%, transparent 25%),
     linear-gradient(45deg, transparent 75%, #171920 75%),
-    linear-gradient(-45deg, transparent 75%, #171920 75%),
-    #0f1015;
-  background-position: 0 0, 0 4px, 4px -4px, -4px 0;
+    linear-gradient(-45deg, transparent 75%, #171920 75%), #0f1015;
+  background-position:
+    0 0,
+    0 4px,
+    4px -4px,
+    -4px 0;
   background-size: 8px 8px;
   box-shadow:
     0 0 0 1px #000,

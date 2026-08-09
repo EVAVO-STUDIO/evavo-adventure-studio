@@ -1,10 +1,6 @@
 import type { RuntimeBundle } from "@evavo/adventure-runtime-bundle";
 import type { InteractiveRuntimeWorldState } from "@evavo/adventure-scene-runtime/commands";
-import {
-  addSaveGameIssue,
-  SaveGamePolicyError,
-  type SaveGameCompatibilityIssue,
-} from "./errors.js";
+import { addSaveGameIssue, type SaveGameCompatibilityIssue, SaveGamePolicyError } from "./errors.js";
 
 export const activeSequencePolicyIssues = (
   bundle: RuntimeBundle,
@@ -12,9 +8,7 @@ export const activeSequencePolicyIssues = (
 ): readonly SaveGameCompatibilityIssue[] => {
   const issues: SaveGameCompatibilityIssue[] = [];
   world.story.activeSequences.forEach((active, index) => {
-    const sequence = bundle.sequences.find(
-      (candidate) => candidate.id === active.sequenceId,
-    );
+    const sequence = bundle.sequences.find((candidate) => candidate.id === active.sequenceId);
     if (!sequence) {
       addSaveGameIssue(
         issues,
@@ -31,10 +25,7 @@ export const activeSequencePolicyIssues = (
         `world.story.activeSequences[${index}]`,
         `Sequence '${sequence.id}' disables saving while it is active.`,
       );
-    } else if (
-      sequence.savePolicy === "boundary-only" &&
-      active.elapsedTicks > 0
-    ) {
+    } else if (sequence.savePolicy === "boundary-only" && active.elapsedTicks > 0) {
       addSaveGameIssue(
         issues,
         "sequence-boundary-required",
@@ -46,10 +37,7 @@ export const activeSequencePolicyIssues = (
   return issues;
 };
 
-export const assertSaveGameAllowed = (
-  bundle: RuntimeBundle,
-  world: InteractiveRuntimeWorldState,
-): void => {
+export const assertSaveGameAllowed = (bundle: RuntimeBundle, world: InteractiveRuntimeWorldState): void => {
   const issues = activeSequencePolicyIssues(bundle, world);
   if (issues.length > 0) throw new SaveGamePolicyError(issues);
 };

@@ -1,9 +1,9 @@
-import { describe, expect, it } from "vitest";
 import type { Id } from "@evavo/adventure-project-schema";
 import type { ResolvedFrame } from "@evavo/adventure-render-contract";
 import type { RuntimeBundle } from "@evavo/adventure-runtime-bundle";
 import type { InteractiveRuntimeWorldState } from "@evavo/adventure-scene-runtime/commands";
 import type { UiSkin } from "@evavo/adventure-ui-skin";
+import { describe, expect, it } from "vitest";
 import {
   appendRuntimeInterface,
   createRuntimeUiGeometryResolver,
@@ -177,13 +177,11 @@ describe("packaged runtime interface", () => {
   });
 
   it("appends selected skin nodes and preserves legacy fallback", () => {
-    const composed = appendRuntimeInterface(
-      frame,
-      bundle,
-      world,
-      "LEDGER MISSING",
-      { position: null, cursorId: "walk", pressed: false },
-    );
+    const composed = appendRuntimeInterface(frame, bundle, world, "LEDGER MISSING", {
+      position: null,
+      cursorId: "walk",
+      pressed: false,
+    });
     expect(composed.nodes.map((node) => node.id)).toEqual(
       expect.arrayContaining([
         "runtime.ui.status.fill",
@@ -198,13 +196,11 @@ describe("packaged runtime interface", () => {
       uiSkins: undefined,
     } as unknown as RuntimeBundle;
     expect(
-      appendRuntimeInterface(
-        frame,
-        legacy,
-        world,
-        "LEGACY",
-        { position: null, cursorId: "walk", pressed: false },
-      ),
+      appendRuntimeInterface(frame, legacy, world, "LEGACY", {
+        position: null,
+        cursorId: "walk",
+        pressed: false,
+      }),
     ).toBe(frame);
   });
 });

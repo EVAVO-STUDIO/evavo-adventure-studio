@@ -10,10 +10,8 @@ export const coldMeridianShowcase = showcase({
   motif: "rain-tenement",
   titleTreatment:
     "A broken signal line resolves into spare bitmap lettering against a nearly black city grid.",
-  dialogueTreatment:
-    "Minimal captions and rare close-ups preserve negative space and distrust.",
-  systemTreatment:
-    "A communicator archive separates what each technician heard, recorded and inferred.",
+  dialogueTreatment: "Minimal captions and rare close-ups preserve negative space and distrust.",
+  systemTreatment: "A communicator archive separates what each technician heard, recorded and inferred.",
   plates: [
     plate(
       "plate.cold-meridian.title",
@@ -45,8 +43,26 @@ export const coldMeridianShowcase = showcase({
       94,
       "The relay repeats your badge number.",
       [
-        actor("actor.cold.technician", "player", 76, 166, 48, "right", "low flashlight", "A square coat, cable bag and narrow light cone form a restrained silhouette."),
-        actor("actor.cold.witness", "npc", 224, 154, 44, "left", "doorway watch", "A pale face cluster and doorway frame distinguish the witness from rain."),
+        actor(
+          "actor.cold.technician",
+          "player",
+          76,
+          166,
+          48,
+          "right",
+          "low flashlight",
+          "A square coat, cable bag and narrow light cone form a restrained silhouette.",
+        ),
+        actor(
+          "actor.cold.witness",
+          "npc",
+          224,
+          154,
+          44,
+          "left",
+          "doorway watch",
+          "A pale face cluster and doorway frame distinguish the witness from rain.",
+        ),
       ],
       [
         prop("prop.cold.relay", "puzzle", 258, 92, 28, 54, "relay cabinet", "broadcasting"),
@@ -69,8 +85,26 @@ export const coldMeridianShowcase = showcase({
       110,
       "It said your name first. Then mine.",
       [
-        actor("actor.cold.technician-dialogue", "player", 88, 164, 64, "right", "held recorder", "The recorder changes the hand silhouette and signals active evidence."),
-        actor("actor.cold.witness-dialogue", "npc", 230, 160, 68, "left", "half-hidden doorway", "Only face, hand and coat edge are lit, preserving uncertainty."),
+        actor(
+          "actor.cold.technician-dialogue",
+          "player",
+          88,
+          164,
+          64,
+          "right",
+          "held recorder",
+          "The recorder changes the hand silhouette and signals active evidence.",
+        ),
+        actor(
+          "actor.cold.witness-dialogue",
+          "npc",
+          230,
+          160,
+          68,
+          "left",
+          "half-hidden doorway",
+          "Only face, hand and coat edge are lit, preserving uncertainty.",
+        ),
       ],
       [
         prop("prop.cold.recorder", "clue", 132, 104, 24, 16, "signal recorder", "playing"),
@@ -92,8 +126,26 @@ export const coldMeridianShowcase = showcase({
       118,
       "CHANNEL 04 · PREDICTION OFFSET 02:13",
       [
-        actor("actor.cold.archive-tech-a", "player", 54, 150, 18, "right", "channel marker", "One square marker identifies the active technician."),
-        actor("actor.cold.archive-tech-b", "companion", 80, 150, 18, "right", "alternate marker", "A split marker preserves the second knowledge boundary."),
+        actor(
+          "actor.cold.archive-tech-a",
+          "player",
+          54,
+          150,
+          18,
+          "right",
+          "channel marker",
+          "One square marker identifies the active technician.",
+        ),
+        actor(
+          "actor.cold.archive-tech-b",
+          "companion",
+          80,
+          150,
+          18,
+          "right",
+          "alternate marker",
+          "A split marker preserves the second knowledge boundary.",
+        ),
       ],
       [
         prop("prop.cold.archive-wave", "clue", 64, 66, 192, 36, "waveform", "aligned"),

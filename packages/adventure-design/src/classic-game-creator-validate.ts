@@ -77,15 +77,10 @@ const registerId = (
   ids.set(id, path);
 };
 
-const validHexColour = (value: string): boolean =>
-  /^#[0-9a-f]{6}$/iu.test(value);
+const validHexColour = (value: string): boolean => /^#[0-9a-f]{6}$/iu.test(value);
 
-const pointInside = (
-  x: number,
-  y: number,
-  width: number,
-  height: number,
-): boolean => x >= 0 && y >= 0 && x <= width && y <= height;
+const pointInside = (x: number, y: number, width: number, height: number): boolean =>
+  x >= 0 && y >= 0 && x <= width && y <= height;
 
 const sceneGeometry = (
   project: ClassicAdventureCreatorProject,
@@ -96,12 +91,7 @@ const sceneGeometry = (
   const path = `scenes[${sceneIndex}]`;
   const viewportHeight = scene.interfaceSafeRect.height;
   if (
-    !pointInside(
-      scene.focalPoint.x,
-      scene.focalPoint.y,
-      project.nativeSize.width,
-      viewportHeight,
-    ) ||
+    !pointInside(scene.focalPoint.x, scene.focalPoint.y, project.nativeSize.width, viewportHeight) ||
     scene.horizonY < 0 ||
     scene.horizonY > viewportHeight ||
     scene.walkLane.top < 0 ||
@@ -143,12 +133,7 @@ const sceneGeometry = (
 
   scene.actors.forEach((actor, actorIndex) => {
     if (
-      !pointInside(
-        actor.position.x,
-        actor.position.y,
-        project.nativeSize.width,
-        viewportHeight,
-      ) ||
+      !pointInside(actor.position.x, actor.position.y, project.nativeSize.width, viewportHeight) ||
       actor.height <= 0 ||
       actor.height > viewportHeight
     ) {
@@ -185,10 +170,7 @@ const sceneGeometry = (
     }
   });
 
-  if (
-    scene.kind === "gameplay" &&
-    !scene.props.some((prop) => prop.interactive)
-  ) {
+  if (scene.kind === "gameplay" && !scene.props.some((prop) => prop.interactive)) {
     issue(
       issues,
       "error",
@@ -213,16 +195,12 @@ const validateInterface = (
       "error",
       "invalid-interface",
       "interface.family",
-      `Family '${project.family}' requires '${contract.interfaceFamily}', not ` +
-        `'${value.family}'.`,
+      `Family '${project.family}' requires '${contract.interfaceFamily}', not ` + `'${value.family}'.`,
       "Select the interface family governed by the production profile.",
       18,
     );
   }
-  if (
-    value.gameplayViewportHeight + value.chromeHeight !==
-    project.nativeSize.height
-  ) {
+  if (value.gameplayViewportHeight + value.chromeHeight !== project.nativeSize.height) {
     issue(
       issues,
       "error",
@@ -253,18 +231,13 @@ const validateInterface = (
       );
     }
   } else if (value.family === "portrait-topic-ledger") {
-    if (
-      value.openBehaviour !== "modal" ||
-      value.portraitSlots !== 2 ||
-      value.topicRows < 5
-    ) {
+    if (value.openBehaviour !== "modal" || value.portraitSlots !== 2 || value.topicRows < 5) {
       issue(
         issues,
         "error",
         "invalid-interface",
         "interface",
-        "The investigation interface requires two portrait anchors and a " +
-          "substantial topic ledger.",
+        "The investigation interface requires two portrait anchors and a " + "substantial topic ledger.",
         "Use two portrait slots and at least five evidence-driven topic rows.",
         16,
       );
@@ -379,9 +352,7 @@ export const validateClassicAdventureCreatorProject = (
     );
   }
 
-  const uniqueAnchors = new Set(project.palette.anchors.map((value) =>
-    value.toLowerCase(),
-  ));
+  const uniqueAnchors = new Set(project.palette.anchors.map((value) => value.toLowerCase()));
   if (
     project.palette.maxColours < 16 ||
     project.palette.maxColours > 256 ||
@@ -434,15 +405,10 @@ export const validateClassicAdventureCreatorProject = (
   validateTiming(project.timing, issues);
 
   const sceneIds = new Set(project.scenes.map((scene) => scene.id));
-  const propIds = new Set(
-    project.scenes.flatMap((scene) => scene.props.map((prop) => prop.id)),
-  );
+  const propIds = new Set(project.scenes.flatMap((scene) => scene.props.map((prop) => prop.id)));
   project.puzzles.forEach((puzzle, puzzleIndex) => {
     registerId(ids, issues, puzzle.id, `puzzles[${puzzleIndex}].id`);
-    if (
-      !sceneIds.has(puzzle.setupSceneId) ||
-      !sceneIds.has(puzzle.resolutionSceneId)
-    ) {
+    if (!sceneIds.has(puzzle.setupSceneId) || !sceneIds.has(puzzle.resolutionSceneId)) {
       issue(
         issues,
         "error",
@@ -466,11 +432,7 @@ export const validateClassicAdventureCreatorProject = (
         );
       }
     }
-    if (
-      puzzle.irreversibleFailure ||
-      puzzle.recovery.trim().length < 40 ||
-      puzzle.steps.length < 3
-    ) {
+    if (puzzle.irreversibleFailure || puzzle.recovery.trim().length < 40 || puzzle.steps.length < 3) {
       issue(
         issues,
         "error",
@@ -496,10 +458,7 @@ export const validateClassicAdventureCreatorProject = (
         12,
       );
     }
-    if (
-      project.family === "gothic-investigation" &&
-      dialogue.topics.length < 5
-    ) {
+    if (project.family === "gothic-investigation" && dialogue.topics.length < 5) {
       issue(
         issues,
         "error",
@@ -553,26 +512,17 @@ export const validateClassicAdventureCreatorProject = (
     status,
     score,
     issues: issues.sort(
-      (left, right) =>
-        left.path.localeCompare(right.path) ||
-        left.code.localeCompare(right.code),
+      (left, right) => left.path.localeCompare(right.path) || left.code.localeCompare(right.code),
     ),
     metrics: {
       sceneCount: project.scenes.length,
       interactivePropCount: project.scenes.reduce(
-        (total, scene) =>
-          total + scene.props.filter((prop) => prop.interactive).length,
+        (total, scene) => total + scene.props.filter((prop) => prop.interactive).length,
         0,
       ),
       puzzleCount: project.puzzles.length,
-      dialogueTopicCount: project.dialogues.reduce(
-        (total, dialogue) => total + dialogue.topics.length,
-        0,
-      ),
-      nativeReviewProofCount: project.scenes.reduce(
-        (total, scene) => total + scene.reviewProofs.length,
-        0,
-      ),
+      dialogueTopicCount: project.dialogues.reduce((total, dialogue) => total + dialogue.topics.length, 0),
+      nativeReviewProofCount: project.scenes.reduce((total, scene) => total + scene.reviewProofs.length, 0),
     },
   };
 };

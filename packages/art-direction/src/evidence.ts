@@ -1,15 +1,11 @@
-import { z } from "zod";
 import type { AssetBuildManifest } from "@evavo/adventure-asset-contract";
+import { type AdventureProject, type Id, idSchema } from "@evavo/adventure-project-schema";
+import { z } from "zod";
 import {
-  idSchema,
-  type AdventureProject,
-  type Id,
-} from "@evavo/adventure-project-schema";
-import {
-  evaluateCompiledArtDirection,
   type ArtAssetRule,
   type ArtDirectionIssue,
   type ArtDirectionManifest,
+  evaluateCompiledArtDirection,
 } from "./index.js";
 
 export const imageAlphaModeSchema = z.enum(["opaque", "binary", "full"]);
@@ -24,9 +20,7 @@ export const artImageVisualEvidenceSchema = z
     alphaMode: imageAlphaModeSchema,
   })
   .strict();
-export type ArtImageVisualEvidence = z.infer<
-  typeof artImageVisualEvidenceSchema
->;
+export type ArtImageVisualEvidence = z.infer<typeof artImageVisualEvidenceSchema>;
 
 export const artAtlasPageVisualEvidenceSchema = z
   .object({
@@ -36,9 +30,7 @@ export const artAtlasPageVisualEvidenceSchema = z
     alphaMode: imageAlphaModeSchema,
   })
   .strict();
-export type ArtAtlasPageVisualEvidence = z.infer<
-  typeof artAtlasPageVisualEvidenceSchema
->;
+export type ArtAtlasPageVisualEvidence = z.infer<typeof artAtlasPageVisualEvidenceSchema>;
 
 export const artSpritesheetVisualEvidenceSchema = z
   .object({
@@ -47,17 +39,13 @@ export const artSpritesheetVisualEvidenceSchema = z
     pages: z.array(artAtlasPageVisualEvidenceSchema).min(1),
   })
   .strict();
-export type ArtSpritesheetVisualEvidence = z.infer<
-  typeof artSpritesheetVisualEvidenceSchema
->;
+export type ArtSpritesheetVisualEvidence = z.infer<typeof artSpritesheetVisualEvidenceSchema>;
 
 export const artVisualEvidenceRecordSchema = z.discriminatedUnion("kind", [
   artImageVisualEvidenceSchema,
   artSpritesheetVisualEvidenceSchema,
 ]);
-export type ArtVisualEvidenceRecord = z.infer<
-  typeof artVisualEvidenceRecordSchema
->;
+export type ArtVisualEvidenceRecord = z.infer<typeof artVisualEvidenceRecordSchema>;
 
 export const artVisualEvidenceManifestSchema = z
   .object({
@@ -67,13 +55,10 @@ export const artVisualEvidenceManifestSchema = z
     assets: z.array(artVisualEvidenceRecordSchema),
   })
   .strict();
-export type ArtVisualEvidenceManifest = z.infer<
-  typeof artVisualEvidenceManifestSchema
->;
+export type ArtVisualEvidenceManifest = z.infer<typeof artVisualEvidenceManifestSchema>;
 
-export const parseArtVisualEvidenceManifest = (
-  input: unknown,
-): ArtVisualEvidenceManifest => artVisualEvidenceManifestSchema.parse(input);
+export const parseArtVisualEvidenceManifest = (input: unknown): ArtVisualEvidenceManifest =>
+  artVisualEvidenceManifestSchema.parse(input);
 
 export type ArtVisualEvidenceIssueCode =
   | "visual-evidence-project-mismatch"
@@ -124,31 +109,19 @@ const evidenceById = (
   return records;
 };
 
-const resolvedOutputMode = (
-  manifest: ArtDirectionManifest,
-  rule: ArtAssetRule,
-): "indexed" | "rgba" =>
-  rule.outputMode === "inherit"
-    ? manifest.profile.palette.mode
-    : rule.outputMode;
+const resolvedOutputMode = (manifest: ArtDirectionManifest, rule: ArtAssetRule): "indexed" | "rgba" =>
+  rule.outputMode === "inherit" ? manifest.profile.palette.mode : rule.outputMode;
 
-const resolvedMaxColours = (
-  manifest: ArtDirectionManifest,
-  rule: ArtAssetRule,
-): number => rule.maxColours ?? manifest.profile.palette.maxColours;
+const resolvedMaxColours = (manifest: ArtDirectionManifest, rule: ArtAssetRule): number =>
+  rule.maxColours ?? manifest.profile.palette.maxColours;
 
 const resolvedTransparency = (
   manifest: ArtDirectionManifest,
   rule: ArtAssetRule,
 ): "opaque" | "binary" | "full" =>
-  rule.transparency === "inherit"
-    ? manifest.profile.transparency
-    : rule.transparency;
+  rule.transparency === "inherit" ? manifest.profile.transparency : rule.transparency;
 
-const alphaMatches = (
-  expected: "opaque" | "binary" | "full",
-  actual: ImageAlphaMode,
-): boolean => {
+const alphaMatches = (expected: "opaque" | "binary" | "full", actual: ImageAlphaMode): boolean => {
   switch (expected) {
     case "opaque":
       return actual === "opaque";
@@ -172,10 +145,7 @@ const checkPixels = (
   label: string,
 ): void => {
   const mode = resolvedOutputMode(manifest, rule);
-  if (
-    (mode === "indexed" && !evidence.palette) ||
-    (mode === "rgba" && evidence.palette)
-  ) {
+  if ((mode === "indexed" && !evidence.palette) || (mode === "rgba" && evidence.palette)) {
     addIssue(
       issues,
       "visual-evidence-palette-mismatch",
@@ -222,13 +192,9 @@ export const evaluateArtDirectionWithVisualEvidence = (
     );
   }
 
-  const compiledById = new Map(
-    compiled.assets.map((asset) => [asset.assetId as string, asset] as const),
-  );
+  const compiledById = new Map(compiled.assets.map((asset) => [asset.assetId as string, asset] as const));
   const records = evidenceById(evidence, issues);
-  const rulesById = new Map(
-    manifest.assets.map((rule) => [rule.assetId as string, rule] as const),
-  );
+  const rulesById = new Map(manifest.assets.map((rule) => [rule.assetId as string, rule] as const));
 
   for (const rule of manifest.assets) {
     const compiledAsset = compiledById.get(rule.assetId);
@@ -255,14 +221,11 @@ export const evaluateArtDirectionWithVisualEvidence = (
       continue;
     }
     if (record.kind === "image") {
-      checkPixels(
-        issues,
-        manifest,
-        rule,
-        record,
-        `assets.${rule.assetId}`,
-        `Image '${rule.assetId}'`,
-      );
+      checkPixels(issues, manifest, rule, record, `assets.${rule.assetId}`, `Image '${rule.assetId}'`);
+      continue;
+    }
+
+    if (compiledAsset.kind !== "spritesheet") {
       continue;
     }
 
@@ -279,9 +242,7 @@ export const evaluateArtDirectionWithVisualEvidence = (
         pagesByRole.set(page.outputRole, page);
       }
     });
-    const compiledRoles = new Set(
-      compiledAsset.metadata.pages.map((page) => page.outputRole),
-    );
+    const compiledRoles = new Set(compiledAsset.metadata.pages.map((page) => page.outputRole));
     for (const page of compiledAsset.metadata.pages) {
       const pageEvidence = pagesByRole.get(page.outputRole);
       if (!pageEvidence) {

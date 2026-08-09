@@ -31,8 +31,7 @@
     linear-gradient(45deg, #101117 25%, transparent 25%),
     linear-gradient(-45deg, #101117 25%, transparent 25%),
     linear-gradient(45deg, transparent 75%, #101117 75%),
-    linear-gradient(-45deg, transparent 75%, #101117 75%),
-    #0d0e13;
+    linear-gradient(-45deg, transparent 75%, #101117 75%), #0d0e13;
   background-position:
     0 0,
     0 6px,

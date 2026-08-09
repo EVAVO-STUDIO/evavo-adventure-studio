@@ -1,17 +1,13 @@
-import {
-  useCallback,
-  useEffect,
-  useReducer,
-  type Dispatch,
-  type ReactNode,
-} from "react";
 import type { Interaction } from "@evavo/adventure-project-schema";
 import type { ObjectStateDefinition } from "@evavo/adventure-scene-instances";
+import { type Dispatch, type ReactNode, useCallback, useEffect, useReducer } from "react";
 import { studioProject, studioSceneInstances } from "./fixture.js";
 import {
   createObjectWorkspace,
   insertObjectStateCommand,
   insertStateInteractionCommand,
+  type ObjectWorkspaceAction,
+  type ObjectWorkspaceState,
   objectManifest,
   objectWorkspaceIsDirty,
   objectWorkspaceReducer,
@@ -23,8 +19,6 @@ import {
   selectedObjectInteraction,
   selectedObjectState,
   setInitialObjectStateCommand,
-  type ObjectWorkspaceAction,
-  type ObjectWorkspaceState,
 } from "./object-workspace.js";
 import "./objects.css";
 
@@ -53,26 +47,18 @@ const Button = ({
   </button>
 );
 
-const Field = ({
-  label,
-  children,
-}: {
-  readonly label: string;
-  readonly children: ReactNode;
-}) => (
-  <label className="field">
+const Field = ({ label, children }: { readonly label: string; readonly children: ReactNode }) => (
+  <div className="field">
     <span>{label}</span>
     {children}
-  </label>
+  </div>
 );
 
-const stateLabel = (state: ObjectStateDefinition): string =>
-  state.id.split(".").at(-1) ?? state.id;
+const stateLabel = (state: ObjectStateDefinition): string => state.id.split(".").at(-1) ?? state.id;
 
 const firstSpeech = (interaction: Interaction): string =>
   interaction.actions.find(
-    (action): action is Extract<Interaction["actions"][number], { kind: "say" }> =>
-      action.kind === "say",
+    (action): action is Extract<Interaction["actions"][number], { kind: "say" }> => action.kind === "say",
   )?.text ?? "";
 
 const withSpeech = (interaction: Interaction, text: string): Interaction => {
@@ -87,16 +73,12 @@ const withSpeech = (interaction: Interaction, text: string): Interaction => {
   return { ...interaction, actions };
 };
 
-const removeOptionalCursor = (
-  state: ObjectStateDefinition,
-): ObjectStateDefinition => {
+const removeOptionalCursor = (state: ObjectStateDefinition): ObjectStateDefinition => {
   const { cursor: _cursor, ...rest } = state;
   return rest;
 };
 
-const removeOptionalFallback = (
-  state: ObjectStateDefinition,
-): ObjectStateDefinition => {
+const removeOptionalFallback = (state: ObjectStateDefinition): ObjectStateDefinition => {
   const { fallbackText: _fallbackText, ...rest } = state;
   return rest;
 };
@@ -143,7 +125,13 @@ const StateInspector = ({
     <aside className="sidebar inspector-sidebar object-inspector">
       <div className="inspector-heading">
         <span className="eyebrow">OBJECT INSPECTOR</span>
-        <h2>{interaction ? interaction.verb : objectState ? stateLabel(objectState) : definition?.name ?? "Objects"}</h2>
+        <h2>
+          {interaction
+            ? interaction.verb
+            : objectState
+              ? stateLabel(objectState)
+              : (definition?.name ?? "Objects")}
+        </h2>
         <code>{interaction?.id ?? objectState?.id ?? definition?.id ?? "No selection"}</code>
       </div>
 
@@ -170,11 +158,7 @@ const StateInspector = ({
                 placeholder="Automatic"
                 onChange={(event) => {
                   const cursor = event.currentTarget.value.trim();
-                  replaceState(
-                    cursor
-                      ? { ...objectState, cursor }
-                      : removeOptionalCursor(objectState),
-                  );
+                  replaceState(cursor ? { ...objectState, cursor } : removeOptionalCursor(objectState));
                 }}
               />
             </Field>
@@ -186,9 +170,7 @@ const StateInspector = ({
                 onChange={(event) => {
                   const fallbackText = event.currentTarget.value;
                   replaceState(
-                    fallbackText
-                      ? { ...objectState, fallbackText }
-                      : removeOptionalFallback(objectState),
+                    fallbackText ? { ...objectState, fallbackText } : removeOptionalFallback(objectState),
                   );
                 }}
               />
@@ -241,11 +223,7 @@ const StateInspector = ({
               <textarea
                 rows={6}
                 value={firstSpeech(interaction)}
-                onChange={(event) =>
-                  replaceInteraction(
-                    withSpeech(interaction, event.currentTarget.value),
-                  )
-                }
+                onChange={(event) => replaceInteraction(withSpeech(interaction, event.currentTarget.value))}
               />
             </Field>
             <label className="toggle-row">
@@ -342,9 +320,7 @@ export const ObjectApp = () => {
         notice: "Added a state-specific verb.",
       });
     } catch (error) {
-      window.alert(
-        error instanceof Error ? error.message : "Interaction creation failed.",
-      );
+      window.alert(error instanceof Error ? error.message : "Interaction creation failed.");
     }
   };
 
@@ -357,9 +333,7 @@ export const ObjectApp = () => {
         notice: "Removed the state interaction.",
       });
     } catch (error) {
-      window.alert(
-        error instanceof Error ? error.message : "Interaction removal failed.",
-      );
+      window.alert(error instanceof Error ? error.message : "Interaction removal failed.");
     }
   };
 
@@ -413,16 +387,10 @@ export const ObjectApp = () => {
 
       <div className="toolbar object-toolbar">
         <div className="toolbar-group">
-          <Button
-            onClick={() => dispatch({ type: "undo" })}
-            disabled={state.history.undoStack.length === 0}
-          >
+          <Button onClick={() => dispatch({ type: "undo" })} disabled={state.history.undoStack.length === 0}>
             ↶
           </Button>
-          <Button
-            onClick={() => dispatch({ type: "redo" })}
-            disabled={state.history.redoStack.length === 0}
-          >
+          <Button onClick={() => dispatch({ type: "redo" })} disabled={state.history.redoStack.length === 0}>
             ↷
           </Button>
         </div>
@@ -440,10 +408,7 @@ export const ObjectApp = () => {
           <Button onClick={addInteraction} disabled={!objectState}>
             ＋ Verb
           </Button>
-          <Button
-            onClick={removeInteraction}
-            disabled={!state.interactionId}
-          >
+          <Button onClick={removeInteraction} disabled={!state.interactionId}>
             − Verb
           </Button>
         </div>
@@ -462,9 +427,7 @@ export const ObjectApp = () => {
               <button
                 type="button"
                 key={candidate.id}
-                className={`object-definition-row ${
-                  candidate.id === state.definitionId ? "is-active" : ""
-                }`}
+                className={`object-definition-row ${candidate.id === state.definitionId ? "is-active" : ""}`}
                 onClick={() =>
                   dispatch({
                     type: "select-definition",
@@ -503,21 +466,16 @@ export const ObjectApp = () => {
                   type="button"
                   key={candidate.id}
                   className={`state-card ${selected ? "is-active" : ""}`}
-                  onClick={() =>
-                    dispatch({ type: "select-state", stateId: candidate.id })
-                  }
+                  onClick={() => dispatch({ type: "select-state", stateId: candidate.id })}
                 >
-                  <span className="state-number">
-                    {String(index + 1).padStart(2, "0")}
-                  </span>
+                  <span className="state-number">{String(index + 1).padStart(2, "0")}</span>
                   <span className="state-preview">
                     <i className={candidate.visible ? "is-visible" : ""}>◇</i>
                   </span>
                   <span className="state-copy">
                     <strong>{stateLabel(candidate)}</strong>
                     <small>
-                      {candidate.visible ? "visible" : "hidden"} ·{" "}
-                      {candidate.interactions.length} verbs
+                      {candidate.visible ? "visible" : "hidden"} · {candidate.interactions.length} verbs
                     </small>
                   </span>
                   {initial ? <span className="initial-pill">INITIAL</span> : null}
@@ -535,9 +493,7 @@ export const ObjectApp = () => {
                 <button
                   type="button"
                   key={interaction.id}
-                  className={`interaction-row ${
-                    interaction.id === state.interactionId ? "is-active" : ""
-                  }`}
+                  className={`interaction-row ${interaction.id === state.interactionId ? "is-active" : ""}`}
                   onClick={() =>
                     dispatch({
                       type: "select-interaction",

@@ -1,50 +1,27 @@
 import { isAbsolute, relative, resolve } from "node:path";
+import { createArtVisualEvidenceFromAssetManifest } from "@evavo/adventure-asset-pipeline/art-evidence";
 import { compileProjectWithInstances } from "@evavo/adventure-compiler/scene-instances";
 import {
   CLI_HELP,
-  CliUsageError,
-  parseCliArguments,
   type CliCommand,
+  CliUsageError,
   type OutputFormat,
+  parseCliArguments,
 } from "./arguments.js";
-import {
-  artInputPaths,
-  loadArtInputs,
-  type LoadedArtInputs,
-} from "./art-inputs.js";
+import { artInputPaths, type LoadedArtInputs, loadArtInputs } from "./art-inputs.js";
 import {
   CliDataError,
+  type CliDiagnostic,
   formatDiagnostic,
   hasErrors,
   sortDiagnostics,
-  type CliDiagnostic,
 } from "./diagnostics.js";
-import {
-  replaceDirectoryAtomically,
-  withTrailingNewline,
-  writeFilesAtomically,
-} from "./filesystem.js";
-import {
-  bitmapFontInputPaths,
-  loadBitmapFonts,
-  type LoadedBitmapFonts,
-} from "./font-inputs.js";
-import {
-  inputPaths,
-  loadInputs,
-  readVerifiedRuntimeOutputs,
-  type LoadedInputs,
-} from "./inputs.js";
+import { replaceDirectoryAtomically, withTrailingNewline, writeFilesAtomically } from "./filesystem.js";
+import { bitmapFontInputPaths, type LoadedBitmapFonts, loadBitmapFonts } from "./font-inputs.js";
+import { inputPaths, type LoadedInputs, loadInputs, readVerifiedRuntimeOutputs } from "./inputs.js";
 import { buildRelease } from "./release.js";
-import {
-  loadSceneInstances,
-  type LoadedSceneInstances,
-} from "./scene-inputs.js";
-import {
-  loadUiSkins,
-  uiSkinInputPaths,
-  type LoadedUiSkins,
-} from "./ui-inputs.js";
+import { type LoadedSceneInstances, loadSceneInstances } from "./scene-inputs.js";
+import { type LoadedUiSkins, loadUiSkins, uiSkinInputPaths } from "./ui-inputs.js";
 
 export const CLI_VERSION = "0.1.0";
 
@@ -65,9 +42,7 @@ const writeResult = (
   human: string,
 ): void => {
   environment.stdout(
-    format === "json"
-      ? withTrailingNewline(JSON.stringify(payload, null, 2))
-      : withTrailingNewline(human),
+    format === "json" ? withTrailingNewline(JSON.stringify(payload, null, 2)) : withTrailingNewline(human),
   );
 };
 
@@ -90,27 +65,10 @@ const loadCombinedInputs = async (
   uiSkinsPath: string | null,
 ): Promise<CombinedInputState> => {
   const base = await loadInputs(projectPath, assetManifestPath);
-  const sceneInstances = await loadSceneInstances(
-    sceneInstancesPath,
-    base.project,
-    base.assetManifest,
-  );
-  const art = await loadArtInputs(
-    artDirectionPath,
-    artEvidencePath,
-    base.project,
-    base.assetManifest,
-  );
-  const bitmapFonts = await loadBitmapFonts(
-    bitmapFontsPath,
-    base.project,
-    base.assetManifest,
-  );
-  const uiSkins = await loadUiSkins(
-    uiSkinsPath,
-    base.project,
-    bitmapFonts.manifest,
-  );
+  const sceneInstances = await loadSceneInstances(sceneInstancesPath, base.project, base.assetManifest);
+  const art = await loadArtInputs(artDirectionPath, artEvidencePath, base.project, base.assetManifest);
+  const bitmapFonts = await loadBitmapFonts(bitmapFontsPath, base.project, base.assetManifest);
+  const uiSkins = await loadUiSkins(uiSkinsPath, base.project, bitmapFonts.manifest);
   return {
     base,
     sceneInstances,
@@ -176,30 +134,22 @@ const runValidate = async (
 
 const normalizedPath = (value: string): string => {
   const resolved = resolve(value);
-  return process.platform === "win32"
-    ? resolved.toLocaleLowerCase("en-US")
-    : resolved;
+  return process.platform === "win32" ? resolved.toLocaleLowerCase("en-US") : resolved;
 };
 
 const sameOutputPath = (left: string, right: string): boolean =>
   normalizedPath(left) === normalizedPath(right);
 
 const isPathWithin = (candidatePath: string, directoryPath: string): boolean => {
-  const pathDifference = relative(
-    normalizedPath(directoryPath),
-    normalizedPath(candidatePath),
-  );
-  return (
-    pathDifference === "" ||
-    (!pathDifference.startsWith("..") && !isAbsolute(pathDifference))
-  );
+  const pathDifference = relative(normalizedPath(directoryPath), normalizedPath(candidatePath));
+  return pathDifference === "" || (!pathDifference.startsWith("..") && !isAbsolute(pathDifference));
 };
 
-const assertGeneratedFilesSafe = (
-  loaded: CombinedInputState,
+const assertGeneratedPathsSafe = (
+  inputFilePaths: readonly string[],
   generatedPaths: readonly string[],
 ): void => {
-  const inputs = allInputPaths(loaded).map(normalizedPath);
+  const inputs = inputFilePaths.map(normalizedPath);
   for (const generatedPath of generatedPaths) {
     if (inputs.includes(normalizedPath(generatedPath))) {
       throw new CliUsageError(
@@ -209,10 +159,10 @@ const assertGeneratedFilesSafe = (
   }
 };
 
-const assertReleaseDirectorySafe = (
-  loaded: CombinedInputState,
-  outputDirectory: string,
-): void => {
+const assertGeneratedFilesSafe = (loaded: CombinedInputState, generatedPaths: readonly string[]): void =>
+  assertGeneratedPathsSafe(allInputPaths(loaded), generatedPaths);
+
+const assertReleaseDirectorySafe = (loaded: CombinedInputState, outputDirectory: string): void => {
   for (const inputPath of allInputPaths(loaded)) {
     if (isPathWithin(inputPath, outputDirectory)) {
       throw new CliUsageError(
@@ -227,9 +177,7 @@ const requireCompiledInputs = (
   commandName: "compile" | "package",
 ): NonNullable<LoadedInputs["assetManifest"]> => {
   if (!loaded.base.assetManifest) {
-    throw new Error(
-      `${commandName} command did not load its required asset manifest.`,
-    );
+    throw new Error(`${commandName} command did not load its required asset manifest.`);
   }
   if (hasErrors(loaded.diagnostics)) {
     throw new CliDataError(loaded.diagnostics);
@@ -241,10 +189,7 @@ const runCompile = async (
   command: Extract<CliCommand, { readonly kind: "compile" }>,
   environment: CliEnvironment,
 ): Promise<number> => {
-  if (
-    command.reportPath &&
-    sameOutputPath(command.outputPath, command.reportPath)
-  ) {
+  if (command.reportPath && sameOutputPath(command.outputPath, command.reportPath)) {
     throw new CliUsageError("Bundle output and report paths must be different.");
   }
 
@@ -258,10 +203,7 @@ const runCompile = async (
     command.uiSkinsPath,
   );
   const assetManifest = requireCompiledInputs(loaded, "compile");
-  assertGeneratedFilesSafe(
-    loaded,
-    [command.outputPath, ...(command.reportPath ? [command.reportPath] : [])],
-  );
+  assertGeneratedFilesSafe(loaded, [command.outputPath, ...(command.reportPath ? [command.reportPath] : [])]);
 
   const compiled = compileProjectWithInstances(
     loaded.base.project,
@@ -308,15 +250,9 @@ const runCompile = async (
     `Compiled project '${loaded.base.project.id}'.`,
     `Bundle: ${resolve(command.outputPath)}`,
     `Fingerprint: ${compiled.fingerprint}`,
-    ...(loaded.art.manifest
-      ? [`Art profile: ${loaded.art.manifest.profile.preset}`]
-      : []),
-    ...(loaded.bitmapFonts.manifest
-      ? [`Bitmap fonts: ${loaded.bitmapFonts.manifest.fonts.length}`]
-      : []),
-    ...(loaded.uiSkins.manifest
-      ? [`Interface skins: ${loaded.uiSkins.manifest.skins.length}`]
-      : []),
+    ...(loaded.art.manifest ? [`Art profile: ${loaded.art.manifest.profile.preset}`] : []),
+    ...(loaded.bitmapFonts.manifest ? [`Bitmap fonts: ${loaded.bitmapFonts.manifest.fonts.length}`] : []),
+    ...(loaded.uiSkins.manifest ? [`Interface skins: ${loaded.uiSkins.manifest.skins.length}`] : []),
     ...(command.reportPath ? [`Report: ${resolve(command.reportPath)}`] : []),
   ].join("\n");
   writeResult(environment, command.format, report, human);
@@ -349,15 +285,9 @@ const runPackage = async (
     loaded.bitmapFonts.manifest ?? undefined,
     loaded.uiSkins.manifest ?? undefined,
   );
-  const artifacts = await readVerifiedRuntimeOutputs(
-    loaded.base.manifestPath,
-    assetManifest,
-  );
+  const artifacts = await readVerifiedRuntimeOutputs(loaded.base.manifestPath, assetManifest);
   const release = buildRelease(compiled, assetManifest, artifacts);
-  const outputDirectory = await replaceDirectoryAtomically(
-    command.outputDirectory,
-    release.files,
-  );
+  const outputDirectory = await replaceDirectoryAtomically(command.outputDirectory, release.files);
 
   const report = {
     reportVersion: 1 as const,
@@ -385,17 +315,71 @@ const runPackage = async (
     `Files: ${release.files.length}`,
     `Bundle fingerprint: ${compiled.fingerprint}`,
     `Release fingerprint: ${release.fingerprint}`,
-    ...(loaded.art.manifest
-      ? [`Art profile: ${loaded.art.manifest.profile.preset}`]
-      : []),
-    ...(loaded.bitmapFonts.manifest
-      ? [`Bitmap fonts: ${loaded.bitmapFonts.manifest.fonts.length}`]
-      : []),
-    ...(loaded.uiSkins.manifest
-      ? [`Interface skins: ${loaded.uiSkins.manifest.skins.length}`]
-      : []),
+    ...(loaded.art.manifest ? [`Art profile: ${loaded.art.manifest.profile.preset}`] : []),
+    ...(loaded.bitmapFonts.manifest ? [`Bitmap fonts: ${loaded.bitmapFonts.manifest.fonts.length}`] : []),
+    ...(loaded.uiSkins.manifest ? [`Interface skins: ${loaded.uiSkins.manifest.skins.length}`] : []),
   ].join("\n");
   writeResult(environment, command.format, report, human);
+  return 0;
+};
+
+const runArtEvidence = async (
+  command: Extract<CliCommand, { readonly kind: "art-evidence" }>,
+  environment: CliEnvironment,
+): Promise<number> => {
+  const loaded = await loadInputs(command.projectPath, command.assetManifestPath);
+  const manifest = loaded.assetManifest;
+  if (!loaded.manifestPath || !manifest) {
+    throw new Error("Art-evidence command did not load its required asset manifest.");
+  }
+  if (hasErrors(loaded.diagnostics)) {
+    throw new CliDataError(loaded.diagnostics);
+  }
+
+  assertGeneratedPathsSafe(inputPaths(loaded), [command.outputPath]);
+  const artifacts = await readVerifiedRuntimeOutputs(loaded.manifestPath, manifest);
+  const outputs = new Map(
+    artifacts.map((artifact) => [`${artifact.assetId}:${artifact.output.role}`, artifact.data] as const),
+  );
+  const evidence = await createArtVisualEvidenceFromAssetManifest(manifest, async (assetId, output) => {
+    const data = outputs.get(`${assetId}:${output.role}`);
+    if (!data) {
+      throw new Error(`Verified runtime output '${assetId}:${output.role}' is unavailable.`);
+    }
+    return data;
+  });
+  await writeFilesAtomically([
+    {
+      path: command.outputPath,
+      data: withTrailingNewline(JSON.stringify(evidence, null, 2)),
+    },
+  ]);
+
+  const visualOutputCount = evidence.assets.reduce(
+    (total, asset) => total + (asset.kind === "image" ? 1 : asset.pages.length),
+    0,
+  );
+  const report = {
+    reportVersion: 1 as const,
+    command: "art-evidence" as const,
+    valid: true,
+    projectId: loaded.project.id,
+    assetManifestFingerprint: manifest.fingerprint,
+    outputPath: resolve(command.outputPath),
+    assetCount: evidence.assets.length,
+    visualOutputCount,
+  };
+  writeResult(
+    environment,
+    command.format,
+    report,
+    [
+      `Generated art evidence for '${loaded.project.id}'.`,
+      `Assets: ${evidence.assets.length}`,
+      `Visual outputs: ${visualOutputCount}`,
+      `Evidence: ${resolve(command.outputPath)}`,
+    ].join("\n"),
+  );
   return 0;
 };
 
@@ -423,9 +407,7 @@ const writeFailure = (
     );
     return;
   }
-  environment.stderr(
-    withTrailingNewline(diagnostics.map(formatDiagnostic).join("\n")),
-  );
+  environment.stderr(withTrailingNewline(diagnostics.map(formatDiagnostic).join("\n")));
 };
 
 export const runCli = async (
@@ -447,6 +429,8 @@ export const runCli = async (
         return await runCompile(command, environment);
       case "package":
         return await runPackage(command, environment);
+      case "art-evidence":
+        return await runArtEvidence(command, environment);
     }
   } catch (error) {
     if (error instanceof CliUsageError) {
@@ -469,9 +453,7 @@ export const runCli = async (
       return 1;
     }
     environment.stderr(
-      `Unexpected CLI failure: ${
-        error instanceof Error ? error.stack ?? error.message : String(error)
-      }\n`,
+      `Unexpected CLI failure: ${error instanceof Error ? (error.stack ?? error.message) : String(error)}\n`,
     );
     return 3;
   }

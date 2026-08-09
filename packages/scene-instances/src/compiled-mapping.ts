@@ -37,10 +37,7 @@ const sameRectangle = (
     readonly height: number;
   },
 ): boolean =>
-  left.x === right.x &&
-  left.y === right.y &&
-  left.width === right.width &&
-  left.height === right.height;
+  left.x === right.x && left.y === right.y && left.width === right.width && left.height === right.height;
 
 const sameSize = (
   left: { readonly width: number; readonly height: number },
@@ -57,9 +54,7 @@ export const validateCompiledObjectVisualMappings = (
   assetManifest: AssetBuildManifest,
 ): readonly CompiledObjectVisualIssue[] => {
   const issues: CompiledObjectVisualIssue[] = [];
-  const assetsById = new Map(
-    assetManifest.assets.map((asset) => [asset.assetId as string, asset]),
-  );
+  const assetsById = new Map(assetManifest.assets.map((asset) => [asset.assetId as string, asset]));
 
   sceneInstances.objectDefinitions.forEach((definition, definitionIndex) => {
     definition.states.forEach((state, stateIndex) => {
@@ -101,9 +96,7 @@ export const validateCompiledObjectVisualMappings = (
         return;
       }
 
-      const compiledFrame = asset.metadata.frames.find(
-        (frame) => frame.frameId === visual.frameId,
-      );
+      const compiledFrame = asset.metadata.frames.find((frame) => frame.frameId === visual.frameId);
       if (!compiledFrame) {
         issue(
           issues,

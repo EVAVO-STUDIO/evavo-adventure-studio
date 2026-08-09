@@ -1,4 +1,3 @@
-import type { AdventureProductionProfile } from "./production-profile-types.js";
 import {
   actors,
   animation,
@@ -10,6 +9,7 @@ import {
   showcase,
 } from "./production-profile-factory.js";
 import { productionProfileSplashes as splashes } from "./production-profile-splashes.js";
+import type { AdventureProductionProfile } from "./production-profile-types.js";
 
 export const iconProductionProfiles: readonly AdventureProductionProfile[] = [
   profile({

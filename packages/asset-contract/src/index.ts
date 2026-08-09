@@ -1,11 +1,11 @@
-import { z } from "zod";
 import {
+  type AdventureProject,
+  type Id,
   idSchema,
   rectangleSchema,
   sizeSchema,
-  type AdventureProject,
-  type Id,
 } from "@evavo/adventure-project-schema";
+import { z } from "zod";
 
 export const sha256Schema = z
   .string()
@@ -21,10 +21,7 @@ export const relativeRuntimePathSchema = z
     message: "Runtime paths must use forward slashes.",
   })
   .refine(
-    (value) =>
-      value
-        .split("/")
-        .every((segment) => segment.length > 0 && segment !== "." && segment !== ".."),
+    (value) => value.split("/").every((segment) => segment.length > 0 && segment !== "." && segment !== ".."),
     { message: "Runtime paths cannot contain empty, current or parent segments." },
   );
 
@@ -300,9 +297,7 @@ const validateOutputRoles = (
   }
 
   const pageRoles = new Set<string>();
-  const pageByRole = new Map(
-    asset.metadata.pages.map((page) => [page.outputRole, page] as const),
-  );
+  const pageByRole = new Map(asset.metadata.pages.map((page) => [page.outputRole, page] as const));
   asset.metadata.pages.forEach((page, pageIndex) => {
     if (pageRoles.has(page.outputRole)) {
       addIssue(
@@ -375,9 +370,7 @@ export const validateAssetBuildManifest = (
     );
   }
 
-  const authoredById = new Map(
-    project.assets.map((asset) => [asset.id as string, asset] as const),
-  );
+  const authoredById = new Map(project.assets.map((asset) => [asset.id as string, asset] as const));
   const compiledById = new Map<string, CompiledAssetRecord>();
   const runtimePaths = new Map<string, string>();
 

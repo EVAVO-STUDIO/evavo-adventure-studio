@@ -1,27 +1,16 @@
 import { readFile } from "node:fs/promises";
 import { dirname, resolve } from "node:path";
 import {
-  parseAssetBuildManifest,
-  validateAssetBuildManifest,
   type AssetBuildManifest,
   type CompiledOutputFile,
+  parseAssetBuildManifest,
+  validateAssetBuildManifest,
 } from "@evavo/adventure-asset-contract";
 import { validateCompiledFrameMappings } from "@evavo/adventure-asset-contract/frame-mapping";
 import { validatePortableRuntimePaths } from "@evavo/adventure-asset-contract/portable-path";
-import {
-  parseAdventureProject,
-  type AdventureProject,
-} from "@evavo/adventure-project-schema";
-import {
-  validateProjectSemantics,
-  type ValidationIssue,
-} from "@evavo/adventure-validation";
-import {
-  CliDataError,
-  errorCode,
-  sortDiagnostics,
-  type CliDiagnostic,
-} from "./diagnostics.js";
+import { type AdventureProject, parseAdventureProject } from "@evavo/adventure-project-schema";
+import { type ValidationIssue, validateProjectSemantics } from "@evavo/adventure-validation";
+import { CliDataError, type CliDiagnostic, errorCode, sortDiagnostics } from "./diagnostics.js";
 import { canonicalStringify, sha256 } from "./hashing.js";
 
 export interface LoadedInputs {
@@ -67,22 +56,20 @@ const schemaDiagnostics = (
     "issues" in error &&
     Array.isArray((error as { readonly issues: unknown }).issues)
   ) {
-    return (error as { readonly issues: readonly unknown[] }).issues.map(
-      (issue) => {
-        const candidate = issue as {
-          readonly code?: unknown;
-          readonly path?: readonly PropertyKey[];
-          readonly message?: unknown;
-        };
-        return {
-          severity: "error" as const,
-          source,
-          code: String(candidate.code ?? "schema-invalid"),
-          path: schemaPath(candidate.path ?? []),
-          message: String(candidate.message ?? "Schema validation failed."),
-        };
-      },
-    );
+    return (error as { readonly issues: readonly unknown[] }).issues.map((issue) => {
+      const candidate = issue as {
+        readonly code?: unknown;
+        readonly path?: readonly PropertyKey[];
+        readonly message?: unknown;
+      };
+      return {
+        severity: "error" as const,
+        source,
+        code: String(candidate.code ?? "schema-invalid"),
+        path: schemaPath(candidate.path ?? []),
+        message: String(candidate.message ?? "Schema validation failed."),
+      };
+    });
   }
 
   return [
@@ -91,8 +78,7 @@ const schemaDiagnostics = (
       source,
       code: "schema-invalid",
       path: "$",
-      message:
-        error instanceof Error ? error.message : "Schema validation failed.",
+      message: error instanceof Error ? error.message : "Schema validation failed.",
     },
   ];
 };
@@ -111,9 +97,7 @@ const readJsonFile = async (
         source,
         code: errorCode(error) ?? "read-failed",
         path,
-        message: `Unable to read '${path}': ${
-          error instanceof Error ? error.message : String(error)
-        }`,
+        message: `Unable to read '${path}': ${error instanceof Error ? error.message : String(error)}`,
       },
     ]);
   }
@@ -127,9 +111,7 @@ const readJsonFile = async (
         source,
         code: "invalid-json",
         path,
-        message: `Invalid JSON in '${path}': ${
-          error instanceof Error ? error.message : String(error)
-        }`,
+        message: `Invalid JSON in '${path}': ${error instanceof Error ? error.message : String(error)}`,
       },
     ]);
   }
@@ -144,9 +126,7 @@ const loadProject = async (path: string): Promise<AdventureProject> => {
   }
 };
 
-const loadAssetManifest = async (
-  path: string,
-): Promise<AssetBuildManifest> => {
+const loadAssetManifest = async (path: string): Promise<AssetBuildManifest> => {
   const input = await readJsonFile(path, "asset-manifest-file");
   try {
     return parseAssetBuildManifest(input);
@@ -155,9 +135,7 @@ const loadAssetManifest = async (
   }
 };
 
-const manifestFingerprintDiagnostic = (
-  manifest: AssetBuildManifest,
-): CliDiagnostic | null => {
+const manifestFingerprintDiagnostic = (manifest: AssetBuildManifest): CliDiagnostic | null => {
   const { fingerprint: _fingerprint, ...payload } = manifest;
   const actual = sha256(canonicalStringify(payload));
   return actual === manifest.fingerprint
@@ -199,14 +177,10 @@ export const evidenceFiles = (
     }
   }
 
-  return files.sort((left, right) =>
-    left.logicalPath.localeCompare(right.logicalPath),
-  );
+  return files.sort((left, right) => left.logicalPath.localeCompare(right.logicalPath));
 };
 
-const verifyEvidenceFile = async (
-  file: EvidenceFile,
-): Promise<readonly CliDiagnostic[]> => {
+const verifyEvidenceFile = async (file: EvidenceFile): Promise<readonly CliDiagnostic[]> => {
   let data: Uint8Array;
   try {
     data = new Uint8Array(await readFile(file.filePath));
@@ -274,9 +248,7 @@ export const loadInputs = async (
 ): Promise<LoadedInputs> => {
   const projectPath = resolve(projectInputPath);
   const project = await loadProject(projectPath);
-  const diagnostics: CliDiagnostic[] = validateProjectSemantics(project).map(
-    projectDiagnostic,
-  );
+  const diagnostics: CliDiagnostic[] = validateProjectSemantics(project).map(projectDiagnostic);
 
   if (!manifestInputPath) {
     return {
@@ -308,9 +280,7 @@ export const loadInputs = async (
   if (fingerprintDiagnostic) {
     diagnostics.push(fingerprintDiagnostic);
   }
-  diagnostics.push(
-    ...(await evidenceDiagnostics(projectPath, manifestPath, assetManifest)),
-  );
+  diagnostics.push(...(await evidenceDiagnostics(projectPath, manifestPath, assetManifest)));
 
   return {
     projectPath,
@@ -328,11 +298,9 @@ export const inputPaths = (loaded: LoadedInputs): readonly string[] => {
   }
   paths.push(loaded.manifestPath);
   paths.push(
-    ...evidenceFiles(
-      loaded.projectPath,
-      loaded.manifestPath,
-      loaded.assetManifest,
-    ).map((file) => file.filePath),
+    ...evidenceFiles(loaded.projectPath, loaded.manifestPath, loaded.assetManifest).map(
+      (file) => file.filePath,
+    ),
   );
   return paths;
 };
@@ -345,14 +313,10 @@ export const readVerifiedRuntimeOutputs = async (
   const artifacts: RuntimeOutputArtifact[] = [];
   const diagnostics: CliDiagnostic[] = [];
 
-  for (const asset of [...manifest.assets].sort((left, right) =>
-    left.assetId.localeCompare(right.assetId),
-  )) {
+  for (const asset of [...manifest.assets].sort((left, right) => left.assetId.localeCompare(right.assetId))) {
     for (const output of [...asset.outputFiles].sort((left, right) => {
       const roleDifference = left.role.localeCompare(right.role);
-      return roleDifference !== 0
-        ? roleDifference
-        : left.runtimePath.localeCompare(right.runtimePath);
+      return roleDifference !== 0 ? roleDifference : left.runtimePath.localeCompare(right.runtimePath);
     })) {
       const filePath = resolve(manifestDirectory, output.runtimePath);
       let data: Uint8Array;

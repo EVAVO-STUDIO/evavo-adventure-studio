@@ -1,10 +1,4 @@
-import type {
-  Id,
-  Point,
-  Polygon,
-  Rectangle,
-  Size,
-} from "@evavo/adventure-project-schema";
+import type { Id, Point, Polygon, Rectangle, Size } from "@evavo/adventure-project-schema";
 import type { SceneObjectInstance } from "@evavo/adventure-scene-instances";
 import type { AdventureDesignId } from "./types.js";
 

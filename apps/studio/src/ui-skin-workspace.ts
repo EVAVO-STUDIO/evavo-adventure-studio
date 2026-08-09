@@ -2,27 +2,27 @@ import type { BitmapFontManifest } from "@evavo/adventure-bitmap-font";
 import type { AdventureProject, Id } from "@evavo/adventure-project-schema";
 import type { RenderNode } from "@evavo/adventure-render-contract";
 import {
-  composeUiSkinNodes,
-  type UiAssetGeometryResolver,
-  type UiRuntimeState,
-} from "@evavo/adventure-ui-skin/compose";
-import {
-  uiSkinById,
-  validateUiSkinManifest,
   type UiSkin,
   type UiSkinIssue,
   type UiSkinManifest,
   type UiVerb,
+  uiSkinById,
+  validateUiSkinManifest,
 } from "@evavo/adventure-ui-skin";
+import {
+  composeUiSkinNodes,
+  type UiAssetGeometryResolver,
+  type UiRuntimeState,
+} from "@evavo/adventure-ui-skin/compose";
 import {
   createUiSkinEditorHistory,
   executeUiSkinEditorCommand,
   isUiSkinEditorDocumentDirty,
   markUiSkinEditorHistorySaved,
   redoUiSkinEditorCommand,
-  undoUiSkinEditorCommand,
   type UiSkinEditorCommand,
   type UiSkinEditorHistoryState,
+  undoUiSkinEditorCommand,
 } from "@evavo/adventure-ui-skin-editor-core";
 
 export interface UiSkinWorkspaceState {
@@ -83,8 +83,7 @@ export const DEFAULT_UI_PREVIEW: UiRuntimeState = {
       enabled: false,
     },
   ],
-  hoveredDialogueChoiceId:
-    "dialogue-choice.preview.rain" as Id<"dialogue-choice">,
+  hoveredDialogueChoiceId: "dialogue-choice.preview.rain" as Id<"dialogue-choice">,
   verbCoinPosition: { x: 160, y: 100 },
 };
 
@@ -104,26 +103,15 @@ export const createUiSkinWorkspace = (
 export const selectedUiSkin = (state: UiSkinWorkspaceState): UiSkin =>
   uiSkinById(state.history.document.manifest, state.selectedSkinId);
 
-export const uiSkinWorkspaceIsDirty = (
-  state: UiSkinWorkspaceState,
-): boolean => isUiSkinEditorDocumentDirty(state.history.document);
+export const uiSkinWorkspaceIsDirty = (state: UiSkinWorkspaceState): boolean =>
+  isUiSkinEditorDocumentDirty(state.history.document);
 
-export const uiSkinWorkspaceIssues = (
-  state: UiSkinWorkspaceState,
-): readonly UiSkinIssue[] =>
-  validateUiSkinManifest(
-    state.project,
-    state.bitmapFonts,
-    state.history.document.manifest,
-  );
+export const uiSkinWorkspaceIssues = (state: UiSkinWorkspaceState): readonly UiSkinIssue[] =>
+  validateUiSkinManifest(state.project, state.bitmapFonts, state.history.document.manifest);
 
-export const uiSkinIssuesForSelectedSkin = (
-  state: UiSkinWorkspaceState,
-): readonly UiSkinIssue[] => {
+export const uiSkinIssuesForSelectedSkin = (state: UiSkinWorkspaceState): readonly UiSkinIssue[] => {
   const skin = selectedUiSkin(state);
-  const index = state.history.document.manifest.skins.findIndex(
-    (candidate) => candidate.id === skin.id,
-  );
+  const index = state.history.document.manifest.skins.findIndex((candidate) => candidate.id === skin.id);
   const prefix = `skins[${index}]`;
   return uiSkinWorkspaceIssues(state).filter(
     (issue) => issue.path.startsWith(prefix) || issue.path === "defaultSkinId",
@@ -139,10 +127,7 @@ export const studioUiGeometryResolver: UiAssetGeometryResolver = {
         trimOffset: { x: 0, y: 0 },
       };
     }
-    if (
-      assetId === "asset.inventory.notebook" ||
-      assetId === "asset.inventory.key"
-    ) {
+    if (assetId === "asset.inventory.notebook" || assetId === "asset.inventory.key") {
       return {
         sourceRect: { x: 0, y: 0, width: 14, height: 14 },
         originalSize: { width: 14, height: 14 },
@@ -153,18 +138,11 @@ export const studioUiGeometryResolver: UiAssetGeometryResolver = {
   },
 };
 
-export const uiSkinWorkspacePreviewNodes = (
-  state: UiSkinWorkspaceState,
-): readonly RenderNode[] =>
-  composeUiSkinNodes(
-    selectedUiSkin(state),
-    state.bitmapFonts,
-    state.preview,
-    {
-      assets: studioUiGeometryResolver,
-      nodePrefix: "studio.ui-preview",
-    },
-  );
+export const uiSkinWorkspacePreviewNodes = (state: UiSkinWorkspaceState): readonly RenderNode[] =>
+  composeUiSkinNodes(selectedUiSkin(state), state.bitmapFonts, state.preview, {
+    assets: studioUiGeometryResolver,
+    nodePrefix: "studio.ui-preview",
+  });
 
 export const replaceSelectedUiSkinCommand = (
   state: UiSkinWorkspaceState,
@@ -175,10 +153,7 @@ export const replaceSelectedUiSkinCommand = (
   skin,
 });
 
-export const replaceUiVerbCommand = (
-  state: UiSkinWorkspaceState,
-  verb: UiVerb,
-): UiSkinEditorCommand => ({
+export const replaceUiVerbCommand = (state: UiSkinWorkspaceState, verb: UiVerb): UiSkinEditorCommand => ({
   kind: "replace-verb",
   skinId: state.selectedSkinId,
   verbId: verb.id,
@@ -197,9 +172,7 @@ export const insertUiVerbCommand = (
 });
 
 const rejectedNotice = (error: unknown): string =>
-  error instanceof Error
-    ? `Interface edit rejected: ${error.message}`
-    : "Interface edit was rejected.";
+  error instanceof Error ? `Interface edit rejected: ${error.message}` : "Interface edit was rejected.";
 
 export const uiSkinWorkspaceReducer = (
   state: UiSkinWorkspaceState,
@@ -222,9 +195,7 @@ export const uiSkinWorkspaceReducer = (
         return {
           ...state,
           history,
-          selectedSkinId: selectedExists
-            ? state.selectedSkinId
-            : history.document.manifest.defaultSkinId,
+          selectedSkinId: selectedExists ? state.selectedSkinId : history.document.manifest.defaultSkinId,
           notice: action.notice ?? null,
         };
       } catch (error) {
@@ -234,21 +205,13 @@ export const uiSkinWorkspaceReducer = (
     case "undo":
       return {
         ...state,
-        history: undoUiSkinEditorCommand(
-          state.project,
-          state.bitmapFonts,
-          state.history,
-        ),
+        history: undoUiSkinEditorCommand(state.project, state.bitmapFonts, state.history),
         notice: "Undid the last interface edit.",
       };
     case "redo":
       return {
         ...state,
-        history: redoUiSkinEditorCommand(
-          state.project,
-          state.bitmapFonts,
-          state.history,
-        ),
+        history: redoUiSkinEditorCommand(state.project, state.bitmapFonts, state.history),
         notice: "Redid the interface edit.",
       };
     case "mark-saved":

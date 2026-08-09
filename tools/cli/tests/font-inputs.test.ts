@@ -1,9 +1,9 @@
 import { mkdir, mkdtemp, rm, writeFile } from "node:fs/promises";
 import { tmpdir } from "node:os";
 import { dirname, join } from "node:path";
-import { afterEach, describe, expect, it } from "vitest";
 import { assetBuildManifestSchema } from "@evavo/adventure-asset-contract";
 import { parseAdventureProject } from "@evavo/adventure-project-schema";
+import { afterEach, describe, expect, it } from "vitest";
 import { CliDataError } from "../src/diagnostics.js";
 import { loadBitmapFonts } from "../src/font-inputs.js";
 
@@ -76,9 +76,7 @@ const compiled = assetBuildManifestSchema.parse({
     {
       assetId: "asset.office",
       kind: "image",
-      sourceFiles: [
-        { path: "art/office.png", sha256: hash, byteLength: 1 },
-      ],
+      sourceFiles: [{ path: "art/office.png", sha256: hash, byteLength: 1 }],
       outputFiles: [
         {
           role: "primary",
@@ -170,9 +168,7 @@ const fontManifest = (sourceRect = { x: 1, y: 1, width: 4, height: 6 }) => ({
 
 afterEach(async () => {
   await Promise.all(
-    temporaryDirectories.splice(0).map((directory) =>
-      rm(directory, { recursive: true, force: true }),
-    ),
+    temporaryDirectories.splice(0).map((directory) => rm(directory, { recursive: true, force: true })),
   );
 });
 
@@ -212,20 +208,12 @@ describe("CLI bitmap font inputs", () => {
     const invalidPath = join(root, "invalid.json");
     await writeJson(invalidPath, { manifestVersion: 1, fonts: [] });
 
-    await expect(
-      loadBitmapFonts(invalidPath, project, compiled),
-    ).rejects.toMatchObject<Partial<CliDataError>>({
-      diagnostics: expect.arrayContaining([
-        expect.objectContaining({ source: "bitmap-fonts-schema" }),
-      ]),
+    await expect(loadBitmapFonts(invalidPath, project, compiled)).rejects.toMatchObject({
+      diagnostics: expect.arrayContaining([expect.objectContaining({ source: "bitmap-fonts-schema" })]),
     });
 
-    await expect(
-      loadBitmapFonts(join(root, "missing.json"), project, compiled),
-    ).rejects.toMatchObject<Partial<CliDataError>>({
-      diagnostics: expect.arrayContaining([
-        expect.objectContaining({ source: "bitmap-fonts-file" }),
-      ]),
+    await expect(loadBitmapFonts(join(root, "missing.json"), project, compiled)).rejects.toMatchObject({
+      diagnostics: expect.arrayContaining([expect.objectContaining({ source: "bitmap-fonts-file" })]),
     });
   });
 });

@@ -1,21 +1,19 @@
-import { describe, expect, it } from "vitest";
 import type { AdventureProject, Id } from "@evavo/adventure-project-schema";
-import type { AdventureDesignDocument } from "../src/types.js";
+import { describe, expect, it } from "vitest";
 import {
+  type AdventureProductionProfile,
   adventureProductionProfileById,
   adventureProductionProfileIds,
   adventureProductionProfiles,
   auditAdventureProductionProfile,
   createAdventureProductionProfileSeed,
   validateAdventureProductionProfile,
-  type AdventureProductionProfile,
 } from "../src/production-profiles.js";
+import type { AdventureDesignDocument } from "../src/types.js";
 
 const projectId = "project.production-profile-test" as Id<"project">;
 
-const matchingDesign = (
-  profile: AdventureProductionProfile,
-): AdventureDesignDocument => {
+const matchingDesign = (profile: AdventureProductionProfile): AdventureDesignDocument => {
   const seed = createAdventureProductionProfileSeed(profile);
   return {
     documentVersion: 1,
@@ -59,11 +57,9 @@ describe("adventure production profiles", () => {
       "neo-noir-lowres",
     ]);
     expect(new Set(adventureProductionProfiles.map((entry) => entry.family)).size).toBe(7);
-    expect(
-      adventureProductionProfiles.flatMap((entry) =>
-        validateAdventureProductionProfile(entry),
-      ),
-    ).toEqual([]);
+    expect(adventureProductionProfiles.flatMap((entry) => validateAdventureProductionProfile(entry))).toEqual(
+      [],
+    );
 
     const serialized = JSON.stringify(adventureProductionProfiles).toLocaleLowerCase("en-US");
     for (const term of [
@@ -164,9 +160,7 @@ describe("adventure production profiles", () => {
         expectedStart += beat.durationTicks;
       }
       expect(expectedStart).toBe(profile.splash.totalTicks);
-      expect(profile.splash.skippableAfterTick).toBeLessThanOrEqual(
-        profile.splash.totalTicks,
-      );
+      expect(profile.splash.skippableAfterTick).toBeLessThanOrEqual(profile.splash.totalTicks);
     }
 
     const storybook = adventureProductionProfileById("storybook-icon-vga");

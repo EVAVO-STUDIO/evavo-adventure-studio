@@ -21,9 +21,7 @@ const compareVersion = (left, right) => {
 const nodeVersion = await readText(".node-version");
 const nvmVersion = await readText(".nvmrc");
 if (nodeVersion !== nvmVersion) {
-  throw new Error(
-    `.node-version (${nodeVersion}) and .nvmrc (${nvmVersion}) must match.`,
-  );
+  throw new Error(`.node-version (${nodeVersion}) and .nvmrc (${nvmVersion}) must match.`);
 }
 
 const packageJson = JSON.parse(await readFile("package.json", "utf8"));
@@ -52,29 +50,19 @@ if (packageJson.engines?.pnpm !== expectedPnpmEngine) {
 const minimumNode = parseVersion(nodeVersion, ".node-version");
 const actualNode = parseVersion(process.versions.node, "Active Node.js");
 if (actualNode[0] !== 24 || compareVersion(actualNode, minimumNode) < 0) {
-  throw new Error(
-    `Node.js ${process.versions.node} is unsupported; expected ${expectedNodeEngine}.`,
-  );
+  throw new Error(`Node.js ${process.versions.node} is unsupported; expected ${expectedNodeEngine}.`);
 }
 
 const userAgent = process.env.npm_config_user_agent ?? "";
-const activePnpmMatch = /(?:^|\s)pnpm\/(\d+\.\d+\.\d+)(?:\s|$)/.exec(
-  userAgent,
-);
+const activePnpmMatch = /(?:^|\s)pnpm\/(\d+\.\d+\.\d+)(?:\s|$)/.exec(userAgent);
 if (!activePnpmMatch?.[1]) {
-  throw new Error(
-    "The toolchain check must run through pnpm so the active pnpm version can be verified.",
-  );
+  throw new Error("The toolchain check must run through pnpm so the active pnpm version can be verified.");
 }
 const actualPnpmVersion = activePnpmMatch[1];
 const minimumPnpm = parseVersion(pnpmVersion, "packageManager pnpm");
 const actualPnpm = parseVersion(actualPnpmVersion, "Active pnpm");
 if (actualPnpm[0] !== 11 || compareVersion(actualPnpm, minimumPnpm) < 0) {
-  throw new Error(
-    `pnpm ${actualPnpmVersion} is unsupported; expected ${expectedPnpmEngine}.`,
-  );
+  throw new Error(`pnpm ${actualPnpmVersion} is unsupported; expected ${expectedPnpmEngine}.`);
 }
 
-process.stdout.write(
-  `Toolchain verified: Node.js ${process.versions.node} and pnpm ${actualPnpmVersion}.\n`,
-);
+process.stdout.write(`Toolchain verified: Node.js ${process.versions.node} and pnpm ${actualPnpmVersion}.\n`);

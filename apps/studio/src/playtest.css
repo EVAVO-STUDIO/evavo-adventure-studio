@@ -95,7 +95,10 @@
   border-radius: 8px;
   background: rgb(19 21 28 / 82%);
   cursor: pointer;
-  transition: border-color 140ms ease, background 140ms ease, transform 140ms ease;
+  transition:
+    border-color 140ms ease,
+    background 140ms ease,
+    transform 140ms ease;
 }
 
 .playtest-file-card:hover,

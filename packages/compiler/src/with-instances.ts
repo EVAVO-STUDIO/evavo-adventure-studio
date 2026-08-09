@@ -4,24 +4,18 @@ import type { AdventureProject } from "@evavo/adventure-project-schema";
 import { parseRuntimeBundle } from "@evavo/adventure-runtime-bundle";
 import {
   emptySceneInstanceManifest,
-  validateSceneInstanceManifest,
   type SceneInstanceIssue,
   type SceneInstanceManifest,
+  validateSceneInstanceManifest,
 } from "@evavo/adventure-scene-instances";
 import {
-  validateCompiledObjectVisualMappings,
   type CompiledObjectVisualIssue,
+  validateCompiledObjectVisualMappings,
 } from "@evavo/adventure-scene-instances/compiled-mapping";
 import type { UiSkinManifest } from "@evavo/adventure-ui-skin";
-import {
-  canonicalStringify,
-  compileProject,
-  type CompiledProject,
-} from "./index.js";
+import { type CompiledProject, canonicalStringify, compileProject } from "./index.js";
 
-export type SceneInstanceCompilationIssue =
-  | SceneInstanceIssue
-  | CompiledObjectVisualIssue;
+export type SceneInstanceCompilationIssue = SceneInstanceIssue | CompiledObjectVisualIssue;
 
 export class SceneInstanceCompilationError extends Error {
   readonly issues: readonly SceneInstanceCompilationIssue[];
@@ -33,30 +27,24 @@ export class SceneInstanceCompilationError extends Error {
   }
 }
 
-const canonicalSceneInstances = (
-  manifest: SceneInstanceManifest,
-): SceneInstanceManifest => ({
+const canonicalSceneInstances = (manifest: SceneInstanceManifest): SceneInstanceManifest => ({
   ...manifest,
   objectDefinitions: [...manifest.objectDefinitions]
     .sort((left, right) => left.id.localeCompare(right.id))
     .map((definition) => ({
       ...definition,
-      states: [...definition.states].sort((left, right) =>
-        left.id.localeCompare(right.id),
-      ),
+      states: [...definition.states].sort((left, right) => left.id.localeCompare(right.id)),
     })),
   scenes: [...manifest.scenes]
     .sort((left, right) => left.sceneId.localeCompare(right.sceneId))
     .map((composition) => ({
       ...composition,
-      actorInstances: [...composition.actorInstances].sort((left, right) =>
-        left.id.localeCompare(right.id),
-      ),
+      actorInstances: [...composition.actorInstances].sort((left, right) => left.id.localeCompare(right.id)),
       objectInstances: [...composition.objectInstances].sort((left, right) =>
         left.id.localeCompare(right.id),
       ),
-      navigationPortals: [...composition.navigationPortals].sort(
-        (left, right) => left.id.localeCompare(right.id),
+      navigationPortals: [...composition.navigationPortals].sort((left, right) =>
+        left.id.localeCompare(right.id),
       ),
     })),
 });
@@ -93,24 +81,13 @@ export const compileProjectWithInstances = (
     },
     sceneInstances,
   );
-  const visualIssues = validateCompiledObjectVisualMappings(
-    sceneInstances,
-    assetManifest,
-  );
-  const issues: SceneInstanceCompilationIssue[] = [
-    ...instanceIssues,
-    ...visualIssues,
-  ];
+  const visualIssues = validateCompiledObjectVisualMappings(sceneInstances, assetManifest);
+  const issues: SceneInstanceCompilationIssue[] = [...instanceIssues, ...visualIssues];
   if (issues.length > 0) {
     throw new SceneInstanceCompilationError(issues);
   }
 
-  const base = compileProject(
-    project,
-    assetManifest,
-    bitmapFonts,
-    uiSkins,
-  );
+  const base = compileProject(project, assetManifest, bitmapFonts, uiSkins);
   const bundle = parseRuntimeBundle({
     ...base.bundle,
     sceneInstances: canonicalSceneInstances(sceneInstances),
@@ -142,13 +119,7 @@ export const tryCompileProjectWithInstances = (
   try {
     return {
       kind: "compiled",
-      project: compileProjectWithInstances(
-        project,
-        assetManifest,
-        sceneInstances,
-        bitmapFonts,
-        uiSkins,
-      ),
+      project: compileProjectWithInstances(project, assetManifest, sceneInstances, bitmapFonts, uiSkins),
     };
   } catch (error) {
     if (error instanceof SceneInstanceCompilationError) {

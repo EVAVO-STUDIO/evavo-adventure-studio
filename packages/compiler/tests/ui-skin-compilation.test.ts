@@ -1,12 +1,9 @@
-import { describe, expect, it } from "vitest";
 import { assetBuildManifestSchema } from "@evavo/adventure-asset-contract";
 import { bitmapFontManifestSchema } from "@evavo/adventure-bitmap-font";
 import { parseAdventureProject } from "@evavo/adventure-project-schema";
 import { parseUiSkinManifest } from "@evavo/adventure-ui-skin";
-import {
-  compileProject,
-  ProjectCompilationError,
-} from "../src/index.js";
+import { describe, expect, it } from "vitest";
+import { compileProject, type ProjectCompilationError } from "../src/index.js";
 
 const hash = "0".repeat(64);
 
@@ -67,9 +64,7 @@ const assets = assetBuildManifestSchema.parse({
     {
       assetId: "asset.office",
       kind: "image",
-      sourceFiles: [
-        { path: "art/office.png", sha256: hash, byteLength: 1 },
-      ],
+      sourceFiles: [{ path: "art/office.png", sha256: hash, byteLength: 1 }],
       outputFiles: [
         {
           role: "primary",
@@ -90,9 +85,7 @@ const assets = assetBuildManifestSchema.parse({
     {
       assetId: "asset.font.ui",
       kind: "image",
-      sourceFiles: [
-        { path: "art/font-ui.png", sha256: hash, byteLength: 1 },
-      ],
+      sourceFiles: [{ path: "art/font-ui.png", sha256: hash, byteLength: 1 }],
       outputFiles: [
         {
           role: "primary",

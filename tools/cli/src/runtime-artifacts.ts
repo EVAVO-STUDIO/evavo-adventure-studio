@@ -1,9 +1,7 @@
+import type { Stats } from "node:fs";
 import { stat } from "node:fs/promises";
 import { resolve } from "node:path";
-import {
-  formatDiagnostic,
-  type CliDiagnostic,
-} from "./diagnostics.js";
+import { type CliDiagnostic, formatDiagnostic } from "./diagnostics.js";
 import { withTrailingNewline } from "./filesystem.js";
 import {
   assertReplayInputFileSize,
@@ -14,15 +12,11 @@ import {
 import {
   defaultRuntimeArtifactCliEnvironment,
   RUNTIME_ARTIFACT_HELP,
-  runRuntimeArtifactCli as runRuntimeArtifactCliBase,
   type RuntimeArtifactCliEnvironment,
+  runRuntimeArtifactCli as runRuntimeArtifactCliBase,
 } from "./runtime-artifacts-base.js";
 
-export {
-  defaultRuntimeArtifactCliEnvironment,
-  RUNTIME_ARTIFACT_HELP,
-  type RuntimeArtifactCliEnvironment,
-};
+export { defaultRuntimeArtifactCliEnvironment, RUNTIME_ARTIFACT_HELP, type RuntimeArtifactCliEnvironment };
 
 type RuntimeArtifactKind = "save-validate" | "replay-validate";
 
@@ -43,9 +37,7 @@ class RuntimeArtifactPreflightError extends Error {
   }
 }
 
-const preflightCommand = (
-  argv: readonly string[],
-): RuntimeArtifactPreflightCommand | null => {
+const preflightCommand = (argv: readonly string[]): RuntimeArtifactPreflightCommand | null => {
   const [command, ...tokens] = argv;
   if (command !== "save-validate" && command !== "replay-validate") {
     return null;
@@ -101,7 +93,7 @@ const preflightInput = async (
   source: CliDiagnostic["source"],
   maximumBytes: number,
 ): Promise<void> => {
-  let metadata;
+  let metadata: Stats;
   try {
     metadata = await stat(path);
   } catch (error) {
@@ -114,21 +106,14 @@ const preflightInput = async (
         source,
         code,
         path,
-        `Unable to read '${path}': ${
-          error instanceof Error ? error.message : String(error)
-        }`,
+        `Unable to read '${path}': ${error instanceof Error ? error.message : String(error)}`,
       ),
     );
   }
 
   if (!metadata.isFile()) {
     throw new RuntimeArtifactPreflightError(
-      inputDiagnostic(
-        source,
-        "input-not-file",
-        path,
-        `Input '${path}' is not a regular file.`,
-      ),
+      inputDiagnostic(source, "input-not-file", path, `Input '${path}' is not a regular file.`),
     );
   }
 
@@ -136,9 +121,7 @@ const preflightInput = async (
     assertReplayInputFileSize(path, metadata.size, maximumBytes);
   } catch (error) {
     if (error instanceof ReplayInputFileTooLargeError) {
-      throw new RuntimeArtifactPreflightError(
-        inputDiagnostic(source, "file-too-large", path, error.message),
-      );
+      throw new RuntimeArtifactPreflightError(inputDiagnostic(source, "file-too-large", path, error.message));
     }
     throw error;
   }
@@ -172,18 +155,13 @@ const writePreflightFailure = (
 
 export const runRuntimeArtifactCli = async (
   argv: readonly string[],
-  environment: RuntimeArtifactCliEnvironment =
-    defaultRuntimeArtifactCliEnvironment,
+  environment: RuntimeArtifactCliEnvironment = defaultRuntimeArtifactCliEnvironment,
 ): Promise<number | null> => {
   const command = preflightCommand(argv);
   if (!command) return runRuntimeArtifactCliBase(argv, environment);
 
   try {
-    await preflightInput(
-      command.bundlePath,
-      "runtime-bundle-file",
-      MAXIMUM_REPLAY_BUNDLE_BYTES,
-    );
+    await preflightInput(command.bundlePath, "runtime-bundle-file", MAXIMUM_REPLAY_BUNDLE_BYTES);
     await preflightInput(
       command.artifactPath,
       command.kind === "save-validate" ? "save-game-file" : "replay-file",

@@ -1,9 +1,6 @@
-import { describe, expect, it } from "vitest";
 import { parseRuntimeBundle } from "@evavo/adventure-runtime-bundle";
-import {
-  canonicalStringify,
-  type CompiledProject,
-} from "../src/index.js";
+import { describe, expect, it } from "vitest";
+import { type CompiledProject, canonicalStringify } from "../src/index.js";
 import { attachRuntimePlayFeelProfile } from "../src/with-play-feel.js";
 
 const hash = "0".repeat(64);
@@ -86,34 +83,20 @@ const compiled: CompiledProject = {
 
 describe("runtime play-feel compilation", () => {
   it("attaches a validated profile without mutating the source compilation", () => {
-    const profiled = attachRuntimePlayFeelProfile(
-      compiled,
-      "storybook-deliberate",
-    );
+    const profiled = attachRuntimePlayFeelProfile(compiled, "storybook-deliberate");
 
     expect(compiled.bundle.playFeelProfileId).toBeUndefined();
     expect(profiled.bundle.playFeelProfileId).toBe("storybook-deliberate");
-    expect(profiled.canonicalJson).toContain(
-      '"playFeelProfileId":"storybook-deliberate"',
-    );
+    expect(profiled.canonicalJson).toContain('"playFeelProfileId":"storybook-deliberate"');
     expect(profiled.fingerprint).toMatch(/^fnv1a64:[0-9a-f]{16}$/u);
     expect(profiled.fingerprint).not.toBe(compiled.fingerprint);
     expect(profiled.warnings).toBe(compiled.warnings);
   });
 
   it("is deterministic and changes identity when the selected family changes", () => {
-    const first = attachRuntimePlayFeelProfile(
-      compiled,
-      "gothic-measured",
-    );
-    const second = attachRuntimePlayFeelProfile(
-      compiled,
-      "gothic-measured",
-    );
-    const cinematic = attachRuntimePlayFeelProfile(
-      compiled,
-      "cinematic-directed",
-    );
+    const first = attachRuntimePlayFeelProfile(compiled, "gothic-measured");
+    const second = attachRuntimePlayFeelProfile(compiled, "gothic-measured");
+    const cinematic = attachRuntimePlayFeelProfile(compiled, "cinematic-directed");
 
     expect(second).toEqual(first);
     expect(cinematic.canonicalJson).not.toBe(first.canonicalJson);
@@ -132,17 +115,14 @@ describe("runtime play-feel compilation", () => {
       },
     };
 
-    expect(() =>
-      attachRuntimePlayFeelProfile(mismatched, "storybook-deliberate"),
-    ).toThrow(/logical ticks per second/u);
+    expect(() => attachRuntimePlayFeelProfile(mismatched, "storybook-deliberate")).toThrow(
+      /logical ticks per second/u,
+    );
   });
 
   it("rejects an ungoverned profile identifier at the compiler boundary", () => {
     expect(() =>
-      attachRuntimePlayFeelProfile(
-        compiled,
-        "fast-modern-smoothing" as "classic-balanced",
-      ),
+      attachRuntimePlayFeelProfile(compiled, "fast-modern-smoothing" as "classic-balanced"),
     ).toThrow();
   });
 });

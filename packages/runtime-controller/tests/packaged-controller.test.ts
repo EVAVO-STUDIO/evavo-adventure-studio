@@ -279,24 +279,18 @@ describe("packaged runtime controller", () => {
 
     controller.setPointer({ x: 100, y: 100 });
     const hoverFrame = controller.createFrame(0);
-    expect(
-      hoverFrame.nodes.some((node) => String(node.id).startsWith("cursor.action")),
-    ).toBe(true);
+    expect(hoverFrame.nodes.some((node) => String(node.id).startsWith("cursor.action"))).toBe(true);
 
     controller.activate({ x: 100, y: 100 });
     expect(controller.statusText()).toBe("USE AFTER APPROACH");
-    expect(
-      controller.worldState().pendingObjectCommands["actor-instance.detective"],
-    ).toBeDefined();
+    expect(controller.worldState().pendingObjectCommands["actor-instance.detective"]).toBeDefined();
 
     controller.createFrame(25);
-    expect(
-      controller.worldState().story.objectStates["object.office.cabinet"],
-    ).toBe("object-state.cabinet.open");
-    expect(controller.statusText()).toBe("USE COMPLETE");
-    expect(statuses).toEqual(
-      expect.arrayContaining(["USE AFTER APPROACH", "USE COMPLETE"]),
+    expect(controller.worldState().story.objectStates["object.office.cabinet"]).toBe(
+      "object-state.cabinet.open",
     );
+    expect(controller.statusText()).toBe("USE COMPLETE");
+    expect(statuses).toEqual(expect.arrayContaining(["USE AFTER APPROACH", "USE COMPLETE"]));
   });
 
   it("uses the new state cursor and surfaces speech feedback immediately", () => {
@@ -316,9 +310,10 @@ describe("packaged runtime controller", () => {
 
     expect(controller.statusText()).toBe("WALKING");
     controller.createFrame(50);
-    expect(
-      controller.worldState().actorInstances["actor-instance.detective"]?.position,
-    ).toEqual({ x: 120, y: 120 });
+    expect(controller.worldState().actorInstances["actor-instance.detective"]?.position).toEqual({
+      x: 120,
+      y: 120,
+    });
   });
 
   it("rejects invalid explicit actor selection before playback", () => {

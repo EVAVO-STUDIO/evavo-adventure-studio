@@ -1,12 +1,3 @@
-import {
-  useCallback,
-  useEffect,
-  useMemo,
-  useReducer,
-  useState,
-  type CSSProperties,
-  type ReactNode,
-} from "react";
 import type { Id } from "@evavo/adventure-project-schema";
 import type {
   BitmapTextRenderNode,
@@ -14,26 +5,31 @@ import type {
   SolidRectangleRenderNode,
   SpriteRenderNode,
 } from "@evavo/adventure-render-contract";
-import type { UiColor, UiSkin, UiVerb } from "@evavo/adventure-ui-skin";
+import type { UiSkin, UiVerb } from "@evavo/adventure-ui-skin";
 import type { UiSkinEditorCommand } from "@evavo/adventure-ui-skin-editor-core";
+import {
+  type CSSProperties,
+  type ReactNode,
+  useCallback,
+  useEffect,
+  useMemo,
+  useReducer,
+  useState,
+} from "react";
+import { studioUiBitmapFonts, studioUiProject, studioUiSkins } from "./ui-skin-fixture.js";
 import {
   createUiSkinWorkspace,
   insertUiVerbCommand,
   replaceSelectedUiSkinCommand,
   replaceUiVerbCommand,
   selectedUiSkin,
+  type UiSkinWorkspaceAction,
+  type UiSkinWorkspaceState,
   uiSkinIssuesForSelectedSkin,
   uiSkinWorkspaceIsDirty,
   uiSkinWorkspacePreviewNodes,
   uiSkinWorkspaceReducer,
-  type UiSkinWorkspaceAction,
-  type UiSkinWorkspaceState,
 } from "./ui-skin-workspace.js";
-import {
-  studioUiBitmapFonts,
-  studioUiProject,
-  studioUiSkins,
-} from "./ui-skin-fixture.js";
 import "./ui-skin.css";
 
 type UiDispatch = React.Dispatch<UiSkinWorkspaceAction>;
@@ -58,27 +54,16 @@ const Button = ({
   readonly disabled?: boolean;
   readonly className?: string;
 }) => (
-  <button
-    type="button"
-    className={`button ${className}`}
-    disabled={disabled}
-    onClick={onClick}
-  >
+  <button type="button" className={`button ${className}`} disabled={disabled} onClick={onClick}>
     {children}
   </button>
 );
 
-const Field = ({
-  label,
-  children,
-}: {
-  readonly label: string;
-  readonly children: ReactNode;
-}) => (
-  <label className="field">
+const Field = ({ label, children }: { readonly label: string; readonly children: ReactNode }) => (
+  <div className="field">
     <span>{label}</span>
     {children}
-  </label>
+  </div>
 );
 
 const NumberInput = ({
@@ -134,10 +119,9 @@ const CommitInput = ({
   );
 };
 
-const packedColor = (value: number): string =>
-  `#${value.toString(16).padStart(6, "0")}`;
+const packedColor = (value: number): string => `#${value.toString(16).padStart(6, "0")}`;
 
-const colorCss = (color: UiColor): string =>
+const colorCss = (color: number | readonly [number, number, number, number]): string =>
   typeof color === "number"
     ? packedColor(color)
     : `rgba(${color[0]}, ${color[1]}, ${color[2]}, ${color[3] / 255})`;
@@ -182,9 +166,7 @@ const PreviewNode = ({ node }: { readonly node: RenderNode }) => {
           textShadow:
             text.outlineColor === undefined
               ? undefined
-              : `-1px -1px ${colorCss(text.outlineColor)}, 1px 1px ${colorCss(
-                  text.outlineColor,
-                )}`,
+              : `-1px -1px ${colorCss(text.outlineColor)}, 1px 1px ${colorCss(text.outlineColor)}`,
         }}
       >
         {text.text}
@@ -246,14 +228,15 @@ const RegionEditor = ({
     nextRect = rect,
     nextPadding = padding,
     notice = `Updated ${title.toLocaleLowerCase("en-US")} region.`,
-  ): void => execute(
-    {
-      kind: "replace-skin",
-      skinId: skin.id,
-      skin: update(nextRect, nextPadding),
-    },
-    notice,
-  );
+  ): void =>
+    execute(
+      {
+        kind: "replace-skin",
+        skinId: skin.id,
+        skin: update(nextRect, nextPadding),
+      },
+      notice,
+    );
 
   return (
     <section className="ui-region-editor">
@@ -322,9 +305,7 @@ const VerbInspector = ({
       label: `VERB ${index}`,
       cursorId: id,
       primary: false,
-      ...(skin.interactionMode === "icon-bar"
-        ? { iconAssetId: "asset.ui.icons" as Id<"asset"> }
-        : {}),
+      ...(skin.interactionMode === "icon-bar" ? { iconAssetId: "asset.ui.icons" as Id<"asset"> } : {}),
     };
     execute(insertUiVerbCommand(state, next), "Added interface verb.");
   };
@@ -333,7 +314,9 @@ const VerbInspector = ({
     <section className="ui-verbs-inspector">
       <div className="section-heading-row">
         <h3>Verb order</h3>
-        <Button disabled={!canAdd} onClick={addVerb}>Add verb</Button>
+        <Button disabled={!canAdd} onClick={addVerb}>
+          Add verb
+        </Button>
       </div>
       {skin.verbs.length === 0 ? (
         <p className="empty-copy">This interaction mode uses contextual commands.</p>
@@ -345,10 +328,7 @@ const VerbInspector = ({
               <CommitInput
                 value={verb.label}
                 onCommit={(label) =>
-                  execute(
-                    replaceUiVerbCommand(state, { ...verb, label }),
-                    "Updated verb label.",
-                  )
+                  execute(replaceUiVerbCommand(state, { ...verb, label }), "Updated verb label.")
                 }
               />
               <input
@@ -392,10 +372,8 @@ const VerbInspector = ({
 };
 
 export const UiSkinApp = () => {
-  const [state, dispatch] = useReducer(
-    uiSkinWorkspaceReducer,
-    undefined,
-    () => createUiSkinWorkspace(studioUiProject, studioUiBitmapFonts, studioUiSkins),
+  const [state, dispatch] = useReducer(uiSkinWorkspaceReducer, undefined, () =>
+    createUiSkinWorkspace(studioUiProject, studioUiBitmapFonts, studioUiSkins),
   );
   const skin = selectedUiSkin(state);
   const issues = uiSkinIssuesForSelectedSkin(state);
@@ -437,16 +415,24 @@ export const UiSkinApp = () => {
         <div>
           <span className="eyebrow">INTERFACE SYSTEM</span>
           <h1>Interaction & UI Skins</h1>
-          <p>{MODE_LABELS[skin.interactionMode]} · {skin.nativeSize.width} × {skin.nativeSize.height}</p>
+          <p>
+            {MODE_LABELS[skin.interactionMode]} · {skin.nativeSize.width} × {skin.nativeSize.height}
+          </p>
         </div>
         <div className="header-actions">
           <span className={`save-state ${uiSkinWorkspaceIsDirty(state) ? "is-dirty" : ""}`}>
             {uiSkinWorkspaceIsDirty(state) ? "UNSAVED" : "SAVED"}
           </span>
-          <Button disabled={state.history.undoStack.length === 0} onClick={() => dispatch({ type: "undo" })}>Undo</Button>
-          <Button disabled={state.history.redoStack.length === 0} onClick={() => dispatch({ type: "redo" })}>Redo</Button>
+          <Button disabled={state.history.undoStack.length === 0} onClick={() => dispatch({ type: "undo" })}>
+            Undo
+          </Button>
+          <Button disabled={state.history.redoStack.length === 0} onClick={() => dispatch({ type: "redo" })}>
+            Redo
+          </Button>
           <Button onClick={() => dispatch({ type: "mark-saved" })}>Mark saved</Button>
-          <Button className="button-primary" onClick={() => downloadManifest(state)}>Export JSON</Button>
+          <Button className="button-primary" onClick={() => downloadManifest(state)}>
+            Export JSON
+          </Button>
         </div>
       </header>
 
@@ -474,12 +460,12 @@ export const UiSkinApp = () => {
           </div>
           <div className="ui-skin-library-actions">
             <Button
-              disabled={skin.id === state.history.document.manifest.defaultSkinId || skin.interactionMode !== state.project.presentation.interactionMode}
+              disabled={
+                skin.id === state.history.document.manifest.defaultSkinId ||
+                skin.interactionMode !== state.project.presentation.interactionMode
+              }
               onClick={() =>
-                execute(
-                  { kind: "set-default-skin", skinId: skin.id },
-                  "Changed the default runtime skin.",
-                )
+                execute({ kind: "set-default-skin", skinId: skin.id }, "Changed the default runtime skin.")
               }
             >
               Set default
@@ -506,8 +492,8 @@ export const UiSkinApp = () => {
                   }
                 />
               </label>
-              <label>
-                Score
+              <div className="ui-preview-field">
+                <span>Score</span>
                 <NumberInput
                   value={state.preview.score ?? 0}
                   min={0}
@@ -519,7 +505,7 @@ export const UiSkinApp = () => {
                     })
                   }
                 />
-              </label>
+              </div>
             </div>
           </div>
 
@@ -530,7 +516,9 @@ export const UiSkinApp = () => {
                 <div className="ui-stage-desk" />
                 <div className="ui-stage-character" />
               </div>
-              {nodes.map((node) => <PreviewNode key={node.id} node={node} />)}
+              {nodes.map((node) => (
+                <PreviewNode key={node.id} node={node} />
+              ))}
             </div>
           </div>
 
@@ -611,8 +599,16 @@ export const UiSkinApp = () => {
                 />
               </Field>
               <div className="readout-grid">
-                <div><span>Mode</span><strong>{MODE_LABELS[skin.interactionMode]}</strong></div>
-                <div><span>Native</span><strong>{skin.nativeSize.width} × {skin.nativeSize.height}</strong></div>
+                <div>
+                  <span>Mode</span>
+                  <strong>{MODE_LABELS[skin.interactionMode]}</strong>
+                </div>
+                <div>
+                  <span>Native</span>
+                  <strong>
+                    {skin.nativeSize.width} × {skin.nativeSize.height}
+                  </strong>
+                </div>
               </div>
             </section>
 

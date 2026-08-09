@@ -1,21 +1,15 @@
 import type { Id, Point } from "@evavo/adventure-project-schema";
 import type {
   BitmapTextRenderNode,
+  RenderNode,
   ResolvedFrame,
   SpriteRenderNode,
 } from "@evavo/adventure-render-contract";
-import {
-  type BitmapFontDefinition,
-  type BitmapFontManifest,
-  type BitmapGlyph,
-} from "./index.js";
+import type { BitmapFontDefinition, BitmapFontManifest, BitmapGlyph } from "./index.js";
 import { layoutBitmapText } from "./layout.js";
 
 export interface BitmapFontResolver {
-  getFont(
-    fontId: Id<"bitmap-font"> | null,
-    fontAssetId: Id<"asset">,
-  ): BitmapFontDefinition | null;
+  getFont(fontId: Id<"bitmap-font"> | null, fontAssetId: Id<"asset">): BitmapFontDefinition | null;
 }
 
 export class BitmapFontResolutionError extends Error {
@@ -36,12 +30,8 @@ export class BitmapFontResolutionError extends Error {
   }
 }
 
-export const createBitmapFontResolver = (
-  manifest: BitmapFontManifest,
-): BitmapFontResolver => {
-  const byId = new Map(
-    manifest.fonts.map((font) => [font.id as string, font] as const),
-  );
+export const createBitmapFontResolver = (manifest: BitmapFontManifest): BitmapFontResolver => {
+  const byId = new Map(manifest.fonts.map((font) => [font.id as string, font] as const));
   const byAsset = new Map<string, BitmapFontDefinition[]>();
   for (const font of manifest.fonts) {
     const fonts = byAsset.get(font.atlasAssetId) ?? [];
@@ -67,16 +57,9 @@ type Rgba = readonly [number, number, number, number];
 const colorToRgba = (color: RenderColor): Rgba => {
   if (typeof color === "number") {
     if (!Number.isInteger(color) || color < 0 || color > 0xffffff) {
-      throw new RangeError(
-        "Packed bitmap text colours must be integers from 0x000000 to 0xFFFFFF.",
-      );
+      throw new RangeError("Packed bitmap text colours must be integers from 0x000000 to 0xFFFFFF.");
     }
-    return [
-      (color >> 16) & 0xff,
-      (color >> 8) & 0xff,
-      color & 0xff,
-      0xff,
-    ];
+    return [(color >> 16) & 0xff, (color >> 8) & 0xff, color & 0xff, 0xff];
   }
   for (const channel of color) {
     if (!Number.isInteger(channel) || channel < 0 || channel > 255) {
@@ -86,17 +69,11 @@ const colorToRgba = (color: RenderColor): Rgba => {
   return color;
 };
 
-const renderNodeId = (value: string): Id<"render-node"> =>
-  value as Id<"render-node">;
+const renderNodeId = (value: string): Id<"render-node"> => value as Id<"render-node">;
 
-const transformLocalPoint = (
-  node: BitmapTextRenderNode,
-  point: Point,
-): Point => {
-  const localX =
-    (point.x - node.transform.pivot.x) * node.transform.scale.x;
-  const localY =
-    (point.y - node.transform.pivot.y) * node.transform.scale.y;
+const transformLocalPoint = (node: BitmapTextRenderNode, point: Point): Point => {
+  const localX = (point.x - node.transform.pivot.x) * node.transform.scale.x;
+  const localY = (point.y - node.transform.pivot.y) * node.transform.scale.y;
   const cosine = Math.cos(node.transform.rotationRadians);
   const sine = Math.sin(node.transform.rotationRadians);
   return {
@@ -125,8 +102,7 @@ const glyphSprite = (
   color: Rgba,
   outlineIndex: number | null,
 ): SpriteRenderNode => {
-  const suffix =
-    outlineIndex === null ? "fill" : `outline.${outlineIndex.toString()}`;
+  const suffix = outlineIndex === null ? "fill" : `outline.${outlineIndex.toString()}`;
   const alpha = color[3] / 255;
 
   return {
@@ -173,19 +149,12 @@ export const resolveBitmapTextNode = (
     );
   }
 
-  const layout = layoutBitmapText(
-    { ...font, lineHeight: node.lineHeight },
-    node.text,
-    {
-      maxWidth: node.maximumWidth,
-      alignment: node.align,
-    },
-  );
+  const layout = layoutBitmapText({ ...font, lineHeight: node.lineHeight }, node.text, {
+    maxWidth: node.maximumWidth,
+    alignment: node.align,
+  });
   const fill = colorToRgba(node.color);
-  const outline =
-    node.outlineColor === undefined
-      ? null
-      : colorToRgba(node.outlineColor);
+  const outline = node.outlineColor === undefined ? null : colorToRgba(node.outlineColor);
   const sprites: SpriteRenderNode[] = [];
 
   layout.placements.forEach((placement, glyphIndex) => {
@@ -208,29 +177,16 @@ export const resolveBitmapTextNode = (
       });
     }
     sprites.push(
-      glyphSprite(
-        node,
-        font,
-        placement.glyph,
-        glyphIndex,
-        { x: placement.x, y: placement.y },
-        fill,
-        null,
-      ),
+      glyphSprite(node, font, placement.glyph, glyphIndex, { x: placement.x, y: placement.y }, fill, null),
     );
   });
 
   return sprites;
 };
 
-export const expandBitmapTextFrame = (
-  frame: ResolvedFrame,
-  resolver: BitmapFontResolver,
-): ResolvedFrame => ({
+export const expandBitmapTextFrame = (frame: ResolvedFrame, resolver: BitmapFontResolver): ResolvedFrame => ({
   ...frame,
-  nodes: frame.nodes.flatMap((node) =>
-    node.kind === "bitmap-text"
-      ? resolveBitmapTextNode(node, resolver)
-      : [node],
+  nodes: frame.nodes.flatMap<RenderNode>((node) =>
+    node.kind === "bitmap-text" ? resolveBitmapTextNode(node, resolver) : [node],
   ),
 });

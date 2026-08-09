@@ -1,10 +1,6 @@
-import { describe, expect, it } from "vitest";
 import { parseSceneInstanceManifest } from "@evavo/adventure-scene-instances";
-import {
-  createEditorHistory,
-  EditorCommandError,
-  executeEditorCommand,
-} from "../src/public.js";
+import { describe, expect, it } from "vitest";
+import { createEditorHistory, EditorCommandError, executeEditorCommand } from "../src/public.js";
 
 const manifest = parseSceneInstanceManifest({
   manifestVersion: 1,

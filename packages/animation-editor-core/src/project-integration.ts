@@ -1,9 +1,5 @@
-import type {
-  Actor,
-  AdventureProject,
-  Id,
-} from "@evavo/adventure-project-schema";
-import { validateEditableActor, type ActorAnimationIssue } from "./index.js";
+import type { Actor, AdventureProject, Id } from "@evavo/adventure-project-schema";
+import { type ActorAnimationIssue, validateEditableActor } from "./index.js";
 
 export type ActorProjectIntegrationIssueCode =
   | "actor-not-in-project"
@@ -102,20 +98,14 @@ const performanceFacingSet = (actor: Actor): ReadonlySet<string> =>
   new Set(actor.animations.map((animation) => animation.facing));
 
 const performancePairSet = (actor: Actor): ReadonlySet<string> =>
-  new Set(
-    actor.animations.map(
-      (animation) => `${animation.state}\u0000${animation.facing}`,
-    ),
-  );
+  new Set(actor.animations.map((animation) => `${animation.state}\u0000${animation.facing}`));
 
 export const validateActorProjectIntegration = (
   project: AdventureProject,
   actor: Actor,
 ): readonly ActorProjectIntegrationIssue[] => {
   const issues: ActorProjectIntegrationIssue[] = [];
-  const actorIndex = project.actors.findIndex(
-    (candidate) => candidate.id === actor.id,
-  );
+  const actorIndex = project.actors.findIndex((candidate) => candidate.id === actor.id);
   if (actorIndex < 0) {
     addIssue(
       issues,
@@ -127,13 +117,7 @@ export const validateActorProjectIntegration = (
   }
 
   for (const actorIssue of validateEditableActor(actor)) {
-    addIssue(
-      issues,
-      "actor-animation-invalid",
-      `actor.${actorIssue.path}`,
-      actorIssue.message,
-      actorIssue,
-    );
+    addIssue(issues, "actor-animation-invalid", `actor.${actorIssue.path}`, actorIssue.message, actorIssue);
   }
 
   const reserved = collectProjectIdsExcludingActor(project, actor.id);
@@ -155,11 +139,7 @@ export const validateActorProjectIntegration = (
   project.dialogues.forEach((dialogue, dialogueIndex) => {
     dialogue.nodes.forEach((node, nodeIndex) => {
       node.lines.forEach((line, lineIndex) => {
-        if (
-          line.speakerId === actor.id &&
-          line.animationState &&
-          !states.has(line.animationState)
-        ) {
+        if (line.speakerId === actor.id && line.animationState && !states.has(line.animationState)) {
           addIssue(
             issues,
             "missing-dialogue-animation-state",
@@ -196,10 +176,7 @@ export const validateActorProjectIntegration = (
               `${cuePath}.animationState`,
               `Sequence animation requests missing actor state '${cue.animationState}'.`,
             );
-          } else if (
-            cue.facing &&
-            !pairs.has(`${cue.animationState}\u0000${cue.facing}`)
-          ) {
+          } else if (cue.facing && !pairs.has(`${cue.animationState}\u0000${cue.facing}`)) {
             addIssue(
               issues,
               "missing-sequence-animation-facing",
@@ -230,15 +207,10 @@ export const validateActorProjectIntegration = (
 
 const cloneJson = <T>(value: T): T => JSON.parse(JSON.stringify(value)) as T;
 
-export const replaceActorInProject = (
-  project: AdventureProject,
-  actor: Actor,
-): AdventureProject => {
+export const replaceActorInProject = (project: AdventureProject, actor: Actor): AdventureProject => {
   const issues = validateActorProjectIntegration(project, actor);
   if (issues.length > 0) throw new ActorProjectIntegrationError(issues);
-  const actorIndex = project.actors.findIndex(
-    (candidate) => candidate.id === actor.id,
-  );
+  const actorIndex = project.actors.findIndex((candidate) => candidate.id === actor.id);
   if (actorIndex < 0) {
     throw new ActorProjectIntegrationError([
       {
@@ -269,9 +241,7 @@ export const mergeActorsIntoProject = (
     const edited = actorById.get(canonical.id);
     if (edited) next = replaceActorInProject(next, edited);
   }
-  const unknown = actors.find(
-    (actor) => !project.actors.some((candidate) => candidate.id === actor.id),
-  );
+  const unknown = actors.find((actor) => !project.actors.some((candidate) => candidate.id === actor.id));
   if (unknown) {
     throw new ActorProjectIntegrationError([
       {

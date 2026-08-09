@@ -1,9 +1,4 @@
-import type {
-  AdventureProject,
-  Id,
-  PresentationProfile,
-  Size,
-} from "@evavo/adventure-project-schema";
+import type { AdventureProject, Id, PresentationProfile, Size } from "@evavo/adventure-project-schema";
 import type {
   AdventureCompositionMode,
   AdventureCreativeDirection,
@@ -222,8 +217,5 @@ export interface AdventureProductionProfileReport {
 
 export interface AdventureProductionProfileAuditInput {
   readonly design?: AdventureDesignDocument;
-  readonly project?: Pick<
-    AdventureProject,
-    "id" | "presentation"
-  >;
+  readonly project?: Pick<AdventureProject, "id" | "presentation">;
 }

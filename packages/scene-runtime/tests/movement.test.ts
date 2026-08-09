@@ -1,6 +1,6 @@
-import { describe, expect, it } from "vitest";
 import type { Id } from "@evavo/adventure-project-schema";
 import { parseRuntimeBundle } from "@evavo/adventure-runtime-bundle";
+import { describe, expect, it } from "vitest";
 import {
   advanceNavigableRuntimeWorld,
   beginActorMovement,
@@ -119,11 +119,7 @@ const bundle = parseRuntimeBundle({
     {
       id: "actor.detective",
       name: "Detective",
-      frames: [
-        actorFrame("frame.idle", 0),
-        actorFrame("frame.walk-1", 12),
-        actorFrame("frame.walk-2", 24),
-      ],
+      frames: [actorFrame("frame.idle", 0), actorFrame("frame.walk-1", 12), actorFrame("frame.walk-2", 24)],
       animations: [
         {
           id: "animation.idle-east",
@@ -241,21 +237,17 @@ describe("fixed-tick actor movement", () => {
   it("rejects fixed instances and routes gated portals from story state", () => {
     const initial = createInitialNavigableRuntimeWorldState(bundle);
     expect(
-      beginActorMovement(
-        bundle,
-        initial,
-        id<"actor-instance">("actor-instance.fixed-guard"),
-        { x: 40, y: 25 },
-      ),
+      beginActorMovement(bundle, initial, id<"actor-instance">("actor-instance.fixed-guard"), {
+        x: 40,
+        y: 25,
+      }),
     ).toMatchObject({ kind: "rejected", reason: "fixed-instance" });
 
     expect(
-      beginActorMovement(
-        bundle,
-        initial,
-        id<"actor-instance">("actor-instance.detective"),
-        { x: 140, y: 25 },
-      ),
+      beginActorMovement(bundle, initial, id<"actor-instance">("actor-instance.detective"), {
+        x: 140,
+        y: 25,
+      }),
     ).toMatchObject({
       kind: "unreachable",
       routeResult: { reason: "no-connected-route" },
@@ -282,24 +274,16 @@ describe("fixed-tick actor movement", () => {
     if (started.kind !== "started") {
       throw new Error("Expected movement to start.");
     }
-    expect(
-      started.state.actorInstances["actor-instance.detective"]?.animationState,
-    ).toBe("walk");
+    expect(started.state.actorInstances["actor-instance.detective"]?.animationState).toBe("walk");
 
     const partial = advanceNavigableRuntimeWorld(bundle, started.state, 15);
-    expect(
-      partial.state.actorInstances["actor-instance.detective"]?.position,
-    ).toEqual({ x: 25, y: 25 });
+    expect(partial.state.actorInstances["actor-instance.detective"]?.position).toEqual({ x: 25, y: 25 });
     expect(partial.state.story.tick).toBe(15);
 
     const completed = advanceNavigableRuntimeWorld(bundle, partial.state, 115);
-    expect(
-      completed.state.actorInstances["actor-instance.detective"]?.position,
-    ).toEqual({ x: 140, y: 25 });
+    expect(completed.state.actorInstances["actor-instance.detective"]?.position).toEqual({ x: 140, y: 25 });
     expect(completed.state.movements["actor-instance.detective"]).toBeUndefined();
-    expect(
-      completed.state.actorInstances["actor-instance.detective"]?.animationState,
-    ).toBe("idle");
+    expect(completed.state.actorInstances["actor-instance.detective"]?.animationState).toBe("idle");
     expect(completed.state.story.tick).toBe(130);
     expect(completed.movementEvents).toEqual(
       expect.arrayContaining([
