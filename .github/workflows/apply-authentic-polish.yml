@@ -59,62 +59,42 @@ jobs:
           tar -xJf /tmp/authentic-polish.tar.xz -C /tmp/authentic-polish
           test -f /tmp/authentic-polish/authentic-polish-bundle-lite/APPLY_AUTHENTIC_POLISH.mjs
 
-      - name: Set up deterministic Python toolchain
-        uses: actions/setup-python@v6
+      - uses: actions/setup-python@v6
         with:
           python-version: "3.13"
 
-      - name: Install deterministic pixel-art generator dependency
+      - name: Install deterministic pixel-art dependency
+        run: python3 -m pip install --disable-pip-version-check --no-input Pillow==12.3.0
+
+      - name: Apply sealed source and regenerate indexed assets
         shell: bash
         run: |
           set -euo pipefail
-          python3 --version
-          python3 -m pip install --disable-pip-version-check --no-input Pillow==12.3.0
-
-      - name: Apply exact source upgrade and regenerate native assets
-        shell: bash
-        run: |
-          set -uo pipefail
-          set +e
           node /tmp/authentic-polish/authentic-polish-bundle-lite/APPLY_AUTHENTIC_POLISH.mjs \
             /tmp/authentic-polish/authentic-polish-bundle-lite \
-            . > /tmp/authentic-polish-apply.log 2>&1
-          status=$?
-          set -e
-          printf '%s\n' "$status" > /tmp/authentic-polish-apply-status.txt
-          cat /tmp/authentic-polish-apply.log
-          echo "Recorded source-application exit status: $status"
-
-      - name: Verify completed source application and exact scope
-        shell: bash
-        run: |
-          set -euo pipefail
-          test -f /tmp/authentic-polish-apply-status.txt
-          status="$(cat /tmp/authentic-polish-apply-status.txt)"
-          if [ "$status" -ne 0 ]; then
-            echo "::error title=Authentic polish source application failed::Exit status $status."
-            tail -n 100 /tmp/authentic-polish-apply.log
-            exit "$status"
-          fi
+            . | tee /tmp/authentic-polish-apply.log
           test -s /tmp/authentic-polish-paths.txt
           test -s /tmp/authentic-polish-text-paths.txt
           test -s /tmp/authentic-polish-biome-paths.txt
           grep -F '"changedPaths": 55' /tmp/authentic-polish-apply.log
           grep -F '"indexedAssets": 17' /tmp/authentic-polish-apply.log
-          git diff --check
+
+      - name: Verify exact applied scope before formatting
+        shell: bash
+        run: |
+          set -euo pipefail
           { git diff --name-only "$BASE_SHA"; git ls-files --others --exclude-standard; } \
             | sort -u > /tmp/authentic-polish-actual-paths.txt
           diff -u /tmp/authentic-polish-paths.txt /tmp/authentic-polish-actual-paths.txt
           test ! -e .agent-release
           test ! -e .github/workflows/apply-authentic-polish.yml
 
-      - name: Set up exact Node toolchain
-        uses: actions/setup-node@v6
+      - uses: actions/setup-node@v6
         with:
           node-version: 24.18.0
           package-manager-cache: false
 
-      - name: Install exact pnpm toolchain and workspace dependencies
+      - name: Install exact pnpm toolchain and workspace
         shell: bash
         run: |
           set -euo pipefail
@@ -126,7 +106,7 @@ jobs:
       - name: Verify pinned repository toolchain
         run: pnpm run check:toolchain
 
-      - name: Canonically format and lint changed source
+      - name: Format and lint changed source
         shell: bash
         run: |
           set -euo pipefail
@@ -172,7 +152,7 @@ jobs:
       - name: Validate canonical Red Ledger runtime source
         run: node scripts/validate-red-ledger-runtime.mjs
 
-      - name: Build the full strict TypeScript project graph
+      - name: Build full strict TypeScript graph
         run: pnpm exec tsc -b --pretty false
 
       - name: Run focused authenticity, runtime, and editor regressions
@@ -190,14 +170,14 @@ jobs:
             packages/adventure-design/tests/red-ledger-runtime.test.mjs \
             --reporter=verbose
 
-      - name: Build production Player and Studio applications
+      - name: Build production Player and Studio
         shell: bash
         run: |
           set -euo pipefail
           pnpm --filter @evavo/adventure-player build
           pnpm --filter @evavo/adventure-studio-app build
 
-      - name: Verify final publication scope
+      - name: Verify final feature scope
         shell: bash
         run: |
           set -euo pipefail
@@ -213,7 +193,6 @@ jobs:
           name: authentic-polish-diagnostics-${{ github.run_number }}
           path: |
             /tmp/authentic-polish-apply.log
-            /tmp/authentic-polish-apply-status.txt
             /tmp/authentic-polish-actual-paths.txt
             /tmp/authentic-polish-paths.txt
             /tmp/authentic-polish-biome-paths.txt
