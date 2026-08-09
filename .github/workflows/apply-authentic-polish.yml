@@ -78,9 +78,11 @@ jobs:
           set +e
           node /tmp/authentic-polish/authentic-polish-bundle-lite/APPLY_AUTHENTIC_POLISH.mjs \
             /tmp/authentic-polish/authentic-polish-bundle-lite \
-            . 2>&1 | tee /tmp/authentic-polish-apply.log
-          status=${PIPESTATUS[0]}
+            . > /tmp/authentic-polish-apply.log 2>&1
+          status=$?
           set -e
+          cat /tmp/authentic-polish-apply.log
+          echo "apply_status=$status"
           if [ "$status" -ne 0 ]; then
             python3 <<'PY'
             from pathlib import Path
@@ -216,7 +218,7 @@ jobs:
         if: failure()
         uses: actions/upload-artifact@v7
         with:
-          name: authentic-polish-diagnostics
+          name: authentic-polish-diagnostics-${{ github.run_number }}
           path: |
             /tmp/authentic-polish-apply.log
             /tmp/authentic-polish-actual-paths.txt
