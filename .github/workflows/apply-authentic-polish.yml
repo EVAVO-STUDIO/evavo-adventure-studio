@@ -33,7 +33,7 @@ jobs:
         shell: bash
         run: |
           set -euo pipefail
-          test "$(git rev-parse HEAD^)" = "$BASE_SHA"
+          git merge-base --is-ancestor "$BASE_SHA" HEAD
           git diff --name-only "$BASE_SHA" HEAD | sort > /tmp/staged-actual.txt
           cat > /tmp/staged-expected.txt <<'EOF'
           .agent-release/part-00
@@ -74,14 +74,43 @@ jobs:
       - name: Apply exact source upgrade and regenerate native assets
         shell: bash
         run: |
-          set -euo pipefail
+          set -uo pipefail
+          set +e
           node /tmp/authentic-polish/authentic-polish-bundle-lite/APPLY_AUTHENTIC_POLISH.mjs \
             /tmp/authentic-polish/authentic-polish-bundle-lite \
-            .
+            . 2>&1 | tee /tmp/authentic-polish-apply.log
+          status=${PIPESTATUS[0]}
+          set -e
+          if [ "$status" -ne 0 ]; then
+            python3 <<'PY'
+            from pathlib import Path
+
+            text = Path("/tmp/authentic-polish-apply.log").read_text(
+                encoding="utf-8",
+                errors="replace",
+            )
+            tail = "\n".join(text.splitlines()[-100:])
+            escaped = (
+                tail.replace("%", "%25")
+                .replace("\r", "%0D")
+                .replace("\n", "%0A")
+            )
+            print(f"::error title=Authentic polish source application failed::{escaped}")
+            PY
+            exit "$status"
+          fi
+
+      - name: Verify applied publication scope
+        shell: bash
+        run: |
+          set -euo pipefail
           git diff --check
           { git diff --name-only "$BASE_SHA"; git ls-files --others --exclude-standard; } \
             | sort -u > /tmp/authentic-polish-actual-paths.txt
-          diff -u /tmp/authentic-polish-paths.txt /tmp/authentic-polish-actual-paths.txt
+          if ! diff -u /tmp/authentic-polish-paths.txt /tmp/authentic-polish-actual-paths.txt; then
+            echo "::error title=Authentic polish path scope mismatch::The applied path set differs from the sealed source manifest."
+            exit 1
+          fi
           test ! -e .agent-release
           test ! -e .github/workflows/apply-authentic-polish.yml
 
@@ -182,6 +211,20 @@ jobs:
           { git diff --name-only "$BASE_SHA"; git ls-files --others --exclude-standard; } \
             | sort -u > /tmp/authentic-polish-actual-paths.txt
           diff -u /tmp/authentic-polish-paths.txt /tmp/authentic-polish-actual-paths.txt
+
+      - name: Upload failure diagnostics
+        if: failure()
+        uses: actions/upload-artifact@v7
+        with:
+          name: authentic-polish-diagnostics
+          path: |
+            /tmp/authentic-polish-apply.log
+            /tmp/authentic-polish-actual-paths.txt
+            /tmp/authentic-polish-paths.txt
+            /tmp/authentic-polish-biome-paths.txt
+            /tmp/authentic-polish-text-paths.txt
+          if-no-files-found: ignore
+          retention-days: 3
 
       - name: Commit verified feature to guarded branch
         shell: bash
