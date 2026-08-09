@@ -1,4 +1,3 @@
-import { z } from "zod";
 import {
   depthBandSchema,
   entranceSchema,
@@ -8,6 +7,7 @@ import {
   presentationProfileSchema,
   sceneSchema,
 } from "@evavo/adventure-project-schema";
+import { z } from "zod";
 import type { ProjectEditorCommand } from "./index.js";
 
 export const projectEditorCommandSchema: z.ZodType<ProjectEditorCommand> = z.lazy(
@@ -137,9 +137,8 @@ export const projectEditorCommandSchema: z.ZodType<ProjectEditorCommand> = z.laz
           entrance: entranceSchema,
         })
         .strict(),
-    ]),
+    ]) as z.ZodType<ProjectEditorCommand>,
 );
 
-export const parseProjectEditorCommand = (
-  input: unknown,
-): ProjectEditorCommand => projectEditorCommandSchema.parse(input);
+export const parseProjectEditorCommand = (input: unknown): ProjectEditorCommand =>
+  projectEditorCommandSchema.parse(input);

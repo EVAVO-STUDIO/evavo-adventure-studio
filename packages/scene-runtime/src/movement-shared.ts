@@ -1,53 +1,32 @@
 import { evaluateCondition } from "@evavo/adventure-core";
 import type { Actor, Id, Point } from "@evavo/adventure-project-schema";
 import type { RuntimeBundle } from "@evavo/adventure-runtime-bundle";
-import type {
-  NavigationPortal,
-  NavigationRouteSegment,
-} from "@evavo/adventure-scene/navigation";
+import type { NavigationPortal, NavigationRouteSegment } from "@evavo/adventure-scene/navigation";
 import type { SceneNavigationPortal } from "@evavo/adventure-scene-instances";
-import {
-  setActorInstanceAnimation,
-  type ActorInstanceRuntimeState,
-} from "./index.js";
-import type {
-  ActorMovementState,
-  NavigableRuntimeWorldState,
-} from "./movement-types.js";
+import { type ActorInstanceRuntimeState, setActorInstanceAnimation } from "./index.js";
+import type { ActorMovementState, NavigableRuntimeWorldState } from "./movement-types.js";
 
 export const MOVEMENT_EPSILON = 1e-7;
 export const DEFAULT_WALK_SPEED = 48;
 
-export const actorsById = (
-  bundle: RuntimeBundle,
-): ReadonlyMap<string, Actor> =>
+export const actorsById = (bundle: RuntimeBundle): ReadonlyMap<string, Actor> =>
   new Map(bundle.actors.map((actor) => [actor.id as string, actor] as const));
 
-export const authoredActorInstance = (
-  bundle: RuntimeBundle,
-  actorInstanceId: Id<"actor-instance">,
-) => {
+export const authoredActorInstance = (bundle: RuntimeBundle, actorInstanceId: Id<"actor-instance">) => {
   for (const composition of bundle.sceneInstances?.scenes ?? []) {
-    const instance = composition.actorInstances.find(
-      (candidate) => candidate.id === actorInstanceId,
-    );
+    const instance = composition.actorInstances.find((candidate) => candidate.id === actorInstanceId);
     if (instance) return { composition, instance };
   }
   return null;
 };
 
-export const geometricDistance = (
-  segment: NavigationRouteSegment,
-): number =>
+export const geometricDistance = (segment: NavigationRouteSegment): number =>
   Math.hypot(segment.to.x - segment.from.x, segment.to.y - segment.from.y);
 
 const directionName = (from: Point, to: Point): string => {
   const x = to.x - from.x;
   const y = to.y - from.y;
-  if (
-    Math.abs(x) <= MOVEMENT_EPSILON &&
-    Math.abs(y) <= MOVEMENT_EPSILON
-  ) {
+  if (Math.abs(x) <= MOVEMENT_EPSILON && Math.abs(y) <= MOVEMENT_EPSILON) {
     return "south";
   }
   const angle = (Math.atan2(y, x) * 180) / Math.PI;
@@ -92,13 +71,9 @@ export const resolveAnimationFacing = (
     if (available.has(fallback)) return fallback;
   }
   if (available.has(currentFacing)) return currentFacing;
-  const first = [...available].sort((left, right) =>
-    left.localeCompare(right),
-  )[0];
+  const first = [...available].sort((left, right) => left.localeCompare(right))[0];
   if (!first) {
-    throw new Error(
-      `Actor '${actor.id}' has no '${animationState}' animation for movement.`,
-    );
+    throw new Error(`Actor '${actor.id}' has no '${animationState}' animation for movement.`);
   }
   return first;
 };
@@ -107,29 +82,35 @@ const portalForSegment = (
   portals: readonly SceneNavigationPortal[],
   segment: NavigationRouteSegment,
 ): SceneNavigationPortal | null =>
-  segment.portalId
-    ? portals.find((portal) => portal.id === segment.portalId) ?? null
-    : null;
+  segment.portalId ? (portals.find((portal) => portal.id === segment.portalId) ?? null) : null;
 
 const animationStateForSegment = (
   movement: ActorMovementState,
   portals: readonly SceneNavigationPortal[],
   segment: NavigationRouteSegment,
-): string =>
-  portalForSegment(portals, segment)?.traversalAnimationState ??
-  movement.walkAnimationState;
+): string => portalForSegment(portals, segment)?.traversalAnimationState ?? movement.walkAnimationState;
 
-const actorRuntimeState = (
+export const actorRuntimeState = (
   state: NavigableRuntimeWorldState,
   actorInstanceId: Id<"actor-instance">,
 ): ActorInstanceRuntimeState => {
   const actorRuntime = state.actorInstances[actorInstanceId];
   if (!actorRuntime) {
-    throw new Error(
-      `Actor instance '${actorInstanceId}' runtime state is missing.`,
-    );
+    throw new Error(`Actor instance '${actorInstanceId}' runtime state is missing.`);
   }
   return actorRuntime;
+};
+
+export const navigationPortalsForActor = (
+  bundle: RuntimeBundle,
+  state: NavigableRuntimeWorldState,
+  actorInstanceId: Id<"actor-instance">,
+): readonly SceneNavigationPortal[] => {
+  const runtime = actorRuntimeState(state, actorInstanceId);
+  return (
+    bundle.sceneInstances?.scenes.find((composition) => composition.sceneId === runtime.sceneId)
+      ?.navigationPortals ?? []
+  );
 };
 
 export const applySegmentAnimation = (
@@ -139,37 +120,21 @@ export const applySegmentAnimation = (
   segment: NavigationRouteSegment,
   portals: readonly SceneNavigationPortal[],
 ): NavigableRuntimeWorldState => {
-  const actorRuntime = actorRuntimeState(
-    state,
-    movement.actorInstanceId,
-  );
+  const actorRuntime = actorRuntimeState(state, movement.actorInstanceId);
   const actor = actorsById(bundle).get(actorRuntime.actorId);
   if (!actor) throw new Error(`Actor '${actorRuntime.actorId}' does not exist.`);
-  const animationState = animationStateForSegment(
-    movement,
-    portals,
-    segment,
-  );
+  const animationState = animationStateForSegment(movement, portals, segment);
   const facing = resolveAnimationFacing(
     actor,
     animationState,
     directionName(segment.from, segment.to),
     actorRuntime.facing,
   );
-  if (
-    actorRuntime.animationState === animationState &&
-    actorRuntime.facing === facing
-  ) {
+  if (actorRuntime.animationState === animationState && actorRuntime.facing === facing) {
     return state;
   }
   return {
-    ...setActorInstanceAnimation(
-      bundle,
-      state,
-      movement.actorInstanceId,
-      animationState,
-      facing,
-    ),
+    ...setActorInstanceAnimation(bundle, state, movement.actorInstanceId, animationState, facing),
     movements: state.movements,
   };
 };
@@ -179,10 +144,7 @@ export const completeMovementAnimation = (
   state: NavigableRuntimeWorldState,
   movement: ActorMovementState,
 ): NavigableRuntimeWorldState => {
-  const actorRuntime = actorRuntimeState(
-    state,
-    movement.actorInstanceId,
-  );
+  const actorRuntime = actorRuntimeState(state, movement.actorInstanceId);
   const actor = actorsById(bundle).get(actorRuntime.actorId);
   if (!actor) throw new Error(`Actor '${actorRuntime.actorId}' does not exist.`);
   const arrivalFacing = resolveAnimationFacing(
@@ -208,14 +170,9 @@ export const enabledPortals = (
   state: NavigableRuntimeWorldState,
   sceneId: Id<"scene">,
 ): readonly NavigationPortal[] => {
-  const composition = bundle.sceneInstances?.scenes.find(
-    (candidate) => candidate.sceneId === sceneId,
-  );
+  const composition = bundle.sceneInstances?.scenes.find((candidate) => candidate.sceneId === sceneId);
   return (composition?.navigationPortals ?? [])
-    .filter(
-      (portal) =>
-        !portal.enabledWhen || evaluateCondition(portal.enabledWhen, state.story),
-    )
+    .filter((portal) => !portal.enabledWhen || evaluateCondition(portal.enabledWhen, state.story))
     .map((portal) => ({
       id: portal.id,
       fromAreaId: portal.fromAreaId,
@@ -223,8 +180,6 @@ export const enabledPortals = (
       fromPoint: portal.fromPoint,
       toPoint: portal.toPoint,
       bidirectional: portal.bidirectional,
-      ...(portal.traversalCost !== undefined
-        ? { traversalCost: portal.traversalCost }
-        : {}),
+      ...(portal.traversalCost !== undefined ? { traversalCost: portal.traversalCost } : {}),
     }));
 };

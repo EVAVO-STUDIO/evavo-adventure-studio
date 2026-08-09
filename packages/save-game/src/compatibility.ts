@@ -1,10 +1,7 @@
 import type { RuntimeBundle } from "@evavo/adventure-runtime-bundle";
 import type { InteractiveRuntimeWorldState } from "@evavo/adventure-scene-runtime/commands";
 import { runtimeBundleFingerprint } from "./canonical.js";
-import {
-  addSaveGameIssue,
-  type SaveGameCompatibilityIssue,
-} from "./errors.js";
+import { addSaveGameIssue, type SaveGameCompatibilityIssue } from "./errors.js";
 import { activeSequencePolicyIssues } from "./policy.js";
 import type { SaveGame } from "./schema.js";
 import {
@@ -63,9 +60,7 @@ export const validateSaveGameCompatibility = (
     );
   }
 
-  const scene = bundle.scenes.find(
-    (candidate) => candidate.id === save.world.story.currentSceneId,
-  );
+  const scene = bundle.scenes.find((candidate) => candidate.id === save.world.story.currentSceneId);
   if (!scene) {
     addSaveGameIssue(
       issues,
@@ -73,17 +68,12 @@ export const validateSaveGameCompatibility = (
       "world.story.currentSceneId",
       `Saved scene '${save.world.story.currentSceneId}' does not exist.`,
     );
-  } else if (
-    !scene.entrances.some(
-      (entrance) => entrance.id === save.world.story.currentEntranceId,
-    )
-  ) {
+  } else if (!scene.entrances.some((entrance) => entrance.id === save.world.story.currentEntranceId)) {
     addSaveGameIssue(
       issues,
       "missing-current-entrance",
       "world.story.currentEntranceId",
-      `Saved entrance '${save.world.story.currentEntranceId}' does not exist ` +
-        `in scene '${scene.id}'.`,
+      `Saved entrance '${save.world.story.currentEntranceId}' does not exist ` + `in scene '${scene.id}'.`,
     );
   }
 
@@ -101,9 +91,7 @@ export const validateSaveGameCompatibility = (
 
   if (save.world.story.activeDialogue) {
     const active = save.world.story.activeDialogue;
-    const dialogue = bundle.dialogues.find(
-      (candidate) => candidate.id === active.dialogueId,
-    );
+    const dialogue = bundle.dialogues.find((candidate) => candidate.id === active.dialogueId);
     if (!dialogue) {
       addSaveGameIssue(
         issues,
@@ -121,40 +109,24 @@ export const validateSaveGameCompatibility = (
     }
   }
 
-  issues.push(
-    ...activeSequencePolicyIssues(
-      bundle,
-      save.world as InteractiveRuntimeWorldState,
-    ),
-  );
+  issues.push(...activeSequencePolicyIssues(bundle, save.world as InteractiveRuntimeWorldState));
 
   const actorPlacements = authoredActorInstances(bundle);
-  const authoredActorIds = new Set(
-    actorPlacements.map(({ instance }) => instance.id as string),
-  );
+  const authoredActorIds = new Set(actorPlacements.map(({ instance }) => instance.id as string));
   const savedActorIds = new Set(Object.keys(save.world.actorInstances));
-  for (const actorInstanceId of new Set([
-    ...authoredActorIds,
-    ...savedActorIds,
-  ])) {
-    if (
-      !authoredActorIds.has(actorInstanceId) ||
-      !savedActorIds.has(actorInstanceId)
-    ) {
+  for (const actorInstanceId of new Set([...authoredActorIds, ...savedActorIds])) {
+    if (!authoredActorIds.has(actorInstanceId) || !savedActorIds.has(actorInstanceId)) {
       addSaveGameIssue(
         issues,
         "actor-instance-set-mismatch",
         "world.actorInstances",
-        `Actor instance '${actorInstanceId}' is not present in both the ` +
-          "bundle and save game.",
+        `Actor instance '${actorInstanceId}' is not present in both the ` + "bundle and save game.",
       );
     }
   }
 
   for (const [key, actorState] of Object.entries(save.world.actorInstances)) {
-    const authored = actorPlacements.find(
-      ({ instance }) => instance.id === actorState.instanceId,
-    );
+    const authored = actorPlacements.find(({ instance }) => instance.id === actorState.instanceId);
     if (key !== actorState.instanceId || !authored) {
       addSaveGameIssue(
         issues,
@@ -164,21 +136,23 @@ export const validateSaveGameCompatibility = (
       );
       continue;
     }
-    if (
-      authored.instance.actorId !== actorState.actorId ||
-      authored.sceneId !== actorState.sceneId
-    ) {
+    if (authored.instance.actorId !== actorState.actorId) {
       addSaveGameIssue(
         issues,
         "actor-instance-identity-mismatch",
-        `world.actorInstances.${key}`,
-        `Saved actor instance '${key}' no longer matches its authored actor ` +
-          "or scene.",
+        `world.actorInstances.${key}.actorId`,
+        `Saved actor instance '${key}' no longer matches its authored actor.`,
       );
     }
-    const actor = bundle.actors.find(
-      (candidate: RuntimeActor) => candidate.id === actorState.actorId,
-    );
+    if (!bundle.scenes.some((candidate) => candidate.id === actorState.sceneId)) {
+      addSaveGameIssue(
+        issues,
+        "actor-instance-identity-mismatch",
+        `world.actorInstances.${key}.sceneId`,
+        `Saved actor instance '${key}' references missing scene ` + `'${actorState.sceneId}'.`,
+      );
+    }
+    const actor = bundle.actors.find((candidate: RuntimeActor) => candidate.id === actorState.actorId);
     if (!actor) {
       addSaveGameIssue(
         issues,
@@ -189,8 +163,7 @@ export const validateSaveGameCompatibility = (
       continue;
     }
     const clip = actor.animations.find(
-      (candidate: RuntimeAnimationClip) =>
-        candidate.id === actorState.playback.clipId,
+      (candidate: RuntimeAnimationClip) => candidate.id === actorState.playback.clipId,
     );
     if (!clip) {
       addSaveGameIssue(
@@ -208,8 +181,7 @@ export const validateSaveGameCompatibility = (
         issues,
         "invalid-animation-frame",
         `world.actorInstances.${key}.playback.frameIndex`,
-        `Saved animation frame index ${actorState.playback.frameIndex} is ` +
-          `invalid for '${clip.id}'.`,
+        `Saved animation frame index ${actorState.playback.frameIndex} is ` + `invalid for '${clip.id}'.`,
       );
     } else if (actorState.playback.ticksIntoFrame > frame.durationTicks) {
       addSaveGameIssue(
@@ -222,21 +194,12 @@ export const validateSaveGameCompatibility = (
   }
 
   for (const [key, movement] of Object.entries(save.world.movements)) {
-    validateSavedMovement(
-      bundle,
-      save,
-      savedActorIds,
-      key,
-      movement,
-      issues,
-    );
+    validateSavedMovement(bundle, save, savedActorIds, key, movement, issues);
   }
   validateSavedCamera(bundle, save, issues);
 
   const objectPlacements = authoredObjectInstances(bundle);
-  const objectIds = new Set(
-    objectPlacements.map(({ instance }) => instance.id as string),
-  );
+  const objectIds = new Set(objectPlacements.map(({ instance }) => instance.id as string));
   const definitions = new Map(
     (bundle.sceneInstances?.objectDefinitions ?? []).map(
       (definition) => [definition.id as string, definition] as const,
@@ -264,9 +227,7 @@ export const validateSaveGameCompatibility = (
     }
   }
 
-  for (const [key, pending] of Object.entries(
-    save.world.pendingObjectCommands,
-  )) {
+  for (const [key, pending] of Object.entries(save.world.pendingObjectCommands)) {
     if (
       key !== pending.actorInstanceId ||
       !savedActorIds.has(pending.actorInstanceId) ||
@@ -311,15 +272,13 @@ export const validateSaveGameCompatibility = (
         issues,
         "invalid-selected-verb",
         "interface.selectedVerbId",
-        `Selected verb '${save.interface.selectedVerbId}' does not exist in ` +
-          "the default UI skin.",
+        `Selected verb '${save.interface.selectedVerbId}' does not exist in ` + "the default UI skin.",
       );
     }
   }
   const parserLimit =
-    bundle.uiSkins?.skins.find(
-      (candidate: RuntimeUiSkin) => candidate.id === bundle.uiSkins?.defaultSkinId,
-    )?.parser?.historyLimit ?? 20;
+    bundle.uiSkins?.skins.find((candidate: RuntimeUiSkin) => candidate.id === bundle.uiSkins?.defaultSkinId)
+      ?.parser?.historyLimit ?? 20;
   if (save.interface.parser.history.length > parserLimit) {
     addSaveGameIssue(
       issues,

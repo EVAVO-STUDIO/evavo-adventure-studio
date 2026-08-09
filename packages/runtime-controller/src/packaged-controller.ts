@@ -12,8 +12,8 @@ import { resolveRuntimeSceneFrame } from "@evavo/adventure-scene-runtime";
 import {
   advanceInteractiveRuntimeWorld,
   createInitialInteractiveRuntimeWorldState,
-  queueSceneObjectCommand,
   type InteractiveRuntimeWorldState,
+  queueSceneObjectCommand,
   type SceneCommandEvent,
 } from "@evavo/adventure-scene-runtime/commands";
 import {
@@ -22,45 +22,39 @@ import {
 } from "@evavo/adventure-scene-runtime/dialogue";
 import { hitTestSceneObject } from "@evavo/adventure-scene-runtime/interactions";
 import { beginActorMovement } from "@evavo/adventure-scene-runtime/movement";
-import { uiSkinById, type UiSkin } from "@evavo/adventure-ui-skin";
 import {
-  hitTestUiSkin,
-  type UiHitTarget,
-} from "@evavo/adventure-ui-skin/hit-testing";
+  reconcileRuntimeActorWithStoryLocation,
+  relocateRuntimeActorToEntrance,
+} from "@evavo/adventure-scene-runtime/scene-transition";
+import { type UiSkin, uiSkinById } from "@evavo/adventure-ui-skin";
+import { hitTestUiSkin, type UiHitTarget } from "@evavo/adventure-ui-skin/hit-testing";
 import {
   appendSoftwareCursor,
+  type ControlledActorSelection,
   cursorIdForObjectTarget,
   nativeScreenPointToWorld,
+  type SoftwareCursorState,
   selectControlledActorInstance,
   verbForCursorId,
-  type ControlledActorSelection,
-  type SoftwareCursorState,
 } from "./input.js";
 import {
   createParserBufferState,
   editParserBuffer,
-  resolveParserCommand,
   type ParserBufferState,
   type ParserKeyInput,
+  resolveParserCommand,
 } from "./parser.js";
 import {
   advanceProfiledRuntimeCamera,
   createProfiledRuntimeCamera,
+  type ProfiledRuntimeCameraState,
   resolvedProfiledRuntimeCamera,
   restoreProfiledRuntimeCamera,
-  type ProfiledRuntimeCameraState,
 } from "./profiled-camera.js";
-import {
-  appendRuntimeInterface,
-  runtimeUiState,
-  type RuntimeUiInteractionState,
-} from "./runtime-ui.js";
+import { appendRuntimeInterface, type RuntimeUiInteractionState, runtimeUiState } from "./runtime-ui.js";
 
 export interface PackagedRuntimeController {
-  readonly selection: Exclude<
-    ControlledActorSelection,
-    { readonly kind: "invalid" }
-  >;
+  readonly selection: Exclude<ControlledActorSelection, { readonly kind: "invalid" }>;
   readonly controlledActorInstanceId: Id<"actor-instance"> | null;
   createFrame(tick: number): ResolvedFrame;
   setPointer(position: Point | null): void;
@@ -129,16 +123,11 @@ const movementFailureStatus = (reason: string): string => {
 };
 
 const speechFromEvents = (events: readonly RuntimeEvent[]): string | null => {
-  const speech = [...events]
-    .reverse()
-    .find((event) => event.kind === "speech-requested");
+  const speech = [...events].reverse().find((event) => event.kind === "speech-requested");
   return speech?.kind === "speech-requested" ? speech.text : null;
 };
 
-const dialogueViewStatus = (
-  view: DialogueView,
-  events: readonly RuntimeEvent[] = [],
-): string =>
+const dialogueViewStatus = (view: DialogueView, events: readonly RuntimeEvent[] = []): string =>
   speechFromEvents(events) ??
   view.lines.at(-1)?.text ??
   (view.choices.some((choice) => choice.visible && choice.enabled)
@@ -154,20 +143,15 @@ const statusFromCommandEvent = (event: SceneCommandEvent): string => {
     case "object-command-rejected":
       return `ACTION REJECTED • ${event.reason}`;
     case "object-command-aborted":
-      return event.reason === "movement-cancelled"
-        ? "ACTION CANCELLED"
-        : "TARGET IS NO LONGER AVAILABLE";
+      return event.reason === "movement-cancelled" ? "ACTION CANCELLED" : "TARGET IS NO LONGER AVAILABLE";
     case "object-command-executed":
-      return (
-        speechFromEvents(event.runtimeEvents) ??
-        `${event.verb.toUpperCase()} COMPLETE`
-      );
+      return speechFromEvents(event.runtimeEvents) ?? `${event.verb.toUpperCase()} COMPLETE`;
+    default:
+      return "ACTION COULD NOT BE RESOLVED";
   }
 };
 
-const runtimeEventsFromCommand = (
-  event: SceneCommandEvent,
-): readonly RuntimeEvent[] =>
+const runtimeEventsFromCommand = (event: SceneCommandEvent): readonly RuntimeEvent[] =>
   event.kind === "object-command-executed" ? event.runtimeEvents : [];
 
 const initialVerbId = (skin: UiSkin | null): Id<"ui-verb"> | null =>
@@ -177,10 +161,7 @@ export const createPackagedRuntimeController = (
   bundle: RuntimeBundle,
   options: PackagedRuntimeControllerOptions = {},
 ): PackagedRuntimeController => {
-  const resolvedSelection = selectControlledActorInstance(
-    bundle,
-    options.requestedActorInstanceId ?? null,
-  );
+  const resolvedSelection = selectControlledActorInstance(bundle, options.requestedActorInstanceId ?? null);
   if (resolvedSelection.kind === "invalid") {
     throw new Error(
       resolvedSelection.reason === "requested-actor-is-fixed"
@@ -192,10 +173,8 @@ export const createPackagedRuntimeController = (
   }
 
   const selection = resolvedSelection;
-  const controlledActorInstanceId =
-    selection.kind === "selected" ? selection.actorInstanceId : null;
-  const runtimeSkin =
-    bundle.uiSkins && bundle.bitmapFonts ? uiSkinById(bundle.uiSkins) : null;
+  const controlledActorInstanceId = selection.kind === "selected" ? selection.actorInstanceId : null;
+  const runtimeSkin = bundle.uiSkins && bundle.bitmapFonts ? uiSkinById(bundle.uiSkins) : null;
   let selectedVerbId = initialVerbId(runtimeSkin);
   let hoveredVerbId: Id<"ui-verb"> | null = null;
   let selectedItemId: Id<"item"> | null = null;
@@ -229,8 +208,7 @@ export const createPackagedRuntimeController = (
     ...(runtimeSkin?.interactionMode === "parser-assisted"
       ? {
           parserText: parser.text,
-          parserCursorVisible:
-            parser.focused && Math.floor(renderedTick / 20) % 2 === 0,
+          parserCursorVisible: parser.focused && Math.floor(renderedTick / 20) % 2 === 0,
         }
       : {}),
   });
@@ -241,29 +219,66 @@ export const createPackagedRuntimeController = (
     options.onStatusChange?.(text);
   };
 
+  const clearActorTransientState = (
+    state: InteractiveRuntimeWorldState,
+    actorInstanceId: Id<"actor-instance">,
+  ): InteractiveRuntimeWorldState => {
+    const movements = { ...state.movements };
+    const pendingObjectCommands = { ...state.pendingObjectCommands };
+    delete movements[actorInstanceId];
+    delete pendingObjectCommands[actorInstanceId];
+    return { ...state, movements, pendingObjectCommands };
+  };
+
+  const reconcileControlledActorTransition = (
+    previousWorld: InteractiveRuntimeWorldState,
+    nextWorld: InteractiveRuntimeWorldState,
+  ): InteractiveRuntimeWorldState => {
+    if (!controlledActorInstanceId) return nextWorld;
+    const actor = nextWorld.actorInstances[controlledActorInstanceId];
+    if (!actor) {
+      throw new Error(`Controlled actor '${controlledActorInstanceId}' runtime state is missing.`);
+    }
+    const storyLocationChanged =
+      previousWorld.story.currentSceneId !== nextWorld.story.currentSceneId ||
+      previousWorld.story.currentEntranceId !== nextWorld.story.currentEntranceId;
+    if (!storyLocationChanged && actor.sceneId === nextWorld.story.currentSceneId) {
+      return nextWorld;
+    }
+    const relocated = storyLocationChanged
+      ? relocateRuntimeActorToEntrance(
+          bundle,
+          nextWorld,
+          controlledActorInstanceId,
+          nextWorld.story.currentSceneId,
+          nextWorld.story.currentEntranceId,
+        )
+      : reconcileRuntimeActorWithStoryLocation(bundle, nextWorld, controlledActorInstanceId);
+    return clearActorTransientState(relocated, controlledActorInstanceId);
+  };
+
   const applyWorldState = (
     nextWorld: InteractiveRuntimeWorldState,
     runtimeEvents: readonly RuntimeEvent[] = [],
   ): void => {
     const previousWorld = world;
+    const reconciledWorld = reconcileControlledActorTransition(previousWorld, nextWorld);
     const camera = advanceProfiledRuntimeCamera({
       bundle,
       state: cameraState,
       previousWorld,
-      nextWorld,
+      nextWorld: reconciledWorld,
       controlledActorInstanceId,
       runtimeEvents,
     });
-    world = nextWorld;
+    world = reconciledWorld;
     cameraState = camera.state;
     baseFrame = resolveRuntimeSceneFrame(bundle, world, {
       camera: camera.camera,
     });
   };
 
-  const setActiveDialogueStatus = (
-    events: readonly RuntimeEvent[] = [],
-  ): boolean => {
+  const setActiveDialogueStatus = (events: readonly RuntimeEvent[] = []): boolean => {
     const view = resolveActiveRuntimeDialogue(bundle, world);
     if (!view) return false;
     setStatus(dialogueViewStatus(view, events));
@@ -275,25 +290,14 @@ export const createPackagedRuntimeController = (
     return hitTestUiSkin(
       runtimeSkin,
       bundle.bitmapFonts,
-      runtimeUiState(
-        bundle,
-        world,
-        runtimeSkin,
-        status,
-        cursor,
-        interactionState(),
-      ),
+      runtimeUiState(bundle, world, runtimeSkin, status, cursor, interactionState()),
       position,
     );
   };
 
   const pointerTarget = () => {
     if (!cursor.position) return null;
-    return hitTestSceneObject(
-      bundle,
-      world,
-      nativeScreenPointToWorld(cursor.position, baseFrame.camera),
-    );
+    return hitTestSceneObject(bundle, world, nativeScreenPointToWorld(cursor.position, baseFrame.camera));
   };
 
   const refreshCursor = (): void => {
@@ -304,12 +308,8 @@ export const createPackagedRuntimeController = (
     }
     const uiTarget = currentUiTarget(cursor.position);
     if (uiTarget) {
-      hoveredVerbId =
-        uiTarget.kind === "verb" || uiTarget.kind === "verb-coin"
-          ? uiTarget.verb.id
-          : null;
-      hoveredDialogueChoiceId =
-        uiTarget.kind === "dialogue-choice" ? uiTarget.choiceId : null;
+      hoveredVerbId = uiTarget.kind === "verb" || uiTarget.kind === "verb-coin" ? uiTarget.verb.id : null;
+      hoveredDialogueChoiceId = uiTarget.kind === "dialogue-choice" ? uiTarget.choiceId : null;
       const cursorId =
         uiTarget.kind === "verb" || uiTarget.kind === "verb-coin"
           ? uiTarget.verb.cursorId
@@ -327,24 +327,17 @@ export const createPackagedRuntimeController = (
     };
   };
 
-  const selectedVerb = () =>
-    runtimeSkin?.verbs.find((verb) => verb.id === selectedVerbId) ?? null;
+  const selectedVerb = () => runtimeSkin?.verbs.find((verb) => verb.id === selectedVerbId) ?? null;
 
   const itemName = (itemId: Id<"item">): string =>
     bundle.inventoryItems.find((item) => item.id === itemId)?.name ?? itemId;
 
-  const chooseDialogue = (
-    target: Extract<UiHitTarget, { readonly kind: "dialogue-choice" }>,
-  ): void => {
+  const chooseDialogue = (target: Extract<UiHitTarget, { readonly kind: "dialogue-choice" }>): void => {
     if (!target.enabled) {
       setStatus("THAT DIALOGUE CHOICE IS DISABLED");
       return;
     }
-    const chosen = chooseActiveRuntimeDialogueOption(
-      bundle,
-      world,
-      target.choiceId,
-    );
+    const chosen = chooseActiveRuntimeDialogueOption(bundle, world, target.choiceId);
     if (chosen.kind === "rejected") {
       setStatus(`DIALOGUE REJECTED • ${chosen.detail}`);
       return;
@@ -395,10 +388,7 @@ export const createPackagedRuntimeController = (
       switch (queued.kind) {
         case "queued":
         case "resolved":
-          applyWorldState(
-            queued.state,
-            runtimeEventsFromCommand(queued.event),
-          );
+          applyWorldState(queued.state, runtimeEventsFromCommand(queued.event));
           applyCommandStatus(queued.event);
           return;
         case "missing-target":
@@ -420,7 +410,7 @@ export const createPackagedRuntimeController = (
   };
 
   const submitParserCommand = (input: string): void => {
-    if (!runtimeSkin || runtimeSkin.interactionMode !== "parser-assisted") {
+    if (runtimeSkin?.interactionMode !== "parser-assisted") {
       return;
     }
     if (world.story.activeDialogue) {
@@ -430,11 +420,7 @@ export const createPackagedRuntimeController = (
     const resolved = resolveParserCommand(bundle, world, runtimeSkin, input);
     switch (resolved.kind) {
       case "object-command":
-        executeObjectCommand(
-          resolved.objectInstanceId,
-          resolved.verb,
-          resolved.itemId ?? selectedItemId,
-        );
+        executeObjectCommand(resolved.objectInstanceId, resolved.verb, resolved.itemId ?? selectedItemId);
         return;
       case "scene-look":
       case "inventory":
@@ -459,9 +445,7 @@ export const createPackagedRuntimeController = (
         case "inventory-slot":
           selectedItemId = target.itemId;
           setStatus(
-            target.itemId
-              ? `${itemName(target.itemId).toUpperCase()} SELECTED`
-              : "EMPTY INVENTORY SLOT",
+            target.itemId ? `${itemName(target.itemId).toUpperCase()} SELECTED` : "EMPTY INVENTORY SLOT",
           );
           return true;
         case "parser":
@@ -506,12 +490,7 @@ export const createPackagedRuntimeController = (
     }
 
     try {
-      const movement = beginActorMovement(
-        bundle,
-        world,
-        controlledActorInstanceId,
-        worldPoint,
-      );
+      const movement = beginActorMovement(bundle, world, controlledActorInstanceId, worldPoint);
       switch (movement.kind) {
         case "started":
           applyWorldState(
@@ -541,7 +520,7 @@ export const createPackagedRuntimeController = (
   };
 
   const handleKey = (input: ParserKeyInput): boolean => {
-    if (!runtimeSkin || runtimeSkin.interactionMode !== "parser-assisted") {
+    if (runtimeSkin?.interactionMode !== "parser-assisted") {
       return false;
     }
     const edited = editParserBuffer(parser, input);
@@ -560,9 +539,7 @@ export const createPackagedRuntimeController = (
         text: parser.text,
         history: parser.history,
       },
-      ...(persistProfiledCamera && cameraState
-        ? { profiledCamera: cameraState }
-        : {}),
+      ...(persistProfiledCamera && cameraState ? { profiledCamera: cameraState } : {}),
     });
 
   const restoreControllerSave = (input: unknown): number => {
@@ -574,7 +551,20 @@ export const createPackagedRuntimeController = (
       );
     }
 
-    world = save.world as InteractiveRuntimeWorldState;
+    const restoredWorld = save.world as InteractiveRuntimeWorldState;
+    if (controlledActorInstanceId) {
+      const reconciled = reconcileRuntimeActorWithStoryLocation(
+        bundle,
+        restoredWorld,
+        controlledActorInstanceId,
+      );
+      world =
+        reconciled === restoredWorld
+          ? restoredWorld
+          : clearActorTransientState(reconciled, controlledActorInstanceId);
+    } else {
+      world = restoredWorld;
+    }
     persistProfiledCamera = save.interface.profiledCamera !== undefined;
     cameraState = restoreProfiledRuntimeCamera({
       bundle,

@@ -1,28 +1,14 @@
 import {
+  type AnimationEvent,
+  type AnimationPlaybackState,
   advanceAnimation,
   currentAnimationFrame,
   startAnimation,
-  type AnimationEvent,
-  type AnimationPlaybackState,
 } from "@evavo/adventure-animation";
 import type { RuntimeAssetRecord } from "@evavo/adventure-asset-contract/runtime-asset";
-import {
-  advanceTicks,
-  applyActions,
-  evaluateCondition,
-  type RuntimeState,
-} from "@evavo/adventure-core";
-import {
-  buildResolvedFrame,
-  resolveActorSprite,
-  resolveCamera,
-} from "@evavo/adventure-frame-resolver";
-import type {
-  Actor,
-  Id,
-  Point,
-  SpriteFrame,
-} from "@evavo/adventure-project-schema";
+import { advanceTicks, applyActions, evaluateCondition, type RuntimeState } from "@evavo/adventure-core";
+import { buildResolvedFrame, resolveActorSprite, resolveCamera } from "@evavo/adventure-frame-resolver";
+import type { Actor, Id, Point, SpriteFrame } from "@evavo/adventure-project-schema";
 import type {
   RenderLayer,
   ResolvedCamera,
@@ -30,13 +16,11 @@ import type {
   SpriteRenderNode,
 } from "@evavo/adventure-render-contract";
 import type { RuntimeBundle } from "@evavo/adventure-runtime-bundle";
-import {
-  quantizeNativePoint,
-  resolveScaleAtY,
-} from "@evavo/adventure-scene";
+import { quantizeNativePoint, resolveScaleAtY } from "@evavo/adventure-scene";
 import type {
   ObjectDefinition,
   ObjectStateDefinition,
+  SceneActorInstance,
   SceneObjectInstance,
 } from "@evavo/adventure-scene-instances";
 
@@ -71,43 +55,37 @@ const normalizeSeed = (seed: number): number => {
   return normalized === 0 ? 0x6d2b79f5 : normalized;
 };
 
-const assetsById = (
-  bundle: RuntimeBundle,
-): ReadonlyMap<string, RuntimeAssetRecord> =>
+const assetsById = (bundle: RuntimeBundle): ReadonlyMap<string, RuntimeAssetRecord> =>
   new Map(bundle.assets.map((asset) => [asset.assetId as string, asset] as const));
 
 const actorsById = (bundle: RuntimeBundle): ReadonlyMap<string, Actor> =>
   new Map(bundle.actors.map((actor) => [actor.id as string, actor] as const));
 
-const objectDefinitionsById = (
-  bundle: RuntimeBundle,
-): ReadonlyMap<string, ObjectDefinition> =>
+const objectDefinitionsById = (bundle: RuntimeBundle): ReadonlyMap<string, ObjectDefinition> =>
   new Map(
     (bundle.sceneInstances?.objectDefinitions ?? []).map(
       (definition) => [definition.id as string, definition] as const,
     ),
   );
 
-const findAnimationClip = (
-  actor: Actor,
-  animationState: string,
-  facing: string,
-) => {
+const actorInstancePlacementsById = (bundle: RuntimeBundle): ReadonlyMap<string, SceneActorInstance> =>
+  new Map(
+    (bundle.sceneInstances?.scenes ?? []).flatMap((composition) =>
+      composition.actorInstances.map((instance) => [instance.id as string, instance] as const),
+    ),
+  );
+
+const findAnimationClip = (actor: Actor, animationState: string, facing: string) => {
   const clip = actor.animations.find(
-    (candidate) =>
-      candidate.state === animationState && candidate.facing === facing,
+    (candidate) => candidate.state === animationState && candidate.facing === facing,
   );
   if (!clip) {
-    throw new Error(
-      `Actor '${actor.id}' has no '${animationState}' animation facing '${facing}'.`,
-    );
+    throw new Error(`Actor '${actor.id}' has no '${animationState}' animation facing '${facing}'.`);
   }
   return clip;
 };
 
-const initialObjectStates = (
-  bundle: RuntimeBundle,
-): Readonly<Record<string, string>> => {
+const initialObjectStates = (bundle: RuntimeBundle): Readonly<Record<string, string>> => {
   const definitions = objectDefinitionsById(bundle);
   const states: Record<string, string> = {};
 
@@ -126,9 +104,7 @@ const initialObjectStates = (
   return states;
 };
 
-const initialActorStates = (
-  bundle: RuntimeBundle,
-): Readonly<Record<string, ActorInstanceRuntimeState>> => {
+const initialActorStates = (bundle: RuntimeBundle): Readonly<Record<string, ActorInstanceRuntimeState>> => {
   const actors = actorsById(bundle);
   const states: Record<string, ActorInstanceRuntimeState> = {};
 
@@ -136,15 +112,9 @@ const initialActorStates = (
     for (const instance of composition.actorInstances) {
       const actor = actors.get(instance.actorId);
       if (!actor) {
-        throw new Error(
-          `Actor instance '${instance.id}' references missing actor '${instance.actorId}'.`,
-        );
+        throw new Error(`Actor instance '${instance.id}' references missing actor '${instance.actorId}'.`);
       }
-      const clip = findAnimationClip(
-        actor,
-        instance.animationState,
-        instance.facing,
-      );
+      const clip = findAnimationClip(actor, instance.animationState, instance.facing);
       states[instance.id] = {
         instanceId: instance.id,
         sceneId: composition.sceneId,
@@ -201,9 +171,7 @@ export const advanceRuntimeWorld = (
   for (const state of Object.values(world.actorInstances)) {
     const actor = actors.get(state.actorId);
     if (!actor) {
-      throw new Error(
-        `Actor instance '${state.instanceId}' references missing actor '${state.actorId}'.`,
-      );
+      throw new Error(`Actor instance '${state.instanceId}' references missing actor '${state.actorId}'.`);
     }
     const transition = advanceAnimation(actor, state.playback, ticks);
     actorInstances[state.instanceId] = {
@@ -304,9 +272,7 @@ const findObjectPlacement = (
 } => {
   const definitions = objectDefinitionsById(bundle);
   for (const composition of bundle.sceneInstances?.scenes ?? []) {
-    const instance = composition.objectInstances.find(
-      (candidate) => candidate.id === objectInstanceId,
-    );
+    const instance = composition.objectInstances.find((candidate) => candidate.id === objectInstanceId);
     if (!instance) {
       continue;
     }
@@ -329,9 +295,7 @@ export const setObjectInstanceState = (
 ): RuntimeWorldState => {
   const { definition } = findObjectPlacement(bundle, objectInstanceId);
   if (!definition.states.some((state) => state.id === stateId)) {
-    throw new Error(
-      `Object definition '${definition.id}' has no state '${stateId}'.`,
-    );
+    throw new Error(`Object definition '${definition.id}' has no state '${stateId}'.`);
   }
   return {
     ...world,
@@ -345,15 +309,10 @@ export const setObjectInstanceState = (
   };
 };
 
-const backgroundNode = (
-  bundle: RuntimeBundle,
-  scene: RuntimeBundle["scenes"][number],
-): SpriteRenderNode => {
+const backgroundNode = (bundle: RuntimeBundle, scene: RuntimeBundle["scenes"][number]): SpriteRenderNode => {
   const asset = assetsById(bundle).get(scene.backgroundAssetId);
-  if (!asset || asset.kind !== "image") {
-    throw new Error(
-      `Scene '${scene.id}' background '${scene.backgroundAssetId}' is not a runtime image.`,
-    );
+  if (asset?.kind !== "image") {
+    throw new Error(`Scene '${scene.id}' background '${scene.backgroundAssetId}' is not a runtime image.`);
   }
   return {
     kind: "sprite",
@@ -384,15 +343,10 @@ const backgroundNode = (
   };
 };
 
-const objectStateFor = (
-  definition: ObjectDefinition,
-  stateId: string,
-): ObjectStateDefinition => {
+const objectStateFor = (definition: ObjectDefinition, stateId: string): ObjectStateDefinition => {
   const state = definition.states.find((candidate) => candidate.id === stateId);
   if (!state) {
-    throw new Error(
-      `Object definition '${definition.id}' has no state '${stateId}'.`,
-    );
+    throw new Error(`Object definition '${definition.id}' has no state '${stateId}'.`);
   }
   return state;
 };
@@ -411,11 +365,7 @@ const objectNode = (
     throw new Error(`Object visual asset '${state.visual.assetId}' does not exist.`);
   }
 
-  const position = quantizeNativePoint(
-    instance.position,
-    bundle.presentation.pixelMotionPolicy,
-    "entity",
-  );
+  const position = quantizeNativePoint(instance.position, bundle.presentation.pixelMotionPolicy, "entity");
   const perspective = resolveScaleAtY(scene.depthBands, position.y);
   const scale = (perspective?.scale ?? 1) * instance.scaleMultiplier;
   const common = {
@@ -453,9 +403,7 @@ const objectNode = (
     };
   }
   if (asset.kind !== "image") {
-    throw new Error(
-      `Object visual '${state.visual.assetId}' is not a runtime image.`,
-    );
+    throw new Error(`Object visual '${state.visual.assetId}' is not a runtime image.`);
   }
   return {
     ...common,
@@ -488,32 +436,39 @@ export const resolveRuntimeSceneFrame = (
   if (!scene) {
     throw new Error(`Runtime scene '${sceneId}' does not exist.`);
   }
-  const composition = bundle.sceneInstances?.scenes.find(
-    (candidate) => candidate.sceneId === sceneId,
-  );
+  const composition = bundle.sceneInstances?.scenes.find((candidate) => candidate.sceneId === sceneId);
   const definitions = objectDefinitionsById(bundle);
   const nodes: SpriteRenderNode[] = [backgroundNode(bundle, scene)];
 
-  for (const authored of composition?.actorInstances ?? []) {
-    const runtime = world.actorInstances[authored.id];
-    if (!runtime) {
-      throw new Error(`Actor instance runtime state '${authored.id}' is missing.`);
+  const actorPlacements = actorInstancePlacementsById(bundle);
+  const activeActors = Object.values(world.actorInstances)
+    .filter((runtime) => runtime.sceneId === sceneId)
+    .sort((left, right) => left.instanceId.localeCompare(right.instanceId));
+  for (const runtime of activeActors) {
+    const authored = actorPlacements.get(runtime.instanceId);
+    if (!authored) {
+      throw new Error(`Actor instance authoring data '${runtime.instanceId}' is missing.`);
     }
-    const conditionVisible =
-      !authored.visibleWhen || evaluateCondition(authored.visibleWhen, world.story);
+    if (authored.actorId !== runtime.actorId) {
+      throw new Error(
+        `Actor instance '${runtime.instanceId}' runtime actor '${runtime.actorId}' ` +
+          `does not match authored actor '${authored.actorId}'.`,
+      );
+    }
+    const conditionVisible = !authored.visibleWhen || evaluateCondition(authored.visibleWhen, world.story);
     const visible = runtime.visibleOverride ?? conditionVisible;
     if (!visible) {
       continue;
     }
-    const actor = actorsById(bundle).get(authored.actorId);
+    const actor = actorsById(bundle).get(runtime.actorId);
     if (!actor) {
-      throw new Error(`Actor '${authored.actorId}' does not exist.`);
+      throw new Error(`Actor '${runtime.actorId}' does not exist.`);
     }
     const frame: SpriteFrame = currentAnimationFrame(actor, runtime.playback);
     nodes.push(
       resolveActorSprite({
-        nodeId: `render.actor-instance.${authored.id}` as Id<"render-node">,
-        stableId: authored.id,
+        nodeId: `render.actor-instance.${runtime.instanceId}` as Id<"render-node">,
+        stableId: runtime.instanceId,
         frame,
         footPosition: runtime.position,
         depthBands: scene.depthBands,
@@ -527,22 +482,15 @@ export const resolveRuntimeSceneFrame = (
   }
 
   for (const instance of composition?.objectInstances ?? []) {
-    if (
-      instance.visibleWhen &&
-      !evaluateCondition(instance.visibleWhen, world.story)
-    ) {
+    if (instance.visibleWhen && !evaluateCondition(instance.visibleWhen, world.story)) {
       continue;
     }
     const definition = definitions.get(instance.definitionId);
     if (!definition) {
-      throw new Error(
-        `Object instance '${instance.id}' definition '${instance.definitionId}' is missing.`,
-      );
+      throw new Error(`Object instance '${instance.id}' definition '${instance.definitionId}' is missing.`);
     }
     const stateId =
-      world.story.objectStates[instance.id] ??
-      instance.initialStateId ??
-      definition.initialStateId;
+      world.story.objectStates[instance.id] ?? instance.initialStateId ?? definition.initialStateId;
     const state = objectStateFor(definition, stateId);
     const resolved = objectNode(bundle, scene, instance, state);
     if (resolved) {
@@ -571,9 +519,7 @@ export const resolveRuntimeSceneFrame = (
     nodes,
   });
   if (result.issues.length > 0) {
-    throw new Error(
-      `Runtime scene '${scene.id}' resolved with ${result.issues.length} frame issue(s).`,
-    );
+    throw new Error(`Runtime scene '${scene.id}' resolved with ${result.issues.length} frame issue(s).`);
   }
   return result.frame;
 };

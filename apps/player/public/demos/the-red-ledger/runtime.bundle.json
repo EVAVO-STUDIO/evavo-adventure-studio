@@ -1,0 +1,3191 @@
+{
+  "bundleVersion": 1,
+  "sourceSchemaVersion": 1,
+  "projectId": "project.red-ledger.playable-slice",
+  "title": "The Red Ledger: Impossible Date",
+  "presentation": {
+    "nativeWidth": 320,
+    "nativeHeight": 200,
+    "interactionMode": "context",
+    "integerScale": true,
+    "textureSampling": "nearest",
+    "logicalTicksPerSecond": 60,
+    "pixelMotionPolicy": "strict",
+    "showScore": false,
+    "allowHotspotAssist": false
+  },
+  "startSceneId": "scene.red-ledger.archive",
+  "startEntranceId": "entrance.red-ledger.archive.start",
+  "assetManifestFingerprint": "b2b514e9322e1b1a166930af2f1a576824cbc7576ba953570f5f3ec3ef9689c3",
+  "assetCompilerVersion": "evavo-red-ledger-slice-2",
+  "assets": [
+    {
+      "assetId": "asset.red-ledger.account",
+      "outputFiles": [
+        {
+          "role": "primary",
+          "runtimePath": "assets/account.png",
+          "mediaType": "image/png",
+          "sha256": "4cf6b27ccdb7ec1e5f6c00b1df329d39ee4da8130fd58c69df2574c37e5d013d",
+          "byteLength": 906
+        }
+      ],
+      "kind": "image",
+      "metadata": {
+        "kind": "image",
+        "width": 32,
+        "height": 18,
+        "palette": true,
+        "colourCount": 6
+      }
+    },
+    {
+      "assetId": "asset.red-ledger.alley",
+      "outputFiles": [
+        {
+          "role": "primary",
+          "runtimePath": "assets/alley.png",
+          "mediaType": "image/png",
+          "sha256": "17f2f910a94fd1e03a63f5f95bf2c4408b7ac40d9d8eb97a8bbe1699e2167ad1",
+          "byteLength": 4212
+        }
+      ],
+      "kind": "image",
+      "metadata": {
+        "kind": "image",
+        "width": 320,
+        "height": 200,
+        "palette": true,
+        "colourCount": 48
+      }
+    },
+    {
+      "assetId": "asset.red-ledger.alley-door-locked",
+      "outputFiles": [
+        {
+          "role": "primary",
+          "runtimePath": "assets/alley-door-locked.png",
+          "mediaType": "image/png",
+          "sha256": "a704df0fba37ed42e688861f06fa6ec26056846fc32f036f97ae3ca68aa809a3",
+          "byteLength": 943
+        }
+      ],
+      "kind": "image",
+      "metadata": {
+        "kind": "image",
+        "width": 34,
+        "height": 98,
+        "palette": true,
+        "colourCount": 7
+      }
+    },
+    {
+      "assetId": "asset.red-ledger.alley-door-open",
+      "outputFiles": [
+        {
+          "role": "primary",
+          "runtimePath": "assets/alley-door-open.png",
+          "mediaType": "image/png",
+          "sha256": "bd394170fa53ce0ba526dd657b7f3f9d8c8334259eb80dcaa4f6593dd5e3db2b",
+          "byteLength": 994
+        }
+      ],
+      "kind": "image",
+      "metadata": {
+        "kind": "image",
+        "width": 34,
+        "height": 98,
+        "palette": true,
+        "colourCount": 6
+      }
+    },
+    {
+      "assetId": "asset.red-ledger.alley-ledger",
+      "outputFiles": [
+        {
+          "role": "primary",
+          "runtimePath": "assets/alley-ledger.png",
+          "mediaType": "image/png",
+          "sha256": "ceb4785a2fd07987685accd846f1c15ead80828f13978b8ed9a38ea84cfef502",
+          "byteLength": 982
+        }
+      ],
+      "kind": "image",
+      "metadata": {
+        "kind": "image",
+        "width": 68,
+        "height": 50,
+        "palette": true,
+        "colourCount": 8
+      }
+    },
+    {
+      "assetId": "asset.red-ledger.archive",
+      "outputFiles": [
+        {
+          "role": "primary",
+          "runtimePath": "assets/archive.png",
+          "mediaType": "image/png",
+          "sha256": "2a46cab678b60eb05a3a116b033e7cbea43e7806de107669d8c1c4af720c28ba",
+          "byteLength": 3865
+        }
+      ],
+      "kind": "image",
+      "metadata": {
+        "kind": "image",
+        "width": 320,
+        "height": 200,
+        "palette": true,
+        "colourCount": 48
+      }
+    },
+    {
+      "assetId": "asset.red-ledger.archivist",
+      "outputFiles": [
+        {
+          "role": "primary",
+          "runtimePath": "assets/archivist-sheet.png",
+          "mediaType": "image/png",
+          "sha256": "fa9ab5ef044ecc05846d6ba1f39eeae6e08e04e861d5b5a5cdcdd62e451e0001",
+          "byteLength": 1276
+        }
+      ],
+      "kind": "image",
+      "metadata": {
+        "kind": "image",
+        "width": 96,
+        "height": 64,
+        "palette": true,
+        "colourCount": 18
+      }
+    },
+    {
+      "assetId": "asset.red-ledger.chapel",
+      "outputFiles": [
+        {
+          "role": "primary",
+          "runtimePath": "assets/chapel.png",
+          "mediaType": "image/png",
+          "sha256": "f34c28eaf16987dc080d5e5667f22f2ff5e6f225812cc01f651c4e2785907e47",
+          "byteLength": 4187
+        }
+      ],
+      "kind": "image",
+      "metadata": {
+        "kind": "image",
+        "width": 320,
+        "height": 200,
+        "palette": true,
+        "colourCount": 48
+      }
+    },
+    {
+      "assetId": "asset.red-ledger.chapel-copy-icon",
+      "outputFiles": [
+        {
+          "role": "primary",
+          "runtimePath": "assets/chapel-copy-icon.png",
+          "mediaType": "image/png",
+          "sha256": "bc2fc791cf8287eaa52e5c362dacc3fb82cceaed323d357045c36c6271c87008",
+          "byteLength": 895
+        }
+      ],
+      "kind": "image",
+      "metadata": {
+        "kind": "image",
+        "width": 18,
+        "height": 18,
+        "palette": true,
+        "colourCount": 5
+      }
+    },
+    {
+      "assetId": "asset.red-ledger.chapel-door",
+      "outputFiles": [
+        {
+          "role": "primary",
+          "runtimePath": "assets/chapel-door.png",
+          "mediaType": "image/png",
+          "sha256": "0deed133bd180c4b1d988273123b75e772c76fbced7cca77acd6fd90c0086467",
+          "byteLength": 934
+        }
+      ],
+      "kind": "image",
+      "metadata": {
+        "kind": "image",
+        "width": 42,
+        "height": 104,
+        "palette": true,
+        "colourCount": 8
+      }
+    },
+    {
+      "assetId": "asset.red-ledger.clerk",
+      "outputFiles": [
+        {
+          "role": "primary",
+          "runtimePath": "assets/clerk-sheet.png",
+          "mediaType": "image/png",
+          "sha256": "e3c81ee341c3f01e116894ccabc3ef1d2b9e6db3ab0447e83a6482ad22fdebd5",
+          "byteLength": 1011
+        }
+      ],
+      "kind": "image",
+      "metadata": {
+        "kind": "image",
+        "width": 32,
+        "height": 64,
+        "palette": true,
+        "colourCount": 16
+      }
+    },
+    {
+      "assetId": "asset.red-ledger.drawer-closed",
+      "outputFiles": [
+        {
+          "role": "primary",
+          "runtimePath": "assets/drawer-closed.png",
+          "mediaType": "image/png",
+          "sha256": "b6bddb28d010e283fe881fe991073f1a4b0e4601ad8ce97804ac4cdd732b3df8",
+          "byteLength": 893
+        }
+      ],
+      "kind": "image",
+      "metadata": {
+        "kind": "image",
+        "width": 40,
+        "height": 24,
+        "palette": true,
+        "colourCount": 7
+      }
+    },
+    {
+      "assetId": "asset.red-ledger.drawer-open",
+      "outputFiles": [
+        {
+          "role": "primary",
+          "runtimePath": "assets/drawer-open.png",
+          "mediaType": "image/png",
+          "sha256": "65be2693cfcfd025aaf7fd1ccdd3fdb75ac6800386f90ed3e31a0a18f29ca965",
+          "byteLength": 945
+        }
+      ],
+      "kind": "image",
+      "metadata": {
+        "kind": "image",
+        "width": 40,
+        "height": 30,
+        "palette": true,
+        "colourCount": 8
+      }
+    },
+    {
+      "assetId": "asset.red-ledger.record-icon",
+      "outputFiles": [
+        {
+          "role": "primary",
+          "runtimePath": "assets/record-icon.png",
+          "mediaType": "image/png",
+          "sha256": "c13ed690102e45968dcd678950a0084970dd10c448cb80732c4704efae026b16",
+          "byteLength": 885
+        }
+      ],
+      "kind": "image",
+      "metadata": {
+        "kind": "image",
+        "width": 18,
+        "height": 18,
+        "palette": true,
+        "colourCount": 5
+      }
+    },
+    {
+      "assetId": "asset.red-ledger.registry",
+      "outputFiles": [
+        {
+          "role": "primary",
+          "runtimePath": "assets/registry.png",
+          "mediaType": "image/png",
+          "sha256": "f8db4d258daff3457efee2f6677e8921a2afc28c594195e95680b1951ed547f7",
+          "byteLength": 936
+        }
+      ],
+      "kind": "image",
+      "metadata": {
+        "kind": "image",
+        "width": 54,
+        "height": 38,
+        "palette": true,
+        "colourCount": 8
+      }
+    },
+    {
+      "assetId": "asset.red-ledger.return-door",
+      "outputFiles": [
+        {
+          "role": "primary",
+          "runtimePath": "assets/return-door.png",
+          "mediaType": "image/png",
+          "sha256": "2880d5861fe778cfd5d5d8795b921526ba1962c254ce1a948fcd13065f953233",
+          "byteLength": 919
+        }
+      ],
+      "kind": "image",
+      "metadata": {
+        "kind": "image",
+        "width": 30,
+        "height": 94,
+        "palette": true,
+        "colourCount": 7
+      }
+    },
+    {
+      "assetId": "asset.red-ledger.ui-font",
+      "outputFiles": [
+        {
+          "role": "primary",
+          "runtimePath": "assets/ui-font.png",
+          "mediaType": "image/png",
+          "sha256": "6dec338d8f2991494a59a4f63118913a790cbdadd79d11de167e8ae702177903",
+          "byteLength": 1343
+        }
+      ],
+      "kind": "image",
+      "metadata": {
+        "kind": "image",
+        "width": 128,
+        "height": 40,
+        "palette": true,
+        "colourCount": 2
+      }
+    }
+  ],
+  "inventoryItems": [
+    {
+      "id": "item.red-ledger.chapel-copy",
+      "name": "Chapel Copy",
+      "description": "A registry copy proving the debtor was elsewhere.",
+      "iconAssetId": "asset.red-ledger.chapel-copy-icon"
+    },
+    {
+      "id": "item.red-ledger.harbour-record",
+      "name": "Harbour Record",
+      "description": "A construction record with a later paper mill mark.",
+      "iconAssetId": "asset.red-ledger.record-icon"
+    }
+  ],
+  "actors": [
+    {
+      "id": "actor.red-ledger.archivist",
+      "name": "Municipal Archivist",
+      "frames": [
+        {
+          "id": "frame.red-ledger.archivist.idle",
+          "assetId": "asset.red-ledger.archivist",
+          "sourceRect": {
+            "x": 0,
+            "y": 0,
+            "width": 32,
+            "height": 64
+          },
+          "sourceSize": {
+            "width": 32,
+            "height": 64
+          },
+          "trimOffset": {
+            "x": 0,
+            "y": 0
+          },
+          "pivot": {
+            "x": 16,
+            "y": 62
+          },
+          "footPoint": {
+            "x": 16,
+            "y": 62
+          },
+          "shadowAnchor": {
+            "x": 16,
+            "y": 62
+          },
+          "durationTicks": 10,
+          "events": [],
+          "mirrorEligible": true
+        },
+        {
+          "id": "frame.red-ledger.archivist.walk-a",
+          "assetId": "asset.red-ledger.archivist",
+          "sourceRect": {
+            "x": 32,
+            "y": 0,
+            "width": 32,
+            "height": 64
+          },
+          "sourceSize": {
+            "width": 32,
+            "height": 64
+          },
+          "trimOffset": {
+            "x": 0,
+            "y": 0
+          },
+          "pivot": {
+            "x": 16,
+            "y": 62
+          },
+          "footPoint": {
+            "x": 16,
+            "y": 62
+          },
+          "shadowAnchor": {
+            "x": 16,
+            "y": 62
+          },
+          "durationTicks": 6,
+          "events": ["footfall-left"],
+          "mirrorEligible": true
+        },
+        {
+          "id": "frame.red-ledger.archivist.walk-b",
+          "assetId": "asset.red-ledger.archivist",
+          "sourceRect": {
+            "x": 64,
+            "y": 0,
+            "width": 32,
+            "height": 64
+          },
+          "sourceSize": {
+            "width": 32,
+            "height": 64
+          },
+          "trimOffset": {
+            "x": 0,
+            "y": 0
+          },
+          "pivot": {
+            "x": 16,
+            "y": 62
+          },
+          "footPoint": {
+            "x": 16,
+            "y": 62
+          },
+          "shadowAnchor": {
+            "x": 16,
+            "y": 62
+          },
+          "durationTicks": 6,
+          "events": ["footfall-right"],
+          "mirrorEligible": true
+        }
+      ],
+      "animations": [
+        {
+          "id": "animation.red-ledger.archivist.idle-east",
+          "state": "idle",
+          "facing": "east",
+          "frameIds": ["frame.red-ledger.archivist.idle"],
+          "loop": true,
+          "interruptible": true
+        },
+        {
+          "id": "animation.red-ledger.archivist.idle-north",
+          "state": "idle",
+          "facing": "north",
+          "frameIds": ["frame.red-ledger.archivist.idle"],
+          "loop": true,
+          "interruptible": true
+        },
+        {
+          "id": "animation.red-ledger.archivist.idle-south",
+          "state": "idle",
+          "facing": "south",
+          "frameIds": ["frame.red-ledger.archivist.idle"],
+          "loop": true,
+          "interruptible": true
+        },
+        {
+          "id": "animation.red-ledger.archivist.idle-west",
+          "state": "idle",
+          "facing": "west",
+          "frameIds": ["frame.red-ledger.archivist.idle"],
+          "loop": true,
+          "interruptible": true
+        },
+        {
+          "id": "animation.red-ledger.archivist.walk-east",
+          "state": "walk",
+          "facing": "east",
+          "frameIds": ["frame.red-ledger.archivist.walk-a", "frame.red-ledger.archivist.walk-b"],
+          "loop": true,
+          "interruptible": true
+        },
+        {
+          "id": "animation.red-ledger.archivist.walk-north",
+          "state": "walk",
+          "facing": "north",
+          "frameIds": ["frame.red-ledger.archivist.walk-a", "frame.red-ledger.archivist.walk-b"],
+          "loop": true,
+          "interruptible": true
+        },
+        {
+          "id": "animation.red-ledger.archivist.walk-south",
+          "state": "walk",
+          "facing": "south",
+          "frameIds": ["frame.red-ledger.archivist.walk-a", "frame.red-ledger.archivist.walk-b"],
+          "loop": true,
+          "interruptible": true
+        },
+        {
+          "id": "animation.red-ledger.archivist.walk-west",
+          "state": "walk",
+          "facing": "west",
+          "frameIds": ["frame.red-ledger.archivist.walk-a", "frame.red-ledger.archivist.walk-b"],
+          "loop": true,
+          "interruptible": true
+        }
+      ]
+    },
+    {
+      "id": "actor.red-ledger.clerk",
+      "name": "Night Clerk",
+      "frames": [
+        {
+          "id": "frame.red-ledger.clerk.idle",
+          "assetId": "asset.red-ledger.clerk",
+          "sourceRect": {
+            "x": 0,
+            "y": 0,
+            "width": 32,
+            "height": 64
+          },
+          "sourceSize": {
+            "width": 32,
+            "height": 64
+          },
+          "trimOffset": {
+            "x": 0,
+            "y": 0
+          },
+          "pivot": {
+            "x": 16,
+            "y": 62
+          },
+          "footPoint": {
+            "x": 16,
+            "y": 62
+          },
+          "shadowAnchor": {
+            "x": 16,
+            "y": 62
+          },
+          "durationTicks": 12,
+          "events": [],
+          "mirrorEligible": true
+        }
+      ],
+      "animations": [
+        {
+          "id": "animation.red-ledger.clerk.idle-east",
+          "state": "idle",
+          "facing": "east",
+          "frameIds": ["frame.red-ledger.clerk.idle"],
+          "loop": true,
+          "interruptible": true
+        },
+        {
+          "id": "animation.red-ledger.clerk.idle-west",
+          "state": "idle",
+          "facing": "west",
+          "frameIds": ["frame.red-ledger.clerk.idle"],
+          "loop": true,
+          "interruptible": true
+        }
+      ]
+    }
+  ],
+  "scenes": [
+    {
+      "id": "scene.red-ledger.alley",
+      "name": "Service Alley Ledger Cache",
+      "width": 320,
+      "height": 200,
+      "backgroundAssetId": "asset.red-ledger.alley",
+      "navigationAreas": [
+        {
+          "id": "navigation.red-ledger.alley",
+          "shape": {
+            "points": [
+              {
+                "x": 24,
+                "y": 88
+              },
+              {
+                "x": 296,
+                "y": 88
+              },
+              {
+                "x": 316,
+                "y": 176
+              },
+              {
+                "x": 4,
+                "y": 176
+              }
+            ]
+          },
+          "elevation": 0
+        }
+      ],
+      "depthBands": [
+        {
+          "id": "depth-band.red-ledger.alley",
+          "farY": 88,
+          "nearY": 176,
+          "farScale": 0.78,
+          "nearScale": 1,
+          "zOffset": 0
+        }
+      ],
+      "occluders": [],
+      "hotspots": [
+        {
+          "id": "hotspot.red-ledger.route.alley-archive",
+          "name": "Archive Return Door",
+          "shape": {
+            "points": [
+              {
+                "x": 0,
+                "y": 50
+              },
+              {
+                "x": 32,
+                "y": 50
+              },
+              {
+                "x": 32,
+                "y": 176
+              },
+              {
+                "x": 0,
+                "y": 176
+              }
+            ]
+          },
+          "walkTo": {
+            "x": 40,
+            "y": 154
+          },
+          "cursor": "use",
+          "interactions": [
+            {
+              "id": "interaction.red-ledger.route.alley-archive",
+              "verb": "use",
+              "actions": [
+                {
+                  "kind": "change-scene",
+                  "sceneId": "scene.red-ledger.archive",
+                  "entranceId": "entrance.red-ledger.archive.from-alley"
+                }
+              ]
+            }
+          ],
+          "fallbackText": "THE WAY IS NOT OPEN YET.",
+          "interactionIndex": {
+            "[\"use\",null]": ["interaction.red-ledger.route.alley-archive"]
+          }
+        }
+      ],
+      "entrances": [
+        {
+          "id": "entrance.red-ledger.alley.from-archive",
+          "position": {
+            "x": 40,
+            "y": 154
+          },
+          "facing": "east"
+        }
+      ],
+      "fallbackText": "RAIN ERASES THE LESS IMPORTANT MARKS."
+    },
+    {
+      "id": "scene.red-ledger.archive",
+      "name": "Municipal Archive at Rainfall",
+      "width": 320,
+      "height": 200,
+      "backgroundAssetId": "asset.red-ledger.archive",
+      "navigationAreas": [
+        {
+          "id": "navigation.red-ledger.archive",
+          "shape": {
+            "points": [
+              {
+                "x": 24,
+                "y": 88
+              },
+              {
+                "x": 296,
+                "y": 88
+              },
+              {
+                "x": 316,
+                "y": 176
+              },
+              {
+                "x": 4,
+                "y": 176
+              }
+            ]
+          },
+          "elevation": 0
+        }
+      ],
+      "depthBands": [
+        {
+          "id": "depth-band.red-ledger.archive",
+          "farY": 88,
+          "nearY": 176,
+          "farScale": 0.78,
+          "nearScale": 1,
+          "zOffset": 0
+        }
+      ],
+      "occluders": [],
+      "hotspots": [
+        {
+          "id": "hotspot.red-ledger.route.archive-chapel",
+          "name": "River Chapel Door",
+          "shape": {
+            "points": [
+              {
+                "x": 274,
+                "y": 44
+              },
+              {
+                "x": 319,
+                "y": 44
+              },
+              {
+                "x": 319,
+                "y": 174
+              },
+              {
+                "x": 274,
+                "y": 174
+              }
+            ]
+          },
+          "walkTo": {
+            "x": 268,
+            "y": 150
+          },
+          "cursor": "use",
+          "interactions": [
+            {
+              "id": "interaction.red-ledger.route.archive-chapel",
+              "verb": "use",
+              "actions": [
+                {
+                  "kind": "change-scene",
+                  "sceneId": "scene.red-ledger.chapel",
+                  "entranceId": "entrance.red-ledger.chapel.from-archive"
+                }
+              ]
+            }
+          ],
+          "fallbackText": "THE WAY IS NOT OPEN YET.",
+          "interactionIndex": {
+            "[\"use\",null]": ["interaction.red-ledger.route.archive-chapel"]
+          }
+        },
+        {
+          "id": "hotspot.red-ledger.route.archive-alley",
+          "name": "Service Alley Door",
+          "shape": {
+            "points": [
+              {
+                "x": 0,
+                "y": 54
+              },
+              {
+                "x": 31,
+                "y": 54
+              },
+              {
+                "x": 31,
+                "y": 174
+              },
+              {
+                "x": 0,
+                "y": 174
+              }
+            ]
+          },
+          "walkTo": {
+            "x": 38,
+            "y": 150
+          },
+          "cursor": "use",
+          "interactions": [
+            {
+              "id": "interaction.red-ledger.route.archive-alley",
+              "verb": "use",
+              "actions": [
+                {
+                  "kind": "change-scene",
+                  "sceneId": "scene.red-ledger.alley",
+                  "entranceId": "entrance.red-ledger.alley.from-archive"
+                }
+              ],
+              "when": {
+                "kind": "flag",
+                "flag": "red-ledger.alley-unlocked",
+                "equals": true
+              }
+            }
+          ],
+          "fallbackText": "THE WAY IS NOT OPEN YET.",
+          "interactionIndex": {
+            "[\"use\",null]": ["interaction.red-ledger.route.archive-alley"]
+          }
+        }
+      ],
+      "entrances": [
+        {
+          "id": "entrance.red-ledger.archive.from-alley",
+          "position": {
+            "x": 42,
+            "y": 150
+          },
+          "facing": "east"
+        },
+        {
+          "id": "entrance.red-ledger.archive.from-chapel",
+          "position": {
+            "x": 268,
+            "y": 150
+          },
+          "facing": "west"
+        },
+        {
+          "id": "entrance.red-ledger.archive.start",
+          "position": {
+            "x": 58,
+            "y": 152
+          },
+          "facing": "east"
+        }
+      ],
+      "fallbackText": "THE ARCHIVE OFFERS NO ANSWER THERE."
+    },
+    {
+      "id": "scene.red-ledger.chapel",
+      "name": "River Chapel Registry",
+      "width": 320,
+      "height": 200,
+      "backgroundAssetId": "asset.red-ledger.chapel",
+      "navigationAreas": [
+        {
+          "id": "navigation.red-ledger.chapel",
+          "shape": {
+            "points": [
+              {
+                "x": 24,
+                "y": 88
+              },
+              {
+                "x": 296,
+                "y": 88
+              },
+              {
+                "x": 316,
+                "y": 176
+              },
+              {
+                "x": 4,
+                "y": 176
+              }
+            ]
+          },
+          "elevation": 0
+        }
+      ],
+      "depthBands": [
+        {
+          "id": "depth-band.red-ledger.chapel",
+          "farY": 88,
+          "nearY": 176,
+          "farScale": 0.78,
+          "nearScale": 1,
+          "zOffset": 0
+        }
+      ],
+      "occluders": [],
+      "hotspots": [
+        {
+          "id": "hotspot.red-ledger.route.chapel-archive",
+          "name": "Archive Return Door",
+          "shape": {
+            "points": [
+              {
+                "x": 0,
+                "y": 56
+              },
+              {
+                "x": 31,
+                "y": 56
+              },
+              {
+                "x": 31,
+                "y": 174
+              },
+              {
+                "x": 0,
+                "y": 174
+              }
+            ]
+          },
+          "walkTo": {
+            "x": 38,
+            "y": 150
+          },
+          "cursor": "use",
+          "interactions": [
+            {
+              "id": "interaction.red-ledger.route.chapel-archive",
+              "verb": "use",
+              "actions": [
+                {
+                  "kind": "change-scene",
+                  "sceneId": "scene.red-ledger.archive",
+                  "entranceId": "entrance.red-ledger.archive.from-chapel"
+                }
+              ]
+            }
+          ],
+          "fallbackText": "THE WAY IS NOT OPEN YET.",
+          "interactionIndex": {
+            "[\"use\",null]": ["interaction.red-ledger.route.chapel-archive"]
+          }
+        }
+      ],
+      "entrances": [
+        {
+          "id": "entrance.red-ledger.chapel.from-archive",
+          "position": {
+            "x": 42,
+            "y": 150
+          },
+          "facing": "east"
+        }
+      ],
+      "fallbackText": "ONLY OLD STONE AND OLDER INK ANSWER."
+    }
+  ],
+  "dialogues": [
+    {
+      "id": "dialogue.red-ledger.clerk",
+      "name": "The Impossible Account Interview",
+      "startNodeId": "dialogue-node.red-ledger.clerk.root",
+      "nodes": [
+        {
+          "id": "dialogue-node.red-ledger.clerk.account",
+          "enterActions": [],
+          "lines": [
+            {
+              "id": "dialogue-line.red-ledger.clerk.account",
+              "speakerId": "actor.red-ledger.clerk",
+              "text": "DATES ARE COPIED. PAPER IS HARDER TO FORGE.",
+              "durationTicks": 100,
+              "interruptible": true
+            }
+          ],
+          "choices": [
+            {
+              "id": "dialogue-choice.red-ledger.clerk.account-back",
+              "text": "BACK TO THE QUESTIONS",
+              "once": false,
+              "actions": [],
+              "nextNodeId": "dialogue-node.red-ledger.clerk.root",
+              "closeDialogue": false
+            }
+          ],
+          "exitActions": []
+        },
+        {
+          "id": "dialogue-node.red-ledger.clerk.chapel",
+          "enterActions": [],
+          "lines": [
+            {
+              "id": "dialogue-line.red-ledger.clerk.chapel",
+              "speakerId": "actor.red-ledger.clerk",
+              "text": "THE CHAPEL REGISTER SHOULD HAVE BURNED THAT WINTER.",
+              "durationTicks": 110,
+              "interruptible": true
+            }
+          ],
+          "choices": [
+            {
+              "id": "dialogue-choice.red-ledger.clerk.chapel-back",
+              "text": "BACK TO THE QUESTIONS",
+              "once": false,
+              "actions": [],
+              "nextNodeId": "dialogue-node.red-ledger.clerk.root",
+              "closeDialogue": false
+            }
+          ],
+          "exitActions": []
+        },
+        {
+          "id": "dialogue-node.red-ledger.clerk.confrontation",
+          "enterActions": [
+            {
+              "kind": "set-flag",
+              "flag": "red-ledger.alley-unlocked",
+              "value": true
+            },
+            {
+              "kind": "set-object-state",
+              "objectId": "object.red-ledger.archive.alley-door",
+              "state": "object-state.red-ledger.alley-door.open"
+            },
+            {
+              "kind": "award-score",
+              "awardId": "score-award.red-ledger.contradiction",
+              "points": 25
+            }
+          ],
+          "lines": [
+            {
+              "id": "dialogue-line.red-ledger.clerk.confrontation",
+              "speakerId": "actor.red-ledger.clerk",
+              "text": "THE DATE IS IMPOSSIBLE. THE SERVICE KEY IS YOURS.",
+              "durationTicks": 130,
+              "interruptible": true
+            }
+          ],
+          "choices": [
+            {
+              "id": "dialogue-choice.red-ledger.clerk.open-alley",
+              "text": "OPEN THE SERVICE ALLEY",
+              "once": true,
+              "actions": [],
+              "closeDialogue": true
+            }
+          ],
+          "exitActions": []
+        },
+        {
+          "id": "dialogue-node.red-ledger.clerk.paper",
+          "enterActions": [],
+          "lines": [
+            {
+              "id": "dialogue-line.red-ledger.clerk.paper",
+              "speakerId": "actor.red-ledger.clerk",
+              "text": "THAT MILL MARK WAS NOT SOLD UNTIL AFTER THE FLOOD.",
+              "durationTicks": 110,
+              "interruptible": true
+            }
+          ],
+          "choices": [
+            {
+              "id": "dialogue-choice.red-ledger.clerk.paper-back",
+              "text": "BACK TO THE QUESTIONS",
+              "once": false,
+              "actions": [],
+              "nextNodeId": "dialogue-node.red-ledger.clerk.root",
+              "closeDialogue": false
+            }
+          ],
+          "exitActions": []
+        },
+        {
+          "id": "dialogue-node.red-ledger.clerk.root",
+          "enterActions": [],
+          "lines": [
+            {
+              "id": "dialogue-line.red-ledger.clerk.opening",
+              "speakerId": "actor.red-ledger.clerk",
+              "text": "THE ARCHIVE CLOSES WHEN RAIN REACHES THE LOWER STAIR.",
+              "durationTicks": 120,
+              "interruptible": true
+            }
+          ],
+          "choices": [
+            {
+              "id": "dialogue-choice.red-ledger.clerk.account",
+              "text": "THE ACCOUNT DATE",
+              "once": false,
+              "actions": [],
+              "nextNodeId": "dialogue-node.red-ledger.clerk.account",
+              "closeDialogue": false
+            },
+            {
+              "id": "dialogue-choice.red-ledger.clerk.paper",
+              "text": "THE PAPER STOCK",
+              "visibleWhen": {
+                "kind": "flag",
+                "flag": "red-ledger.paper-record-found",
+                "equals": true
+              },
+              "once": false,
+              "actions": [],
+              "nextNodeId": "dialogue-node.red-ledger.clerk.paper",
+              "closeDialogue": false
+            },
+            {
+              "id": "dialogue-choice.red-ledger.clerk.chapel",
+              "text": "THE RIVER CHAPEL",
+              "visibleWhen": {
+                "kind": "flag",
+                "flag": "red-ledger.chapel-proof",
+                "equals": true
+              },
+              "once": false,
+              "actions": [],
+              "nextNodeId": "dialogue-node.red-ledger.clerk.chapel",
+              "closeDialogue": false
+            },
+            {
+              "id": "dialogue-choice.red-ledger.clerk.confront",
+              "text": "PROVE THE CONTRADICTION",
+              "visibleWhen": {
+                "kind": "all",
+                "conditions": [
+                  {
+                    "kind": "flag",
+                    "flag": "red-ledger.account-inspected",
+                    "equals": true
+                  },
+                  {
+                    "kind": "flag",
+                    "flag": "red-ledger.paper-record-found",
+                    "equals": true
+                  },
+                  {
+                    "kind": "flag",
+                    "flag": "red-ledger.chapel-proof",
+                    "equals": true
+                  },
+                  {
+                    "kind": "flag",
+                    "flag": "red-ledger.alley-unlocked",
+                    "equals": false
+                  }
+                ]
+              },
+              "once": true,
+              "actions": [],
+              "nextNodeId": "dialogue-node.red-ledger.clerk.confrontation",
+              "closeDialogue": false
+            },
+            {
+              "id": "dialogue-choice.red-ledger.clerk.leave",
+              "text": "LEAVE THE INTERVIEW",
+              "once": false,
+              "actions": [],
+              "closeDialogue": true
+            }
+          ],
+          "exitActions": []
+        }
+      ],
+      "nodeIndex": {
+        "dialogue-node.red-ledger.clerk.account": 0,
+        "dialogue-node.red-ledger.clerk.chapel": 1,
+        "dialogue-node.red-ledger.clerk.confrontation": 2,
+        "dialogue-node.red-ledger.clerk.paper": 3,
+        "dialogue-node.red-ledger.clerk.root": 4
+      }
+    }
+  ],
+  "sequences": [],
+  "bitmapFonts": {
+    "manifestVersion": 1,
+    "projectId": "project.red-ledger.playable-slice",
+    "fonts": [
+      {
+        "id": "bitmap-font.red-ledger.ui",
+        "name": "Red Ledger Archive Small Caps",
+        "atlasAssetId": "asset.red-ledger.ui-font",
+        "lineHeight": 10,
+        "baseline": 8,
+        "spaceAdvance": 4,
+        "letterSpacing": 0,
+        "fallbackCodePoint": 63,
+        "glyphs": [
+          {
+            "id": "font-glyph.red-ledger.0020",
+            "codePoint": 32,
+            "sourceRect": {
+              "x": 0,
+              "y": 0,
+              "width": 8,
+              "height": 10
+            },
+            "bearing": {
+              "x": 0,
+              "y": 0
+            },
+            "advance": 4
+          },
+          {
+            "id": "font-glyph.red-ledger.0021",
+            "codePoint": 33,
+            "sourceRect": {
+              "x": 8,
+              "y": 0,
+              "width": 8,
+              "height": 10
+            },
+            "bearing": {
+              "x": 0,
+              "y": 0
+            },
+            "advance": 8
+          },
+          {
+            "id": "font-glyph.red-ledger.0022",
+            "codePoint": 34,
+            "sourceRect": {
+              "x": 16,
+              "y": 0,
+              "width": 8,
+              "height": 10
+            },
+            "bearing": {
+              "x": 0,
+              "y": 0
+            },
+            "advance": 8
+          },
+          {
+            "id": "font-glyph.red-ledger.0023",
+            "codePoint": 35,
+            "sourceRect": {
+              "x": 24,
+              "y": 0,
+              "width": 8,
+              "height": 10
+            },
+            "bearing": {
+              "x": 0,
+              "y": 0
+            },
+            "advance": 8
+          },
+          {
+            "id": "font-glyph.red-ledger.0024",
+            "codePoint": 36,
+            "sourceRect": {
+              "x": 32,
+              "y": 0,
+              "width": 8,
+              "height": 10
+            },
+            "bearing": {
+              "x": 0,
+              "y": 0
+            },
+            "advance": 8
+          },
+          {
+            "id": "font-glyph.red-ledger.0025",
+            "codePoint": 37,
+            "sourceRect": {
+              "x": 40,
+              "y": 0,
+              "width": 8,
+              "height": 10
+            },
+            "bearing": {
+              "x": 0,
+              "y": 0
+            },
+            "advance": 8
+          },
+          {
+            "id": "font-glyph.red-ledger.0026",
+            "codePoint": 38,
+            "sourceRect": {
+              "x": 48,
+              "y": 0,
+              "width": 8,
+              "height": 10
+            },
+            "bearing": {
+              "x": 0,
+              "y": 0
+            },
+            "advance": 8
+          },
+          {
+            "id": "font-glyph.red-ledger.0027",
+            "codePoint": 39,
+            "sourceRect": {
+              "x": 56,
+              "y": 0,
+              "width": 8,
+              "height": 10
+            },
+            "bearing": {
+              "x": 0,
+              "y": 0
+            },
+            "advance": 8
+          },
+          {
+            "id": "font-glyph.red-ledger.0028",
+            "codePoint": 40,
+            "sourceRect": {
+              "x": 64,
+              "y": 0,
+              "width": 8,
+              "height": 10
+            },
+            "bearing": {
+              "x": 0,
+              "y": 0
+            },
+            "advance": 8
+          },
+          {
+            "id": "font-glyph.red-ledger.0029",
+            "codePoint": 41,
+            "sourceRect": {
+              "x": 72,
+              "y": 0,
+              "width": 8,
+              "height": 10
+            },
+            "bearing": {
+              "x": 0,
+              "y": 0
+            },
+            "advance": 8
+          },
+          {
+            "id": "font-glyph.red-ledger.002a",
+            "codePoint": 42,
+            "sourceRect": {
+              "x": 80,
+              "y": 0,
+              "width": 8,
+              "height": 10
+            },
+            "bearing": {
+              "x": 0,
+              "y": 0
+            },
+            "advance": 8
+          },
+          {
+            "id": "font-glyph.red-ledger.002b",
+            "codePoint": 43,
+            "sourceRect": {
+              "x": 88,
+              "y": 0,
+              "width": 8,
+              "height": 10
+            },
+            "bearing": {
+              "x": 0,
+              "y": 0
+            },
+            "advance": 8
+          },
+          {
+            "id": "font-glyph.red-ledger.002c",
+            "codePoint": 44,
+            "sourceRect": {
+              "x": 96,
+              "y": 0,
+              "width": 8,
+              "height": 10
+            },
+            "bearing": {
+              "x": 0,
+              "y": 0
+            },
+            "advance": 8
+          },
+          {
+            "id": "font-glyph.red-ledger.002d",
+            "codePoint": 45,
+            "sourceRect": {
+              "x": 104,
+              "y": 0,
+              "width": 8,
+              "height": 10
+            },
+            "bearing": {
+              "x": 0,
+              "y": 0
+            },
+            "advance": 8
+          },
+          {
+            "id": "font-glyph.red-ledger.002e",
+            "codePoint": 46,
+            "sourceRect": {
+              "x": 112,
+              "y": 0,
+              "width": 8,
+              "height": 10
+            },
+            "bearing": {
+              "x": 0,
+              "y": 0
+            },
+            "advance": 8
+          },
+          {
+            "id": "font-glyph.red-ledger.002f",
+            "codePoint": 47,
+            "sourceRect": {
+              "x": 120,
+              "y": 0,
+              "width": 8,
+              "height": 10
+            },
+            "bearing": {
+              "x": 0,
+              "y": 0
+            },
+            "advance": 8
+          },
+          {
+            "id": "font-glyph.red-ledger.0030",
+            "codePoint": 48,
+            "sourceRect": {
+              "x": 0,
+              "y": 10,
+              "width": 8,
+              "height": 10
+            },
+            "bearing": {
+              "x": 0,
+              "y": 0
+            },
+            "advance": 8
+          },
+          {
+            "id": "font-glyph.red-ledger.0031",
+            "codePoint": 49,
+            "sourceRect": {
+              "x": 8,
+              "y": 10,
+              "width": 8,
+              "height": 10
+            },
+            "bearing": {
+              "x": 0,
+              "y": 0
+            },
+            "advance": 8
+          },
+          {
+            "id": "font-glyph.red-ledger.0032",
+            "codePoint": 50,
+            "sourceRect": {
+              "x": 16,
+              "y": 10,
+              "width": 8,
+              "height": 10
+            },
+            "bearing": {
+              "x": 0,
+              "y": 0
+            },
+            "advance": 8
+          },
+          {
+            "id": "font-glyph.red-ledger.0033",
+            "codePoint": 51,
+            "sourceRect": {
+              "x": 24,
+              "y": 10,
+              "width": 8,
+              "height": 10
+            },
+            "bearing": {
+              "x": 0,
+              "y": 0
+            },
+            "advance": 8
+          },
+          {
+            "id": "font-glyph.red-ledger.0034",
+            "codePoint": 52,
+            "sourceRect": {
+              "x": 32,
+              "y": 10,
+              "width": 8,
+              "height": 10
+            },
+            "bearing": {
+              "x": 0,
+              "y": 0
+            },
+            "advance": 8
+          },
+          {
+            "id": "font-glyph.red-ledger.0035",
+            "codePoint": 53,
+            "sourceRect": {
+              "x": 40,
+              "y": 10,
+              "width": 8,
+              "height": 10
+            },
+            "bearing": {
+              "x": 0,
+              "y": 0
+            },
+            "advance": 8
+          },
+          {
+            "id": "font-glyph.red-ledger.0036",
+            "codePoint": 54,
+            "sourceRect": {
+              "x": 48,
+              "y": 10,
+              "width": 8,
+              "height": 10
+            },
+            "bearing": {
+              "x": 0,
+              "y": 0
+            },
+            "advance": 8
+          },
+          {
+            "id": "font-glyph.red-ledger.0037",
+            "codePoint": 55,
+            "sourceRect": {
+              "x": 56,
+              "y": 10,
+              "width": 8,
+              "height": 10
+            },
+            "bearing": {
+              "x": 0,
+              "y": 0
+            },
+            "advance": 8
+          },
+          {
+            "id": "font-glyph.red-ledger.0038",
+            "codePoint": 56,
+            "sourceRect": {
+              "x": 64,
+              "y": 10,
+              "width": 8,
+              "height": 10
+            },
+            "bearing": {
+              "x": 0,
+              "y": 0
+            },
+            "advance": 8
+          },
+          {
+            "id": "font-glyph.red-ledger.0039",
+            "codePoint": 57,
+            "sourceRect": {
+              "x": 72,
+              "y": 10,
+              "width": 8,
+              "height": 10
+            },
+            "bearing": {
+              "x": 0,
+              "y": 0
+            },
+            "advance": 8
+          },
+          {
+            "id": "font-glyph.red-ledger.003a",
+            "codePoint": 58,
+            "sourceRect": {
+              "x": 80,
+              "y": 10,
+              "width": 8,
+              "height": 10
+            },
+            "bearing": {
+              "x": 0,
+              "y": 0
+            },
+            "advance": 8
+          },
+          {
+            "id": "font-glyph.red-ledger.003b",
+            "codePoint": 59,
+            "sourceRect": {
+              "x": 88,
+              "y": 10,
+              "width": 8,
+              "height": 10
+            },
+            "bearing": {
+              "x": 0,
+              "y": 0
+            },
+            "advance": 8
+          },
+          {
+            "id": "font-glyph.red-ledger.003c",
+            "codePoint": 60,
+            "sourceRect": {
+              "x": 96,
+              "y": 10,
+              "width": 8,
+              "height": 10
+            },
+            "bearing": {
+              "x": 0,
+              "y": 0
+            },
+            "advance": 8
+          },
+          {
+            "id": "font-glyph.red-ledger.003d",
+            "codePoint": 61,
+            "sourceRect": {
+              "x": 104,
+              "y": 10,
+              "width": 8,
+              "height": 10
+            },
+            "bearing": {
+              "x": 0,
+              "y": 0
+            },
+            "advance": 8
+          },
+          {
+            "id": "font-glyph.red-ledger.003e",
+            "codePoint": 62,
+            "sourceRect": {
+              "x": 112,
+              "y": 10,
+              "width": 8,
+              "height": 10
+            },
+            "bearing": {
+              "x": 0,
+              "y": 0
+            },
+            "advance": 8
+          },
+          {
+            "id": "font-glyph.red-ledger.003f",
+            "codePoint": 63,
+            "sourceRect": {
+              "x": 120,
+              "y": 10,
+              "width": 8,
+              "height": 10
+            },
+            "bearing": {
+              "x": 0,
+              "y": 0
+            },
+            "advance": 8
+          },
+          {
+            "id": "font-glyph.red-ledger.0040",
+            "codePoint": 64,
+            "sourceRect": {
+              "x": 0,
+              "y": 20,
+              "width": 8,
+              "height": 10
+            },
+            "bearing": {
+              "x": 0,
+              "y": 0
+            },
+            "advance": 8
+          },
+          {
+            "id": "font-glyph.red-ledger.0041",
+            "codePoint": 65,
+            "sourceRect": {
+              "x": 8,
+              "y": 20,
+              "width": 8,
+              "height": 10
+            },
+            "bearing": {
+              "x": 0,
+              "y": 0
+            },
+            "advance": 8
+          },
+          {
+            "id": "font-glyph.red-ledger.0042",
+            "codePoint": 66,
+            "sourceRect": {
+              "x": 16,
+              "y": 20,
+              "width": 8,
+              "height": 10
+            },
+            "bearing": {
+              "x": 0,
+              "y": 0
+            },
+            "advance": 8
+          },
+          {
+            "id": "font-glyph.red-ledger.0043",
+            "codePoint": 67,
+            "sourceRect": {
+              "x": 24,
+              "y": 20,
+              "width": 8,
+              "height": 10
+            },
+            "bearing": {
+              "x": 0,
+              "y": 0
+            },
+            "advance": 8
+          },
+          {
+            "id": "font-glyph.red-ledger.0044",
+            "codePoint": 68,
+            "sourceRect": {
+              "x": 32,
+              "y": 20,
+              "width": 8,
+              "height": 10
+            },
+            "bearing": {
+              "x": 0,
+              "y": 0
+            },
+            "advance": 8
+          },
+          {
+            "id": "font-glyph.red-ledger.0045",
+            "codePoint": 69,
+            "sourceRect": {
+              "x": 40,
+              "y": 20,
+              "width": 8,
+              "height": 10
+            },
+            "bearing": {
+              "x": 0,
+              "y": 0
+            },
+            "advance": 8
+          },
+          {
+            "id": "font-glyph.red-ledger.0046",
+            "codePoint": 70,
+            "sourceRect": {
+              "x": 48,
+              "y": 20,
+              "width": 8,
+              "height": 10
+            },
+            "bearing": {
+              "x": 0,
+              "y": 0
+            },
+            "advance": 8
+          },
+          {
+            "id": "font-glyph.red-ledger.0047",
+            "codePoint": 71,
+            "sourceRect": {
+              "x": 56,
+              "y": 20,
+              "width": 8,
+              "height": 10
+            },
+            "bearing": {
+              "x": 0,
+              "y": 0
+            },
+            "advance": 8
+          },
+          {
+            "id": "font-glyph.red-ledger.0048",
+            "codePoint": 72,
+            "sourceRect": {
+              "x": 64,
+              "y": 20,
+              "width": 8,
+              "height": 10
+            },
+            "bearing": {
+              "x": 0,
+              "y": 0
+            },
+            "advance": 8
+          },
+          {
+            "id": "font-glyph.red-ledger.0049",
+            "codePoint": 73,
+            "sourceRect": {
+              "x": 72,
+              "y": 20,
+              "width": 8,
+              "height": 10
+            },
+            "bearing": {
+              "x": 0,
+              "y": 0
+            },
+            "advance": 8
+          },
+          {
+            "id": "font-glyph.red-ledger.004a",
+            "codePoint": 74,
+            "sourceRect": {
+              "x": 80,
+              "y": 20,
+              "width": 8,
+              "height": 10
+            },
+            "bearing": {
+              "x": 0,
+              "y": 0
+            },
+            "advance": 8
+          },
+          {
+            "id": "font-glyph.red-ledger.004b",
+            "codePoint": 75,
+            "sourceRect": {
+              "x": 88,
+              "y": 20,
+              "width": 8,
+              "height": 10
+            },
+            "bearing": {
+              "x": 0,
+              "y": 0
+            },
+            "advance": 8
+          },
+          {
+            "id": "font-glyph.red-ledger.004c",
+            "codePoint": 76,
+            "sourceRect": {
+              "x": 96,
+              "y": 20,
+              "width": 8,
+              "height": 10
+            },
+            "bearing": {
+              "x": 0,
+              "y": 0
+            },
+            "advance": 8
+          },
+          {
+            "id": "font-glyph.red-ledger.004d",
+            "codePoint": 77,
+            "sourceRect": {
+              "x": 104,
+              "y": 20,
+              "width": 8,
+              "height": 10
+            },
+            "bearing": {
+              "x": 0,
+              "y": 0
+            },
+            "advance": 8
+          },
+          {
+            "id": "font-glyph.red-ledger.004e",
+            "codePoint": 78,
+            "sourceRect": {
+              "x": 112,
+              "y": 20,
+              "width": 8,
+              "height": 10
+            },
+            "bearing": {
+              "x": 0,
+              "y": 0
+            },
+            "advance": 8
+          },
+          {
+            "id": "font-glyph.red-ledger.004f",
+            "codePoint": 79,
+            "sourceRect": {
+              "x": 120,
+              "y": 20,
+              "width": 8,
+              "height": 10
+            },
+            "bearing": {
+              "x": 0,
+              "y": 0
+            },
+            "advance": 8
+          },
+          {
+            "id": "font-glyph.red-ledger.0050",
+            "codePoint": 80,
+            "sourceRect": {
+              "x": 0,
+              "y": 30,
+              "width": 8,
+              "height": 10
+            },
+            "bearing": {
+              "x": 0,
+              "y": 0
+            },
+            "advance": 8
+          },
+          {
+            "id": "font-glyph.red-ledger.0051",
+            "codePoint": 81,
+            "sourceRect": {
+              "x": 8,
+              "y": 30,
+              "width": 8,
+              "height": 10
+            },
+            "bearing": {
+              "x": 0,
+              "y": 0
+            },
+            "advance": 8
+          },
+          {
+            "id": "font-glyph.red-ledger.0052",
+            "codePoint": 82,
+            "sourceRect": {
+              "x": 16,
+              "y": 30,
+              "width": 8,
+              "height": 10
+            },
+            "bearing": {
+              "x": 0,
+              "y": 0
+            },
+            "advance": 8
+          },
+          {
+            "id": "font-glyph.red-ledger.0053",
+            "codePoint": 83,
+            "sourceRect": {
+              "x": 24,
+              "y": 30,
+              "width": 8,
+              "height": 10
+            },
+            "bearing": {
+              "x": 0,
+              "y": 0
+            },
+            "advance": 8
+          },
+          {
+            "id": "font-glyph.red-ledger.0054",
+            "codePoint": 84,
+            "sourceRect": {
+              "x": 32,
+              "y": 30,
+              "width": 8,
+              "height": 10
+            },
+            "bearing": {
+              "x": 0,
+              "y": 0
+            },
+            "advance": 8
+          },
+          {
+            "id": "font-glyph.red-ledger.0055",
+            "codePoint": 85,
+            "sourceRect": {
+              "x": 40,
+              "y": 30,
+              "width": 8,
+              "height": 10
+            },
+            "bearing": {
+              "x": 0,
+              "y": 0
+            },
+            "advance": 8
+          },
+          {
+            "id": "font-glyph.red-ledger.0056",
+            "codePoint": 86,
+            "sourceRect": {
+              "x": 48,
+              "y": 30,
+              "width": 8,
+              "height": 10
+            },
+            "bearing": {
+              "x": 0,
+              "y": 0
+            },
+            "advance": 8
+          },
+          {
+            "id": "font-glyph.red-ledger.0057",
+            "codePoint": 87,
+            "sourceRect": {
+              "x": 56,
+              "y": 30,
+              "width": 8,
+              "height": 10
+            },
+            "bearing": {
+              "x": 0,
+              "y": 0
+            },
+            "advance": 8
+          },
+          {
+            "id": "font-glyph.red-ledger.0058",
+            "codePoint": 88,
+            "sourceRect": {
+              "x": 64,
+              "y": 30,
+              "width": 8,
+              "height": 10
+            },
+            "bearing": {
+              "x": 0,
+              "y": 0
+            },
+            "advance": 8
+          },
+          {
+            "id": "font-glyph.red-ledger.0059",
+            "codePoint": 89,
+            "sourceRect": {
+              "x": 72,
+              "y": 30,
+              "width": 8,
+              "height": 10
+            },
+            "bearing": {
+              "x": 0,
+              "y": 0
+            },
+            "advance": 8
+          },
+          {
+            "id": "font-glyph.red-ledger.005a",
+            "codePoint": 90,
+            "sourceRect": {
+              "x": 80,
+              "y": 30,
+              "width": 8,
+              "height": 10
+            },
+            "bearing": {
+              "x": 0,
+              "y": 0
+            },
+            "advance": 8
+          },
+          {
+            "id": "font-glyph.red-ledger.2022",
+            "codePoint": 8226,
+            "sourceRect": {
+              "x": 88,
+              "y": 30,
+              "width": 8,
+              "height": 10
+            },
+            "bearing": {
+              "x": 0,
+              "y": 0
+            },
+            "advance": 8
+          }
+        ],
+        "kernings": []
+      }
+    ]
+  },
+  "uiSkins": {
+    "manifestVersion": 1,
+    "projectId": "project.red-ledger.playable-slice",
+    "defaultSkinId": "ui-skin.red-ledger.runtime",
+    "skins": [
+      {
+        "id": "ui-skin.red-ledger.runtime",
+        "name": "Red Ledger Evidence Strip",
+        "interactionMode": "context",
+        "nativeSize": {
+          "width": 320,
+          "height": 200
+        },
+        "status": {
+          "id": "ui-region.red-ledger.status",
+          "rect": {
+            "x": 0,
+            "y": 176,
+            "width": 234,
+            "height": 24
+          },
+          "padding": 4,
+          "panel": {
+            "fill": 658706,
+            "border": 5398893,
+            "borderWidth": 1,
+            "accent": 10235195
+          }
+        },
+        "verbs": [],
+        "inventory": {
+          "region": {
+            "id": "ui-region.red-ledger.inventory",
+            "rect": {
+              "x": 234,
+              "y": 176,
+              "width": 86,
+              "height": 24
+            },
+            "padding": 2,
+            "panel": {
+              "fill": 658706,
+              "border": 5398893,
+              "borderWidth": 1,
+              "accent": 10235195
+            }
+          },
+          "slotWidth": 20,
+          "slotHeight": 20,
+          "gap": 2,
+          "visibleSlots": 3,
+          "slot": {
+            "fill": 1383203,
+            "border": 5398893,
+            "borderWidth": 1
+          },
+          "selected": {
+            "fill": 2957348,
+            "border": 13015638,
+            "borderWidth": 1,
+            "accent": 10235195
+          }
+        },
+        "dialogueChoices": {
+          "region": {
+            "id": "ui-region.red-ledger.dialogue",
+            "rect": {
+              "x": 24,
+              "y": 92,
+              "width": 272,
+              "height": 84
+            },
+            "padding": 3,
+            "panel": {
+              "fill": 658706,
+              "border": 5398893,
+              "borderWidth": 1,
+              "accent": 10235195
+            }
+          },
+          "gap": 1,
+          "maximumChoices": 5,
+          "normal": {
+            "fill": 1383203,
+            "border": 5398893,
+            "borderWidth": 1
+          },
+          "hover": {
+            "fill": 2957348,
+            "border": 13015638,
+            "borderWidth": 1,
+            "accent": 10235195
+          },
+          "disabled": {
+            "fill": 1053464,
+            "border": 3160128,
+            "borderWidth": 1
+          }
+        },
+        "fonts": {
+          "status": {
+            "fontId": "bitmap-font.red-ledger.ui",
+            "color": 14207400,
+            "outlineColor": 329224,
+            "align": "left"
+          },
+          "inventory": {
+            "fontId": "bitmap-font.red-ledger.ui",
+            "color": 14207400,
+            "align": "center"
+          },
+          "dialogue": {
+            "fontId": "bitmap-font.red-ledger.ui",
+            "color": 14207400,
+            "outlineColor": 329224,
+            "align": "left"
+          }
+        }
+      }
+    ]
+  },
+  "sceneInstances": {
+    "manifestVersion": 1,
+    "projectId": "project.red-ledger.playable-slice",
+    "objectDefinitions": [
+      {
+        "id": "object-definition.red-ledger.account",
+        "name": "Impossible Account",
+        "initialStateId": "object-state.red-ledger.account.unread",
+        "states": [
+          {
+            "id": "object-state.red-ledger.account.unread",
+            "visual": {
+              "kind": "image",
+              "assetId": "asset.red-ledger.account",
+              "pivot": {
+                "x": 16,
+                "y": 9
+              },
+              "opacity": 1
+            },
+            "visible": true,
+            "interactionShape": {
+              "points": [
+                {
+                  "x": 0,
+                  "y": 0
+                },
+                {
+                  "x": 32,
+                  "y": 0
+                },
+                {
+                  "x": 32,
+                  "y": 18
+                },
+                {
+                  "x": 0,
+                  "y": 18
+                }
+              ]
+            },
+            "walkToOffset": {
+              "x": 0,
+              "y": 34
+            },
+            "faceDirection": "north",
+            "cursor": "look",
+            "interactions": [
+              {
+                "id": "interaction.red-ledger.account.inspect-first",
+                "verb": "look",
+                "when": {
+                  "kind": "flag",
+                  "flag": "red-ledger.account-inspected",
+                  "equals": false
+                },
+                "actions": [
+                  {
+                    "kind": "say",
+                    "speakerId": "actor.red-ledger.archivist",
+                    "text": "THE INK CLAIMS A DATE BEFORE THIS PAPER EXISTED."
+                  },
+                  {
+                    "kind": "set-flag",
+                    "flag": "red-ledger.account-inspected",
+                    "value": true
+                  },
+                  {
+                    "kind": "award-score",
+                    "awardId": "score-award.red-ledger.account",
+                    "points": 5
+                  }
+                ],
+                "once": false
+              },
+              {
+                "id": "interaction.red-ledger.account.inspect-repeat",
+                "verb": "look",
+                "actions": [
+                  {
+                    "kind": "say",
+                    "speakerId": "actor.red-ledger.archivist",
+                    "text": "THE DATE AND THE PAPER CANNOT BOTH BE TRUE."
+                  }
+                ],
+                "once": false
+              }
+            ],
+            "fallbackText": "THE ACCOUNT NEEDS CAREFUL READING."
+          }
+        ]
+      },
+      {
+        "id": "object-definition.red-ledger.alley-door",
+        "name": "Service Alley Door",
+        "initialStateId": "object-state.red-ledger.alley-door.locked",
+        "states": [
+          {
+            "id": "object-state.red-ledger.alley-door.locked",
+            "visual": {
+              "kind": "image",
+              "assetId": "asset.red-ledger.alley-door-locked",
+              "pivot": {
+                "x": 17,
+                "y": 98
+              },
+              "opacity": 1
+            },
+            "visible": true,
+            "interactionShape": {
+              "points": [
+                {
+                  "x": 0,
+                  "y": 0
+                },
+                {
+                  "x": 34,
+                  "y": 0
+                },
+                {
+                  "x": 34,
+                  "y": 98
+                },
+                {
+                  "x": 0,
+                  "y": 98
+                }
+              ]
+            },
+            "walkToOffset": {
+              "x": 30,
+              "y": 0
+            },
+            "faceDirection": "west",
+            "cursor": "use",
+            "interactions": [
+              {
+                "id": "interaction.red-ledger.alley-door.enter-unlocked",
+                "verb": "use",
+                "when": {
+                  "kind": "flag",
+                  "flag": "red-ledger.alley-unlocked",
+                  "equals": true
+                },
+                "actions": [
+                  {
+                    "kind": "change-scene",
+                    "sceneId": "scene.red-ledger.alley",
+                    "entranceId": "entrance.red-ledger.alley.from-archive"
+                  }
+                ],
+                "once": false
+              },
+              {
+                "id": "interaction.red-ledger.alley-door.locked",
+                "verb": "use",
+                "actions": [
+                  {
+                    "kind": "say",
+                    "speakerId": "actor.red-ledger.archivist",
+                    "text": "THE SERVICE DOOR NEEDS THE CLERK KEY."
+                  }
+                ],
+                "once": false
+              }
+            ],
+            "fallbackText": "THE SERVICE DOOR IS LOCKED."
+          },
+          {
+            "id": "object-state.red-ledger.alley-door.open",
+            "visual": {
+              "kind": "image",
+              "assetId": "asset.red-ledger.alley-door-open",
+              "pivot": {
+                "x": 17,
+                "y": 98
+              },
+              "opacity": 1
+            },
+            "visible": true,
+            "interactionShape": {
+              "points": [
+                {
+                  "x": 0,
+                  "y": 0
+                },
+                {
+                  "x": 34,
+                  "y": 0
+                },
+                {
+                  "x": 34,
+                  "y": 98
+                },
+                {
+                  "x": 0,
+                  "y": 98
+                }
+              ]
+            },
+            "walkToOffset": {
+              "x": 30,
+              "y": 0
+            },
+            "faceDirection": "west",
+            "cursor": "use",
+            "interactions": [
+              {
+                "id": "interaction.red-ledger.alley-door.enter-open",
+                "verb": "use",
+                "actions": [
+                  {
+                    "kind": "change-scene",
+                    "sceneId": "scene.red-ledger.alley",
+                    "entranceId": "entrance.red-ledger.alley.from-archive"
+                  }
+                ],
+                "once": false
+              }
+            ],
+            "fallbackText": "THE SERVICE ALLEY IS OPEN."
+          }
+        ]
+      },
+      {
+        "id": "object-definition.red-ledger.alley-ledger",
+        "name": "Contradiction Ledger",
+        "initialStateId": "object-state.red-ledger.alley-ledger.sealed",
+        "states": [
+          {
+            "id": "object-state.red-ledger.alley-ledger.sealed",
+            "visual": {
+              "kind": "image",
+              "assetId": "asset.red-ledger.alley-ledger",
+              "pivot": {
+                "x": 34,
+                "y": 50
+              },
+              "opacity": 1
+            },
+            "visible": true,
+            "interactionShape": {
+              "points": [
+                {
+                  "x": 0,
+                  "y": 0
+                },
+                {
+                  "x": 68,
+                  "y": 0
+                },
+                {
+                  "x": 68,
+                  "y": 50
+                },
+                {
+                  "x": 0,
+                  "y": 50
+                }
+              ]
+            },
+            "walkToOffset": {
+              "x": -42,
+              "y": 8
+            },
+            "faceDirection": "east",
+            "cursor": "look",
+            "interactions": [
+              {
+                "id": "interaction.red-ledger.alley-ledger.resolve",
+                "verb": "look",
+                "when": {
+                  "kind": "flag",
+                  "flag": "red-ledger.slice-complete",
+                  "equals": false
+                },
+                "actions": [
+                  {
+                    "kind": "set-flag",
+                    "flag": "red-ledger.slice-complete",
+                    "value": true
+                  },
+                  {
+                    "kind": "say",
+                    "speakerId": "actor.red-ledger.archivist",
+                    "text": "THE FALSE DEBT HID A ROUTE THROUGH THE FLOODED WARDS."
+                  },
+                  {
+                    "kind": "award-score",
+                    "awardId": "score-award.red-ledger.resolution",
+                    "points": 50
+                  }
+                ],
+                "once": false
+              },
+              {
+                "id": "interaction.red-ledger.alley-ledger.resolved",
+                "verb": "look",
+                "actions": [
+                  {
+                    "kind": "say",
+                    "speakerId": "actor.red-ledger.archivist",
+                    "text": "THE CASE IS PROVED. THE NEXT ROUTE IS NOW VISIBLE."
+                  }
+                ],
+                "once": false
+              }
+            ],
+            "fallbackText": "THE LEDGER WAITS UNDER THE RAIN."
+          }
+        ]
+      },
+      {
+        "id": "object-definition.red-ledger.alley-return",
+        "name": "Archive Return Door",
+        "initialStateId": "object-state.red-ledger.alley-return.closed",
+        "states": [
+          {
+            "id": "object-state.red-ledger.alley-return.closed",
+            "visual": {
+              "kind": "image",
+              "assetId": "asset.red-ledger.return-door",
+              "pivot": {
+                "x": 15,
+                "y": 94
+              },
+              "opacity": 1
+            },
+            "visible": true,
+            "interactionShape": {
+              "points": [
+                {
+                  "x": 0,
+                  "y": 0
+                },
+                {
+                  "x": 30,
+                  "y": 0
+                },
+                {
+                  "x": 30,
+                  "y": 94
+                },
+                {
+                  "x": 0,
+                  "y": 94
+                }
+              ]
+            },
+            "walkToOffset": {
+              "x": 28,
+              "y": 0
+            },
+            "faceDirection": "west",
+            "cursor": "use",
+            "interactions": [
+              {
+                "id": "interaction.red-ledger.alley-return.archive",
+                "verb": "use",
+                "actions": [
+                  {
+                    "kind": "change-scene",
+                    "sceneId": "scene.red-ledger.archive",
+                    "entranceId": "entrance.red-ledger.archive.from-alley"
+                  }
+                ],
+                "once": false
+              }
+            ],
+            "fallbackText": "THE DOOR RETURNS TO THE ARCHIVE."
+          }
+        ]
+      },
+      {
+        "id": "object-definition.red-ledger.chapel-door",
+        "name": "River Chapel Door",
+        "initialStateId": "object-state.red-ledger.chapel-door.closed",
+        "states": [
+          {
+            "id": "object-state.red-ledger.chapel-door.closed",
+            "visual": {
+              "kind": "image",
+              "assetId": "asset.red-ledger.chapel-door",
+              "pivot": {
+                "x": 21,
+                "y": 104
+              },
+              "opacity": 1
+            },
+            "visible": true,
+            "interactionShape": {
+              "points": [
+                {
+                  "x": 0,
+                  "y": 0
+                },
+                {
+                  "x": 42,
+                  "y": 0
+                },
+                {
+                  "x": 42,
+                  "y": 104
+                },
+                {
+                  "x": 0,
+                  "y": 104
+                }
+              ]
+            },
+            "walkToOffset": {
+              "x": -28,
+              "y": 0
+            },
+            "faceDirection": "east",
+            "cursor": "use",
+            "interactions": [
+              {
+                "id": "interaction.red-ledger.chapel-door.enter",
+                "verb": "use",
+                "actions": [
+                  {
+                    "kind": "change-scene",
+                    "sceneId": "scene.red-ledger.chapel",
+                    "entranceId": "entrance.red-ledger.chapel.from-archive"
+                  }
+                ],
+                "once": false
+              }
+            ],
+            "fallbackText": "THE CHAPEL DOOR OPENS TOWARD THE RIVER."
+          }
+        ]
+      },
+      {
+        "id": "object-definition.red-ledger.clerk-hotspot",
+        "name": "Night Clerk",
+        "initialStateId": "object-state.red-ledger.clerk.waiting",
+        "states": [
+          {
+            "id": "object-state.red-ledger.clerk.waiting",
+            "visual": {
+              "kind": "image",
+              "assetId": "asset.red-ledger.clerk",
+              "pivot": {
+                "x": 16,
+                "y": 62
+              },
+              "opacity": 0
+            },
+            "visible": true,
+            "interactionShape": {
+              "points": [
+                {
+                  "x": 0,
+                  "y": 0
+                },
+                {
+                  "x": 32,
+                  "y": 0
+                },
+                {
+                  "x": 32,
+                  "y": 64
+                },
+                {
+                  "x": 0,
+                  "y": 64
+                }
+              ]
+            },
+            "walkToOffset": {
+              "x": -34,
+              "y": 0
+            },
+            "faceDirection": "east",
+            "cursor": "talk",
+            "interactions": [
+              {
+                "id": "interaction.red-ledger.clerk.talk",
+                "verb": "talk",
+                "actions": [
+                  {
+                    "kind": "start-dialogue",
+                    "dialogueId": "dialogue.red-ledger.clerk"
+                  }
+                ],
+                "once": false
+              }
+            ],
+            "fallbackText": "THE CLERK WAITS FOR A PRECISE QUESTION."
+          }
+        ]
+      },
+      {
+        "id": "object-definition.red-ledger.drawer",
+        "name": "Misfiled Harbour Drawer",
+        "initialStateId": "object-state.red-ledger.drawer.closed",
+        "states": [
+          {
+            "id": "object-state.red-ledger.drawer.closed",
+            "visual": {
+              "kind": "image",
+              "assetId": "asset.red-ledger.drawer-closed",
+              "pivot": {
+                "x": 20,
+                "y": 24
+              },
+              "opacity": 1
+            },
+            "visible": true,
+            "interactionShape": {
+              "points": [
+                {
+                  "x": 0,
+                  "y": 0
+                },
+                {
+                  "x": 40,
+                  "y": 0
+                },
+                {
+                  "x": 40,
+                  "y": 24
+                },
+                {
+                  "x": 0,
+                  "y": 24
+                }
+              ]
+            },
+            "walkToOffset": {
+              "x": 0,
+              "y": 22
+            },
+            "faceDirection": "north",
+            "cursor": "use",
+            "interactions": [
+              {
+                "id": "interaction.red-ledger.drawer.open",
+                "verb": "use",
+                "actions": [
+                  {
+                    "kind": "set-object-state",
+                    "objectId": "object.red-ledger.archive.drawer",
+                    "state": "object-state.red-ledger.drawer.open"
+                  },
+                  {
+                    "kind": "give-item",
+                    "itemId": "item.red-ledger.harbour-record"
+                  },
+                  {
+                    "kind": "set-flag",
+                    "flag": "red-ledger.paper-record-found",
+                    "value": true
+                  },
+                  {
+                    "kind": "say",
+                    "speakerId": "actor.red-ledger.archivist",
+                    "text": "THE HARBOUR RECORD NAMES THE PAPER MILL AND YEAR."
+                  },
+                  {
+                    "kind": "award-score",
+                    "awardId": "score-award.red-ledger.record",
+                    "points": 10
+                  }
+                ],
+                "once": true
+              }
+            ],
+            "fallbackText": "THE DRAWER IS JAMMED WITH OLD FORMS."
+          },
+          {
+            "id": "object-state.red-ledger.drawer.open",
+            "visual": {
+              "kind": "image",
+              "assetId": "asset.red-ledger.drawer-open",
+              "pivot": {
+                "x": 20,
+                "y": 30
+              },
+              "opacity": 1
+            },
+            "visible": true,
+            "interactionShape": {
+              "points": [
+                {
+                  "x": 0,
+                  "y": 0
+                },
+                {
+                  "x": 40,
+                  "y": 0
+                },
+                {
+                  "x": 40,
+                  "y": 30
+                },
+                {
+                  "x": 0,
+                  "y": 30
+                }
+              ]
+            },
+            "cursor": "look",
+            "interactions": [
+              {
+                "id": "interaction.red-ledger.drawer.inspect-open",
+                "verb": "look",
+                "actions": [
+                  {
+                    "kind": "say",
+                    "speakerId": "actor.red-ledger.archivist",
+                    "text": "NOTHING ELSE SURVIVED THE MISFILING."
+                  }
+                ],
+                "once": false
+              }
+            ],
+            "fallbackText": "THE OPEN DRAWER IS EMPTY."
+          }
+        ]
+      },
+      {
+        "id": "object-definition.red-ledger.registry",
+        "name": "River Chapel Registry",
+        "initialStateId": "object-state.red-ledger.registry.closed",
+        "states": [
+          {
+            "id": "object-state.red-ledger.registry.closed",
+            "visual": {
+              "kind": "image",
+              "assetId": "asset.red-ledger.registry",
+              "pivot": {
+                "x": 27,
+                "y": 38
+              },
+              "opacity": 1
+            },
+            "visible": true,
+            "interactionShape": {
+              "points": [
+                {
+                  "x": 0,
+                  "y": 0
+                },
+                {
+                  "x": 54,
+                  "y": 0
+                },
+                {
+                  "x": 54,
+                  "y": 38
+                },
+                {
+                  "x": 0,
+                  "y": 38
+                }
+              ]
+            },
+            "walkToOffset": {
+              "x": 0,
+              "y": 28
+            },
+            "faceDirection": "north",
+            "cursor": "look",
+            "interactions": [
+              {
+                "id": "interaction.red-ledger.registry.inspect-first",
+                "verb": "look",
+                "when": {
+                  "kind": "flag",
+                  "flag": "red-ledger.chapel-proof",
+                  "equals": false
+                },
+                "actions": [
+                  {
+                    "kind": "give-item",
+                    "itemId": "item.red-ledger.chapel-copy"
+                  },
+                  {
+                    "kind": "set-flag",
+                    "flag": "red-ledger.chapel-proof",
+                    "value": true
+                  },
+                  {
+                    "kind": "say",
+                    "speakerId": "actor.red-ledger.archivist",
+                    "text": "THE REGISTRY PLACES THE DEBTOR HERE ON THAT DATE."
+                  },
+                  {
+                    "kind": "award-score",
+                    "awardId": "score-award.red-ledger.chapel",
+                    "points": 10
+                  }
+                ],
+                "once": false
+              },
+              {
+                "id": "interaction.red-ledger.registry.inspect-repeat",
+                "verb": "look",
+                "actions": [
+                  {
+                    "kind": "say",
+                    "speakerId": "actor.red-ledger.archivist",
+                    "text": "THE CHAPEL COPY IS ENOUGH TO CHALLENGE THE ACCOUNT."
+                  }
+                ],
+                "once": false
+              }
+            ],
+            "fallbackText": "THE REGISTRY IS LEGIBLE UNDER THE DUST."
+          }
+        ]
+      },
+      {
+        "id": "object-definition.red-ledger.return-door",
+        "name": "Archive Return Door",
+        "initialStateId": "object-state.red-ledger.return-door.closed",
+        "states": [
+          {
+            "id": "object-state.red-ledger.return-door.closed",
+            "visual": {
+              "kind": "image",
+              "assetId": "asset.red-ledger.return-door",
+              "pivot": {
+                "x": 15,
+                "y": 94
+              },
+              "opacity": 1
+            },
+            "visible": true,
+            "interactionShape": {
+              "points": [
+                {
+                  "x": 0,
+                  "y": 0
+                },
+                {
+                  "x": 30,
+                  "y": 0
+                },
+                {
+                  "x": 30,
+                  "y": 94
+                },
+                {
+                  "x": 0,
+                  "y": 94
+                }
+              ]
+            },
+            "walkToOffset": {
+              "x": 26,
+              "y": 0
+            },
+            "faceDirection": "west",
+            "cursor": "use",
+            "interactions": [
+              {
+                "id": "interaction.red-ledger.return-door.archive",
+                "verb": "use",
+                "actions": [
+                  {
+                    "kind": "change-scene",
+                    "sceneId": "scene.red-ledger.archive",
+                    "entranceId": "entrance.red-ledger.archive.from-chapel"
+                  }
+                ],
+                "once": false
+              }
+            ],
+            "fallbackText": "THE DOOR RETURNS TO THE ARCHIVE."
+          }
+        ]
+      }
+    ],
+    "scenes": [
+      {
+        "sceneId": "scene.red-ledger.alley",
+        "actorInstances": [],
+        "objectInstances": [
+          {
+            "id": "object.red-ledger.alley.ledger",
+            "definitionId": "object-definition.red-ledger.alley-ledger",
+            "position": {
+              "x": 229,
+              "y": 146
+            },
+            "layer": "world",
+            "elevation": 0,
+            "zOffset": 1,
+            "scaleMultiplier": 1,
+            "mirrored": false
+          },
+          {
+            "id": "object.red-ledger.alley.return-door",
+            "definitionId": "object-definition.red-ledger.alley-return",
+            "position": {
+              "x": 15,
+              "y": 153
+            },
+            "layer": "world",
+            "elevation": 0,
+            "zOffset": 0,
+            "scaleMultiplier": 1,
+            "mirrored": false
+          }
+        ],
+        "navigationPortals": []
+      },
+      {
+        "sceneId": "scene.red-ledger.archive",
+        "actorInstances": [
+          {
+            "id": "actor-instance.red-ledger.archivist",
+            "actorId": "actor.red-ledger.archivist",
+            "position": {
+              "x": 58,
+              "y": 152
+            },
+            "facing": "east",
+            "animationState": "idle",
+            "mobility": "walkable",
+            "elevation": 0,
+            "zOffset": 0,
+            "scaleMultiplier": 1
+          },
+          {
+            "id": "actor-instance.red-ledger.clerk",
+            "actorId": "actor.red-ledger.clerk",
+            "position": {
+              "x": 208,
+              "y": 145
+            },
+            "facing": "west",
+            "animationState": "idle",
+            "mobility": "fixed",
+            "elevation": 0,
+            "zOffset": 0,
+            "scaleMultiplier": 0.92
+          }
+        ],
+        "objectInstances": [
+          {
+            "id": "object.red-ledger.archive.account",
+            "definitionId": "object-definition.red-ledger.account",
+            "position": {
+              "x": 138,
+              "y": 123
+            },
+            "layer": "world",
+            "elevation": 0,
+            "zOffset": 1,
+            "scaleMultiplier": 1,
+            "mirrored": false
+          },
+          {
+            "id": "object.red-ledger.archive.alley-door",
+            "definitionId": "object-definition.red-ledger.alley-door",
+            "position": {
+              "x": 17,
+              "y": 150
+            },
+            "layer": "world",
+            "elevation": 0,
+            "zOffset": 0,
+            "scaleMultiplier": 1,
+            "mirrored": false
+          },
+          {
+            "id": "object.red-ledger.archive.chapel-door",
+            "definitionId": "object-definition.red-ledger.chapel-door",
+            "position": {
+              "x": 294,
+              "y": 150
+            },
+            "layer": "world",
+            "elevation": 0,
+            "zOffset": 0,
+            "scaleMultiplier": 1,
+            "mirrored": false
+          },
+          {
+            "id": "object.red-ledger.archive.clerk-hotspot",
+            "definitionId": "object-definition.red-ledger.clerk-hotspot",
+            "position": {
+              "x": 208,
+              "y": 145
+            },
+            "layer": "world",
+            "elevation": 0,
+            "zOffset": 2,
+            "scaleMultiplier": 0.92,
+            "mirrored": false
+          },
+          {
+            "id": "object.red-ledger.archive.drawer",
+            "definitionId": "object-definition.red-ledger.drawer",
+            "position": {
+              "x": 88,
+              "y": 137
+            },
+            "layer": "world",
+            "elevation": 0,
+            "zOffset": 1,
+            "scaleMultiplier": 1,
+            "mirrored": false
+          }
+        ],
+        "navigationPortals": []
+      },
+      {
+        "sceneId": "scene.red-ledger.chapel",
+        "actorInstances": [],
+        "objectInstances": [
+          {
+            "id": "object.red-ledger.chapel.registry",
+            "definitionId": "object-definition.red-ledger.registry",
+            "position": {
+              "x": 172,
+              "y": 133
+            },
+            "layer": "world",
+            "elevation": 0,
+            "zOffset": 1,
+            "scaleMultiplier": 1,
+            "mirrored": false
+          },
+          {
+            "id": "object.red-ledger.chapel.return-door",
+            "definitionId": "object-definition.red-ledger.return-door",
+            "position": {
+              "x": 15,
+              "y": 151
+            },
+            "layer": "world",
+            "elevation": 0,
+            "zOffset": 0,
+            "scaleMultiplier": 1,
+            "mirrored": false
+          }
+        ],
+        "navigationPortals": []
+      }
+    ]
+  },
+  "playFeelProfileId": "gothic-measured"
+}

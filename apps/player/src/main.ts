@@ -1,7 +1,4 @@
-import {
-  advanceFixedStepClock,
-  createFixedStepClock,
-} from "@evavo/adventure-core/fixed-step";
+import { advanceFixedStepClock, createFixedStepClock } from "@evavo/adventure-core/fixed-step";
 import type { Id, Point } from "@evavo/adventure-project-schema";
 import type {
   NativeCanvas,
@@ -11,30 +8,15 @@ import type {
 } from "@evavo/adventure-render-contract";
 import { PixiWebGLRenderer } from "@evavo/adventure-renderer-pixi";
 import { PixiAssetTextureStore } from "@evavo/adventure-renderer-pixi/texture-store";
-import type { ReplayEvent, ReplayLog } from "@evavo/adventure-replay";
-import {
-  mapClientPointToNative,
-  requestedActorFromSearch,
-} from "./input.js";
-import {
-  createPackagedRuntimeController,
-  type PackagedRuntimeController,
-} from "./packaged-controller.js";
-import {
-  parserKeyInputFromKeyboardEvent,
-  type ParserKeyInput,
-} from "./parser.js";
-import {
-  createPlayerReplayRecorder,
-  type ReplayRecordingStatus,
-} from "./replay-recorder.js";
-import { createPackagedRuntimeRenderer } from "./runtime-renderer.js";
+import type { ReplayLog } from "@evavo/adventure-replay";
+import { requestedRuntimeBundleFromSearch } from "./built-in-demos.js";
+import { mapClientPointToNative, requestedActorFromSearch } from "./input.js";
+import { createPackagedRuntimeController, type PackagedRuntimeController } from "./packaged-controller.js";
+import { type ParserKeyInput, parserKeyInputFromKeyboardEvent } from "./parser.js";
+import { createPlayerReplayRecorder, type ReplayRecordingStatus } from "./replay-recorder.js";
 import { loadRuntimeBundle } from "./runtime-loader.js";
-import {
-  hasSaveGameSlot,
-  readSaveGameSlot,
-  writeSaveGameSlot,
-} from "./save-storage.js";
+import { createPackagedRuntimeRenderer } from "./runtime-renderer.js";
+import { hasSaveGameSlot, readSaveGameSlot, writeSaveGameSlot } from "./save-storage.js";
 import "./style.css";
 
 const id = <T extends string>(value: string): Id<T> => value as Id<T>;
@@ -98,33 +80,9 @@ const createLaboratoryFrame = (tick: number): ResolvedFrame => {
       rectangle("window.sky", "background", 233, 27, 62, 72, 0x091727),
       rectangle("window.frame.vertical", "rear-ambient", 263, 27, 3, 72, 0x454157),
       rectangle("window.frame.horizontal", "rear-ambient", 233, 61, 62, 3, 0x454157),
-      rectangle(
-        "window.city-light.1",
-        "rear-ambient",
-        242,
-        76,
-        3,
-        3,
-        cityLight === 0 ? 0xf4c26a : 0x574a39,
-      ),
-      rectangle(
-        "window.city-light.2",
-        "rear-ambient",
-        282,
-        45,
-        2,
-        3,
-        cityLight === 1 ? 0xd65b6f : 0x4a2630,
-      ),
-      rectangle(
-        "window.city-light.3",
-        "rear-ambient",
-        251,
-        39,
-        2,
-        2,
-        cityLight === 2 ? 0x79b9d1 : 0x263b45,
-      ),
+      rectangle("window.city-light.1", "rear-ambient", 242, 76, 3, 3, cityLight === 0 ? 0xf4c26a : 0x574a39),
+      rectangle("window.city-light.2", "rear-ambient", 282, 45, 2, 3, cityLight === 1 ? 0xd65b6f : 0x4a2630),
+      rectangle("window.city-light.3", "rear-ambient", 251, 39, 2, 2, cityLight === 2 ? 0x79b9d1 : 0x263b45),
       rectangle("desk.body", "world", 92, 101, 132, 48, 0x493a35),
       rectangle("desk.top", "world", 86, 96, 144, 8, 0x765a48),
       rectangle("desk.drawer", "world", 111, 110, 82, 17, 0x30272a),
@@ -135,15 +93,7 @@ const createLaboratoryFrame = (tick: number): ResolvedFrame => {
       rectangle("lamp.base", "world", 196, 91, 18, 5, 0x17141a),
       rectangle("lamp.stem", "world", 203, 66, 3, 26, 0xaaa0a2),
       rectangle("lamp.shade", "world", 194, 59, 21, 9, 0x7d1f35),
-      rectangle(
-        "lamp.glow",
-        "effects",
-        184,
-        69,
-        41,
-        2,
-        lampOn ? 0xffc86b : 0x493923,
-      ),
+      rectangle("lamp.glow", "effects", 184, 69, 41, 2, lampOn ? 0xffc86b : 0x493923),
       rectangle("actor.shadow", "world", 37, 158, 38, 5, 0x0b0a0f),
       rectangle("actor.legs.left", "world", 47, 132, 8, 28, 0x12121a),
       rectangle("actor.legs.right", "world", 59, 132, 8, 28, 0x12121a),
@@ -203,9 +153,7 @@ interface MountedPlayer {
 }
 
 const updateStatus = (text: string): void => {
-  const status = document.querySelector<HTMLElement>(
-    ".player-status span:last-child",
-  );
+  const status = document.querySelector<HTMLElement>(".player-status span:last-child");
   if (status) status.textContent = text;
 };
 
@@ -213,9 +161,7 @@ const errorText = (prefix: string, error: unknown): string =>
   `${prefix} • ${error instanceof Error ? error.message : String(error)}`;
 
 const downloadText = (fileName: string, text: string): void => {
-  const url = URL.createObjectURL(
-    new Blob([text], { type: "application/json;charset=utf-8" }),
-  );
+  const url = URL.createObjectURL(new Blob([text], { type: "application/json;charset=utf-8" }));
   const link = document.createElement("a");
   link.href = url;
   link.download = fileName;
@@ -226,11 +172,7 @@ const downloadText = (fileName: string, text: string): void => {
   URL.revokeObjectURL(url);
 };
 
-const nativePointer = (
-  host: HTMLElement,
-  canvas: NativeCanvas,
-  event: PointerEvent,
-): Point | null => {
+const nativePointer = (host: HTMLElement, canvas: NativeCanvas, event: PointerEvent): Point | null => {
   const bounds = host.getBoundingClientRect();
   return mapClientPointToNative(
     { x: event.clientX, y: event.clientY },
@@ -244,10 +186,7 @@ const nativePointer = (
   );
 };
 
-const mountPlayer = async (
-  host: HTMLElement,
-  player: MountedPlayer,
-): Promise<void> => {
+const mountPlayer = async (host: HTMLElement, player: MountedPlayer): Promise<void> => {
   const initialFrame = player.createFrame(0);
   await player.renderer.initialize(
     { target: host, devicePixelRatio: window.devicePixelRatio },
@@ -350,42 +289,22 @@ const mountPlayer = async (
 
   const onKeyDown = (event: KeyboardEvent): void => {
     const commandModifier = event.ctrlKey || event.metaKey;
-    if (
-      player.persistence &&
-      commandModifier &&
-      event.shiftKey &&
-      event.code === "KeyS"
-    ) {
+    if (player.persistence && commandModifier && event.shiftKey && event.code === "KeyS") {
       saveQuickSlot();
       event.preventDefault();
       return;
     }
-    if (
-      player.persistence &&
-      commandModifier &&
-      event.shiftKey &&
-      event.code === "KeyL"
-    ) {
+    if (player.persistence && commandModifier && event.shiftKey && event.code === "KeyL") {
       restoreQuickSlot();
       event.preventDefault();
       return;
     }
-    if (
-      player.replay &&
-      commandModifier &&
-      event.shiftKey &&
-      event.code === "KeyR"
-    ) {
+    if (player.replay && commandModifier && event.shiftKey && event.code === "KeyR") {
       toggleReplayRecording();
       event.preventDefault();
       return;
     }
-    if (
-      player.replay &&
-      commandModifier &&
-      event.shiftKey &&
-      event.code === "KeyE"
-    ) {
+    if (player.replay && commandModifier && event.shiftKey && event.code === "KeyE") {
       exportLatestReplay();
       event.preventDefault();
       return;
@@ -457,22 +376,13 @@ const packagedPlayer = async (
   const bundle = await loadRuntimeBundle(bundleUrl);
   const textures = new PixiAssetTextureStore({ aliasNamespace: bundle.projectId });
   await textures.loadRuntimeAssets(bundle.assets, bundleUrl);
-  const controller: PackagedRuntimeController = createPackagedRuntimeController(
-    bundle,
-    { requestedActorInstanceId },
-  );
+  const controller: PackagedRuntimeController = createPackagedRuntimeController(bundle, {
+    requestedActorInstanceId,
+  });
   const recorder = createPlayerReplayRecorder(bundle);
   const persistence: PlayerPersistence = {
-    saveQuickSlot: () =>
-      writeSaveGameSlot(
-        window.localStorage,
-        bundle,
-        controller.createSaveGame(),
-      ),
-    loadQuickSlot: () =>
-      controller.restoreSaveGame(
-        readSaveGameSlot(window.localStorage, bundle),
-      ),
+    saveQuickSlot: () => writeSaveGameSlot(window.localStorage, bundle, controller.createSaveGame()),
+    loadQuickSlot: () => controller.restoreSaveGame(readSaveGameSlot(window.localStorage, bundle)),
     hasQuickSlot: () => hasSaveGameSlot(window.localStorage, bundle),
   };
   const replay: PlayerReplayControls = {
@@ -510,22 +420,17 @@ const boot = async (): Promise<void> => {
   const host = document.querySelector<HTMLElement>("#player-host");
   if (!host) throw new Error("Player host element was not found.");
 
-  const bundleParameter = new URLSearchParams(window.location.search).get(
-    "bundle",
-  );
+  const bundleParameter = requestedRuntimeBundleFromSearch(window.location.search);
   if (!bundleParameter) {
-    host.dataset.mode = "rendering-lab";
+    host.dataset["mode"] = "rendering-lab";
     await mountPlayer(host, laboratoryPlayer());
     return;
   }
 
   const bundleUrl = new URL(bundleParameter, window.location.href).href;
-  host.dataset.mode = "runtime-bundle";
+  host.dataset["mode"] = "runtime-bundle";
   host.textContent = "Loading runtime bundle…";
-  const player = await packagedPlayer(
-    bundleUrl,
-    requestedActorFromSearch(window.location.search),
-  );
+  const player = await packagedPlayer(bundleUrl, requestedActorFromSearch(window.location.search));
   host.textContent = "";
   host.setAttribute("aria-label", "Native adventure game canvas");
   await mountPlayer(host, player);
@@ -535,8 +440,7 @@ void boot().catch((error: unknown) => {
   console.error(error);
   const host = document.querySelector<HTMLElement>("#player-host");
   if (host) {
-    host.dataset.mode = "error";
-    host.textContent =
-      error instanceof Error ? error.message : "The player could not start.";
+    host.dataset["mode"] = "error";
+    host.textContent = error instanceof Error ? error.message : "The player could not start.";
   }
 });

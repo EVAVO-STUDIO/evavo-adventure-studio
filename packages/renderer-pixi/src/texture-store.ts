@@ -1,6 +1,4 @@
-import type {
-  RuntimeAssetRecord,
-} from "@evavo/adventure-asset-contract";
+import type { RuntimeAssetRecord } from "@evavo/adventure-asset-contract";
 import type { BitmapFontResolver } from "@evavo/adventure-bitmap-font/render";
 import { bitmapFontResolverForAssetCollection } from "@evavo/adventure-bitmap-font/runtime-registry";
 import type { Id } from "@evavo/adventure-project-schema";
@@ -26,9 +24,7 @@ export class PixiRuntimeAssetKindError extends Error {
   readonly assetKind: RuntimeAssetRecord["kind"];
 
   constructor(asset: RuntimeAssetRecord) {
-    super(
-      `Runtime asset '${asset.assetId}' has non-renderable kind '${asset.kind}'.`,
-    );
+    super(`Runtime asset '${asset.assetId}' has non-renderable kind '${asset.kind}'.`);
     this.name = "PixiRuntimeAssetKindError";
     this.assetId = asset.assetId;
     this.assetKind = asset.kind;
@@ -51,15 +47,8 @@ export class PixiAssetLoadError extends Error {
   readonly assetId: Id<"asset">;
   readonly runtimePath: string;
 
-  constructor(
-    assetId: Id<"asset">,
-    runtimePath: string,
-    cause: unknown,
-  ) {
-    super(
-      `PixiJS could not load runtime asset '${assetId}' from '${runtimePath}'.`,
-      { cause },
-    );
+  constructor(assetId: Id<"asset">, runtimePath: string, cause: unknown) {
+    super(`PixiJS could not load runtime asset '${assetId}' from '${runtimePath}'.`, { cause });
     this.name = "PixiAssetLoadError";
     this.assetId = assetId;
     this.runtimePath = runtimePath;
@@ -71,9 +60,7 @@ export class PixiAssetTypeError extends Error {
   readonly runtimePath: string;
 
   constructor(assetId: Id<"asset">, runtimePath: string) {
-    super(
-      `Runtime asset '${assetId}' output '${runtimePath}' did not resolve to a PixiJS Texture.`,
-    );
+    super(`Runtime asset '${assetId}' output '${runtimePath}' did not resolve to a PixiJS Texture.`);
     this.name = "PixiAssetTypeError";
     this.assetId = assetId;
     this.runtimePath = runtimePath;
@@ -93,9 +80,7 @@ const outputByRole = (
 ): ReadonlyMap<string, RuntimeAssetRecord["outputFiles"][number]> =>
   new Map(asset.outputFiles.map((output) => [output.role, output] as const));
 
-export const planRuntimeTextureLoads = (
-  asset: RuntimeAssetRecord,
-): RuntimeTexturePlan => {
+export const planRuntimeTextureLoads = (asset: RuntimeAssetRecord): RuntimeTexturePlan => {
   const outputs = outputByRole(asset);
 
   if (asset.kind === "image") {
@@ -141,10 +126,7 @@ export const planRuntimeTextureLoads = (
     })
     .sort((left, right) => left.role.localeCompare(right.role));
   const frameRoleById = new Map(
-    asset.metadata.frames.map((frame) => [
-      frame.frameId as string,
-      frame.pageOutputRole,
-    ] as const),
+    asset.metadata.frames.map((frame) => [frame.frameId as string, frame.pageOutputRole] as const),
   );
 
   return { requests, frameRoleById };
@@ -161,10 +143,8 @@ const runtimeUrl = (bundleUrl: string, runtimePath: string): string => {
   }
 };
 
-const frameTextureKey = (
-  assetId: Id<"asset">,
-  frameId: Id<"sprite-frame">,
-): string => `${assetId}\u0000${frameId}`;
+const frameTextureKey = (assetId: Id<"asset">, frameId: Id<"sprite-frame">): string =>
+  `${assetId}\u0000${frameId}`;
 
 export class PixiAssetTextureStore {
   private readonly aliasNamespace: string;
@@ -176,23 +156,16 @@ export class PixiAssetTextureStore {
   private runtimeBitmapFonts: BitmapFontResolver | null = null;
 
   constructor(options: PixiTextureStoreOptions = {}) {
-    this.aliasNamespace = normalizeNamespace(
-      options.aliasNamespace ?? "evavo-adventure",
-    );
+    this.aliasNamespace = normalizeNamespace(options.aliasNamespace ?? "evavo-adventure");
   }
 
   getBitmapFontResolver(): BitmapFontResolver | null {
     return this.runtimeBitmapFonts;
   }
 
-  getTexture(
-    assetId: Id<"asset">,
-    frameId: Id<"sprite-frame"> | null = null,
-  ): Texture | null {
+  getTexture(assetId: Id<"asset">, frameId: Id<"sprite-frame"> | null = null): Texture | null {
     if (frameId) {
-      const frameTexture = this.frameTextures.get(
-        frameTextureKey(assetId, frameId),
-      );
+      const frameTexture = this.frameTextures.get(frameTextureKey(assetId, frameId));
       if (frameTexture) {
         return frameTexture;
       }
@@ -200,10 +173,9 @@ export class PixiAssetTextureStore {
     return this.primaryTextures.get(assetId) ?? null;
   }
 
-  hasTexture(
-    assetId: Id<"asset">,
-    frameId: Id<"sprite-frame"> | null = null,
-  ): boolean => this.getTexture(assetId, frameId) !== null;
+  hasTexture(assetId: Id<"asset">, frameId: Id<"sprite-frame"> | null = null): boolean {
+    return this.getTexture(assetId, frameId) !== null;
+  }
 
   registerTexture(assetId: Id<"asset">, texture: Texture): void {
     if ((this.aliasesByAsset.get(assetId)?.size ?? 0) > 0) {
@@ -214,11 +186,7 @@ export class PixiAssetTextureStore {
     this.primaryTextures.set(assetId, texture);
   }
 
-  registerFrameTexture(
-    assetId: Id<"asset">,
-    frameId: Id<"sprite-frame">,
-    texture: Texture,
-  ): void {
+  registerFrameTexture(assetId: Id<"asset">, frameId: Id<"sprite-frame">, texture: Texture): void {
     if ((this.aliasesByAsset.get(assetId)?.size ?? 0) > 0) {
       throw new Error(
         `Asset '${assetId}' is owned by the PixiJS Assets loader and must be unloaded before replacement.`,
@@ -231,10 +199,7 @@ export class PixiAssetTextureStore {
     this.frameKeysByAsset.set(assetId, keys);
   }
 
-  async loadRuntimeAsset(
-    asset: RuntimeAssetRecord,
-    bundleUrl: string,
-  ): Promise<void> {
+  async loadRuntimeAsset(asset: RuntimeAssetRecord, bundleUrl: string): Promise<void> {
     const plan = planRuntimeTextureLoads(asset);
     if (plan.requests.length === 0) {
       throw new PixiRuntimeAssetOutputError(
@@ -255,24 +220,16 @@ export class PixiAssetTextureStore {
         try {
           loaded = await Assets.load<Texture>({ alias, src: sourceUrl });
         } catch (error) {
-          throw new PixiAssetLoadError(
-            request.assetId,
-            request.runtimePath,
-            error,
-          );
+          throw new PixiAssetLoadError(request.assetId, request.runtimePath, error);
         }
         if (!(loaded instanceof Texture)) {
           await Assets.unload(alias);
-          throw new PixiAssetTypeError(
-            request.assetId,
-            request.runtimePath,
-          );
+          throw new PixiAssetTypeError(request.assetId, request.runtimePath);
         }
 
         texturesByRole.set(request.role, loaded);
         this.ownedAliases.set(alias, request.assetId);
-        const aliases =
-          this.aliasesByAsset.get(request.assetId) ?? new Set<string>();
+        const aliases = this.aliasesByAsset.get(request.assetId) ?? new Set<string>();
         aliases.add(alias);
         this.aliasesByAsset.set(request.assetId, aliases);
         loadedAliases.push(alias);
@@ -281,11 +238,7 @@ export class PixiAssetTextureStore {
       if (asset.kind === "image") {
         const primary = texturesByRole.get("primary");
         if (!primary) {
-          throw new PixiRuntimeAssetOutputError(
-            asset.assetId,
-            "primary",
-            "the primary texture did not load",
-          );
+          throw new PixiRuntimeAssetOutputError(asset.assetId, "primary", "the primary texture did not load");
         }
         this.primaryTextures.set(asset.assetId, primary);
         return;
@@ -325,14 +278,9 @@ export class PixiAssetTextureStore {
     }
   }
 
-  async loadRuntimeAssets(
-    assets: readonly RuntimeAssetRecord[],
-    bundleUrl: string,
-  ): Promise<void> {
+  async loadRuntimeAssets(assets: readonly RuntimeAssetRecord[], bundleUrl: string): Promise<void> {
     const renderable = assets
-      .filter(
-        (asset) => asset.kind === "image" || asset.kind === "spritesheet",
-      )
+      .filter((asset) => asset.kind === "image" || asset.kind === "spritesheet")
       .sort((left, right) => left.assetId.localeCompare(right.assetId));
 
     for (const asset of renderable) {
@@ -342,8 +290,8 @@ export class PixiAssetTextureStore {
   }
 
   async unloadAsset(assetId: Id<"asset">): Promise<void> {
-    const aliases = [...(this.aliasesByAsset.get(assetId) ?? [])].sort(
-      (left, right) => left.localeCompare(right),
+    const aliases = [...(this.aliasesByAsset.get(assetId) ?? [])].sort((left, right) =>
+      left.localeCompare(right),
     );
     for (const alias of aliases) {
       await Assets.unload(alias);
@@ -359,9 +307,7 @@ export class PixiAssetTextureStore {
   }
 
   async dispose(): Promise<void> {
-    const assetIds = [...this.aliasesByAsset.keys()].sort((left, right) =>
-      left.localeCompare(right),
-    );
+    const assetIds = [...this.aliasesByAsset.keys()].sort((left, right) => left.localeCompare(right));
     for (const assetId of assetIds) {
       await this.unloadAsset(assetId as Id<"asset">);
     }

@@ -1,18 +1,11 @@
 import {
   ADVENTURE_MOTION_UNITS_PER_PIXEL,
-  adventurePlayFeelProfileById,
   type AdventurePlayFeelProfileId,
+  adventurePlayFeelProfileById,
 } from "@evavo/adventure-play-feel";
 import type { Id } from "@evavo/adventure-project-schema";
 import type { RuntimeBundle } from "@evavo/adventure-runtime-bundle";
 import type { NavigationRoute } from "@evavo/adventure-scene/navigation";
-import {
-  advanceProfiledNavigationMovement,
-  beginProfiledNavigationMovement,
-  type ProfiledNavigationFallbackReason,
-  type ProfiledNavigationMovementEvent,
-  type ProfiledNavigationMovementState,
-} from "./profiled-movement.js";
 import { setActorInstancePosition } from "./index.js";
 import {
   applySegmentAnimation,
@@ -21,6 +14,7 @@ import {
   DEFAULT_WALK_SPEED,
   geometricDistance,
   MOVEMENT_EPSILON,
+  navigationPortalsForActor,
 } from "./movement-shared.js";
 import type {
   ActorMovementEvent,
@@ -29,6 +23,13 @@ import type {
   MovementStepResult,
   NavigableRuntimeWorldState,
 } from "./movement-types.js";
+import {
+  advanceProfiledNavigationMovement,
+  beginProfiledNavigationMovement,
+  type ProfiledNavigationFallbackReason,
+  type ProfiledNavigationMovementEvent,
+  type ProfiledNavigationMovementState,
+} from "./profiled-movement.js";
 
 export interface CreatedMovement {
   readonly movement: ActorMovementState;
@@ -41,9 +42,9 @@ const selectedPlayFeelProfileId = (
   bundle: RuntimeBundle,
   options: BeginActorMovementOptions,
 ): AdventurePlayFeelProfileId | null =>
-  Object.prototype.hasOwnProperty.call(options, "playFeelProfileId")
-    ? options.playFeelProfileId ?? null
-    : bundle.playFeelProfileId ?? null;
+  Object.hasOwn(options, "playFeelProfileId")
+    ? (options.playFeelProfileId ?? null)
+    : (bundle.playFeelProfileId ?? null);
 
 export const createMovementFromRoute = (
   bundle: RuntimeBundle,
@@ -72,9 +73,7 @@ export const createMovementFromRoute = (
       mode = "profiled";
       profiled = started.state;
       speedPixelsPerSecond =
-        requestedSpeed ??
-        adventurePlayFeelProfileById(profileId).movement
-          .topSpeedPixelsPerSecond;
+        requestedSpeed ?? adventurePlayFeelProfileById(profileId).movement.topSpeedPixelsPerSecond;
     } else {
       fallbackReason = started.reason;
       speedPixelsPerSecond = requestedSpeed ?? started.speedPixelsPerSecond;
@@ -105,57 +104,41 @@ const advanceLegacyMovementOneTick = (
 ): MovementStepResult => {
   const authored = authoredActorInstance(bundle, movement.actorInstanceId);
   if (!authored) {
-    throw new Error(
-      `Actor instance '${movement.actorInstanceId}' authoring data is missing.`,
-    );
+    throw new Error(`Actor instance '${movement.actorInstanceId}' authoring data is missing.`);
   }
   let nextState = state;
   let nextMovement = movement;
   const events: ActorMovementEvent[] = [];
-  let availableDistance =
-    movement.speedPixelsPerSecond / bundle.presentation.logicalTicksPerSecond;
+  let availableDistance = movement.speedPixelsPerSecond / bundle.presentation.logicalTicksPerSecond;
 
   while (availableDistance > MOVEMENT_EPSILON) {
     const segment = nextMovement.route.segments[nextMovement.nextSegmentIndex];
     if (!segment) break;
     const segmentLength = geometricDistance(segment);
-    const remaining = Math.max(
-      0,
-      segmentLength - nextMovement.distanceAlongSegment,
-    );
+    const remaining = Math.max(0, segmentLength - nextMovement.distanceAlongSegment);
 
     if (remaining > availableDistance + MOVEMENT_EPSILON) {
       const progress =
         segmentLength <= MOVEMENT_EPSILON
           ? 1
-          : (nextMovement.distanceAlongSegment + availableDistance) /
-            segmentLength;
+          : (nextMovement.distanceAlongSegment + availableDistance) / segmentLength;
       nextState = {
-        ...setActorInstancePosition(
-          nextState,
-          movement.actorInstanceId,
-          {
-            x: segment.from.x + (segment.to.x - segment.from.x) * progress,
-            y: segment.from.y + (segment.to.y - segment.from.y) * progress,
-          },
-        ),
+        ...setActorInstancePosition(nextState, movement.actorInstanceId, {
+          x: segment.from.x + (segment.to.x - segment.from.x) * progress,
+          y: segment.from.y + (segment.to.y - segment.from.y) * progress,
+        }),
         movements: nextState.movements,
       };
       nextMovement = {
         ...nextMovement,
-        distanceAlongSegment:
-          nextMovement.distanceAlongSegment + availableDistance,
+        distanceAlongSegment: nextMovement.distanceAlongSegment + availableDistance,
       };
       availableDistance = 0;
       break;
     }
 
     nextState = {
-      ...setActorInstancePosition(
-        nextState,
-        movement.actorInstanceId,
-        segment.to,
-      ),
+      ...setActorInstancePosition(nextState, movement.actorInstanceId, segment.to),
       movements: nextState.movements,
     };
     availableDistance -= remaining;
@@ -187,7 +170,7 @@ const advanceLegacyMovementOneTick = (
       nextState,
       nextMovement,
       following,
-      authored.composition.navigationPortals,
+      navigationPortalsForActor(bundle, nextState, movement.actorInstanceId),
     );
   }
 
@@ -221,9 +204,7 @@ const profiledEvent = (
     case "movement-segment-completed": {
       const segment = movement.route.segments[event.segmentIndex];
       if (!segment) {
-        throw new Error(
-          `Profiled movement completed missing route segment ${event.segmentIndex}.`,
-        );
+        throw new Error(`Profiled movement completed missing route segment ${event.segmentIndex}.`);
       }
       return {
         kind: "movement-segment-completed",
@@ -250,9 +231,7 @@ const advanceProfiledMovementOneTick = (
 ): MovementStepResult => {
   const authored = authoredActorInstance(bundle, movement.actorInstanceId);
   if (!authored) {
-    throw new Error(
-      `Actor instance '${movement.actorInstanceId}' authoring data is missing.`,
-    );
+    throw new Error(`Actor instance '${movement.actorInstanceId}' authoring data is missing.`);
   }
   const advanced = advanceProfiledNavigationMovement(
     movement.profiled,
@@ -265,16 +244,10 @@ const advanceProfiledMovementOneTick = (
     },
   );
   let nextState: NavigableRuntimeWorldState = {
-    ...setActorInstancePosition(
-      state,
-      movement.actorInstanceId,
-      advanced.position,
-    ),
+    ...setActorInstancePosition(state, movement.actorInstanceId, advanced.position),
     movements: state.movements,
   };
-  const events = advanced.events.map((event) =>
-    profiledEvent(movement, event, state.story.tick + 1),
-  );
+  const events = advanced.events.map((event) => profiledEvent(movement, event, state.story.tick + 1));
 
   if (advanced.arrived) {
     nextState = completeMovementAnimation(bundle, nextState, movement);
@@ -282,16 +255,11 @@ const advanceProfiledMovementOneTick = (
   }
 
   const motion = advanced.state.extension.motion;
-  const nextSegmentIndex = Math.min(
-    motion.segmentIndex,
-    movement.route.segments.length - 1,
-  );
+  const nextSegmentIndex = Math.min(motion.segmentIndex, movement.route.segments.length - 1);
   const nextMovement: ActorMovementState = {
     ...movement,
     nextSegmentIndex,
-    distanceAlongSegment:
-      motion.distanceAlongSegmentMicropixels /
-      ADVENTURE_MOTION_UNITS_PER_PIXEL,
+    distanceAlongSegment: motion.distanceAlongSegmentMicropixels / ADVENTURE_MOTION_UNITS_PER_PIXEL,
     profiled: advanced.state,
   };
   const segment = nextMovement.route.segments[nextSegmentIndex];
@@ -301,7 +269,7 @@ const advanceProfiledMovementOneTick = (
       nextState,
       nextMovement,
       segment,
-      authored.composition.navigationPortals,
+      navigationPortalsForActor(bundle, nextState, movement.actorInstanceId),
     );
   }
   return { state: nextState, movement: nextMovement, events };

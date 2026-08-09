@@ -20,6 +20,10 @@
       "types": "./dist/src/movement.d.ts",
       "import": "./dist/src/movement.js"
     },
+    "./scene-transition": {
+      "types": "./dist/src/scene-transition.d.ts",
+      "import": "./dist/src/scene-transition.js"
+    },
     "./profiled-movement": {
       "types": "./dist/src/profiled-movement.d.ts",
       "import": "./dist/src/profiled-movement.js"

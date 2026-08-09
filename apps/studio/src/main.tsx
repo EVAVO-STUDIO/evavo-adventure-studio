@@ -1,11 +1,12 @@
-import { StrictMode, type ReactNode } from "react";
+import { type ReactNode, StrictMode } from "react";
 import { createRoot } from "react-dom/client";
-import { App } from "./App.js";
 import { AdventureAuthenticityApp } from "./AdventureAuthenticityApp.js";
 import { AdventureDesignApp } from "./AdventureDesignApp.js";
 import { AdventureEvidenceApp } from "./AdventureEvidenceApp.js";
 import { AnimationApp } from "./AnimationApp.js";
+import { App } from "./App.js";
 import { ArtDirectionApp } from "./ArtDirectionApp.js";
+import { ClassicExperienceApp } from "./ClassicExperienceApp.js";
 import { ClassicGameCreatorApp } from "./ClassicGameCreatorApp.js";
 import { DialogueApp } from "./DialogueApp.js";
 import { StudioErrorBoundary } from "./ErrorBoundary.js";
@@ -33,6 +34,8 @@ const workspace = new URLSearchParams(window.location.search).get("workspace");
 const application: ReactNode =
   workspace === "creator" ? (
     <ClassicGameCreatorApp />
+  ) : workspace === "polish" ? (
+    <ClassicExperienceApp />
   ) : workspace === "feel" ? (
     <MotionFeelApp />
   ) : workspace === "showcases" ? (
@@ -79,6 +82,7 @@ switcher.setAttribute("aria-label", "Adventure Studio workspaces");
 const workspaces = [
   { id: "composer", href: "/", label: "Composer" },
   { id: "creator", href: "/?workspace=creator", label: "Creator" },
+  { id: "polish", href: "/?workspace=polish", label: "Polish" },
   { id: "profiles", href: "/?workspace=profiles", label: "Profiles" },
   { id: "showcases", href: "/?workspace=showcases", label: "Showcases" },
   { id: "feel", href: "/?workspace=feel", label: "Feel" },
@@ -100,6 +104,7 @@ const workspaces = [
 ] as const;
 const activeWorkspace =
   workspace === "creator" ||
+  workspace === "polish" ||
   workspace === "feel" ||
   workspace === "showcases" ||
   workspace === "profiles" ||
