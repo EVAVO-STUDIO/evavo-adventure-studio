@@ -100,20 +100,25 @@ jobs:
           ''',
           )
 
-          red_ledger = Path("packages/adventure-design/src/red-ledger-runtime.ts")
-          source = red_ledger.read_text(encoding="utf-8")
-          replacements = {
-              "source.project": 'source["project"]',
-              "source.assetManifest": 'source["assetManifest"]',
-              "source.bitmapFonts": 'source["bitmapFonts"]',
-              "source.uiSkins": 'source["uiSkins"]',
-              "source.sceneInstances": 'source["sceneInstances"]',
-          }
-          for old, new in replacements.items():
-              if source.count(old) != 1:
-                  raise SystemExit(f"{red_ledger}: guarded token {old!r} did not match once.")
-              source = source.replace(old, new)
-          red_ledger.write_text(source, encoding="utf-8", newline="\n")
+          replace_exact(
+              "packages/adventure-design/src/red-ledger-runtime.ts",
+              '''  return requireProjectIdentity({
+              project: parseAdventureProject(source.project),
+              assetManifest: parseAssetBuildManifest(source.assetManifest),
+              bitmapFonts: parseBitmapFontManifest(source.bitmapFonts),
+              uiSkins: parseUiSkinManifest(source.uiSkins),
+              sceneInstances: parseSceneInstanceManifest(source.sceneInstances),
+            });
+          ''',
+              '''  return requireProjectIdentity({
+              project: parseAdventureProject(source["project"]),
+              assetManifest: parseAssetBuildManifest(source["assetManifest"]),
+              bitmapFonts: parseBitmapFontManifest(source["bitmapFonts"]),
+              uiSkins: parseUiSkinManifest(source["uiSkins"]),
+              sceneInstances: parseSceneInstanceManifest(source["sceneInstances"]),
+            });
+          ''',
+          )
 
           scene_test = Path("packages/scene-runtime/tests/scene-transition.test.ts")
           source = scene_test.read_text(encoding="utf-8")
