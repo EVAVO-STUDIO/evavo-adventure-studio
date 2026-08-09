@@ -1,0 +1,51 @@
+name: Verify strict TypeScript repair
+
+on:
+  push:
+    branches:
+      - agent/verify-strict-typescript-build
+
+permissions:
+  contents: read
+
+jobs:
+  verify:
+    runs-on: ubuntu-latest
+    timeout-minutes: 45
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: agent/verify-strict-typescript-build
+          fetch-depth: 0
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 24.18.0
+      - name: Install exact pnpm toolchain and dependencies
+        shell: bash
+        run: |
+          set -euo pipefail
+          npm install --global pnpm@11.17.0
+          pnpm install --lockfile=false
+      - name: Verify repair scope
+        shell: bash
+        run: |
+          set -euo pipefail
+          test "$(git rev-parse HEAD^)" = "11dd0120afee19088f520d7b0c3caf90927ba7f1"
+          git diff --name-only 395f76e094fdd5965a738cdc00c16d692f55bf7a 11dd0120afee19088f520d7b0c3caf90927ba7f1 | sort > /tmp/actual.txt
+          cat > /tmp/expected.txt <<'EOF'
+          packages/project-editor-core/src/command-schema.ts
+          packages/project-schema/tests/project-schema.test.ts
+          EOF
+          diff -u /tmp/expected.txt /tmp/actual.txt
+      - name: Run strict verification
+        shell: bash
+        run: |
+          set -euo pipefail
+          pnpm run check:toolchain
+          pnpm exec biome check \
+            packages/project-editor-core/src/command-schema.ts \
+            packages/project-schema/tests/project-schema.test.ts
+          pnpm exec tsc -b --pretty false
+          pnpm exec vitest run \
+            packages/project-schema/tests/project-schema.test.ts \
+            packages/project-editor-core/tests/project-editor.test.ts
