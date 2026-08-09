@@ -181,6 +181,27 @@ jobs:
               '    if (runtimeSkin?.interactionMode !== "parser-assisted") {',
           )
           replace_exact(
+              "packages/runtime-controller/src/packaged-controller.ts",
+              '''    case "object-command-executed":
+              return (
+                speechFromEvents(event.runtimeEvents) ??
+                `${event.verb.toUpperCase()} COMPLETE`
+              );
+            }
+          };
+          ''',
+              '''    case "object-command-executed":
+              return (
+                speechFromEvents(event.runtimeEvents) ??
+                `${event.verb.toUpperCase()} COMPLETE`
+              );
+            default:
+              return "ACTION COULD NOT BE RESOLVED";
+            }
+          };
+          ''',
+          )
+          replace_exact(
               "packages/scene-runtime/src/index.ts",
               "  const asset = assetsById(bundle).get(scene.backgroundAssetId);\n"
               '  if (!asset || asset.kind !== "image") {',
