@@ -90,6 +90,154 @@ jobs:
           test ! -e .agent-release
           test ! -e .github/workflows/apply-authentic-polish.yml
 
+      - name: Apply reviewed source-hygiene fixes
+        shell: bash
+        run: |
+          set -euo pipefail
+          python3 <<'PY'
+          from pathlib import Path
+
+          def replace_exact(path_value: str, old: str, new: str) -> None:
+              path = Path(path_value)
+              source = path.read_text(encoding="utf-8")
+              count = source.count(old)
+              if count != 1:
+                  raise SystemExit(
+                      f"{path}: expected one guarded source block, found {count}."
+                  )
+              path.write_text(source.replace(old, new), encoding="utf-8", newline="\n")
+
+          replace_exact(
+              "packages/scene-runtime/src/scene-transition.ts",
+              "      `Actor '${actor.id}' has no idle or '${actorInstance.animationState}' ` +\n"
+              "        \"arrival animation.\",",
+              "      `Actor '${actor.id}' has no idle or "
+              "'${actorInstance.animationState}' arrival animation.`,",
+          )
+          replace_exact(
+              "apps/player/src/main.ts",
+              'import type { ReplayEvent, ReplayLog } from "@evavo/adventure-replay";',
+              'import type { ReplayLog } from "@evavo/adventure-replay";',
+          )
+          replace_exact(
+              "packages/runtime-controller/src/packaged-controller.ts",
+              "  const submitParserCommand = (input: string): void => {\n"
+              '    if (!runtimeSkin || runtimeSkin.interactionMode !== "parser-assisted") {',
+              "  const submitParserCommand = (input: string): void => {\n"
+              '    if (runtimeSkin?.interactionMode !== "parser-assisted") {',
+          )
+          replace_exact(
+              "packages/runtime-controller/src/packaged-controller.ts",
+              "  const handleKey = (input: ParserKeyInput): boolean => {\n"
+              '    if (!runtimeSkin || runtimeSkin.interactionMode !== "parser-assisted") {',
+              "  const handleKey = (input: ParserKeyInput): boolean => {\n"
+              '    if (runtimeSkin?.interactionMode !== "parser-assisted") {',
+          )
+          replace_exact(
+              "packages/scene-runtime/src/index.ts",
+              "  const asset = assetsById(bundle).get(scene.backgroundAssetId);\n"
+              '  if (!asset || asset.kind !== "image") {',
+              "  const asset = assetsById(bundle).get(scene.backgroundAssetId);\n"
+              '  if (asset?.kind !== "image") {',
+          )
+          replace_exact(
+              "scripts/validate-red-ledger-runtime.mjs",
+              "    const key = JSON.stringify([interaction.verb, interaction.itemId ?? null]);\n"
+              "    (interactionIndex[key] ??= []).push(interaction.id);",
+              "    const key = JSON.stringify([interaction.verb, interaction.itemId ?? null]);\n"
+              "    const interactionIds = interactionIndex[key] ?? [];\n"
+              "    interactionIds.push(interaction.id);\n"
+              "    interactionIndex[key] = interactionIds;",
+          )
+
+          app_path = Path("apps/studio/src/ClassicExperienceApp.tsx")
+          app_source = app_path.read_text(encoding="utf-8")
+          app_old = '''const principleLabel = (principle: ClassicExperiencePrincipleResult): string =>
+            principle.id.replaceAll("-", " ");
+
+          export const ClassicExperienceApp = () => {
+            const [projectIndex, setProjectIndex] = useState(1);
+            const project =
+              classicAdventureCreatorProjects[projectIndex] ??
+              classicAdventureCreatorProjects[0]!;
+          '''
+          app_new = '''const principleLabel = (principle: ClassicExperiencePrincipleResult): string =>
+            principle.id.replaceAll("-", " ");
+
+          const defaultClassicAdventureProject = classicAdventureCreatorProjects[0];
+          if (!defaultClassicAdventureProject) {
+            throw new Error("Classic Experience requires at least one creator project.");
+          }
+
+          export const ClassicExperienceApp = () => {
+            const [projectIndex, setProjectIndex] = useState(1);
+            const project =
+              classicAdventureCreatorProjects[projectIndex] ??
+              defaultClassicAdventureProject;
+          '''
+          if app_source.count(app_old) != 1:
+              raise SystemExit("ClassicExperienceApp guarded block did not match exactly.")
+          app_path.write_text(
+              app_source.replace(app_old, app_new),
+              encoding="utf-8",
+              newline="\n",
+          )
+
+          test_path = Path(
+              "packages/adventure-design/tests/classic-experience.test.ts"
+          )
+          test_source = test_path.read_text(encoding="utf-8")
+          helper_old = '''const mutable = (
+            project: ClassicAdventureCreatorProject,
+          ): ClassicAdventureCreatorProject => structuredClone(project);
+
+          '''
+          helper_new = '''const mutable = (
+            project: ClassicAdventureCreatorProject,
+          ): ClassicAdventureCreatorProject => structuredClone(project);
+
+          const mutableProjectAt = (index: number): ClassicAdventureCreatorProject => {
+            const project = classicAdventureCreatorProjects[index];
+            if (!project) {
+              throw new Error(`Classic experience fixture ${index} is missing.`);
+            }
+            return mutable(project);
+          };
+
+          const firstPuzzle = (
+            project: ClassicAdventureCreatorProject,
+          ): ClassicAdventureCreatorProject["puzzles"][number] => {
+            const puzzle = project.puzzles[0];
+            if (!puzzle) {
+              throw new Error(`Classic experience project '${project.id}' has no puzzle.`);
+            }
+            return puzzle;
+          };
+
+          '''
+          if test_source.count(helper_old) != 1:
+              raise SystemExit("Classic experience test helper block did not match.")
+          test_source = test_source.replace(helper_old, helper_new)
+          test_source = test_source.replace(
+              "const project = mutable(classicAdventureCreatorProjects[0]!);\n"
+              "    const puzzle = project.puzzles[0]!;",
+              "const project = mutableProjectAt(0);\n"
+              "    const puzzle = firstPuzzle(project);",
+          )
+          test_source = test_source.replace(
+              "const project = mutable(classicAdventureCreatorProjects[1]!);\n"
+              "    const puzzle = project.puzzles[0]!;",
+              "const project = mutableProjectAt(1);\n"
+              "    const puzzle = firstPuzzle(project);",
+          )
+          if "classicAdventureCreatorProjects[0]!" in test_source:
+              raise SystemExit("A creator-project non-null assertion remains.")
+          if "project.puzzles[0]!" in test_source:
+              raise SystemExit("A puzzle non-null assertion remains.")
+          test_path.write_text(test_source, encoding="utf-8", newline="\n")
+          print("Applied ten reviewed source-hygiene fixes.")
+          PY
+
       - uses: actions/setup-node@v6
         with:
           node-version: 24.18.0
