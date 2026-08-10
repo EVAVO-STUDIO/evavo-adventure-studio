@@ -17,6 +17,8 @@
     { "path": "packages/ui-skin" },
     { "path": "packages/ui-skin-editor-core" },
     { "path": "packages/audio" },
+    { "path": "packages/audio-controller" },
+    { "path": "packages/audio-web" },
     { "path": "packages/save-game" },
     { "path": "packages/replay" },
     { "path": "packages/runtime-controller" },
