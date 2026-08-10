@@ -1,4 +1,11 @@
-import { type Id, idSchema, pointSchema, scalarSchema } from "@evavo/adventure-project-schema";
+import type { AudioRuntimeState } from "@evavo/adventure-audio/runtime";
+import { audioRuntimeStateSchema } from "@evavo/adventure-audio/runtime-schema";
+import {
+  type Id,
+  idSchema,
+  pointSchema,
+  scalarSchema,
+} from "@evavo/adventure-project-schema";
 import type { InteractiveRuntimeWorldState } from "@evavo/adventure-scene-runtime/commands";
 import {
   type ProfiledNavigationMovementState,
@@ -12,8 +19,13 @@ import {
 
 const fnvFingerprintSchema = z
   .string()
-  .regex(/^fnv1a64:[0-9a-f]{16}$/u, "Expected an FNV-1a 64-bit fingerprint.");
-const sha256Schema = z.string().regex(/^[0-9a-f]{64}$/u, "Expected a lowercase SHA-256 digest.");
+  .regex(
+    /^fnv1a64:[0-9a-f]{16}$/u,
+    "Expected an FNV-1a 64-bit fingerprint.",
+  );
+const sha256Schema = z
+  .string()
+  .regex(/^[0-9a-f]{64}$/u, "Expected a lowercase SHA-256 digest.");
 
 const animationPlaybackSchema = z
   .object({
@@ -50,7 +62,10 @@ const activeSequenceSchema = z
     sequenceId: idSchema("sequence"),
     elapsedTicks: z.number().int().nonnegative(),
     iteration: z.number().int().nonnegative(),
-    nextCueIndexByTrack: z.record(z.string().min(1), z.number().int().nonnegative()),
+    nextCueIndexByTrack: z.record(
+      z.string().min(1),
+      z.number().int().nonnegative(),
+    ),
   })
   .strict();
 
@@ -70,7 +85,10 @@ const runtimeStorySchema = z
     activeDialogue: activeDialogueSchema.nullable(),
     activeSequences: z.array(activeSequenceSchema),
     objectStates: z.record(z.string().min(1), z.string().min(1)),
-    randomStreams: z.record(z.string().min(1), z.number().int().nonnegative().max(0xffffffff)),
+    randomStreams: z.record(
+      z.string().min(1),
+      z.number().int().nonnegative().max(0xffffffff),
+    ),
     score: z.number().int(),
   })
   .strict();
@@ -103,14 +121,19 @@ const profiledMovementStateSchema = z
   .transform(
     (
       value: unknown,
-      context: { addIssue(issue: { code: "custom"; message: string }): void },
+      context: {
+        addIssue(issue: { code: "custom"; message: string }): void;
+      },
     ): ProfiledNavigationMovementState => {
       try {
         return parseProfiledNavigationMovementState(value);
       } catch (error) {
         context.addIssue({
           code: "custom",
-          message: error instanceof Error ? error.message : "Profiled movement state is invalid.",
+          message:
+            error instanceof Error
+              ? error.message
+              : "Profiled movement state is invalid.",
         });
         return z.NEVER;
       }
@@ -143,9 +166,15 @@ const pendingCommandSchema = z
 export const interactiveWorldSaveSchema = z
   .object({
     story: runtimeStorySchema,
-    actorInstances: z.record(z.string().min(1), actorInstanceRuntimeSchema),
+    actorInstances: z.record(
+      z.string().min(1),
+      actorInstanceRuntimeSchema,
+    ),
     movements: z.record(z.string().min(1), actorMovementSchema),
-    pendingObjectCommands: z.record(z.string().min(1), pendingCommandSchema),
+    pendingObjectCommands: z.record(
+      z.string().min(1),
+      pendingCommandSchema,
+    ),
   })
   .strict() as z.ZodType<InteractiveRuntimeWorldState>;
 
@@ -184,6 +213,7 @@ export interface SaveGamePayload {
   readonly assetManifestFingerprint: string;
   readonly world: InteractiveRuntimeWorldState;
   readonly interface: SaveGameInterfaceState;
+  readonly audio?: AudioRuntimeState;
 }
 
 const saveGamePayloadObjectSchema = z
@@ -194,10 +224,12 @@ const saveGamePayloadObjectSchema = z
     assetManifestFingerprint: sha256Schema,
     world: interactiveWorldSaveSchema,
     interface: saveGameInterfaceStateSchema,
+    audio: audioRuntimeStateSchema.optional(),
   })
   .strict();
 
-export const saveGamePayloadSchema = saveGamePayloadObjectSchema as z.ZodType<SaveGamePayload>;
+export const saveGamePayloadSchema =
+  saveGamePayloadObjectSchema as z.ZodType<SaveGamePayload>;
 
 export interface SaveGame extends SaveGamePayload {
   readonly saveFingerprint: string;
