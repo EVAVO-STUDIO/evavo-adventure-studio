@@ -10,6 +10,8 @@
     "typecheck": "tsc -b --pretty false"
   },
   "dependencies": {
+    "@evavo/adventure-audio-controller": "workspace:*",
+    "@evavo/adventure-audio-web": "workspace:*",
     "@evavo/adventure-bitmap-font": "workspace:*",
     "@evavo/adventure-core": "workspace:*",
     "@evavo/adventure-dialogue": "workspace:*",
