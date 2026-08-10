@@ -14,6 +14,7 @@ export type PackagedRuntimeController = AudioPackagedRuntimeController;
 export type { PackagedRuntimeControllerOptions };
 
 const runtimeBundleUrl = (): string | null => {
+  if (typeof window === "undefined") return null;
   const requested = requestedRuntimeBundleFromSearch(window.location.search);
   return requested ? new URL(requested, window.location.href).href : null;
 };
@@ -25,6 +26,14 @@ export const createPackagedRuntimeController = (
   const controller = createAudioPackagedRuntimeController(bundle, options);
   const bundleUrl = runtimeBundleUrl();
   let output: WebAudioCommandPlayer | null = null;
+
+  const flushAudio = (): void => {
+    const tick = controller.worldState().story.tick;
+    const pending = controller.drainAudioCommands();
+    if (!output) return;
+    output.synchronize(tick);
+    output.submit(pending, tick);
+  };
 
   if (bundle.audioMix && bundleUrl && webAudioIsSupported()) {
     output = new WebAudioCommandPlayer(
@@ -41,18 +50,13 @@ export const createPackagedRuntimeController = (
     void output.preload().catch((error: unknown) => console.error(error));
     window.addEventListener(
       "pagehide",
-      () => void output?.dispose().catch((error: unknown) => console.error(error)),
+      () =>
+        void output
+          ?.dispose()
+          .catch((error: unknown) => console.error(error)),
       { once: true },
     );
   }
-
-  const flushAudio = (): void => {
-    const tick = controller.worldState().story.tick;
-    const pending = controller.drainAudioCommands();
-    if (!output) return;
-    output.synchronize(tick);
-    output.submit(pending, tick);
-  };
 
   const unlockAudio = (): void => {
     if (!output) return;
