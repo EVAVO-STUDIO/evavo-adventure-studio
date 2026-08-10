@@ -55,6 +55,32 @@ const project = parseAdventureProject({
   inventoryItems: [],
 });
 
+const compiledAudioAsset = (
+  assetId: string,
+  sourcePath: string,
+  runtimePath: string,
+  durationMilliseconds: number,
+) => ({
+  assetId,
+  kind: "audio" as const,
+  sourceFiles: [{ path: sourcePath, sha256: hash, byteLength: 10 }],
+  outputFiles: [
+    {
+      role: "primary",
+      runtimePath,
+      mediaType: "audio/ogg",
+      sha256: hash,
+      byteLength: 8,
+    },
+  ],
+  metadata: {
+    kind: "audio" as const,
+    durationMilliseconds,
+    channels: 2,
+    sampleRate: 44_100,
+  },
+});
+
 const assets = assetBuildManifestSchema.parse({
   manifestVersion: 1,
   projectId: project.id,
@@ -84,31 +110,18 @@ const assets = assetBuildManifestSchema.parse({
         colourCount: 128,
       },
     },
-    ...[
-      ["asset.music", "audio/music.ogg", "assets/audio/music.ogg", 12_000],
-      ["asset.rain", "audio/rain.ogg", "assets/audio/rain.ogg", 20_000],
-    ].map(([assetId, sourcePath, runtimePath, durationMilliseconds]) => ({
-      assetId,
-      kind: "audio" as const,
-      sourceFiles: [
-        { path: sourcePath, sha256: hash, byteLength: 10 },
-      ],
-      outputFiles: [
-        {
-          role: "primary",
-          runtimePath,
-          mediaType: "audio/ogg",
-          sha256: hash,
-          byteLength: 8,
-        },
-      ],
-      metadata: {
-        kind: "audio" as const,
-        durationMilliseconds,
-        channels: 2,
-        sampleRate: 44_100,
-      },
-    })),
+    compiledAudioAsset(
+      "asset.music",
+      "audio/music.ogg",
+      "assets/audio/music.ogg",
+      12_000,
+    ),
+    compiledAudioAsset(
+      "asset.rain",
+      "audio/rain.ogg",
+      "assets/audio/rain.ogg",
+      20_000,
+    ),
   ],
 });
 
@@ -232,7 +245,11 @@ describe("audio mix compilation", () => {
       "audio-cue.music",
       "audio-cue.rain",
     ]);
-    expect(compiled.bundle.audioMix?.soundscapes[0]?.layers.map((layer) => layer.id)).toEqual([
+    expect(
+      compiled.bundle.audioMix?.soundscapes[0]?.layers.map(
+        (layer) => layer.id,
+      ),
+    ).toEqual([
       "audio-scene-layer.office.music",
       "audio-scene-layer.office.rain",
     ]);
