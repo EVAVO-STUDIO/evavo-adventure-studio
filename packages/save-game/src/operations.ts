@@ -2,6 +2,7 @@ import type { AudioRuntimeState } from "@evavo/adventure-audio/runtime";
 import type { Id } from "@evavo/adventure-project-schema";
 import type { RuntimeBundle } from "@evavo/adventure-runtime-bundle";
 import type { InteractiveRuntimeWorldState } from "@evavo/adventure-scene-runtime/commands";
+import { validateSavedAudio } from "./audio-compatibility.js";
 import {
   canonicalSaveGameJson,
   fnv1a64,
@@ -31,6 +32,14 @@ export interface CreateSaveGameOptions {
   readonly audio?: AudioRuntimeState;
 }
 
+const completeCompatibilityIssues = (
+  bundle: RuntimeBundle,
+  save: SaveGame,
+) => [
+  ...validateSaveGameCompatibility(bundle, save),
+  ...validateSavedAudio(bundle, save),
+];
+
 export const createSaveGame = (
   bundle: RuntimeBundle,
   world: InteractiveRuntimeWorldState,
@@ -51,7 +60,7 @@ export const createSaveGame = (
     ...payload,
     saveFingerprint: fnv1a64(canonicalSaveGameJson(payload)),
   });
-  const issues = validateSaveGameCompatibility(bundle, save);
+  const issues = completeCompatibilityIssues(bundle, save);
   if (issues.length > 0) throw new SaveGameCompatibilityError(issues);
   return save;
 };
@@ -61,7 +70,7 @@ export const loadSaveGame = (
   input: unknown,
 ): SaveGame => {
   const save = parseSaveGame(input);
-  const issues = validateSaveGameCompatibility(bundle, save);
+  const issues = completeCompatibilityIssues(bundle, save);
   if (issues.length > 0) throw new SaveGameCompatibilityError(issues);
   return save;
 };
