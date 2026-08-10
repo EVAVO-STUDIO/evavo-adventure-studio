@@ -31,6 +31,7 @@
     "@evavo/adventure-art-direction": "workspace:*",
     "@evavo/adventure-asset-contract": "workspace:*",
     "@evavo/adventure-asset-pipeline": "workspace:*",
+    "@evavo/adventure-audio": "workspace:*",
     "@evavo/adventure-bitmap-font": "workspace:*",
     "@evavo/adventure-compiler": "workspace:*",
     "@evavo/adventure-playtest-inspector": "workspace:*",
