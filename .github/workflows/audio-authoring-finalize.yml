@@ -1,0 +1,401 @@
+name: One-use Audio Studio finalization
+
+on:
+  push:
+    branches: [main]
+    paths:
+      - ".github/workflows/audio-authoring-finalize.yml"
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+concurrency:
+  group: audio-authoring-finalize-main
+  cancel-in-progress: false
+
+jobs:
+  finalize:
+    name: Finalize Audio Studio and verify
+    if: github.actor != 'github-actions[bot]'
+    runs-on: ubuntu-24.04
+    timeout-minutes: 35
+
+    steps:
+      - name: Check out main
+        uses: actions/checkout@08eba0b27e820071cde6df949e0beb9ba4906955
+        with:
+          ref: main
+          fetch-depth: 0
+
+      - name: Install Node.js
+        uses: actions/setup-node@49933ea5288caeca8642d1e84afbd3f7d6820020
+        with:
+          node-version-file: .nvmrc
+          package-manager-cache: false
+
+      - name: Activate pinned pnpm
+        shell: bash
+        run: |
+          corepack enable
+          corepack prepare pnpm@11.17.0 --activate
+          pnpm --version
+
+      - name: Finalize audio authoring source and documentation
+        shell: bash
+        run: |
+          python3 - <<'PY'
+          from pathlib import Path
+
+          def replace_once(path: Path, old: str, new: str) -> None:
+              text = path.read_text(encoding="utf-8")
+              if old not in text:
+                  raise SystemExit(f"Expected source fragment is missing from {path}: {old[:120]!r}")
+              path.write_text(text.replace(old, new, 1), encoding="utf-8")
+
+          audio_app = Path("apps/studio/src/AudioApp.tsx")
+          replace_once(audio_app, "  type AudioBusId,\n", "")
+          replace_once(
+              audio_app,
+              'const id = <T extends string>(value: string): Id<T> => value as Id<T>;\n\n',
+              '''const id = <T extends string>(value: string): Id<T> => value as Id<T>;
+
+const nextStableId = (prefix: string, existing: readonly string[]): string => {
+  const used = new Set(existing);
+  let suffix = existing.length + 1;
+  while (used.has(`${prefix}.${suffix}`)) suffix += 1;
+  return `${prefix}.${suffix}`;
+};
+
+''',
+          )
+          replace_once(
+              audio_app,
+              '    const cueId = id<"audio-cue">(`audio-cue.custom.${index}`);',
+              '''    const cueId = id<"audio-cue">(
+      nextStableId(
+        "audio-cue.custom",
+        manifest.cues.map((candidate) => candidate.id),
+      ),
+    );''',
+          )
+          replace_once(
+              audio_app,
+              '''    const index = soundscape.layers.length + 1;
+    execute(
+      insertSceneLayerCommand(state, {
+        id: id<"audio-scene-layer">(
+          `audio-scene-layer.${state.selectedSceneId}.${index}`,
+        ),''',
+              '''    const layerId = id<"audio-scene-layer">(
+      nextStableId(
+        `audio-scene-layer.${state.selectedSceneId}`,
+        soundscape.layers.map((candidate) => candidate.id),
+      ),
+    );
+    execute(
+      insertSceneLayerCommand(state, {
+        id: layerId,''',
+          )
+          replace_once(
+              audio_app,
+              '''    const bindingId = id<"audio-speech-binding">(
+      `audio-speech-binding.custom.${manifest.speechBindings.length + 1}`,
+    );''',
+              '''    const bindingId = id<"audio-speech-binding">(
+      nextStableId(
+        "audio-speech-binding.custom",
+        manifest.speechBindings.map((candidate) => candidate.id),
+      ),
+    );''',
+          )
+          replace_once(
+              audio_app,
+              '''    const ruleId = id<"audio-ducking-rule">(
+      `audio-ducking-rule.custom.${manifest.ducking.length + 1}`,
+    );''',
+              '''    const ruleId = id<"audio-ducking-rule">(
+      nextStableId(
+        "audio-ducking-rule.custom",
+        manifest.ducking.map((candidate) => candidate.id),
+      ),
+    );''',
+          )
+          replace_once(
+              audio_app,
+              '''                  replace(
+                    {
+                      ...cue,
+                      bus: event.currentTarget.value as AudioContentBusId,
+                    },
+                    "Changed cue bus.",
+                  )''',
+              '''                  {
+                    const bus = event.currentTarget.value as AudioContentBusId;
+                    replace(
+                      {
+                        ...cue,
+                        bus,
+                        ...(bus === "speech"
+                          ? {
+                              loop: null,
+                              polyphony: "restart" as const,
+                              maxInstances: 1,
+                            }
+                          : {}),
+                      },
+                      "Changed cue bus.",
+                    );
+                  }''',
+          )
+          replace_once(
+              audio_app,
+              '''                type="checkbox"
+                checked={cue.loop !== null}''',
+              '''                type="checkbox"
+                checked={cue.loop !== null}
+                disabled={cue.bus === "speech"}''',
+          )
+
+          readme = Path("README.md")
+          readme_text = readme.read_text(encoding="utf-8")
+          readme_text = readme_text.replace(
+              "character animation, art-direction policy, bitmap fonts, interaction skins, dialogue graphs, timeline sequencing, playtest artifact inspection and project validation.",
+              "character animation, art-direction policy, bitmap fonts, interaction skins, deterministic audio mixing, dialogue graphs, timeline sequencing, playtest artifact inspection and project validation.",
+          )
+          interface_link = "- [Interface skins and interaction layouts](docs/interface-skins.md)\n"
+          audio_link = "- [Audio authoring and deterministic mix](docs/audio-authoring.md)\n"
+          if audio_link not in readme_text:
+              if interface_link not in readme_text:
+                  raise SystemExit("README interface-skins link anchor is missing")
+              readme_text = readme_text.replace(interface_link, interface_link + audio_link, 1)
+          interface_route = "/?workspace=interface\n"
+          audio_route = "/?workspace=audio\n"
+          if audio_route not in readme_text:
+              if interface_route not in readme_text:
+                  raise SystemExit("README interface route anchor is missing")
+              readme_text = readme_text.replace(interface_route, interface_route + audio_route, 1)
+          readme.write_text(readme_text, encoding="utf-8")
+
+          editor_index = Path("docs/editor-expansion-index.md")
+          index_text = editor_index.read_text(encoding="utf-8")
+          interface_row = "| Interface Skins | `/?workspace=interface` | project UI-skin sidecar | `@evavo/adventure-ui-skin-editor-core` |\n"
+          audio_row = "| Audio Studio | `/?workspace=audio` | project audio-mix sidecar | `@evavo/adventure-audio-editor-core` |\n"
+          if audio_row not in index_text:
+              if interface_row not in index_text:
+                  raise SystemExit("Editor index interface row anchor is missing")
+              index_text = index_text.replace(interface_row, interface_row + audio_row, 1)
+          interface_paragraph = "Interface skins bind the canonical interaction mode to native regions, verbs, bitmap-font roles, inventory, parser, score, dialogue choices and verb coins. They compile only after source validation and compiled icon-frame validation, then drive the same renderer-neutral composer in Studio and packaged gameplay.\n"
+          audio_paragraph = "\nAudio Studio owns the project-scoped bus hierarchy, authored cues, loop boundaries, fades, polyphony, scene soundscapes, speech bindings, performance markers and ducking rules. Its serializable command history validates every mutation against the canonical project before compilation; the runtime bundle, deterministic controller, save system and Web Audio adapter consume the same manifest without a parallel browser-only format.\n"
+          if audio_paragraph.strip() not in index_text:
+              if interface_paragraph not in index_text:
+                  raise SystemExit("Editor index interface paragraph anchor is missing")
+              index_text = index_text.replace(
+                  interface_paragraph,
+                  interface_paragraph + audio_paragraph,
+                  1,
+              )
+          verification_anchor = "- interface-skin schema, editor, compiler, runtime, hit-testing and player tests;\n"
+          verification_audio = "- audio-mix schema, editor history, compiler, runtime, save-state, Web Audio and Studio tests;\n"
+          if verification_audio not in index_text:
+              if verification_anchor not in index_text:
+                  raise SystemExit("Editor index verification anchor is missing")
+              index_text = index_text.replace(
+                  verification_anchor,
+                  verification_anchor + verification_audio,
+                  1,
+              )
+          editor_index.write_text(index_text, encoding="utf-8")
+
+          Path("docs/audio-authoring.md").write_text(
+              '''# Audio authoring and deterministic mix
+
+## Purpose
+
+Audio Studio is the project-scoped authoring surface for music, speech, ambience, room tone, effects and interface sound. It keeps the expressive timing of a 1990s adventure soundtrack while using the same deterministic tick clock, stable IDs, validation rules and runtime bundle as the rest of Adventure Studio.
+
+Open the workspace at:
+
+```text
+http://localhost:5174/?workspace=audio
+```
+
+The canonical sidecar is `AudioMixManifest` from `@evavo/adventure-audio`. The visual workspace edits it through `@evavo/adventure-audio-editor-core`; it does not keep an unrelated React-only copy.
+
+## Bus hierarchy
+
+Every mix declares the complete bus set:
+
+- `master`;
+- `music`;
+- `speech`;
+- `ambience`;
+- `effects`;
+- `interface`.
+
+Each bus owns a normalized level, mute state, maximum simultaneous voices and deterministic voice-stealing policy. Voice limits are part of authored game behavior rather than an incidental browser resource decision.
+
+Ducking rules identify a source bus, target bus, target level and fixed-tick attack and release. A common configuration lowers music and ambience while speech is active without permanently changing the authored bus mix.
+
+## Audio cues
+
+A cue binds one canonical audio asset to a content bus and declares:
+
+- gain and source offset;
+- fade-in and fade-out ticks;
+- optional loop start, loop end and crossfade in milliseconds;
+- overlap, restart or ignore polyphony;
+- maximum instances and priority;
+- an optional interrupt group.
+
+Speech cues cannot loop. Restart and ignore polyphony normally use one instance. Removing a cue is rejected while a soundscape or speech binding still references it.
+
+Loop boundaries remain media-time values because they address encoded samples. Scheduling, fades, scene transitions, sequences, speech and persistence use logical adventure ticks.
+
+## Scene soundscapes
+
+Each project scene can own one soundscape containing ordered layers. A layer identifies a music, ambience or room-tone role, a cue, optional story-state condition, start delay, fades and a restart policy:
+
+- `restart` begins from the authored cue offset;
+- `resume` restores the persisted playhead when possible;
+- `continue` keeps a compatible voice across scene re-entry.
+
+Music layers must use music cues. Ambience and room-tone layers must use ambience cues. The runtime evaluates conditions against canonical story state when a scene is entered.
+
+## Speech performance
+
+Speech bindings connect exact dialogue-line IDs to speech cues. They can add lead-in, tail time and fixed-tick performance markers for mouth shapes, facial poses or other authored voice events.
+
+Markers are ordered and stable. They do not depend on browser font or animation timing. Save games preserve active audio voices and playheads, and loading recreates deterministic playback commands against the same bundle.
+
+## Sequence audio
+
+Cinematic audio tracks use the project sequence contract. `sound` cues select a compatible authored audio cue by asset and bus; `stop-audio` cues stop one bus with a fixed-tick fade. Sequence playback, looping and skipping remain governed by the deterministic sequence scheduler.
+
+## Editor command model
+
+Audio Studio supports serializable commands for:
+
+- bus replacement;
+- cue insertion, replacement and protected removal;
+- soundscape insertion, replacement and removal;
+- scene-layer insertion, replacement and removal;
+- speech-binding insertion, replacement and removal;
+- ducking-rule insertion, replacement and removal;
+- atomic recursive batches.
+
+Every accepted command has an exact inverse for undo. The command is applied to an immutable clone, parsed through the audio schema and semantically validated against the project before history mutation. Invalid edits never enter undo history.
+
+## Compilation and playback
+
+The production path is:
+
+```text
+audio-mix.json
+    ↓ schema and semantic validation
+verified compiled audio assets
+    ↓ deterministic compiler
+runtime bundle audioMix
+    ↓ audio-aware runtime controller
+portable AudioCommand stream
+    ↓ Web Audio adapter
+browser playback
+```
+
+The runtime controller owns story synchronization, scene soundscapes, sequence cues, active speech and save restoration. The Web Audio adapter owns decoding, gain nodes, scheduling and autoplay recovery. Neither adapter changes canonical story state.
+
+## Command-line validation
+
+Validate the sidecar with the project and compiled asset evidence:
+
+```powershell
+pnpm cli -- validate `
+  --project .\\game\\project.json `
+  --asset-manifest .\\game\\build\\assets.manifest.json `
+  --audio-mix .\\game\\audio-mix.json
+```
+
+Compile and package with the same sidecar:
+
+```powershell
+pnpm cli -- compile `
+  --project .\\game\\project.json `
+  --asset-manifest .\\game\\build\\assets.manifest.json `
+  --audio-mix .\\game\\audio-mix.json `
+  --out .\\game\\build\\game.bundle.json
+
+pnpm cli -- package `
+  --project .\\game\\project.json `
+  --asset-manifest .\\game\\build\\assets.manifest.json `
+  --audio-mix .\\game\\audio-mix.json `
+  --out .\\game\\release\\web
+```
+
+Compilation rejects project identity drift, missing audio outputs, wrong asset kinds, invalid loops, missing buses, incompatible soundscape layers, stale dialogue bindings and sequence audio references that cannot be resolved.
+
+## Verification
+
+The governed editor-expansion gate covers:
+
+- audio schemas and semantic validation;
+- serializable editor commands, inverse operations and protected references;
+- Audio Studio reducer behavior and dirty-state history;
+- deterministic compilation and source-free runtime validation;
+- save compatibility and restored playheads;
+- audio-aware runtime control;
+- Web Audio scheduling, voice completion and autoplay recovery;
+- Player and Studio builds.
+
+Run it from an installed workspace with:
+
+```powershell
+pnpm run check:editor-expansion
+```
+
+A successful technical gate does not replace listening review. Final production still requires checking encoded quality, perceived loudness, loop seams, speech intelligibility, performance timing and the full mix on representative speakers and headphones.
+''',
+              encoding="utf-8",
+          )
+          PY
+
+      - name: Install dependencies and refresh lockfile
+        run: pnpm install --no-frozen-lockfile
+
+      - name: Apply canonical source formatting
+        run: >-
+          pnpm exec biome check --write
+          apps/studio/src/AudioApp.tsx
+          apps/studio/src/audio.css
+          apps/studio/src/audio-fixture.ts
+          apps/studio/src/audio-workspace.ts
+          apps/studio/tests/audio-workspace.test.ts
+          packages/audio-editor-core
+
+      - name: Verify repository lint
+        run: pnpm exec biome ci .
+
+      - name: Run governed editor expansion gate
+        run: pnpm run check:editor-expansion
+
+      - name: Commit verified Audio Studio finalization
+        shell: bash
+        run: |
+          if git diff --quiet; then
+            echo "Audio Studio finalization is already current."
+            exit 0
+          fi
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add \
+            README.md \
+            docs/audio-authoring.md \
+            docs/editor-expansion-index.md \
+            apps/studio/src/AudioApp.tsx \
+            apps/studio/src/audio.css \
+            apps/studio/src/audio-fixture.ts \
+            apps/studio/src/audio-workspace.ts \
+            apps/studio/tests/audio-workspace.test.ts \
+            packages/audio-editor-core \
+            pnpm-lock.yaml
+          git commit -m "feat: finalize verified Audio Studio authoring"
+          git push origin HEAD:main
