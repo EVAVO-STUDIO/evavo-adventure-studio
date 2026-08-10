@@ -12,6 +12,10 @@
       "types": "./dist/src/runtime.d.ts",
       "import": "./dist/src/runtime.js"
     },
+    "./runtime-schema": {
+      "types": "./dist/src/runtime-schema.d.ts",
+      "import": "./dist/src/runtime-schema.js"
+    },
     "./runtime-validation": {
       "types": "./dist/src/runtime-validation.d.ts",
       "import": "./dist/src/runtime-validation.js"
