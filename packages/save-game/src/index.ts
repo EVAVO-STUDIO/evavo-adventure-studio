@@ -1,3 +1,4 @@
+export * from "./audio-compatibility.js";
 export * from "./canonical.js";
 export * from "./compatibility.js";
 export * from "./errors.js";
