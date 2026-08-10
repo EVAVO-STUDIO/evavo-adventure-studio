@@ -27,7 +27,18 @@ export type SaveGameCompatibilityIssueCode =
   | "invalid-controlled-actor"
   | "invalid-selected-item"
   | "invalid-selected-verb"
-  | "parser-history-limit";
+  | "parser-history-limit"
+  | "audio-state-without-runtime-mix"
+  | "audio-project-mismatch"
+  | "audio-scene-mismatch"
+  | "audio-tick-mismatch"
+  | "audio-bus-unconfigured"
+  | "audio-voice-asset-missing"
+  | "audio-voice-asset-kind"
+  | "audio-voice-cue-missing"
+  | "audio-voice-cue-mismatch"
+  | "audio-scene-layer-missing"
+  | "audio-resume-cue-missing";
 
 export interface SaveGameCompatibilityIssue {
   readonly severity: "error";
@@ -56,7 +67,9 @@ export class SaveGameCompatibilityError extends Error {
   readonly issues: readonly SaveGameCompatibilityIssue[];
 
   constructor(issues: readonly SaveGameCompatibilityIssue[]) {
-    super(`Save game is incompatible with this runtime bundle (${issues.length} issue(s)).`);
+    super(
+      `Save game is incompatible with this runtime bundle (${issues.length} issue(s)).`,
+    );
     this.name = "SaveGameCompatibilityError";
     this.issues = issues;
   }
