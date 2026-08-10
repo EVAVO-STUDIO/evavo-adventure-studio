@@ -53,6 +53,12 @@ importers:
 
   apps/player:
     dependencies:
+      '@evavo/adventure-audio-controller':
+        specifier: workspace:*
+        version: link:../../packages/audio-controller
+      '@evavo/adventure-audio-web':
+        specifier: workspace:*
+        version: link:../../packages/audio-web
       '@evavo/adventure-bitmap-font':
         specifier: workspace:*
         version: link:../../packages/bitmap-font
@@ -283,6 +289,54 @@ importers:
         specifier: 'catalog:'
         version: 0.35.3(@types/node@24.13.3)
 
+  packages/audio:
+    dependencies:
+      '@evavo/adventure-asset-contract':
+        specifier: workspace:*
+        version: link:../asset-contract
+      '@evavo/adventure-project-schema':
+        specifier: workspace:*
+        version: link:../project-schema
+      zod:
+        specifier: 'catalog:'
+        version: 4.4.3
+
+  packages/audio-controller:
+    dependencies:
+      '@evavo/adventure-audio':
+        specifier: workspace:*
+        version: link:../audio
+      '@evavo/adventure-core':
+        specifier: workspace:*
+        version: link:../core
+      '@evavo/adventure-project-schema':
+        specifier: workspace:*
+        version: link:../project-schema
+      '@evavo/adventure-runtime-bundle':
+        specifier: workspace:*
+        version: link:../runtime-bundle
+      '@evavo/adventure-runtime-controller':
+        specifier: workspace:*
+        version: link:../runtime-controller
+      '@evavo/adventure-save-game':
+        specifier: workspace:*
+        version: link:../save-game
+      '@evavo/adventure-scene-runtime':
+        specifier: workspace:*
+        version: link:../scene-runtime
+
+  packages/audio-web:
+    dependencies:
+      '@evavo/adventure-asset-contract':
+        specifier: workspace:*
+        version: link:../asset-contract
+      '@evavo/adventure-audio':
+        specifier: workspace:*
+        version: link:../audio
+      '@evavo/adventure-project-schema':
+        specifier: workspace:*
+        version: link:../project-schema
+
   packages/bitmap-font:
     dependencies:
       '@evavo/adventure-asset-contract':
@@ -315,6 +369,9 @@ importers:
       '@evavo/adventure-asset-contract':
         specifier: workspace:*
         version: link:../asset-contract
+      '@evavo/adventure-audio':
+        specifier: workspace:*
+        version: link:../audio
       '@evavo/adventure-bitmap-font':
         specifier: workspace:*
         version: link:../bitmap-font
@@ -493,6 +550,9 @@ importers:
       '@evavo/adventure-asset-contract':
         specifier: workspace:*
         version: link:../asset-contract
+      '@evavo/adventure-audio':
+        specifier: workspace:*
+        version: link:../audio
       '@evavo/adventure-bitmap-font':
         specifier: workspace:*
         version: link:../bitmap-font
@@ -551,6 +611,9 @@ importers:
 
   packages/save-game:
     dependencies:
+      '@evavo/adventure-audio':
+        specifier: workspace:*
+        version: link:../audio
       '@evavo/adventure-play-feel':
         specifier: workspace:*
         version: link:../play-feel
@@ -716,6 +779,9 @@ importers:
       '@evavo/adventure-asset-pipeline':
         specifier: workspace:*
         version: link:../../packages/asset-pipeline
+      '@evavo/adventure-audio':
+        specifier: workspace:*
+        version: link:../../packages/audio
       '@evavo/adventure-bitmap-font':
         specifier: workspace:*
         version: link:../../packages/bitmap-font
