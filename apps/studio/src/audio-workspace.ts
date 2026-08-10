@@ -53,12 +53,6 @@ export type AudioWorkspaceAction =
   | { readonly type: "mark-saved" }
   | { readonly type: "clear-notice" };
 
-const firstSceneId = (project: AdventureProject): Id<"scene"> => {
-  const scene = project.scenes[0];
-  if (!scene) throw new Error("Audio Studio requires at least one project scene.");
-  return scene.id;
-};
-
 export const createAudioWorkspace = (
   project: AdventureProject,
   manifest: AudioMixManifest,
@@ -66,7 +60,7 @@ export const createAudioWorkspace = (
   project,
   history: createAudioEditorHistory(project, manifest),
   selectedCueId: manifest.cues[0]?.id ?? null,
-  selectedSceneId: project.startSceneId ?? firstSceneId(project),
+  selectedSceneId: project.startSceneId,
   selectedBindingId: manifest.speechBindings[0]?.id ?? null,
   selectedDuckingRuleId: manifest.ducking[0]?.id ?? null,
   notice: null,
@@ -115,11 +109,20 @@ export const audioWorkspaceIssues = (
 export const audioIssuesForSelection = (
   state: AudioWorkspaceState,
 ): readonly AudioMixIssue[] => {
+  const issues = audioWorkspaceIssues(state);
+  if (
+    state.selectedCueId === null &&
+    state.selectedBindingId === null &&
+    state.selectedDuckingRuleId === null
+  ) {
+    return issues;
+  }
+
   const cue = selectedAudioCue(state);
   const soundscape = selectedAudioSoundscape(state);
   const binding = selectedAudioSpeechBinding(state);
   const rule = selectedAudioDuckingRule(state);
-  return audioWorkspaceIssues(state).filter(
+  return issues.filter(
     (issue) =>
       (cue ? issue.message.includes(`'${cue.id}'`) : false) ||
       (soundscape ? issue.message.includes(`'${soundscape.sceneId}'`) : false) ||
