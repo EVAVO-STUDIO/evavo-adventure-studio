@@ -1,3 +1,4 @@
+import type { AudioMixManifest } from "@evavo/adventure-audio";
 import type { AssetBuildManifest } from "@evavo/adventure-asset-contract";
 import type { BitmapFontManifest } from "@evavo/adventure-bitmap-font";
 import type { AdventureProject } from "@evavo/adventure-project-schema";
@@ -13,9 +14,15 @@ import {
   validateCompiledObjectVisualMappings,
 } from "@evavo/adventure-scene-instances/compiled-mapping";
 import type { UiSkinManifest } from "@evavo/adventure-ui-skin";
-import { type CompiledProject, canonicalStringify, compileProject } from "./index.js";
+import {
+  type CompiledProject,
+  canonicalStringify,
+  compileProject,
+} from "./index.js";
 
-export type SceneInstanceCompilationIssue = SceneInstanceIssue | CompiledObjectVisualIssue;
+export type SceneInstanceCompilationIssue =
+  | SceneInstanceIssue
+  | CompiledObjectVisualIssue;
 
 export class SceneInstanceCompilationError extends Error {
   readonly issues: readonly SceneInstanceCompilationIssue[];
@@ -27,24 +34,30 @@ export class SceneInstanceCompilationError extends Error {
   }
 }
 
-const canonicalSceneInstances = (manifest: SceneInstanceManifest): SceneInstanceManifest => ({
+const canonicalSceneInstances = (
+  manifest: SceneInstanceManifest,
+): SceneInstanceManifest => ({
   ...manifest,
   objectDefinitions: [...manifest.objectDefinitions]
     .sort((left, right) => left.id.localeCompare(right.id))
     .map((definition) => ({
       ...definition,
-      states: [...definition.states].sort((left, right) => left.id.localeCompare(right.id)),
+      states: [...definition.states].sort((left, right) =>
+        left.id.localeCompare(right.id),
+      ),
     })),
   scenes: [...manifest.scenes]
     .sort((left, right) => left.sceneId.localeCompare(right.sceneId))
     .map((composition) => ({
       ...composition,
-      actorInstances: [...composition.actorInstances].sort((left, right) => left.id.localeCompare(right.id)),
+      actorInstances: [...composition.actorInstances].sort((left, right) =>
+        left.id.localeCompare(right.id),
+      ),
       objectInstances: [...composition.objectInstances].sort((left, right) =>
         left.id.localeCompare(right.id),
       ),
-      navigationPortals: [...composition.navigationPortals].sort((left, right) =>
-        left.id.localeCompare(right.id),
+      navigationPortals: [...composition.navigationPortals].sort(
+        (left, right) => left.id.localeCompare(right.id),
       ),
     })),
 });
@@ -65,9 +78,12 @@ const fnv1a64 = (value: string): string => {
 export const compileProjectWithInstances = (
   project: AdventureProject,
   assetManifest: AssetBuildManifest,
-  sceneInstances: SceneInstanceManifest = emptySceneInstanceManifest(project.id),
+  sceneInstances: SceneInstanceManifest = emptySceneInstanceManifest(
+    project.id,
+  ),
   bitmapFonts?: BitmapFontManifest,
   uiSkins?: UiSkinManifest,
+  audioMix?: AudioMixManifest,
 ): CompiledProject => {
   const instanceIssues = validateSceneInstanceManifest(
     {
@@ -81,13 +97,25 @@ export const compileProjectWithInstances = (
     },
     sceneInstances,
   );
-  const visualIssues = validateCompiledObjectVisualMappings(sceneInstances, assetManifest);
-  const issues: SceneInstanceCompilationIssue[] = [...instanceIssues, ...visualIssues];
+  const visualIssues = validateCompiledObjectVisualMappings(
+    sceneInstances,
+    assetManifest,
+  );
+  const issues: SceneInstanceCompilationIssue[] = [
+    ...instanceIssues,
+    ...visualIssues,
+  ];
   if (issues.length > 0) {
     throw new SceneInstanceCompilationError(issues);
   }
 
-  const base = compileProject(project, assetManifest, bitmapFonts, uiSkins);
+  const base = compileProject(
+    project,
+    assetManifest,
+    bitmapFonts,
+    uiSkins,
+    audioMix,
+  );
   const bundle = parseRuntimeBundle({
     ...base.bundle,
     sceneInstances: canonicalSceneInstances(sceneInstances),
@@ -115,11 +143,19 @@ export const tryCompileProjectWithInstances = (
   sceneInstances?: SceneInstanceManifest,
   bitmapFonts?: BitmapFontManifest,
   uiSkins?: UiSkinManifest,
+  audioMix?: AudioMixManifest,
 ): SceneInstanceCompilationResult => {
   try {
     return {
       kind: "compiled",
-      project: compileProjectWithInstances(project, assetManifest, sceneInstances, bitmapFonts, uiSkins),
+      project: compileProjectWithInstances(
+        project,
+        assetManifest,
+        sceneInstances,
+        bitmapFonts,
+        uiSkins,
+        audioMix,
+      ),
     };
   } catch (error) {
     if (error instanceof SceneInstanceCompilationError) {
