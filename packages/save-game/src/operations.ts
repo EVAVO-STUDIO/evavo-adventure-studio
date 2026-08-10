@@ -1,12 +1,22 @@
+import type { AudioRuntimeState } from "@evavo/adventure-audio/runtime";
 import type { Id } from "@evavo/adventure-project-schema";
 import type { RuntimeBundle } from "@evavo/adventure-runtime-bundle";
 import type { InteractiveRuntimeWorldState } from "@evavo/adventure-scene-runtime/commands";
-import { canonicalSaveGameJson, fnv1a64, parseSaveGame, runtimeBundleFingerprint } from "./canonical.js";
+import {
+  canonicalSaveGameJson,
+  fnv1a64,
+  parseSaveGame,
+  runtimeBundleFingerprint,
+} from "./canonical.js";
 import { validateSaveGameCompatibility } from "./compatibility.js";
 import { SaveGameCompatibilityError } from "./errors.js";
 import { assertSaveGameAllowed } from "./policy.js";
 import type { SaveGameProfiledRuntimeCameraState } from "./profiled-camera.js";
-import { type SaveGame, saveGamePayloadSchema, saveGameSchema } from "./schema.js";
+import {
+  type SaveGame,
+  saveGamePayloadSchema,
+  saveGameSchema,
+} from "./schema.js";
 
 export interface CreateSaveGameOptions {
   readonly controlledActorInstanceId: Id<"actor-instance"> | null;
@@ -18,6 +28,7 @@ export interface CreateSaveGameOptions {
     readonly history: readonly string[];
   };
   readonly profiledCamera?: SaveGameProfiledRuntimeCameraState;
+  readonly audio?: AudioRuntimeState;
 }
 
 export const createSaveGame = (
@@ -26,13 +37,15 @@ export const createSaveGame = (
   options: CreateSaveGameOptions,
 ): SaveGame => {
   assertSaveGameAllowed(bundle, world);
+  const { audio, ...interfaceState } = options;
   const payload = saveGamePayloadSchema.parse({
     saveVersion: 1,
     projectId: bundle.projectId,
     bundleFingerprint: runtimeBundleFingerprint(bundle),
     assetManifestFingerprint: bundle.assetManifestFingerprint,
     world,
-    interface: options,
+    interface: interfaceState,
+    ...(audio ? { audio } : {}),
   });
   const save = saveGameSchema.parse({
     ...payload,
@@ -43,11 +56,15 @@ export const createSaveGame = (
   return save;
 };
 
-export const loadSaveGame = (bundle: RuntimeBundle, input: unknown): SaveGame => {
+export const loadSaveGame = (
+  bundle: RuntimeBundle,
+  input: unknown,
+): SaveGame => {
   const save = parseSaveGame(input);
   const issues = validateSaveGameCompatibility(bundle, save);
   if (issues.length > 0) throw new SaveGameCompatibilityError(issues);
   return save;
 };
 
-export const serializeSaveGame = (save: SaveGame): string => `${canonicalSaveGameJson(save)}\n`;
+export const serializeSaveGame = (save: SaveGame): string =>
+  `${canonicalSaveGameJson(save)}\n`;
