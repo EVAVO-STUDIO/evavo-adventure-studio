@@ -16,6 +16,7 @@ interface ProjectCommandInputs {
   readonly artEvidencePath: string | null;
   readonly bitmapFontsPath: string | null;
   readonly uiSkinsPath: string | null;
+  readonly audioMixPath: string | null;
   readonly format: OutputFormat;
 }
 
@@ -72,6 +73,7 @@ const VALUE_OPTIONS = new Set([
   "--art-evidence",
   "--bitmap-fonts",
   "--ui-skins",
+  "--audio-mix",
   "--out",
   "--output",
   "--report",
@@ -139,7 +141,10 @@ const requiredValue = (options: ParsedOptions, key: string): string => {
   return value;
 };
 
-const optionalValue = (options: ParsedOptions, key: string): string | null => options.values.get(key) ?? null;
+const optionalValue = (
+  options: ParsedOptions,
+  key: string,
+): string | null => options.values.get(key) ?? null;
 
 const outputValue = (options: ParsedOptions): string =>
   optionalValue(options, "--out") ?? requiredValue(options, "--output");
@@ -156,18 +161,26 @@ const PROJECT_INPUT_OPTIONS = [
   "--art-evidence",
   "--bitmap-fonts",
   "--ui-skins",
+  "--audio-mix",
 ] as const;
 
 const sharedInputs = (
   options: ParsedOptions,
-): Omit<ProjectCommandInputs, "projectPath" | "assetManifestPath" | "format"> => {
+): Omit<
+  ProjectCommandInputs,
+  "projectPath" | "assetManifestPath" | "format"
+> => {
   const artDirectionPath = optionalValue(options, "--art-direction");
   const artEvidencePath = optionalValue(options, "--art-evidence");
   if (artEvidencePath && !artDirectionPath) {
-    throw new CliUsageError("Option '--art-evidence' requires '--art-direction'.");
+    throw new CliUsageError(
+      "Option '--art-evidence' requires '--art-direction'.",
+    );
   }
   if (artEvidencePath && !options.values.has("--asset-manifest")) {
-    throw new CliUsageError("Option '--art-evidence' requires '--asset-manifest'.");
+    throw new CliUsageError(
+      "Option '--art-evidence' requires '--asset-manifest'.",
+    );
   }
   return {
     sceneInstancesPath: optionalValue(options, "--scene-instances"),
@@ -175,15 +188,25 @@ const sharedInputs = (
     artEvidencePath,
     bitmapFontsPath: optionalValue(options, "--bitmap-fonts"),
     uiSkinsPath: optionalValue(options, "--ui-skins"),
+    audioMixPath: optionalValue(options, "--audio-mix"),
   };
 };
 
 export const parseCliArguments = (argv: readonly string[]): CliCommand => {
   const [command, ...tokens] = argv;
-  if (!command || command === "help" || command === "--help" || command === "-h") {
+  if (
+    !command ||
+    command === "help" ||
+    command === "--help" ||
+    command === "-h"
+  ) {
     return { kind: "help" };
   }
-  if (command === "version" || command === "--version" || command === "-v") {
+  if (
+    command === "version" ||
+    command === "--version" ||
+    command === "-v"
+  ) {
     if (tokens.length > 0) {
       throw new CliUsageError("The version command does not accept options.");
     }
@@ -204,7 +227,12 @@ export const parseCliArguments = (argv: readonly string[]): CliCommand => {
     case "compile":
       assertAllowedOptions(
         options,
-        new Set([...PROJECT_INPUT_OPTIONS, "--out", "--output", "--report"]),
+        new Set([
+          ...PROJECT_INPUT_OPTIONS,
+          "--out",
+          "--output",
+          "--report",
+        ]),
         JSON_FLAG,
       );
       return {
@@ -217,7 +245,11 @@ export const parseCliArguments = (argv: readonly string[]): CliCommand => {
         format: outputFormat(options),
       };
     case "package":
-      assertAllowedOptions(options, new Set([...PROJECT_INPUT_OPTIONS, "--out", "--output"]), JSON_FLAG);
+      assertAllowedOptions(
+        options,
+        new Set([...PROJECT_INPUT_OPTIONS, "--out", "--output"]),
+        JSON_FLAG,
+      );
       return {
         kind: "package",
         projectPath: requiredValue(options, "--project"),
@@ -247,15 +279,15 @@ export const parseCliArguments = (argv: readonly string[]): CliCommand => {
 export const CLI_HELP = `EVAVO Adventure Studio CLI
 
 Usage:
-  evavo-adventure validate --project <project.json> [--asset-manifest <assets.json>] [--scene-instances <scene-instances.json>] [--art-direction <art-direction.json>] [--art-evidence <art-evidence.json>] [--bitmap-fonts <bitmap-fonts.json>] [--ui-skins <ui-skins.json>] [--json]
-  evavo-adventure compile --project <project.json> --asset-manifest <assets.json> [--scene-instances <scene-instances.json>] [--art-direction <art-direction.json>] [--art-evidence <art-evidence.json>] [--bitmap-fonts <bitmap-fonts.json>] [--ui-skins <ui-skins.json>] --out <game.bundle.json> [--report <report.json>] [--json]
-  evavo-adventure package --project <project.json> --asset-manifest <assets.json> [--scene-instances <scene-instances.json>] [--art-direction <art-direction.json>] [--art-evidence <art-evidence.json>] [--bitmap-fonts <bitmap-fonts.json>] [--ui-skins <ui-skins.json>] --out <release-directory> [--json]
+  evavo-adventure validate --project <project.json> [--asset-manifest <assets.json>] [--scene-instances <scene-instances.json>] [--art-direction <art-direction.json>] [--art-evidence <art-evidence.json>] [--bitmap-fonts <bitmap-fonts.json>] [--ui-skins <ui-skins.json>] [--audio-mix <audio-mix.json>] [--json]
+  evavo-adventure compile --project <project.json> --asset-manifest <assets.json> [--scene-instances <scene-instances.json>] [--art-direction <art-direction.json>] [--art-evidence <art-evidence.json>] [--bitmap-fonts <bitmap-fonts.json>] [--ui-skins <ui-skins.json>] [--audio-mix <audio-mix.json>] --out <game.bundle.json> [--report <report.json>] [--json]
+  evavo-adventure package --project <project.json> --asset-manifest <assets.json> [--scene-instances <scene-instances.json>] [--art-direction <art-direction.json>] [--art-evidence <art-evidence.json>] [--bitmap-fonts <bitmap-fonts.json>] [--ui-skins <ui-skins.json>] [--audio-mix <audio-mix.json>] --out <release-directory> [--json]
   evavo-adventure art-evidence --project <project.json> --asset-manifest <assets.json> --out <art-evidence.json> [--json]
   evavo-adventure version
 
 Exit codes:
   0  success
-  1  project, asset, scene composition, art, bitmap-font or interface-skin validation failed
+  1  project, asset, scene composition, art, bitmap-font, interface-skin or audio-mix validation failed
   2  invalid command-line usage
   3  unexpected internal failure
 `;
