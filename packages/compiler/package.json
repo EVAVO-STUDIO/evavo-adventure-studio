@@ -29,6 +29,7 @@
     "typecheck": "tsc -b --pretty false"
   },
   "dependencies": {
+    "@evavo/adventure-audio": "workspace:*",
     "@evavo/adventure-asset-contract": "workspace:*",
     "@evavo/adventure-bitmap-font": "workspace:*",
     "@evavo/adventure-play-feel": "workspace:*",
