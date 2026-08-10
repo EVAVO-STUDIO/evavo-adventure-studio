@@ -13,6 +13,8 @@
     "@evavo/adventure-animation-editor-core": "workspace:*",
     "@evavo/adventure-art-direction": "workspace:*",
     "@evavo/adventure-asset-contract": "workspace:*",
+    "@evavo/adventure-audio": "workspace:*",
+    "@evavo/adventure-audio-editor-core": "workspace:*",
     "@evavo/adventure-bitmap-font": "workspace:*",
     "@evavo/adventure-bitmap-font-editor-core": "workspace:*",
     "@evavo/adventure-design": "workspace:*",
