@@ -114,6 +114,12 @@ importers:
       '@evavo/adventure-asset-contract':
         specifier: workspace:*
         version: link:../../packages/asset-contract
+      '@evavo/adventure-audio':
+        specifier: workspace:*
+        version: link:../../packages/audio
+      '@evavo/adventure-audio-editor-core':
+        specifier: workspace:*
+        version: link:../../packages/audio-editor-core
       '@evavo/adventure-bitmap-font':
         specifier: workspace:*
         version: link:../../packages/bitmap-font
@@ -324,6 +330,18 @@ importers:
       '@evavo/adventure-scene-runtime':
         specifier: workspace:*
         version: link:../scene-runtime
+
+  packages/audio-editor-core:
+    dependencies:
+      '@evavo/adventure-audio':
+        specifier: workspace:*
+        version: link:../audio
+      '@evavo/adventure-project-schema':
+        specifier: workspace:*
+        version: link:../project-schema
+      zod:
+        specifier: 'catalog:'
+        version: 4.4.3
 
   packages/audio-web:
     dependencies:
