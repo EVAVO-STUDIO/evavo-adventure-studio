@@ -6,6 +6,7 @@ import { AdventureEvidenceApp } from "./AdventureEvidenceApp.js";
 import { AnimationApp } from "./AnimationApp.js";
 import { App } from "./App.js";
 import { ArtDirectionApp } from "./ArtDirectionApp.js";
+import { AudioApp } from "./AudioApp.js";
 import { ClassicExperienceApp } from "./ClassicExperienceApp.js";
 import { ClassicGameCreatorApp } from "./ClassicGameCreatorApp.js";
 import { DialogueApp } from "./DialogueApp.js";
@@ -66,6 +67,8 @@ const application: ReactNode =
     <FontApp />
   ) : workspace === "interface" ? (
     <UiSkinApp />
+  ) : workspace === "audio" ? (
+    <AudioApp />
   ) : workspace === "dialogue" ? (
     <DialogueApp />
   ) : workspace === "playtest" ? (
@@ -98,6 +101,7 @@ const workspaces = [
   { id: "art", href: "/?workspace=art", label: "Art" },
   { id: "fonts", href: "/?workspace=fonts", label: "Fonts" },
   { id: "interface", href: "/?workspace=interface", label: "Interface" },
+  { id: "audio", href: "/?workspace=audio", label: "Audio" },
   { id: "dialogue", href: "/?workspace=dialogue", label: "Dialogue" },
   { id: "playtest", href: "/?workspace=playtest", label: "Playtest" },
   { id: "validation", href: "/?workspace=validation", label: "Validate" },
@@ -120,6 +124,7 @@ const activeWorkspace =
   workspace === "art" ||
   workspace === "fonts" ||
   workspace === "interface" ||
+  workspace === "audio" ||
   workspace === "dialogue" ||
   workspace === "playtest" ||
   workspace === "validation"
