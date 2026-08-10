@@ -1,6 +1,7 @@
 import type { RuntimeAssetRecord } from "@evavo/adventure-asset-contract";
 import type {
   DialogueGraph,
+  Id,
   PresentationProfile,
   Scene,
   Sequence,
@@ -25,7 +26,7 @@ export interface RuntimeAudioIssue {
 }
 
 export interface RuntimeAudioBundleView {
-  readonly projectId: string;
+  readonly projectId: Id<"project">;
   readonly presentation: PresentationProfile;
   readonly assets: readonly RuntimeAssetRecord[];
   readonly scenes: readonly Scene[];
@@ -39,11 +40,12 @@ export const validateRuntimeAudioMixManifest = (
 ): readonly RuntimeAudioIssue[] => {
   const sourceIssues: readonly AudioMixIssue[] = validateAudioMixManifest(
     {
-      id: bundle.projectId as never,
+      id: bundle.projectId,
       presentation: bundle.presentation,
       assets: bundle.assets.map((asset) => ({
         id: asset.assetId,
-        path: asset.outputFiles[0]?.runtimePath ?? `runtime:${asset.assetId}`,
+        path:
+          asset.outputFiles[0]?.runtimePath ?? `runtime:${asset.assetId}`,
         kind: asset.kind,
       })),
       scenes: bundle.scenes,
@@ -60,7 +62,9 @@ export const validateRuntimeAudioMixManifest = (
   manifest.cues.forEach((cue, cueIndex) => {
     const asset = assets.get(cue.assetId);
     if (!asset || asset.kind !== "audio") return;
-    const primary = asset.outputFiles.find((output) => output.role === "primary");
+    const primary = asset.outputFiles.find(
+      (output) => output.role === "primary",
+    );
     if (!primary) {
       issues.push({
         severity: "error",
