@@ -204,8 +204,12 @@ describe("audio save state", () => {
     expect(loaded.audio).toEqual(audio);
     expect(loaded.audio?.voices[0]).toMatchObject({
       cueId: "audio-cue.rain",
-      sceneId: undefined,
       startedAtTick: 0,
+      owner: {
+        kind: "scene-layer",
+        sceneId: "scene.office",
+        layerId: "audio-scene-layer.office.rain",
+      },
     });
     expect(serializeSaveGame(loaded)).toBe(serializeSaveGame(save));
   });
