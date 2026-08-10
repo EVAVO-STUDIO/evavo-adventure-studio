@@ -1,0 +1,32 @@
+{
+  "name": "@evavo/adventure-audio",
+  "version": "0.1.0",
+  "private": true,
+  "type": "module",
+  "exports": {
+    ".": {
+      "types": "./dist/src/index.d.ts",
+      "import": "./dist/src/index.js"
+    },
+    "./runtime": {
+      "types": "./dist/src/runtime.d.ts",
+      "import": "./dist/src/runtime.js"
+    },
+    "./compiled-mapping": {
+      "types": "./dist/src/compiled-mapping.d.ts",
+      "import": "./dist/src/compiled-mapping.js"
+    }
+  },
+  "files": [
+    "dist"
+  ],
+  "scripts": {
+    "build": "tsc -b",
+    "typecheck": "tsc -b --pretty false"
+  },
+  "dependencies": {
+    "@evavo/adventure-asset-contract": "workspace:*",
+    "@evavo/adventure-project-schema": "workspace:*",
+    "zod": "catalog:"
+  }
+}
