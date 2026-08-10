@@ -10,13 +10,14 @@ The project is designed around the production grammar of classic Sierra, LucasAr
 - **Profile-driven identity:** seven original production families connect canvas, palette, scene grammar, actor performance, interface, puzzles, audio, publisher splash and showcase direction instead of applying one generic retro filter.
 - **Original showcase proof:** every production family includes title, gameplay, dialogue and system plates with native composition, actor, prop, UI and recoverable puzzle intent.
 - **Deterministic play feel:** authored acceleration, braking, cornering, footfall phase, camera response, command buffering and fixed-step frame pacing make each family play differently without letting monitor cadence alter story state.
+- **Deterministic audio production:** authored buses, voice limits, cue loop points, fades, ducking, room soundscapes, cinematic cues, speech bindings and performance markers share the fixed-tick runtime and save-state contract.
 - **Complete adventure runtime:** navigation, hotspots, verbs, inventory, dialogue, conditions, flags, scoring, cutscenes, audio and save-state persistence.
 - **Connected game direction:** a production bible for visual identity, illustrated geography, chapters, puzzle causality, clue delivery and shot-based cinematic intent.
 - **Evidence-backed production:** compiled dimensions, indexed pixels, binary alpha, bitmap fonts and native interface geometry are reviewed against the same canonical project.
 - **Native scene construction:** walk lanes, depth bands, entrances, hotspots and foreground occlusion are reviewed together at the exact gameplay canvas before final art lock.
 - **Native scene staging:** player control, actor silhouettes, stateful props, portal handoffs and deterministic layer order are reviewed in the same scene-instance graph that ships.
 - **Progression integrity:** bounded canonical state exploration proves routes through object interactions, inventory, dialogue and sequence outcomes while exposing unreachable objectives and recoverability risks.
-- **Visual production studio:** scene composition, walkmesh editing, depth maps, occluders, hotspot authoring, character animation, art-direction policy, bitmap fonts, interaction skins, dialogue graphs, timeline sequencing, playtest artifact inspection and project validation.
+- **Visual production studio:** scene composition, walkmesh editing, depth maps, occluders, hotspot authoring, character animation, art-direction policy, bitmap fonts, interaction skins, audio mixing, dialogue graphs, timeline sequencing, playtest artifact inspection and project validation.
 - **Flexible game identity:** supports parser-like, icon-bar, verb-list, verb-coin, two-button and context-sensitive interaction models without copying any one commercial game.
 - **Deterministic projects:** human-readable project files, stable IDs, schema validation, reproducible builds and revision-safe exports.
 
@@ -70,6 +71,7 @@ The top-level `/card-game-studio/` path is ignored defensively so an accidental 
 - [Art direction and compiled pixel evidence](docs/art-direction.md)
 - [Native bitmap fonts](docs/bitmap-fonts.md)
 - [Interface skins and interaction layouts](docs/interface-skins.md)
+- [Audio Studio and deterministic sound production](docs/audio-studio.md)
 - [Deterministic save games](docs/save-games.md)
 - [Deterministic replays](docs/deterministic-replays.md)
 - [Renderer-free replay execution](docs/replay-execution.md)
@@ -88,10 +90,11 @@ The first milestone is a small five-room mystery vignette that proves:
 6. navigation, depth, scale and partial occlusion;
 7. authentic native-resolution rendering, palettes, sprite timing and bitmap text;
 8. verbs, cursors, dialogue, inventory, score and alternate interface policies;
-9. skippable in-scene cinematics with equivalent completion state;
-10. bounded progression exploration and one deliberately broken recoverability variant;
-11. validation fixtures, rendering laboratories and compiled exports;
-12. browser and Windows development players.
+9. deterministic buses, room soundscapes, speech bindings and skippable cinematic audio;
+10. skippable in-scene cinematics with equivalent completion state;
+11. bounded progression exploration and one deliberately broken recoverability variant;
+12. validation fixtures, rendering laboratories and compiled exports;
+13. browser and Windows development players.
 
 ## Development
 
@@ -146,6 +149,7 @@ Studio routes currently include:
 /?workspace=art
 /?workspace=fonts
 /?workspace=interface
+/?workspace=audio
 /?workspace=dialogue
 /?workspace=playtest
 /?workspace=validation
