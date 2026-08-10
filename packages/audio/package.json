@@ -12,6 +12,10 @@
       "types": "./dist/src/runtime.d.ts",
       "import": "./dist/src/runtime.js"
     },
+    "./runtime-validation": {
+      "types": "./dist/src/runtime-validation.d.ts",
+      "import": "./dist/src/runtime-validation.js"
+    },
     "./compiled-mapping": {
       "types": "./dist/src/compiled-mapping.d.ts",
       "import": "./dist/src/compiled-mapping.js"
