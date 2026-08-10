@@ -17,6 +17,7 @@
     "typecheck": "tsc -b --pretty false"
   },
   "dependencies": {
+    "@evavo/adventure-audio": "workspace:*",
     "@evavo/adventure-play-feel": "workspace:*",
     "@evavo/adventure-project-schema": "workspace:*",
     "@evavo/adventure-runtime-bundle": "workspace:*",
