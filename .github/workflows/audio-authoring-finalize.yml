@@ -82,14 +82,10 @@ jobs:
             ].join("\n"),
             [
               "}) => (",
-              "  <div",
-              "    className={`audio-field${wide ? \" is-wide\" : \"\"}`}",
-              "    role=\"group\"",
-              "    aria-label={label}",
-              "  >",
-              "    <span>{label}</span>",
+              "  <fieldset className={`audio-field${wide ? \" is-wide\" : \"\"}`}>",
+              "    <legend>{label}</legend>",
               "    {children}",
-              "  </div>",
+              "  </fieldset>",
               ");",
             ].join("\n"),
           );
@@ -178,15 +174,47 @@ jobs:
             throw new Error(`Expected three loop assertions, found ${assertionCount}.`);
           }
           source = source.replaceAll("...cue.loop!", "...loop");
-
           fs.writeFileSync(path, source);
+
+          const cssPath = "apps/studio/src/audio.css";
+          let css = fs.readFileSync(cssPath, "utf8");
+          const oldFieldCss = [
+            ".audio-field {",
+            "  display: grid;",
+            "  min-width: 0;",
+            "  gap: 5px;",
+            "}",
+            "",
+            ".audio-field > span {",
+          ].join("\n");
+          const newFieldCss = [
+            ".audio-field {",
+            "  display: grid;",
+            "  min-width: 0;",
+            "  min-inline-size: 0;",
+            "  gap: 5px;",
+            "  margin: 0;",
+            "  padding: 0;",
+            "  border: 0;",
+            "}",
+            "",
+            ".audio-field > legend {",
+          ].join("\n");
+          if (!css.includes(oldFieldCss)) {
+            throw new Error("Expected audio field CSS fragment is missing.");
+          }
+          css = css.replace(oldFieldCss, newFieldCss);
+          fs.writeFileSync(cssPath, css);
           NODE
 
       - name: Install exact committed dependency graph
         run: pnpm install --frozen-lockfile
 
       - name: Apply canonical formatting
-        run: pnpm exec biome check --write apps/studio/src/AudioApp.tsx
+        run: >-
+          pnpm exec biome check --write
+          apps/studio/src/AudioApp.tsx
+          apps/studio/src/audio.css
 
       - name: Verify repository lint
         run: pnpm exec biome ci .
@@ -197,12 +225,12 @@ jobs:
       - name: Commit verified Audio Studio hardening
         shell: bash
         run: |
-          if git diff --quiet -- apps/studio/src/AudioApp.tsx; then
+          if git diff --quiet -- apps/studio/src/AudioApp.tsx apps/studio/src/audio.css; then
             echo "Audio Studio source is already current."
             exit 0
           fi
           git config user.name "github-actions[bot]"
           git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
-          git add apps/studio/src/AudioApp.tsx
+          git add apps/studio/src/AudioApp.tsx apps/studio/src/audio.css
           git commit -m "fix: harden verified Audio Studio authoring"
           git push origin HEAD:main
