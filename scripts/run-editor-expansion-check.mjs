@@ -25,6 +25,8 @@ const commands = [
     "packages/ui-skin/tests",
     "packages/ui-skin-editor-core/tests",
     "packages/audio/tests",
+    "packages/audio-controller/tests",
+    "packages/audio-web/tests",
     "packages/save-game/tests",
     "packages/replay/tests",
     "packages/runtime-controller/tests",
