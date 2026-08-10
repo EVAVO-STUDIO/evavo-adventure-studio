@@ -13,6 +13,7 @@
     { "path": "packages/bitmap-font-editor-core" },
     { "path": "packages/ui-skin" },
     { "path": "packages/ui-skin-editor-core" },
+    { "path": "packages/audio" },
     { "path": "packages/asset-contract" },
     { "path": "packages/core" },
     { "path": "packages/play-feel" },
