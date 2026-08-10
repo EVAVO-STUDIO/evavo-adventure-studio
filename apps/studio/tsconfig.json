@@ -27,6 +27,12 @@
       "path": "../../packages/asset-contract"
     },
     {
+      "path": "../../packages/audio"
+    },
+    {
+      "path": "../../packages/audio-editor-core"
+    },
+    {
       "path": "../../packages/bitmap-font"
     },
     {
