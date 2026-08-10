@@ -17,6 +17,9 @@
       "path": "../../packages/asset-pipeline"
     },
     {
+      "path": "../../packages/audio"
+    },
+    {
       "path": "../../packages/bitmap-font"
     },
     {
