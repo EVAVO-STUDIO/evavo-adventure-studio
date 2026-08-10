@@ -1,3 +1,4 @@
+import { audioMixManifestSchema } from "@evavo/adventure-audio";
 import { sha256Schema } from "@evavo/adventure-asset-contract";
 import { runtimeAssetRecordSchema } from "@evavo/adventure-asset-contract/runtime-asset";
 import { bitmapFontManifestSchema } from "@evavo/adventure-bitmap-font";
@@ -15,13 +16,32 @@ import {
 import { sceneInstanceManifestSchema } from "@evavo/adventure-scene-instances";
 import { uiSkinManifestSchema } from "@evavo/adventure-ui-skin";
 import { z } from "zod";
-import { RuntimeBitmapFontValidationError, validateRuntimeBitmapFonts } from "./font-validation.js";
-import { RuntimeSceneInstanceValidationError, validateRuntimeSceneInstances } from "./instance-validation.js";
-import { RuntimeUiSkinValidationError, validateRuntimeUiSkins } from "./ui-validation.js";
-import { RuntimeBundleValidationError, validateRuntimeBundleSemantics } from "./validation.js";
+import {
+  RuntimeAudioMixValidationError,
+  validateRuntimeAudioMix,
+} from "./audio-validation.js";
+import {
+  RuntimeBitmapFontValidationError,
+  validateRuntimeBitmapFonts,
+} from "./font-validation.js";
+import {
+  RuntimeSceneInstanceValidationError,
+  validateRuntimeSceneInstances,
+} from "./instance-validation.js";
+import {
+  RuntimeUiSkinValidationError,
+  validateRuntimeUiSkins,
+} from "./ui-validation.js";
+import {
+  RuntimeBundleValidationError,
+  validateRuntimeBundleSemantics,
+} from "./validation.js";
 
 export const compiledHotspotSchema = hotspotSchema.extend({
-  interactionIndex: z.record(z.string().min(1), z.array(idSchema("interaction"))),
+  interactionIndex: z.record(
+    z.string().min(1),
+    z.array(idSchema("interaction")),
+  ),
 });
 export type CompiledHotspot = z.infer<typeof compiledHotspotSchema>;
 
@@ -31,7 +51,10 @@ export const compiledSceneSchema = sceneSchema.extend({
 export type CompiledScene = z.infer<typeof compiledSceneSchema>;
 
 export const compiledDialogueSchema = dialogueGraphSchema.extend({
-  nodeIndex: z.record(z.string().min(1), z.number().int().nonnegative()),
+  nodeIndex: z.record(
+    z.string().min(1),
+    z.number().int().nonnegative(),
+  ),
 });
 export type CompiledDialogue = z.infer<typeof compiledDialogueSchema>;
 
@@ -50,7 +73,9 @@ export const runtimePlayFeelProfileIdSchema = z.enum([
   "cinematic-directed",
   "noir-restrained",
 ]);
-export type RuntimePlayFeelProfileId = z.infer<typeof runtimePlayFeelProfileIdSchema>;
+export type RuntimePlayFeelProfileId = z.infer<
+  typeof runtimePlayFeelProfileIdSchema
+>;
 
 export const runtimeBundleSchema = z
   .object({
@@ -73,6 +98,7 @@ export const runtimeBundleSchema = z
     sceneInstances: sceneInstanceManifestSchema.optional(),
     bitmapFonts: bitmapFontManifestSchema.optional(),
     uiSkins: uiSkinManifestSchema.optional(),
+    audioMix: audioMixManifestSchema.optional(),
   })
   .strict();
 export type RuntimeBundle = z.infer<typeof runtimeBundleSchema>;
@@ -91,9 +117,17 @@ export const parseRuntimeBundle = (input: unknown): RuntimeBundle => {
   if (bitmapFontIssues.length > 0) {
     throw new RuntimeBitmapFontValidationError(bitmapFontIssues);
   }
-  const uiSkinIssues = validateRuntimeUiSkins(bundle).filter((issue) => issue.severity === "error");
+  const uiSkinIssues = validateRuntimeUiSkins(bundle).filter(
+    (issue) => issue.severity === "error",
+  );
   if (uiSkinIssues.length > 0) {
     throw new RuntimeUiSkinValidationError(uiSkinIssues);
+  }
+  const audioIssues = validateRuntimeAudioMix(bundle).filter(
+    (issue) => issue.severity === "error",
+  );
+  if (audioIssues.length > 0) {
+    throw new RuntimeAudioMixValidationError(audioIssues);
   }
   if (bundle.bitmapFonts) {
     registerBitmapFontsForAssetCollection(bundle.assets, bundle.bitmapFonts);
@@ -101,6 +135,7 @@ export const parseRuntimeBundle = (input: unknown): RuntimeBundle => {
   return bundle;
 };
 
+export * from "./audio-validation.js";
 export * from "./font-validation.js";
 export * from "./instance-validation.js";
 export * from "./ui-validation.js";
