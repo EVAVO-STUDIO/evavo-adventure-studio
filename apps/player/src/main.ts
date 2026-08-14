@@ -15,7 +15,14 @@ import { type ParserKeyInput, parserKeyInputFromKeyboardEvent } from "./parser.j
 import { createPlayerReplayRecorder, type ReplayRecordingStatus } from "./replay-recorder.js";
 import { loadRuntimeBundle } from "./runtime-loader.js";
 import { createPackagedRuntimeRenderer } from "./runtime-renderer.js";
-import { hasSaveGameSlot, readSaveGameSlot, writeSaveGameSlot } from "./save-storage.js";
+import {
+  hasSaveGameSlot,
+  listSaveGameSlots,
+  readSaveGameSlot,
+  type SaveGameSlotSnapshot,
+  writeSaveGameSlot,
+} from "./save-storage.js";
+import { runClassicSystemMenu } from "./system-menu.js";
 import "./style.css";
 
 interface PlayerInputController {
@@ -29,6 +36,9 @@ interface PlayerPersistence {
   saveQuickSlot(): void;
   loadQuickSlot(): number;
   hasQuickSlot(): boolean;
+  saveSlot(slot: number): void;
+  loadSlot(slot: number): number;
+  listSlots(): readonly SaveGameSlotSnapshot[];
 }
 
 interface PlayerReplayControls {
@@ -50,6 +60,7 @@ interface MountedPlayer {
   readonly persistence?: PlayerPersistence;
   readonly replay?: PlayerReplayControls;
   readonly statusText?: () => string;
+  readonly bundle?: RuntimeBundle;
   readonly disposeAdditional?: () => Promise<void>;
 }
 
@@ -112,6 +123,7 @@ const mountPlayer = async (
   let previousTime = performance.now();
   let animationFrame = 0;
   let disposed = false;
+  let systemMenuActive = false;
 
   const resize = (): void => {
     const bounds = host.getBoundingClientRect();
@@ -124,14 +136,16 @@ const mountPlayer = async (
   resize();
 
   const onPointerMove = (event: PointerEvent): void => {
+    if (systemMenuActive) return;
     player.input?.setPointer(nativePointer(host, initialFrame.canvas, event));
   };
   const onPointerLeave = (): void => {
+    if (systemMenuActive) return;
     player.input?.setPointer(null);
     player.input?.setPressed(false);
   };
   const onPointerDown = (event: PointerEvent): void => {
-    if (!player.input || event.button !== 0) return;
+    if (systemMenuActive || !player.input || event.button !== 0) return;
     const point = nativePointer(host, initialFrame.canvas, event);
     player.input.setPointer(point);
     player.input.setPressed(true);
@@ -143,9 +157,11 @@ const mountPlayer = async (
     event.preventDefault();
   };
   const onPointerUp = (event: PointerEvent): void => {
-    if (event.button === 0) player.input?.setPressed(false);
+    if (!systemMenuActive && event.button === 0) player.input?.setPressed(false);
   };
-  const onPointerCancel = (): void => player.input?.setPressed(false);
+  const onPointerCancel = (): void => {
+    if (!systemMenuActive) player.input?.setPressed(false);
+  };
   const onContextMenu = (event: MouseEvent): void => {
     if (player.input) event.preventDefault();
   };
@@ -200,7 +216,59 @@ const mountPlayer = async (
     updateStatus("REPLAY EXPORTED");
   };
 
+  const openSystemMenu = (): void => {
+    if (systemMenuActive || !player.persistence || !player.bundle) return;
+    systemMenuActive = true;
+    player.input?.setPressed(false);
+    player.input?.setPointer(null);
+    updateStatus("GAME PAUSED");
+
+    void runClassicSystemMenu(host, {
+      bundle: player.bundle,
+      snapshots: player.persistence.listSlots,
+      saveSlot: player.persistence.saveSlot,
+      loadSlot: (slot) => {
+        player.replay?.cancel();
+        return player.persistence?.loadSlot(slot) ?? logicalTick;
+      },
+    })
+      .then((result) => {
+        if (result.kind === "return-to-title") {
+          window.location.reload();
+          return;
+        }
+        if (result.kind === "loaded") {
+          logicalTick = result.tick;
+          player.renderer.render(player.createFrame(logicalTick));
+          updateStatus(result.slot === 0 ? "QUICK SAVE RESTORED" : `SAVE SLOT ${result.slot} RESTORED`);
+        } else if (player.statusText) {
+          updateStatus(player.statusText());
+        } else {
+          updateStatus("GAME RESUMED");
+        }
+        systemMenuActive = false;
+        clock = createFixedStepClock();
+        previousTime = performance.now();
+        host.focus();
+      })
+      .catch((error: unknown) => {
+        console.error(error);
+        systemMenuActive = false;
+        clock = createFixedStepClock();
+        previousTime = performance.now();
+        updateStatus(errorText("SYSTEM MENU FAILED", error));
+        host.focus();
+      });
+  };
+
   const onKeyDown = (event: KeyboardEvent): void => {
+    if (systemMenuActive) return;
+    if (player.persistence && event.key === "Escape") {
+      openSystemMenu();
+      event.preventDefault();
+      return;
+    }
+
     const commandModifier = event.ctrlKey || event.metaKey;
     if (player.persistence && commandModifier && event.shiftKey && event.code === "KeyS") {
       saveQuickSlot();
@@ -244,6 +312,11 @@ const mountPlayer = async (
 
   const renderLoop = (now: number): void => {
     if (disposed) return;
+    if (systemMenuActive) {
+      previousTime = now;
+      animationFrame = requestAnimationFrame(renderLoop);
+      return;
+    }
     const advanced = advanceFixedStepClock(clock, now - previousTime, {
       ticksPerSecond: player.ticksPerSecond,
       maxCatchUpTicks: 4,
@@ -299,6 +372,9 @@ const packagedPlayer = async (
     saveQuickSlot: () => writeSaveGameSlot(window.localStorage, bundle, controller.createSaveGame()),
     loadQuickSlot: () => controller.restoreSaveGame(readSaveGameSlot(window.localStorage, bundle)),
     hasQuickSlot: () => hasSaveGameSlot(window.localStorage, bundle),
+    saveSlot: (slot) => writeSaveGameSlot(window.localStorage, bundle, controller.createSaveGame(), slot),
+    loadSlot: (slot) => controller.restoreSaveGame(readSaveGameSlot(window.localStorage, bundle, slot)),
+    listSlots: () => listSaveGameSlots(window.localStorage, bundle, 10),
   };
   const replay: PlayerReplayControls = {
     start: () => recorder.start(controller.createSaveGame()),
@@ -321,6 +397,7 @@ const packagedPlayer = async (
       persistence,
       replay,
       statusText: controller.statusText,
+      bundle,
       disposeAdditional: () => textures.dispose(),
     },
   };
