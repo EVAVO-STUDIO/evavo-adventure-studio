@@ -16,6 +16,10 @@
       "types": "./dist/src/front-end-editor.d.ts",
       "import": "./dist/src/front-end-editor.js"
     },
+    "./lifecycle": {
+      "types": "./dist/src/lifecycle.d.ts",
+      "import": "./dist/src/lifecycle.js"
+    },
     "./localisation": {
       "types": "./dist/src/localisation.d.ts",
       "import": "./dist/src/localisation.js"

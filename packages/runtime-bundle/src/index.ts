@@ -14,6 +14,7 @@ import {
   sequenceSchema,
 } from "@evavo/adventure-project-schema";
 import { classicFrontEndManifestSchema } from "@evavo/adventure-project-schema/front-end";
+import { gameLifecycleManifestSchema } from "@evavo/adventure-project-schema/lifecycle";
 import { sceneInstanceManifestSchema } from "@evavo/adventure-scene-instances";
 import { uiSkinManifestSchema } from "@evavo/adventure-ui-skin";
 import { z } from "zod";
@@ -95,6 +96,7 @@ export const runtimeBundleSchema = z
     audioMix: audioMixManifestSchema.optional(),
     localisation: runtimeLocalisationPackSchema.optional(),
     frontEnd: classicFrontEndManifestSchema.optional(),
+    lifecycle: gameLifecycleManifestSchema.optional(),
   })
   .strict()
   .superRefine((bundle, context) => {
@@ -103,6 +105,13 @@ export const runtimeBundleSchema = z
         code: "custom",
         path: ["frontEnd", "projectId"],
         message: `Front-end project '${bundle.frontEnd.projectId}' does not match runtime project '${bundle.projectId}'.`,
+      });
+    }
+    if (bundle.lifecycle && bundle.lifecycle.projectId !== bundle.projectId) {
+      context.addIssue({
+        code: "custom",
+        path: ["lifecycle", "projectId"],
+        message: `Lifecycle project '${bundle.lifecycle.projectId}' does not match runtime project '${bundle.projectId}'.`,
       });
     }
   });
