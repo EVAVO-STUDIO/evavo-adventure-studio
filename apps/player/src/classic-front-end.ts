@@ -7,15 +7,18 @@ import {
   type ClassicFrontEndCommand,
   type ClassicFrontEndEffect,
   type ClassicFrontEndPolicy,
-  type ClassicFrontEndStartMode,
+  type ClassicFrontEndStartRequest,
 } from "./classic-front-end-state.js";
+import type { SaveGameSlotSnapshot } from "./save-storage.js";
 import "./classic-front-end.css";
+import "./classic-front-end-slots.css";
 
 export interface ClassicFrontEndOptions {
   readonly title: string;
-  readonly hasSave: boolean;
+  readonly snapshots?: () => readonly SaveGameSlotSnapshot[];
   readonly frontEnd?: ClassicFrontEndManifest;
   readonly notice?: string;
+  readonly skipSplash?: boolean;
 }
 
 export const classicFrontEndSkipped = (search: string): boolean => {
@@ -65,13 +68,32 @@ const policyFromManifest = (manifest?: ClassicFrontEndManifest): ClassicFrontEnd
       }
     : DEFAULT_CLASSIC_FRONT_END_POLICY;
 
+const loadDescription = (snapshots: readonly SaveGameSlotSnapshot[]): string => {
+  const valid = snapshots.filter((snapshot) => snapshot.status === "valid").length;
+  const invalid = snapshots.filter((snapshot) => snapshot.status === "invalid").length;
+  if (valid > 0) {
+    return `${valid} compatible save${valid === 1 ? "" : "s"} available. Empty and damaged slots cannot be loaded.`;
+  }
+  if (invalid > 0) return "Stored saves are damaged or incompatible with this game build.";
+  return "No compatible save games are available.";
+};
+
 export const runClassicFrontEnd = (
   host: HTMLElement,
   options: ClassicFrontEndOptions,
-): Promise<ClassicFrontEndStartMode> =>
+): Promise<ClassicFrontEndStartRequest> =>
   new Promise((resolve) => {
     const policy = policyFromManifest(options.frontEnd);
-    let state = createClassicFrontEndState(options.hasSave);
+    const snapshots = (): readonly SaveGameSlotSnapshot[] => options.snapshots?.() ?? [];
+    let state = createClassicFrontEndState();
+    if (options.skipSplash) {
+      state = transitionClassicFrontEnd(
+        state,
+        { kind: "tick", ticks: policy.splashDurationTicks },
+        policy,
+        snapshots(),
+      ).state;
+    }
     let notice = options.notice ?? null;
     let previousTime = performance.now();
     let tickRemainder = 0;
@@ -102,15 +124,15 @@ export const runClassicFrontEnd = (
       host.removeEventListener("pointerdown", onSplashPointer);
     };
 
-    const complete = (mode: ClassicFrontEndStartMode): void => {
+    const complete = (request: ClassicFrontEndStartRequest): void => {
       cleanup();
-      resolve(mode);
+      resolve(request);
     };
 
     const applyEffect = (effect: ClassicFrontEndEffect): void => {
       if (!effect) return;
       if (effect.kind === "start") {
-        complete(effect.mode);
+        complete(effect.request);
         return;
       }
       void requestFullscreen().catch(() => {
@@ -120,7 +142,7 @@ export const runClassicFrontEnd = (
     };
 
     const apply = (command: ClassicFrontEndCommand): void => {
-      const transition = transitionClassicFrontEnd(state, command, policy);
+      const transition = transitionClassicFrontEnd(state, command, policy, snapshots());
       state = transition.state;
       applyEffect(transition.effect);
       if (!settled) render();
@@ -130,16 +152,25 @@ export const runClassicFrontEnd = (
       const panel = element("div", "classic-front-end-menu");
       panel.appendChild(element("h2", "classic-front-end-menu-title", heading));
       if (description) panel.appendChild(element("p", "classic-front-end-copy", description));
-      const items = classicFrontEndMenuItems(state, policy);
+      const items = classicFrontEndMenuItems(state, policy, snapshots());
       const list = element("div", "classic-front-end-menu-items");
       items.forEach((item, index) => {
-        const button = element("button", "classic-front-end-menu-item", item.label);
+        const button = element("button", "classic-front-end-menu-item");
         button.type = "button";
         button.disabled = !item.enabled;
         button.dataset["selected"] = index === state.selectedIndex ? "true" : "false";
+        button.appendChild(element("strong", "classic-front-end-menu-label", item.label));
+        if (item.detail) {
+          button.appendChild(element("small", "classic-front-end-menu-detail", item.detail));
+        }
         button.addEventListener("pointerenter", () => apply({ kind: "set-selection", index }));
         button.addEventListener("click", () => {
-          const selection = transitionClassicFrontEnd(state, { kind: "set-selection", index }, policy);
+          const selection = transitionClassicFrontEnd(
+            state,
+            { kind: "set-selection", index },
+            policy,
+            snapshots(),
+          );
           state = selection.state;
           apply({ kind: "activate" });
         });
@@ -150,11 +181,7 @@ export const runClassicFrontEnd = (
     };
 
     const footer = (): HTMLElement =>
-      element(
-        "div",
-        "classic-front-end-footer",
-        "↑ ↓ SELECT   ENTER CHOOSE   ESC BACK",
-      );
+      element("div", "classic-front-end-footer", "↑ ↓ SELECT   ENTER CHOOSE   ESC BACK");
 
     const render = (): void => {
       frame.replaceChildren();
@@ -195,14 +222,7 @@ export const runClassicFrontEnd = (
           frame.appendChild(menu("MAIN MENU"));
           break;
         case "load-menu":
-          frame.appendChild(
-            menu(
-              policy.labels.loadGame,
-              state.hasSave
-                ? "One verified browser quick-save slot is available."
-                : "No compatible quick save is available.",
-            ),
-          );
+          frame.appendChild(menu(policy.labels.loadGame, loadDescription(snapshots())));
           break;
         case "options": {
           const panel = menu(policy.labels.options);
@@ -235,11 +255,12 @@ export const runClassicFrontEnd = (
             ),
           );
           break;
-        case "publisher-splash":
-          break;
       }
       if (notice) frame.appendChild(element("div", "classic-front-end-notice", notice));
       frame.appendChild(footer());
+      queueMicrotask(() => {
+        frame.querySelector<HTMLButtonElement>('[data-selected="true"]')?.focus();
+      });
     };
 
     const onKeyDown = (event: KeyboardEvent): void => {
@@ -282,5 +303,5 @@ export const runClassicFrontEnd = (
     host.addEventListener("pointerdown", onSplashPointer);
     host.focus();
     render();
-    animationFrame = requestAnimationFrame(animate);
+    if (state.screen === "publisher-splash") animationFrame = requestAnimationFrame(animate);
   });

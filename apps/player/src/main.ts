@@ -432,24 +432,28 @@ const boot = async (): Promise<void> => {
   let initialSave: SaveGame | undefined;
   if (!classicFrontEndSkipped(window.location.search)) {
     updateStatus("TITLE SCREEN");
-    let startMode = await runClassicFrontEnd(host, {
+    const snapshots = (): readonly SaveGameSlotSnapshot[] =>
+      listSaveGameSlots(window.localStorage, bundle, 10);
+    let request = await runClassicFrontEnd(host, {
       title: bundle.title,
-      hasSave: hasSaveGameSlot(window.localStorage, bundle),
+      snapshots,
       ...(bundle.frontEnd ? { frontEnd: bundle.frontEnd } : {}),
     });
-    if (startMode === "continue") {
+    while (request.kind === "load") {
       try {
-        initialSave = readSaveGameSlot(window.localStorage, bundle);
+        initialSave = readSaveGameSlot(window.localStorage, bundle, request.slot);
+        break;
       } catch (error) {
-        startMode = await runClassicFrontEnd(host, {
+        request = await runClassicFrontEnd(host, {
           title: bundle.title,
-          hasSave: false,
+          snapshots,
+          skipSplash: true,
           ...(bundle.frontEnd ? { frontEnd: bundle.frontEnd } : {}),
-          notice: errorText("QUICK SAVE UNAVAILABLE", error),
+          notice: errorText(
+            request.slot === 0 ? "QUICK SAVE UNAVAILABLE" : `SAVE SLOT ${request.slot} UNAVAILABLE`,
+            error,
+          ),
         });
-        if (startMode === "continue") {
-          throw new Error("Classic front end selected an unavailable save slot.");
-        }
       }
     }
   }

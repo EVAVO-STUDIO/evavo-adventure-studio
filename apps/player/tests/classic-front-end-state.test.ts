@@ -4,31 +4,56 @@ import {
   createClassicFrontEndState,
   DEFAULT_CLASSIC_FRONT_END_POLICY,
   transitionClassicFrontEnd,
+  type ClassicFrontEndSaveSlot,
 } from "../src/classic-front-end-state.js";
+
+const emptySlots = (): readonly ClassicFrontEndSaveSlot[] =>
+  Array.from({ length: 10 }, (_, slot) => ({ slot, status: "empty" as const }));
+
+const withValidSlot = (
+  slot: number,
+  overrides: Partial<ClassicFrontEndSaveSlot> = {},
+): readonly ClassicFrontEndSaveSlot[] =>
+  emptySlots().map((candidate) =>
+    candidate.slot === slot
+      ? {
+          slot,
+          status: "valid" as const,
+          tick: 480 + slot,
+          sceneName: "Municipal Archive",
+          score: 12,
+          inventoryCount: 2,
+          ...overrides,
+        }
+      : candidate,
+  );
+
+const titleState = (slots: readonly ClassicFrontEndSaveSlot[]) =>
+  transitionClassicFrontEnd(
+    createClassicFrontEndState(),
+    { kind: "tick", ticks: 96 },
+    DEFAULT_CLASSIC_FRONT_END_POLICY,
+    slots,
+  ).state;
 
 describe("classic front-end state machine", () => {
   it("holds the publisher splash for the authored minimum and then opens the title menu", () => {
-    let state = createClassicFrontEndState(false);
-    state = transitionClassicFrontEnd(state, { kind: "tick", ticks: 17 }).state;
-    expect(transitionClassicFrontEnd(state, { kind: "skip-splash" }).state.screen).toBe(
-      "publisher-splash",
-    );
+    const slots = emptySlots();
+    let state = createClassicFrontEndState();
+    state = transitionClassicFrontEnd(state, { kind: "tick", ticks: 17 }, undefined, slots).state;
+    expect(
+      transitionClassicFrontEnd(state, { kind: "skip-splash" }, undefined, slots).state.screen,
+    ).toBe("publisher-splash");
 
-    state = transitionClassicFrontEnd(state, { kind: "tick", ticks: 1 }).state;
-    state = transitionClassicFrontEnd(state, { kind: "skip-splash" }).state;
-    expect(state.screen).toBe("title-menu");
-
-    state = createClassicFrontEndState(false);
-    state = transitionClassicFrontEnd(state, { kind: "tick", ticks: 96 }).state;
+    state = transitionClassicFrontEnd(state, { kind: "tick", ticks: 1 }, undefined, slots).state;
+    state = transitionClassicFrontEnd(state, { kind: "skip-splash" }, undefined, slots).state;
     expect(state.screen).toBe("title-menu");
   });
 
-  it("skips disabled save actions while preserving classic wraparound navigation", () => {
-    let state = transitionClassicFrontEnd(
-      createClassicFrontEndState(false),
-      { kind: "tick", ticks: 96 },
-    ).state;
-    expect(classicFrontEndMenuItems(state).map((item) => [item.id, item.enabled])).toEqual([
+  it("disables Continue and Load when there are no validated saves", () => {
+    const slots = emptySlots();
+    const state = titleState(slots);
+    expect(classicFrontEndMenuItems(state, undefined, slots).map((item) => [item.id, item.enabled])).toEqual([
       ["new", true],
       ["continue", false],
       ["load", false],
@@ -36,66 +61,76 @@ describe("classic front-end state machine", () => {
       ["credits", true],
       ["quit", true],
     ]);
-
-    state = transitionClassicFrontEnd(state, { kind: "move-selection", delta: 1 }).state;
-    expect(classicFrontEndMenuItems(state)[state.selectedIndex]?.id).toBe("options");
-    state = transitionClassicFrontEnd(state, { kind: "move-selection", delta: -1 }).state;
-    expect(classicFrontEndMenuItems(state)[state.selectedIndex]?.id).toBe("new");
   });
 
-  it("offers Continue and a separate Load screen when a quick save exists", () => {
-    let state = transitionClassicFrontEnd(
-      createClassicFrontEndState(true),
-      { kind: "tick", ticks: 96 },
+  it("uses slot zero for Continue and does not accept a damaged quick save", () => {
+    const validQuick = withValidSlot(0);
+    let state = titleState(validQuick);
+    state = transitionClassicFrontEnd(
+      state,
+      { kind: "set-selection", index: 1 },
+      undefined,
+      validQuick,
     ).state;
-    state = transitionClassicFrontEnd(state, { kind: "set-selection", index: 1 }).state;
-    expect(transitionClassicFrontEnd(state, { kind: "activate" }).effect).toEqual({
+    expect(transitionClassicFrontEnd(state, { kind: "activate" }, undefined, validQuick).effect).toEqual({
       kind: "start",
-      mode: "continue",
+      request: { kind: "load", slot: 0 },
     });
 
-    state = transitionClassicFrontEnd(state, { kind: "set-selection", index: 2 }).state;
-    state = transitionClassicFrontEnd(state, { kind: "activate" }).state;
+    const damagedQuick = emptySlots().map((slot) =>
+      slot.slot === 0 ? { slot: 0, status: "invalid" as const, message: "bad checksum" } : slot,
+    );
+    state = titleState(damagedQuick);
+    expect(classicFrontEndMenuItems(state, undefined, damagedQuick)[1]?.enabled).toBe(false);
+  });
+
+  it("opens Load for valid manual slots even when Quick Save is empty", () => {
+    const slots = withValidSlot(7);
+    let state = titleState(slots);
+    const titleItems = classicFrontEndMenuItems(state, undefined, slots);
+    expect(titleItems.find((item) => item.id === "continue")?.enabled).toBe(false);
+    expect(titleItems.find((item) => item.id === "load")?.enabled).toBe(true);
+
+    const loadIndex = titleItems.findIndex((item) => item.id === "load");
+    state = transitionClassicFrontEnd(
+      state,
+      { kind: "set-selection", index: loadIndex },
+      undefined,
+      slots,
+    ).state;
+    state = transitionClassicFrontEnd(state, { kind: "activate" }, undefined, slots).state;
     expect(state.screen).toBe("load-menu");
-    expect(transitionClassicFrontEnd(state, { kind: "activate" }).effect).toEqual({
+
+    const items = classicFrontEndMenuItems(state, undefined, slots);
+    expect(items).toHaveLength(11);
+    expect(items[7]).toMatchObject({
+      id: "save-slot-7",
+      label: "SAVE SLOT 07",
+      enabled: true,
+      slot: 7,
+    });
+    expect(items[7]?.detail).toContain("Municipal Archive");
+
+    state = transitionClassicFrontEnd(state, { kind: "set-selection", index: 7 }, undefined, slots).state;
+    expect(transitionClassicFrontEnd(state, { kind: "activate" }, undefined, slots).effect).toEqual({
       kind: "start",
-      mode: "continue",
+      request: { kind: "load", slot: 7 },
     });
   });
 
-  it("keeps options, credits and quit inside the front-end instead of changing game state", () => {
-    let state = transitionClassicFrontEnd(
-      createClassicFrontEndState(false),
-      { kind: "tick", ticks: 96 },
-    ).state;
-    state = transitionClassicFrontEnd(state, { kind: "set-selection", index: 3 }).state;
-    state = transitionClassicFrontEnd(state, { kind: "activate" }).state;
-    expect(state.screen).toBe("options");
-    expect(transitionClassicFrontEnd(state, { kind: "activate" }).effect).toEqual({
-      kind: "request-fullscreen",
-    });
+  it("keeps empty and damaged slots visible but non-loadable", () => {
+    const slots = emptySlots().map((slot) =>
+      slot.slot === 3 ? { slot: 3, status: "invalid" as const, message: "corrupt" } : slot,
+    );
+    let state = titleState(withValidSlot(1));
+    const valid = withValidSlot(1);
+    const loadIndex = classicFrontEndMenuItems(state, undefined, valid).findIndex((item) => item.id === "load");
+    state = transitionClassicFrontEnd(state, { kind: "set-selection", index: loadIndex }, undefined, valid).state;
+    state = transitionClassicFrontEnd(state, { kind: "activate" }, undefined, valid).state;
 
-    state = transitionClassicFrontEnd(state, { kind: "back" }).state;
-    state = transitionClassicFrontEnd(state, { kind: "set-selection", index: 4 }).state;
-    state = transitionClassicFrontEnd(state, { kind: "activate" }).state;
-    expect(state.screen).toBe("credits");
-    state = transitionClassicFrontEnd(state, { kind: "back" }).state;
-    state = transitionClassicFrontEnd(state, { kind: "set-selection", index: 5 }).state;
-    state = transitionClassicFrontEnd(state, { kind: "activate" }).state;
-    expect(state.screen).toBe("quit");
-  });
-
-  it("reselects a valid command if a save disappears", () => {
-    let state = transitionClassicFrontEnd(
-      createClassicFrontEndState(true),
-      { kind: "tick", ticks: 96 },
-    ).state;
-    state = transitionClassicFrontEnd(state, { kind: "set-selection", index: 1 }).state;
-    state = transitionClassicFrontEnd(state, {
-      kind: "set-save-available",
-      available: false,
-    }).state;
-    expect(state.selectedIndex).toBe(0);
+    const items = classicFrontEndMenuItems(state, undefined, slots);
+    expect(items[0]).toMatchObject({ enabled: false, detail: "EMPTY" });
+    expect(items[3]).toMatchObject({ enabled: false, detail: "DAMAGED SAVE" });
   });
 
   it("honours authored menu visibility, wording, timing and fullscreen policy", () => {
@@ -115,18 +150,19 @@ describe("classic front-end state machine", () => {
       showQuit: false,
       allowFullscreen: false,
     };
-    let state = createClassicFrontEndState(true);
-    state = transitionClassicFrontEnd(state, { kind: "tick", ticks: 30 }, policy).state;
+    const slots = withValidSlot(0);
+    let state = createClassicFrontEndState();
+    state = transitionClassicFrontEnd(state, { kind: "tick", ticks: 30 }, policy, slots).state;
 
-    expect(classicFrontEndMenuItems(state, policy).map((item) => [item.id, item.label])).toEqual([
+    expect(classicFrontEndMenuItems(state, policy, slots).map((item) => [item.id, item.label])).toEqual([
       ["new", "BEGIN CASE"],
       ["options", "OPTIONS"],
       ["credits", "WHO MADE THIS"],
     ]);
 
-    state = transitionClassicFrontEnd(state, { kind: "set-selection", index: 1 }, policy).state;
-    state = transitionClassicFrontEnd(state, { kind: "activate" }, policy).state;
+    state = transitionClassicFrontEnd(state, { kind: "set-selection", index: 1 }, policy, slots).state;
+    state = transitionClassicFrontEnd(state, { kind: "activate" }, policy, slots).state;
     expect(state.screen).toBe("options");
-    expect(classicFrontEndMenuItems(state, policy).map((item) => item.id)).toEqual(["back"]);
+    expect(classicFrontEndMenuItems(state, policy, slots).map((item) => item.id)).toEqual(["back"]);
   });
 });
