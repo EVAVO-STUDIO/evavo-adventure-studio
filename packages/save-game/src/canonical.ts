@@ -1,4 +1,5 @@
 import type { RuntimeBundle } from "@evavo/adventure-runtime-bundle";
+import { runtimeBundleSaveCompatibilityView } from "@evavo/adventure-runtime-bundle/localisation";
 import { SaveGameIntegrityError } from "./errors.js";
 import { type SaveGame, type SaveGamePayload, saveGameSchema } from "./schema.js";
 
@@ -35,8 +36,11 @@ export const fnv1a64 = (value: string): string => {
   return `fnv1a64:${hash.toString(16).padStart(16, "0")}`;
 };
 
-export const runtimeBundleFingerprint = (bundle: RuntimeBundle): string =>
+export const runtimeBundleExactFingerprint = (bundle: RuntimeBundle): string =>
   fnv1a64(canonicalSaveGameJson(bundle));
+
+export const runtimeBundleFingerprint = (bundle: RuntimeBundle): string =>
+  runtimeBundleExactFingerprint(runtimeBundleSaveCompatibilityView(bundle));
 
 export const payloadFromSave = (save: SaveGame): SaveGamePayload => ({
   saveVersion: save.saveVersion,

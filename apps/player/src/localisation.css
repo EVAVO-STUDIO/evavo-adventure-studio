@@ -1,0 +1,27 @@
+.runtime-locale-selector {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  margin-left: auto;
+  color: #8d919f;
+  font-size: 8px;
+  font-weight: 750;
+  letter-spacing: 0.08em;
+}
+
+.runtime-locale-selector select {
+  max-width: 150px;
+  height: 22px;
+  border: 1px solid #30333d;
+  border-radius: 2px;
+  background: #111218;
+  color: #f4f5f8;
+  font: inherit;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+}
+
+.runtime-locale-selector select:focus-visible {
+  outline: 1px solid #ff244e;
+  outline-offset: 2px;
+}

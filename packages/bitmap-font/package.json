@@ -12,6 +12,10 @@
       "types": "./dist/src/layout.d.ts",
       "import": "./dist/src/layout.js"
     },
+    "./localisation": {
+      "types": "./dist/src/localisation.d.ts",
+      "import": "./dist/src/localisation.js"
+    },
     "./compiled-mapping": {
       "types": "./dist/src/compiled-mapping.d.ts",
       "import": "./dist/src/compiled-mapping.js"

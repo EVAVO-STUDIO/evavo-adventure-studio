@@ -16,6 +16,10 @@
       "types": "./dist/src/font-validation.d.ts",
       "import": "./dist/src/font-validation.js"
     },
+    "./localisation": {
+      "types": "./dist/src/localisation.d.ts",
+      "import": "./dist/src/localisation.js"
+    },
     "./ui-validation": {
       "types": "./dist/src/ui-validation.d.ts",
       "import": "./dist/src/ui-validation.js"

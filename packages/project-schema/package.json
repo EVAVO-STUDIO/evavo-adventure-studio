@@ -7,6 +7,10 @@
     ".": {
       "types": "./dist/src/index.d.ts",
       "import": "./dist/src/index.js"
+    },
+    "./localisation": {
+      "types": "./dist/src/localisation.d.ts",
+      "import": "./dist/src/localisation.js"
     }
   },
   "files": [

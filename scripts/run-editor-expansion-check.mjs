@@ -11,6 +11,7 @@ const commands = [
     "exec",
     "vitest",
     "run",
+    "packages/project-schema/tests",
     "packages/editor-core/tests",
     "packages/project-editor-core/tests",
     "packages/dialogue-editor-core/tests",
@@ -37,10 +38,12 @@ const commands = [
     "packages/compiler/tests/bitmap-font-compilation.test.ts",
     "packages/compiler/tests/ui-skin-compilation.test.ts",
     "packages/compiler/tests/audio-compilation.test.ts",
+    "packages/compiler/tests/with-localisation.test.ts",
     "packages/compiler/tests/with-play-feel.test.ts",
     "packages/runtime-bundle/tests/bitmap-font-runtime.test.ts",
     "packages/runtime-bundle/tests/ui-skin-runtime.test.ts",
     "packages/runtime-bundle/tests/audio-runtime.test.ts",
+    "packages/runtime-bundle/tests/localisation-runtime.test.ts",
     "packages/runtime-bundle/tests/play-feel-profile.test.ts",
     "packages/renderer-pixi/tests",
     "apps/player/tests",
@@ -63,12 +66,8 @@ for (const args of commands) {
     stdio: "inherit",
     windowsHide: true,
   });
-  if (result.error) {
-    throw result.error;
-  }
-  if (result.signal) {
-    throw new Error(`${pnpm} ${args.join(" ")} ended with ${result.signal}.`);
-  }
+  if (result.error) throw result.error;
+  if (result.signal) throw new Error(`${pnpm} ${args.join(" ")} ended with ${result.signal}.`);
   if (result.status !== 0) {
     process.exitCode = result.status ?? 1;
     break;

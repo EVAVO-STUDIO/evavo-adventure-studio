@@ -16,6 +16,10 @@
       "types": "./dist/src/with-instances.d.ts",
       "import": "./dist/src/with-instances.js"
     },
+    "./with-localisation": {
+      "types": "./dist/src/with-localisation.d.ts",
+      "import": "./dist/src/with-localisation.js"
+    },
     "./with-play-feel": {
       "types": "./dist/src/with-play-feel.d.ts",
       "import": "./dist/src/with-play-feel.js"

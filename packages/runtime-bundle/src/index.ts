@@ -28,6 +28,7 @@ import {
   RuntimeSceneInstanceValidationError,
   validateRuntimeSceneInstances,
 } from "./instance-validation.js";
+import { runtimeLocalisationPackSchema } from "./localisation.js";
 import {
   RuntimeUiSkinValidationError,
   validateRuntimeUiSkins,
@@ -38,10 +39,7 @@ import {
 } from "./validation.js";
 
 export const compiledHotspotSchema = hotspotSchema.extend({
-  interactionIndex: z.record(
-    z.string().min(1),
-    z.array(idSchema("interaction")),
-  ),
+  interactionIndex: z.record(z.string().min(1), z.array(idSchema("interaction"))),
 });
 export type CompiledHotspot = z.infer<typeof compiledHotspotSchema>;
 
@@ -51,10 +49,7 @@ export const compiledSceneSchema = sceneSchema.extend({
 export type CompiledScene = z.infer<typeof compiledSceneSchema>;
 
 export const compiledDialogueSchema = dialogueGraphSchema.extend({
-  nodeIndex: z.record(
-    z.string().min(1),
-    z.number().int().nonnegative(),
-  ),
+  nodeIndex: z.record(z.string().min(1), z.number().int().nonnegative()),
 });
 export type CompiledDialogue = z.infer<typeof compiledDialogueSchema>;
 
@@ -73,9 +68,7 @@ export const runtimePlayFeelProfileIdSchema = z.enum([
   "cinematic-directed",
   "noir-restrained",
 ]);
-export type RuntimePlayFeelProfileId = z.infer<
-  typeof runtimePlayFeelProfileIdSchema
->;
+export type RuntimePlayFeelProfileId = z.infer<typeof runtimePlayFeelProfileIdSchema>;
 
 export const runtimeBundleSchema = z
   .object({
@@ -99,6 +92,7 @@ export const runtimeBundleSchema = z
     bitmapFonts: bitmapFontManifestSchema.optional(),
     uiSkins: uiSkinManifestSchema.optional(),
     audioMix: audioMixManifestSchema.optional(),
+    localisation: runtimeLocalisationPackSchema.optional(),
   })
   .strict();
 export type RuntimeBundle = z.infer<typeof runtimeBundleSchema>;
@@ -106,9 +100,7 @@ export type RuntimeBundle = z.infer<typeof runtimeBundleSchema>;
 export const parseRuntimeBundle = (input: unknown): RuntimeBundle => {
   const bundle = runtimeBundleSchema.parse(input);
   const issues = validateRuntimeBundleSemantics(bundle);
-  if (issues.length > 0) {
-    throw new RuntimeBundleValidationError(issues);
-  }
+  if (issues.length > 0) throw new RuntimeBundleValidationError(issues);
   const sceneInstanceIssues = validateRuntimeSceneInstances(bundle);
   if (sceneInstanceIssues.length > 0) {
     throw new RuntimeSceneInstanceValidationError(sceneInstanceIssues);
@@ -117,26 +109,17 @@ export const parseRuntimeBundle = (input: unknown): RuntimeBundle => {
   if (bitmapFontIssues.length > 0) {
     throw new RuntimeBitmapFontValidationError(bitmapFontIssues);
   }
-  const uiSkinIssues = validateRuntimeUiSkins(bundle).filter(
-    (issue) => issue.severity === "error",
-  );
-  if (uiSkinIssues.length > 0) {
-    throw new RuntimeUiSkinValidationError(uiSkinIssues);
-  }
-  const audioIssues = validateRuntimeAudioMix(bundle).filter(
-    (issue) => issue.severity === "error",
-  );
-  if (audioIssues.length > 0) {
-    throw new RuntimeAudioMixValidationError(audioIssues);
-  }
-  if (bundle.bitmapFonts) {
-    registerBitmapFontsForAssetCollection(bundle.assets, bundle.bitmapFonts);
-  }
+  const uiSkinIssues = validateRuntimeUiSkins(bundle).filter((issue) => issue.severity === "error");
+  if (uiSkinIssues.length > 0) throw new RuntimeUiSkinValidationError(uiSkinIssues);
+  const audioIssues = validateRuntimeAudioMix(bundle).filter((issue) => issue.severity === "error");
+  if (audioIssues.length > 0) throw new RuntimeAudioMixValidationError(audioIssues);
+  if (bundle.bitmapFonts) registerBitmapFontsForAssetCollection(bundle.assets, bundle.bitmapFonts);
   return bundle;
 };
 
 export * from "./audio-validation.js";
 export * from "./font-validation.js";
 export * from "./instance-validation.js";
+export * from "./localisation.js";
 export * from "./ui-validation.js";
 export * from "./validation.js";

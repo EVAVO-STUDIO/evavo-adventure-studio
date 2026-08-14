@@ -1,6 +1,7 @@
 import type { Id } from "@evavo/adventure-project-schema";
 import type { ResolvedFrame, SpriteRenderNode } from "@evavo/adventure-render-contract";
 import { parseRuntimeBundle, type RuntimeBundle } from "@evavo/adventure-runtime-bundle";
+import { localiseRuntimeBundleForBrowser } from "./localisation.js";
 
 export class RuntimeBundleFetchError extends Error {
   readonly bundleUrl: string;
@@ -53,16 +54,14 @@ export const loadRuntimeBundle = async (
     );
   }
 
-  return parseRuntimeBundle(input);
+  return localiseRuntimeBundleForBrowser(parseRuntimeBundle(input));
 };
 
 const renderNodeId = (value: string): Id<"render-node"> => value as Id<"render-node">;
 
 const backgroundNode = (bundle: RuntimeBundle): SpriteRenderNode => {
   const scene = bundle.scenes.find((candidate) => candidate.id === bundle.startSceneId);
-  if (!scene) {
-    throw new Error(`Start scene '${bundle.startSceneId}' is unavailable.`);
-  }
+  if (!scene) throw new Error(`Start scene '${bundle.startSceneId}' is unavailable.`);
 
   const asset = bundle.assets.find((candidate) => candidate.assetId === scene.backgroundAssetId);
   if (!asset) {
@@ -113,9 +112,7 @@ export const createRuntimeStartFrame = (bundle: RuntimeBundle, tick: number): Re
     throw new RangeError("Runtime preview tick must be a non-negative safe integer.");
   }
   const scene = bundle.scenes.find((candidate) => candidate.id === bundle.startSceneId);
-  if (!scene) {
-    throw new Error(`Start scene '${bundle.startSceneId}' is unavailable.`);
-  }
+  if (!scene) throw new Error(`Start scene '${bundle.startSceneId}' is unavailable.`);
 
   return {
     frameVersion: 1,
