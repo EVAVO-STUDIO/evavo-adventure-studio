@@ -92,6 +92,37 @@ function packageFiles(directory = ROOT) {
   return found.sort();
 }
 
+function workflowFiles() {
+  const directory = absolute(".github/workflows");
+  if (!fs.existsSync(directory) || !fs.statSync(directory).isDirectory()) {
+    sourceErrors.push(".github/workflows: required workflow directory is missing");
+    return [];
+  }
+  return fs
+    .readdirSync(directory, { withFileTypes: true })
+    .filter((entry) => entry.isFile() && /\.ya?ml$/i.test(entry.name))
+    .map((entry) => entry.name)
+    .sort();
+}
+
+function workspacePackagePaths() {
+  const found = [];
+  for (const root of ["apps", "packages", "tools"]) {
+    const directory = absolute(root);
+    if (!fs.existsSync(directory) || !fs.statSync(directory).isDirectory()) continue;
+    for (const entry of fs.readdirSync(directory, { withFileTypes: true })) {
+      if (!entry.isDirectory()) continue;
+      const packagePath = path.join(directory, entry.name, "package.json");
+      if (fs.existsSync(packagePath)) found.push(`${root}/${entry.name}`);
+    }
+  }
+  return found.sort();
+}
+
+function escapeRegExp(value) {
+  return value.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
+}
+
 const packageSource = read("package.json");
 const packageJson = parseJson("package.json", packageSource);
 const nodeVersion = read(".node-version").trim();
@@ -141,15 +172,86 @@ requireTokens("pnpm-workspace.yaml", workspaceSource, [
   "disallowWorkspaceCycles: true",
 ]);
 
+for (const alternateLock of ["package-lock.json", "yarn.lock", "bun.lock", "bun.lockb"]) {
+  if (fs.existsSync(absolute(alternateLock))) {
+    sourceErrors.push(`${alternateLock}: alternate package-manager lock is forbidden; pnpm-lock.yaml is canonical`);
+  }
+}
+
+const expectedWorkflowFiles = ["ci.yml", "editor-expansion-ci.yml"];
+const observedWorkflowFiles = workflowFiles();
+for (const workflow of expectedWorkflowFiles) {
+  if (!observedWorkflowFiles.includes(workflow)) {
+    sourceErrors.push(`.github/workflows: missing governed workflow ${workflow}`);
+  }
+}
+for (const workflow of observedWorkflowFiles) {
+  if (!expectedWorkflowFiles.includes(workflow)) {
+    sourceErrors.push(`.github/workflows/${workflow}: unexpected workflow outside the governed allowlist`);
+  }
+}
+
 const immutableAction = /^[A-Za-z0-9_.-]+\/[A-Za-z0-9_.-]+(?:\/[A-Za-z0-9_./-]+)?@[0-9a-f]{40}$/;
-for (const [name, source, requiredScope] of [
-  ["ci.yml", ciSource, "validation_scope:"],
-  ["editor-expansion-ci.yml", editorSource, "check:editor-expansion"],
-]) {
+const forbiddenWorkflowTokens = [
+  "push:",
+  "pull_request:",
+  "pull_request_target:",
+  "schedule:",
+  "workflow_call:",
+  "workflow_run:",
+  "matrix:",
+  "ubuntu-latest",
+  "windows-latest",
+  "macos-latest",
+  "pnpm install --lockfile=false",
+  "pnpm install --no-frozen-lockfile",
+  "pnpm/action-setup@",
+  "npm install --global pnpm",
+  "permissions: write-all",
+  "write-all",
+  "contents: write",
+  "actions: write",
+  "checks: write",
+  "deployments: write",
+  "discussions: write",
+  "id-token: write",
+  "issues: write",
+  "packages: write",
+  "pages: write",
+  "pull-requests: write",
+  "repository-projects: write",
+  "security-events: write",
+  "statuses: write",
+  "secrets.",
+  "git push",
+  "git commit",
+  "git reset --hard",
+  "git clean -",
+  "gh release",
+  "vercel deploy",
+  "wrangler deploy",
+  "npm publish",
+  "pnpm publish",
+];
+for (const name of observedWorkflowFiles) {
+  const source = read(`.github/workflows/${name}`);
   const observedEvents = events(source);
   if (observedEvents.length !== 1 || observedEvents[0] !== "workflow_dispatch") {
     sourceErrors.push(`${name}: must be workflow_dispatch only, found ${JSON.stringify(observedEvents)}`);
   }
+  requireTokens(name, source, ["permissions:\n  contents: read", "persist-credentials: false"]);
+  forbidTokens(name, source, forbiddenWorkflowTokens);
+  for (const action of actions(source)) {
+    if (!immutableAction.test(action)) {
+      sourceErrors.push(`${name}: action is not immutable: ${action}`);
+    }
+  }
+}
+
+for (const [name, source, requiredScope] of [
+  ["ci.yml", ciSource, "validation_scope:"],
+  ["editor-expansion-ci.yml", editorSource, "check:editor-expansion"],
+]) {
   requireTokens(name, source, [
     "expected_sha:",
     "request_source:",
@@ -172,33 +274,6 @@ for (const [name, source, requiredScope] of [
     '"deployment": "disabled"',
     requiredScope,
   ]);
-  forbidTokens(name, source, [
-    "push:",
-    "pull_request:",
-    "schedule:",
-    "workflow_run:",
-    "matrix:",
-    "pnpm install --no-frozen-lockfile",
-    "pnpm/action-setup@",
-    "contents: write",
-    "statuses: write",
-    "actions: write",
-    "deployments: write",
-    "id-token: write",
-    "secrets.",
-    "git push",
-    "git reset --hard",
-    "git clean -",
-    "vercel deploy",
-    "wrangler deploy",
-    "npm publish",
-    "pnpm publish",
-  ]);
-  for (const action of actions(source)) {
-    if (!immutableAction.test(action)) {
-      sourceErrors.push(`${name}: action is not immutable: ${action}`);
-    }
-  }
 }
 
 requireTokens("ci.yml", ciSource, [
@@ -242,6 +317,7 @@ for (const packagePath of packageFiles()) {
 
 const lockPath = absolute("pnpm-lock.yaml");
 const lockfilePresent = fs.existsSync(lockPath);
+const workspacePackages = workspacePackagePaths();
 if (!lockfilePresent) {
   fullErrors.push("pnpm-lock.yaml: missing; installed workspace verification is blocked");
 } else {
@@ -251,6 +327,12 @@ if (!lockfilePresent) {
   }
   if (!/^importers:\s*$/m.test(lockSource) || !/^\s{2}\.\s*:\s*$/m.test(lockSource)) {
     fullErrors.push("pnpm-lock.yaml: root workspace importer is missing");
+  }
+  for (const workspacePackage of workspacePackages) {
+    const importer = new RegExp(`^  ${escapeRegExp(workspacePackage)}:\\s*$`, "m");
+    if (!importer.test(lockSource)) {
+      fullErrors.push(`pnpm-lock.yaml: workspace importer is missing for ${workspacePackage}`);
+    }
   }
 }
 
@@ -265,6 +347,8 @@ const report = {
   sourceReady,
   fullReady,
   lockfilePresent,
+  workflowFiles: observedWorkflowFiles,
+  workspaceImporterCount: workspacePackages.length,
   automaticWorkflowRunsAllowed: false,
   oneRunnerPerDispatch: true,
   dependencyInstallPerformed: false,

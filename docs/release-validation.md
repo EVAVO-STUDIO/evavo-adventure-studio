@@ -2,22 +2,21 @@
 
 ## Current state
 
-Adventure Studio has an exact source toolchain but no committed `pnpm-lock.yaml`.
+Adventure Studio pins one exact source toolchain and one canonical workspace lock:
 
 ```text
 Node.js 24.18.0
 pnpm 11.17.0
+pnpm-lock.yaml committed
 ```
 
-Dependency-free source readiness is available. Installed workspace, browser build and editor-expansion readiness remain blocked until a canonical shared workspace lock is generated, reviewed and committed.
+The committed lock structurally enables frozen installed-workspace verification. That does not make the repository green by declaration: TypeScript, Vitest, Biome, Vite, Pixi, Sharp, browser builds and editor-expansion checks may only be reported as passing after the relevant command has executed successfully against the exact candidate SHA.
 
-A source-contract pass is not evidence that TypeScript, Vitest, Biome, Vite, Pixi, Sharp or any browser application executed.
+A dependency-free source-contract pass proves policy and source structure only. It is not runtime, build or browser evidence.
 
 ## Capacity model
 
-The repository previously ran two automatic workflows across Ubuntu and Windows, creating up to four hosted jobs for an ordinary source change. Both workflows also used a mutable installation.
-
-The retained operating model is:
+The retained operating model is deliberately manual and bounded:
 
 ```text
 develop locally
@@ -25,12 +24,37 @@ develop locally
 → commit and push to main
 → no automatic workflow run
 → select one exact current main SHA
-→ dispatch one deliberate operating-system lane
+→ dispatch one deliberate validation scope on one operating-system lane
 → retain bounded evidence
-→ dispatch the second operating system only when release evidence requires it
+→ dispatch a second operating system only when release evidence requires it
 ```
 
-A single dispatch starts one runner, not an operating-system matrix.
+A single dispatch starts one runner. There is no push, pull-request, scheduled or operating-system-matrix workflow.
+
+## Governed workflow surface
+
+Exactly two workflow files are allowed:
+
+```text
+.github/workflows/ci.yml
+.github/workflows/editor-expansion-ci.yml
+```
+
+The release-readiness checker scans the complete workflow directory, not only the two expected filenames. An unexpected YAML workflow fails source readiness even when it is manual or read-only. This prevents obsolete finalisers, duplicate diagnostics and hidden scheduled jobs from surviving outside the reviewed contract.
+
+Both retained workflows are manual exact-SHA gates. They require:
+
+- `request_source=evavo-development-studio`;
+- the requested SHA to equal the dispatched `main` SHA;
+- proof that the candidate belongs to `origin/main`;
+- one explicitly selected runner;
+- immutable remote action commit SHAs;
+- no persisted checkout credentials;
+- read-only repository permissions;
+- a frozen install from the committed pnpm lock;
+- a clean tracked tree after validation;
+- bounded evidence retention;
+- no source mutation, provider mutation, package publication or deployment authority.
 
 ## Source contracts
 
@@ -45,17 +69,22 @@ pnpm run source:check
 
 This validates:
 
-- `.node-version` and `.nvmrc` alignment;
-- the active Node and pnpm versions;
-- repository and workflow release policy;
+- `.node-version`, `.nvmrc`, `packageManager` and engine alignment;
+- the reviewed root verification commands;
 - pinned workspace catalog declarations;
-- the absence of `latest` and cross-repository `file:` dependencies.
+- the absence of `latest` and cross-repository `file:` dependencies;
+- one canonical `pnpm-lock.yaml` with no npm, Yarn or Bun lock beside it;
+- the exact two-file workflow allowlist;
+- manual-only workflow events;
+- read-only permissions and non-persisted checkout credentials;
+- immutable action SHAs;
+- the absence of scheduled, matrix, mutable-install, source-push, publication and deployment shortcuts.
 
 It installs nothing, starts no browser application, calls no provider and deploys nothing.
 
-## Canonical lock generation
+## Canonical lock maintenance
 
-Generate the shared workspace lock only from a clean exact-`main` checkout:
+Do not regenerate the lock for ordinary source-only changes. When a dependency, catalog entry or workspace package changes, start from a clean exact-`main` checkout and use the pinned toolchain:
 
 ```powershell
 node --version
@@ -73,17 +102,18 @@ v24.18.0
 
 Review the generated `pnpm-lock.yaml` before committing it. Confirm:
 
-1. the root importer exists;
-2. all `apps/*`, `packages/*` and `tools/*` projects are represented;
+1. the root importer remains present;
+2. every package under `apps/*`, `packages/*` and `tools/*` has an importer;
 3. workspace dependencies remain governed by the repository workspace policy;
 4. catalog versions resolve exactly as declared in `pnpm-workspace.yaml`;
 5. no `latest`, cross-repository `file:`, local absolute path, registry credential or environment value appears;
 6. no application source or generated artifact changed with the lock;
-7. the lock was generated, not hand edited.
+7. no alternate package-manager lock was created;
+8. the lock was generated by the exact pnpm version rather than hand edited.
 
 ## Complete workspace proof
 
-After committing the reviewed lock, start from a fresh checkout of that exact SHA:
+For an installed release candidate, start from a fresh checkout of that exact SHA:
 
 ```powershell
 corepack enable
@@ -95,6 +125,8 @@ git diff --exit-code
 git status --short
 ```
 
+The full readiness mode additionally verifies that the canonical lock has a root importer and an importer for every current workspace package.
+
 Run the complete workspace gate separately on:
 
 ```text
@@ -102,7 +134,7 @@ ubuntu-24.04
 windows-2022
 ```
 
-The two operating-system results may be dispatched independently. Do not restore an automatic matrix.
+The operating-system results are independent deliberate dispatches. Do not restore an automatic matrix.
 
 ## Editor expansion proof
 
@@ -112,7 +144,7 @@ The canonical editor-expansion command is:
 pnpm run check:editor-expansion
 ```
 
-It runs the exact shared sequence for both operating systems:
+It runs the shared sequence for one deliberately selected operating system:
 
 - toolchain verification;
 - `tsconfig.editor-expansion.json` project compilation;
@@ -122,31 +154,21 @@ It runs the exact shared sequence for both operating systems:
 - timeline lab build;
 - CLI build.
 
-The workflow may run only after a frozen install from the committed lock.
-
-## Workflow rules
-
-Both workflows are manual exact-SHA gates. They require:
-
-- `request_source=evavo-development-studio`;
-- the requested SHA to equal the dispatched `main` SHA;
-- proof that the candidate belongs to `origin/main`;
-- one explicitly selected runner;
-- immutable remote action commit SHAs;
-- no persisted checkout credentials;
-- read-only repository permissions;
-- a clean tracked tree after validation;
-- bounded evidence retention;
-- no provider, release, package-publication or deployment authority.
+The workflow may run only after the full release-readiness contract and a frozen install from the committed lock.
 
 ## Prohibited shortcuts
 
 Do not:
 
-- restore push, pull-request or scheduled validation;
-- restore the Ubuntu/Windows matrix;
-- use `pnpm install --no-frozen-lockfile`;
+- add ad hoc workflow files outside the two-file allowlist;
+- restore push, pull-request, scheduled or chained workflow validation;
+- restore an Ubuntu/Windows matrix;
+- grant workflow write permissions or persist checkout credentials;
+- let Actions patch, commit or push repository source;
+- use mutable action tags or `*-latest` runners;
+- use `pnpm install --lockfile=false` or `--no-frozen-lockfile`;
+- retain `package-lock.json`, `yarn.lock`, `bun.lock` or `bun.lockb` beside the pnpm lock;
 - hand-edit `pnpm-lock.yaml`;
 - treat source readiness as installed-runtime evidence;
-- publish packages or deploy applications from CI validation;
+- publish packages or deploy applications from validation workflows;
 - classify a zero-step GitHub Actions failure as a source defect.
