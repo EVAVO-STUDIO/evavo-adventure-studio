@@ -13,6 +13,7 @@ import { DialogueApp } from "./DialogueApp.js";
 import { StudioErrorBoundary } from "./ErrorBoundary.js";
 import { FontApp } from "./FontApp.js";
 import { GeometryApp } from "./GeometryApp.js";
+import { LocalisationApp } from "./LocalisationApp.js";
 import { MotionFeelApp } from "./MotionFeelApp.js";
 import { ObjectApp } from "./ObjectApp.js";
 import { PlaytestApp } from "./PlaytestApp.js";
@@ -65,6 +66,8 @@ const application: ReactNode =
     <ArtDirectionApp />
   ) : workspace === "fonts" ? (
     <FontApp />
+  ) : workspace === "localisation" ? (
+    <LocalisationApp />
   ) : workspace === "interface" ? (
     <UiSkinApp />
   ) : workspace === "audio" ? (
@@ -100,6 +103,7 @@ const workspaces = [
   { id: "animation", href: "/?workspace=animation", label: "Animation" },
   { id: "art", href: "/?workspace=art", label: "Art" },
   { id: "fonts", href: "/?workspace=fonts", label: "Fonts" },
+  { id: "localisation", href: "/?workspace=localisation", label: "Localise" },
   { id: "interface", href: "/?workspace=interface", label: "Interface" },
   { id: "audio", href: "/?workspace=audio", label: "Audio" },
   { id: "dialogue", href: "/?workspace=dialogue", label: "Dialogue" },
@@ -123,6 +127,7 @@ const activeWorkspace =
   workspace === "animation" ||
   workspace === "art" ||
   workspace === "fonts" ||
+  workspace === "localisation" ||
   workspace === "interface" ||
   workspace === "audio" ||
   workspace === "dialogue" ||
