@@ -1,5 +1,5 @@
 import { advanceFixedStepClock, createFixedStepClock } from "@evavo/adventure-core/fixed-step";
-import type { Point } from "@evavo/adventure-project-schema";
+import type { Id, Point } from "@evavo/adventure-project-schema";
 import type { NativeCanvas, ResolvedFrame } from "@evavo/adventure-render-contract";
 import { PixiWebGLRenderer } from "@evavo/adventure-renderer-pixi";
 import { PixiAssetTextureStore } from "@evavo/adventure-renderer-pixi/texture-store";
@@ -10,6 +10,10 @@ import { requestedRuntimeBundleFromSearch } from "./built-in-demos.js";
 import { classicFrontEndSkipped, runClassicFrontEnd } from "./classic-front-end.js";
 import { mapClientPointToNative, requestedActorFromSearch } from "./input.js";
 import { createLaboratoryFrame } from "./laboratory-frame.js";
+import {
+  configuredOpeningSequenceId,
+  requestedNewGameOpeningSequenceId,
+} from "./opening-sequence.js";
 import { createPackagedRuntimeController, type PackagedRuntimeController } from "./packaged-controller.js";
 import { type ParserKeyInput, parserKeyInputFromKeyboardEvent } from "./parser.js";
 import { createPlayerReplayRecorder, type ReplayRecordingStatus } from "./replay-recorder.js";
@@ -30,6 +34,10 @@ interface PlayerInputController {
   setPressed(pressed: boolean): void;
   activate(position: Point): void;
   handleKey?(input: ParserKeyInput): boolean;
+  activeBlockingSequenceId?(): Id<"sequence"> | null;
+  skipNarrativeSequence?(
+    sequenceId: Id<"sequence">,
+  ): { readonly kind: "skipped" | "rejected"; readonly reason?: string };
 }
 
 interface PlayerPersistence {
@@ -125,6 +133,9 @@ const mountPlayer = async (
   let disposed = false;
   let systemMenuActive = false;
 
+  const blockingSequenceId = (): Id<"sequence"> | null =>
+    player.input?.activeBlockingSequenceId?.() ?? null;
+
   const resize = (): void => {
     const bounds = host.getBoundingClientRect();
     if (bounds.width > 0 && bounds.height > 0) {
@@ -136,16 +147,20 @@ const mountPlayer = async (
   resize();
 
   const onPointerMove = (event: PointerEvent): void => {
-    if (systemMenuActive) return;
+    if (systemMenuActive || blockingSequenceId()) return;
     player.input?.setPointer(nativePointer(host, initialFrame.canvas, event));
   };
   const onPointerLeave = (): void => {
-    if (systemMenuActive) return;
+    if (systemMenuActive || blockingSequenceId()) return;
     player.input?.setPointer(null);
     player.input?.setPressed(false);
   };
   const onPointerDown = (event: PointerEvent): void => {
     if (systemMenuActive || !player.input || event.button !== 0) return;
+    if (blockingSequenceId()) {
+      event.preventDefault();
+      return;
+    }
     const point = nativePointer(host, initialFrame.canvas, event);
     player.input.setPointer(point);
     player.input.setPressed(true);
@@ -157,10 +172,12 @@ const mountPlayer = async (
     event.preventDefault();
   };
   const onPointerUp = (event: PointerEvent): void => {
-    if (!systemMenuActive && event.button === 0) player.input?.setPressed(false);
+    if (!systemMenuActive && !blockingSequenceId() && event.button === 0) {
+      player.input?.setPressed(false);
+    }
   };
   const onPointerCancel = (): void => {
-    if (!systemMenuActive) player.input?.setPressed(false);
+    if (!systemMenuActive && !blockingSequenceId()) player.input?.setPressed(false);
   };
   const onContextMenu = (event: MouseEvent): void => {
     if (player.input) event.preventDefault();
@@ -217,7 +234,14 @@ const mountPlayer = async (
   };
 
   const openSystemMenu = (): void => {
-    if (systemMenuActive || !player.persistence || !player.bundle) return;
+    if (
+      systemMenuActive ||
+      blockingSequenceId() ||
+      !player.persistence ||
+      !player.bundle
+    ) {
+      return;
+    }
     systemMenuActive = true;
     player.input?.setPressed(false);
     player.input?.setPointer(null);
@@ -263,6 +287,21 @@ const mountPlayer = async (
 
   const onKeyDown = (event: KeyboardEvent): void => {
     if (systemMenuActive) return;
+
+    const sequenceId = blockingSequenceId();
+    if (sequenceId) {
+      if (event.key === "Escape" && player.input?.skipNarrativeSequence) {
+        const result = player.input.skipNarrativeSequence(sequenceId);
+        updateStatus(
+          result.kind === "skipped"
+            ? "CUTSCENE SKIPPED"
+            : (player.statusText?.() ?? "CUTSCENE CANNOT BE SKIPPED YET"),
+        );
+      }
+      event.preventDefault();
+      return;
+    }
+
     if (player.persistence && event.key === "Escape") {
       openSystemMenu();
       event.preventDefault();
@@ -360,13 +399,19 @@ const packagedPlayer = async (
   bundleUrl: string,
   requestedActorInstanceId: string | null,
   initialSave?: SaveGame,
+  initialSequenceId?: Id<"sequence"> | null,
+  restartSequenceId?: Id<"sequence"> | null,
 ): Promise<PackagedPlayerSession> => {
   const textures = new PixiAssetTextureStore({ aliasNamespace: bundle.projectId });
   await textures.loadRuntimeAssets(bundle.assets, bundleUrl);
   const controller: PackagedRuntimeController = createPackagedRuntimeController(bundle, {
     requestedActorInstanceId,
+    ...(initialSequenceId ? { initialSequenceId } : {}),
+    ...(restartSequenceId ? { restartSequenceId } : {}),
   });
-  const initialTick = initialSave ? controller.restoreSaveGame(initialSave) : 0;
+  const initialTick = initialSave
+    ? controller.restoreSaveGame(initialSave)
+    : controller.worldState().story.tick;
   const recorder = createPlayerReplayRecorder(bundle);
   const persistence: PlayerPersistence = {
     saveQuickSlot: () => writeSaveGameSlot(window.localStorage, bundle, controller.createSaveGame()),
@@ -458,14 +503,31 @@ const boot = async (): Promise<void> => {
     }
   }
 
+  const restartSequenceId = configuredOpeningSequenceId(
+    bundle,
+    window.location.search,
+  );
+  const initialSequenceId = requestedNewGameOpeningSequenceId(
+    bundle,
+    window.location.search,
+    initialSave !== undefined,
+  );
   host.dataset["mode"] = "runtime-loading";
   host.textContent = "Loading game…";
-  updateStatus(initialSave ? "RESTORING GAME" : "STARTING NEW GAME");
+  updateStatus(
+    initialSave
+      ? "RESTORING GAME"
+      : initialSequenceId
+        ? "STARTING OPENING"
+        : "STARTING NEW GAME",
+  );
   const session = await packagedPlayer(
     bundle,
     bundleUrl,
     requestedActorFromSearch(window.location.search),
     initialSave,
+    initialSequenceId,
+    restartSequenceId,
   );
   host.textContent = "";
   host.dataset["mode"] = "runtime-bundle";

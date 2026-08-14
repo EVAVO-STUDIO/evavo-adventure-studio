@@ -1,7 +1,13 @@
 import type { RuntimeEvent, RuntimeState } from "@evavo/adventure-core";
 import { beginDialogue } from "@evavo/adventure-dialogue";
+import type { Id } from "@evavo/adventure-project-schema";
 import type { RuntimeBundle } from "@evavo/adventure-runtime-bundle";
-import { advanceSequence, startSequence } from "@evavo/adventure-sequence";
+import {
+  advanceSequence,
+  skipSequence,
+  startSequence,
+  type SequenceRejectionReason,
+} from "@evavo/adventure-sequence";
 
 export interface RuntimeNarrativeWorld {
   readonly story: RuntimeState;
@@ -160,6 +166,70 @@ export const applyRuntimeSequenceRequestEvents = <T extends RuntimeNarrativeWorl
   events: readonly RuntimeEvent[],
   options: RuntimeNarrativeOptions = {},
 ): RuntimeNarrativeTransition<T> => applyNarrativeRequests(bundle, state, events, "sequence-only", options);
+
+export const startRuntimeNarrativeSequence = <T extends RuntimeNarrativeWorld>(
+  bundle: Pick<RuntimeBundle, "dialogues" | "sequences">,
+  state: T,
+  sequenceId: Id<"sequence">,
+  options: RuntimeNarrativeOptions = {},
+): RuntimeNarrativeTransition<T> =>
+  applyRuntimeNarrativeRequestEvents(
+    bundle,
+    state,
+    [{ kind: "sequence-requested", sequenceId }],
+    options,
+  );
+
+export type RuntimeNarrativeSequenceSkipResult<T extends RuntimeNarrativeWorld> =
+  | {
+      readonly kind: "skipped";
+      readonly state: T;
+      readonly events: readonly RuntimeEvent[];
+    }
+  | {
+      readonly kind: "rejected";
+      readonly reason: SequenceRejectionReason;
+      readonly state: T;
+      readonly events: readonly RuntimeEvent[];
+    };
+
+export const skipRuntimeNarrativeSequence = <T extends RuntimeNarrativeWorld>(
+  bundle: Pick<RuntimeBundle, "dialogues" | "sequences">,
+  state: T,
+  sequenceId: Id<"sequence">,
+  options: RuntimeNarrativeOptions = {},
+): RuntimeNarrativeSequenceSkipResult<T> => {
+  const sequence = bundle.sequences.find((candidate) => candidate.id === sequenceId);
+  if (!sequence) {
+    throw new RuntimeNarrativeRequestError(
+      "missing-sequence",
+      `Requested sequence '${sequenceId}' does not exist.`,
+      sequenceId,
+    );
+  }
+
+  const operation = skipSequence(state.story, sequence);
+  if (operation.kind === "rejected") {
+    return {
+      kind: "rejected",
+      reason: operation.reason,
+      state,
+      events: [],
+    };
+  }
+
+  const requests = applyRuntimeNarrativeRequestEvents(
+    bundle,
+    withStory(state, operation.transition.state),
+    operation.transition.events,
+    options,
+  );
+  return {
+    kind: "skipped",
+    state: requests.state,
+    events: requests.events,
+  };
+};
 
 export const advanceRuntimeNarrativeSequences = <T extends RuntimeNarrativeWorld>(
   bundle: Pick<RuntimeBundle, "dialogues" | "sequences">,

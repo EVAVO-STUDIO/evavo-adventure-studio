@@ -15,6 +15,10 @@ import {
 } from "@evavo/adventure-project-schema";
 import { classicFrontEndManifestSchema } from "@evavo/adventure-project-schema/front-end";
 import { gameLifecycleManifestSchema } from "@evavo/adventure-project-schema/lifecycle";
+import {
+  gameOpeningManifestSchema,
+  validateGameOpeningManifest,
+} from "@evavo/adventure-project-schema/opening";
 import { sceneInstanceManifestSchema } from "@evavo/adventure-scene-instances";
 import { uiSkinManifestSchema } from "@evavo/adventure-ui-skin";
 import { z } from "zod";
@@ -97,6 +101,7 @@ export const runtimeBundleSchema = z
     localisation: runtimeLocalisationPackSchema.optional(),
     frontEnd: classicFrontEndManifestSchema.optional(),
     lifecycle: gameLifecycleManifestSchema.optional(),
+    opening: gameOpeningManifestSchema.optional(),
   })
   .strict()
   .superRefine((bundle, context) => {
@@ -113,6 +118,18 @@ export const runtimeBundleSchema = z
         path: ["lifecycle", "projectId"],
         message: `Lifecycle project '${bundle.lifecycle.projectId}' does not match runtime project '${bundle.projectId}'.`,
       });
+    }
+    if (bundle.opening) {
+      for (const issue of validateGameOpeningManifest(
+        { id: bundle.projectId, sequences: bundle.sequences },
+        bundle.opening,
+      )) {
+        context.addIssue({
+          code: "custom",
+          path: ["opening", issue.path],
+          message: issue.message,
+        });
+      }
     }
   });
 export type RuntimeBundle = z.infer<typeof runtimeBundleSchema>;

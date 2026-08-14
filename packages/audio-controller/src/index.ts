@@ -1,4 +1,4 @@
-import { evaluateCondition } from "@evavo/adventure-core";
+import { evaluateCondition, type RuntimeEvent } from "@evavo/adventure-core";
 import type {
   Id,
   Sequence,
@@ -10,12 +10,22 @@ import {
   type PackagedRuntimeController,
   type PackagedRuntimeControllerOptions,
 } from "@evavo/adventure-runtime-controller";
+import { advanceProfiledRuntimeCamera } from "@evavo/adventure-runtime-controller/profiled-camera";
 import {
+  canonicalSaveGameJson,
   createSaveGame as createRuntimeSaveGame,
+  fnv1a64,
   loadSaveGame as loadRuntimeSaveGame,
+  runtimeBundleFingerprint,
+  saveGamePayloadSchema,
+  saveGameSchema,
   type SaveGame,
 } from "@evavo/adventure-save-game";
 import type { InteractiveRuntimeWorldState } from "@evavo/adventure-scene-runtime/commands";
+import {
+  skipRuntimeNarrativeSequence,
+  startRuntimeNarrativeSequence,
+} from "@evavo/adventure-scene-runtime/narrative";
 import {
   type AudioCommand,
   type AudioRuntimeState,
@@ -28,11 +38,19 @@ import {
   triggerAudioCue,
 } from "@evavo/adventure-audio/runtime";
 
+export interface AudioNarrativeSequenceSkipResult {
+  readonly kind: "skipped" | "rejected";
+  readonly reason?: string;
+}
+
 export interface AudioPackagedRuntimeController
   extends PackagedRuntimeController {
   audioState(): AudioRuntimeState | null;
   drainAudioCommands(): readonly AudioCommand[];
   completeAudioVoice(voiceId: Id<"audio-voice">): void;
+  startNarrativeSequence(sequenceId: Id<"sequence">): readonly RuntimeEvent[];
+  skipNarrativeSequence(sequenceId: Id<"sequence">): AudioNarrativeSequenceSkipResult;
+  activeBlockingSequenceId(): Id<"sequence"> | null;
 }
 
 const dialogueKey = (
@@ -154,6 +172,25 @@ const speechCueForActiveDialogue = (
   return null;
 };
 
+const internalWorldReplacementSave = (
+  bundle: RuntimeBundle,
+  world: InteractiveRuntimeWorldState,
+  interfaceState: SaveGame["interface"],
+): SaveGame => {
+  const payload = saveGamePayloadSchema.parse({
+    saveVersion: 1,
+    projectId: bundle.projectId,
+    bundleFingerprint: runtimeBundleFingerprint(bundle),
+    assetManifestFingerprint: bundle.assetManifestFingerprint,
+    world,
+    interface: interfaceState,
+  });
+  return saveGameSchema.parse({
+    ...payload,
+    saveFingerprint: fnv1a64(canonicalSaveGameJson(payload)),
+  });
+};
+
 export const createAudioPackagedRuntimeController = (
   bundle: RuntimeBundle,
   options: PackagedRuntimeControllerOptions = {},
@@ -164,6 +201,8 @@ export const createAudioPackagedRuntimeController = (
   let audio: AudioRuntimeState | null = null;
   let synchronizedTick = controller.worldState().story.tick;
   let activeDialogueKey = dialogueKey(controller.worldState());
+  let trackedNarrativeSequenceId: Id<"sequence"> | null = null;
+  let trackedNarrativeInterface: SaveGame["interface"] | null = null;
 
   const appendCommands = (next: readonly AudioCommand[]): void => {
     commands.push(...next);
@@ -273,6 +312,101 @@ export const createAudioPackagedRuntimeController = (
     return result;
   };
 
+  const activeBlockingSequenceId = (): Id<"sequence"> | null => {
+    if (!trackedNarrativeSequenceId) return null;
+    const active = controller
+      .worldState()
+      .story.activeSequences.some(
+        (sequence) => sequence.sequenceId === trackedNarrativeSequenceId,
+      );
+    const definition = bundle.sequences.find(
+      (sequence) => sequence.id === trackedNarrativeSequenceId,
+    );
+    return active && definition?.blocking ? trackedNarrativeSequenceId : null;
+  };
+
+  const clearTrackedNarrativeIfInactive = (): void => {
+    if (
+      trackedNarrativeSequenceId &&
+      !controller
+        .worldState()
+        .story.activeSequences.some(
+          (active) => active.sequenceId === trackedNarrativeSequenceId,
+        )
+    ) {
+      trackedNarrativeSequenceId = null;
+      trackedNarrativeInterface = null;
+    }
+  };
+
+  const replaceControllerWorld = (
+    previous: InteractiveRuntimeWorldState,
+    next: InteractiveRuntimeWorldState,
+    runtimeEvents: readonly RuntimeEvent[],
+    interfaceSnapshot: SaveGame["interface"],
+  ): void => {
+    const camera = advanceProfiledRuntimeCamera({
+      bundle,
+      state: controller.cameraState(),
+      previousWorld: previous,
+      nextWorld: next,
+      controlledActorInstanceId: controller.controlledActorInstanceId,
+      runtimeEvents,
+    });
+    const { profiledCamera: _profiledCamera, ...withoutCamera } = interfaceSnapshot;
+    const interfaceState = camera.state
+      ? { ...withoutCamera, profiledCamera: camera.state }
+      : withoutCamera;
+    controller.restoreSaveGame(
+      internalWorldReplacementSave(bundle, next, interfaceState),
+    );
+    synchronizeWorld(previous, controller.worldState());
+  };
+
+  const startNarrativeSequence = (
+    sequenceId: Id<"sequence">,
+  ): readonly RuntimeEvent[] => {
+    clearTrackedNarrativeIfInactive();
+    if (trackedNarrativeSequenceId) {
+      throw new Error(
+        `Narrative sequence '${trackedNarrativeSequenceId}' is already managed by this controller.`,
+      );
+    }
+    const snapshot = controller.createSaveGame();
+    const previous = controller.worldState();
+    const transition = startRuntimeNarrativeSequence(bundle, previous, sequenceId);
+    replaceControllerWorld(previous, transition.state, transition.events, snapshot.interface);
+    trackedNarrativeSequenceId = sequenceId;
+    trackedNarrativeInterface = snapshot.interface;
+    return transition.events;
+  };
+
+  const skipNarrativeSequence = (
+    sequenceId: Id<"sequence">,
+  ): AudioNarrativeSequenceSkipResult => {
+    clearTrackedNarrativeIfInactive();
+    if (
+      trackedNarrativeSequenceId !== sequenceId ||
+      !trackedNarrativeInterface
+    ) {
+      return { kind: "rejected", reason: "sequence-not-controller-started" };
+    }
+    const previous = controller.worldState();
+    const skipped = skipRuntimeNarrativeSequence(bundle, previous, sequenceId);
+    if (skipped.kind === "rejected") {
+      return { kind: "rejected", reason: skipped.reason };
+    }
+    replaceControllerWorld(
+      previous,
+      skipped.state,
+      skipped.events,
+      trackedNarrativeInterface,
+    );
+    trackedNarrativeSequenceId = null;
+    trackedNarrativeInterface = null;
+    return { kind: "skipped" };
+  };
+
   const createControllerSave = (): SaveGame => {
     const interfaceSave = controller.createSaveGame();
     return createRuntimeSaveGame(bundle, controller.worldState(), {
@@ -317,6 +451,8 @@ export const createAudioPackagedRuntimeController = (
 
     synchronizedTick = restoredTick;
     activeDialogueKey = dialogueKey(controller.worldState());
+    trackedNarrativeSequenceId = null;
+    trackedNarrativeInterface = null;
     return restoredTick;
   };
 
@@ -346,6 +482,9 @@ export const createAudioPackagedRuntimeController = (
         completeAudioVoice(mix, audio, voiceId, audio.tick),
       );
     },
+    startNarrativeSequence,
+    skipNarrativeSequence,
+    activeBlockingSequenceId,
     createFrame: (tick) => {
       if (tick < synchronizedTick) {
         throw new RangeError(
@@ -353,7 +492,9 @@ export const createAudioPackagedRuntimeController = (
         );
       }
       if (tick === synchronizedTick) {
-        return controller.createFrame(tick);
+        const frame = controller.createFrame(tick);
+        clearTrackedNarrativeIfInactive();
+        return frame;
       }
 
       let frame = controller.createFrame(synchronizedTick);
@@ -366,6 +507,7 @@ export const createAudioPackagedRuntimeController = (
         frame = controller.createFrame(nextTick);
         synchronizeWorld(previous, controller.worldState());
       }
+      clearTrackedNarrativeIfInactive();
       return frame;
     },
   };

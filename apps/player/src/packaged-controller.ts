@@ -6,13 +6,18 @@ import {
   WebAudioCommandPlayer,
   webAudioIsSupported,
 } from "@evavo/adventure-audio-web";
+import type { Id, Sequence } from "@evavo/adventure-project-schema";
 import type { GameLifecycleOutcome } from "@evavo/adventure-project-schema/lifecycle";
 import type { RuntimeBundle } from "@evavo/adventure-runtime-bundle";
-import type { PackagedRuntimeControllerOptions } from "@evavo/adventure-runtime-controller";
+import {
+  type PackagedRuntimeControllerOptions as BasePackagedRuntimeControllerOptions,
+} from "@evavo/adventure-runtime-controller";
+import { appendNativeStatusPanel } from "@evavo/adventure-runtime-controller/native-status";
 import type { SaveGame } from "@evavo/adventure-save-game";
 import { requestedRuntimeBundleFromSearch } from "./built-in-demos.js";
 import { resolveActiveGameLifecycleOutcome } from "./lifecycle-outcome.js";
 import { runGameLifecycleScreen } from "./lifecycle-screen.js";
+import { frameWithoutInteractiveChrome } from "./opening-sequence.js";
 import {
   PLAYER_RUNTIME_RESTORED_EVENT,
   type PlayerRuntimeRestoredDetail,
@@ -20,7 +25,12 @@ import {
 import { listSaveGameSlots, readSaveGameSlot } from "./save-storage.js";
 
 export type PackagedRuntimeController = AudioPackagedRuntimeController;
-export type { PackagedRuntimeControllerOptions };
+
+export interface PackagedRuntimeControllerOptions
+  extends BasePackagedRuntimeControllerOptions {
+  readonly initialSequenceId?: Id<"sequence"> | null;
+  readonly restartSequenceId?: Id<"sequence"> | null;
+}
 
 const runtimeBundleUrl = (): string | null => {
   if (typeof window === "undefined") return null;
@@ -36,12 +46,79 @@ const dispatchRuntimeRestored = (restoredTick: number, tickOffset: number): void
   );
 };
 
+const activeSequenceState = (
+  controller: AudioPackagedRuntimeController,
+  sequenceId: Id<"sequence">,
+) =>
+  controller
+    .worldState()
+    .story.activeSequences.find((active) => active.sequenceId === sequenceId) ?? null;
+
+const sequenceSpeechCues = (
+  sequence: Sequence,
+): readonly {
+  readonly atTick: number;
+  readonly text: string;
+  readonly durationTicks?: number;
+}[] =>
+  sequence.tracks
+    .flatMap((track) => track.cues)
+    .flatMap((cue) => {
+      if (cue.kind === "speech") {
+        return [
+          {
+            atTick: cue.atTick,
+            text: cue.text,
+            ...(cue.durationTicks === undefined ? {} : { durationTicks: cue.durationTicks }),
+          },
+        ];
+      }
+      if (cue.kind === "story-action" && cue.action.kind === "say") {
+        return [{ atTick: cue.atTick, text: cue.action.text }];
+      }
+      return [];
+    })
+    .sort((left, right) => left.atTick - right.atTick);
+
+const activeSequenceCaption = (
+  sequence: Sequence,
+  elapsedTicks: number,
+): string | null => {
+  const cues = sequenceSpeechCues(sequence).filter((cue) => cue.atTick <= elapsedTicks);
+  const cue = cues.at(-1);
+  if (!cue) return null;
+  if (
+    cue.durationTicks !== undefined &&
+    elapsedTicks >= cue.atTick + cue.durationTicks
+  ) {
+    return null;
+  }
+  return cue.text;
+};
+
+const blockingSequenceStatus = (
+  bundle: RuntimeBundle,
+  controller: AudioPackagedRuntimeController,
+  sequenceId: Id<"sequence">,
+): string => {
+  const sequence = bundle.sequences.find((candidate) => candidate.id === sequenceId);
+  const active = activeSequenceState(controller, sequenceId);
+  if (!sequence || !active) return "CUTSCENE";
+  const canSkip =
+    sequence.skip.allowed && active.elapsedTicks >= sequence.skip.safeAfterTick;
+  const caption = activeSequenceCaption(sequence, active.elapsedTicks);
+  if (caption) return `${caption}${canSkip ? " • ESC" : ""}`;
+  return `${sequence.name.toUpperCase()}${canSkip ? " • ESC TO SKIP" : ""}`;
+};
+
 export const createPackagedRuntimeController = (
   bundle: RuntimeBundle,
   options: PackagedRuntimeControllerOptions = {},
 ): PackagedRuntimeController => {
   const controller = createAudioPackagedRuntimeController(bundle, options);
   const bundleUrl = runtimeBundleUrl();
+  const openingSequenceId = options.initialSequenceId ?? null;
+  const restartSequenceId = options.restartSequenceId ?? openingSequenceId;
   const initialSave: SaveGame | null = (() => {
     try {
       return controller.createSaveGame();
@@ -49,6 +126,10 @@ export const createPackagedRuntimeController = (
       return null;
     }
   })();
+  if (openingSequenceId) {
+    controller.startNarrativeSequence(openingSequenceId);
+  }
+
   let output: WebAudioCommandPlayer | null = null;
   let lastExternalTick = controller.worldState().story.tick;
   let tickOffset = 0;
@@ -124,6 +205,18 @@ export const createPackagedRuntimeController = (
     return tick;
   }
 
+  function restartInitialState(): void {
+    if (!initialSave) {
+      returnToTitle();
+      return;
+    }
+    restoreInternal(initialSave);
+    if (restartSequenceId) {
+      controller.startNarrativeSequence(restartSequenceId);
+      flushAudio();
+    }
+  }
+
   function openLifecycle(outcome: GameLifecycleOutcome): void {
     if (
       lifecycleUiActive ||
@@ -147,11 +240,7 @@ export const createPackagedRuntimeController = (
           return;
         }
         if (result.kind === "restart") {
-          if (initialSave) restoreInternal(initialSave);
-          else {
-            returnToTitle();
-            return;
-          }
+          restartInitialState();
         }
         lifecycleUiActive = false;
       })
@@ -161,33 +250,52 @@ export const createPackagedRuntimeController = (
       });
   }
 
+  const cinematicFrame = (
+    frame: ReturnType<typeof controller.createFrame>,
+  ): ReturnType<typeof controller.createFrame> => {
+    const sequenceId = controller.activeBlockingSequenceId();
+    if (!sequenceId) return frame;
+    const stripped = frameWithoutInteractiveChrome(frame);
+    return appendNativeStatusPanel(
+      stripped,
+      bundle,
+      blockingSequenceStatus(bundle, controller, sequenceId),
+    );
+  };
+
   flushAudio();
 
   return {
     ...controller,
     setPointer: (position) => {
-      if (lifecycleOutcome) return;
+      if (lifecycleOutcome || controller.activeBlockingSequenceId()) return;
       controller.setPointer(position);
     },
     setPressed: (pressed) => {
-      if (lifecycleOutcome) return;
+      if (lifecycleOutcome || controller.activeBlockingSequenceId()) return;
       if (pressed) unlockAudio();
       controller.setPressed(pressed);
     },
     activate: (position) => {
-      if (lifecycleOutcome) return;
+      if (lifecycleOutcome || controller.activeBlockingSequenceId()) return;
       unlockAudio();
       controller.activate(position);
       flushAudio();
       checkLifecycle();
     },
     handleKey: (input) => {
-      if (lifecycleOutcome) return false;
+      if (lifecycleOutcome || controller.activeBlockingSequenceId()) return false;
       unlockAudio();
       const handled = controller.handleKey(input);
       flushAudio();
       checkLifecycle();
       return handled;
+    },
+    skipNarrativeSequence: (sequenceId) => {
+      const result = controller.skipNarrativeSequence(sequenceId);
+      flushAudio();
+      checkLifecycle();
+      return result;
     },
     restoreSaveGame: (input) => {
       const tick = controller.restoreSaveGame(input);
@@ -205,7 +313,13 @@ export const createPackagedRuntimeController = (
       controller.completeAudioVoice(voiceId);
       flushAudio();
     },
-    statusText: () => lifecycleOutcome?.title ?? controller.statusText(),
+    statusText: () => {
+      if (lifecycleOutcome) return lifecycleOutcome.title;
+      const sequenceId = controller.activeBlockingSequenceId();
+      return sequenceId
+        ? blockingSequenceStatus(bundle, controller, sequenceId)
+        : controller.statusText();
+    },
     createFrame: (externalTick) => {
       lastExternalTick = externalTick;
       if (lifecycleOutcome && lifecycleFrame) {
@@ -220,7 +334,7 @@ export const createPackagedRuntimeController = (
       flushAudio();
       lifecycleFrame = frame;
       checkLifecycle();
-      return frame;
+      return cinematicFrame(frame);
     },
     drainAudioCommands: () => controller.drainAudioCommands(),
   };
