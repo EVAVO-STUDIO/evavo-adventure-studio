@@ -47,18 +47,11 @@ export const createClassicSystemMenuState = (): ClassicSystemMenuState => ({
 const slotTitle = (slot: number): string =>
   slot === 0 ? "QUICK SAVE" : `SAVE SLOT ${slot.toString().padStart(2, "0")}`;
 
-const tickLabel = (tick: number): string => {
-  const seconds = Math.floor(tick / 60);
-  const minutes = Math.floor(seconds / 60);
-  const remainingSeconds = seconds % 60;
-  return `${minutes.toString().padStart(2, "0")}:${remainingSeconds.toString().padStart(2, "0")}`;
-};
-
 export const classicSystemMenuSlotLabel = (snapshot: SaveGameSlotSnapshot): string => {
   const title = slotTitle(snapshot.slot);
   if (snapshot.status === "empty") return `${title}  —  EMPTY`;
   if (snapshot.status === "invalid") return `${title}  —  DAMAGED SAVE`;
-  return `${title}  —  ${snapshot.sceneName}  ${tickLabel(snapshot.tick)}`;
+  return `${title}  —  ${snapshot.sceneName}  TICK ${snapshot.tick}`;
 };
 
 const rootItems = (snapshots: readonly SaveGameSlotSnapshot[]): readonly ClassicSystemMenuItem[] => [
