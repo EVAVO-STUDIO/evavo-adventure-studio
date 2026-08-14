@@ -15,9 +15,28 @@ export interface ClassicFrontEndState {
   readonly hasSave: boolean;
 }
 
+export interface ClassicFrontEndLabels {
+  readonly newGame: string;
+  readonly continueGame: string;
+  readonly loadGame: string;
+  readonly options: string;
+  readonly credits: string;
+  readonly quit: string;
+  readonly quickSave: string;
+  readonly back: string;
+  readonly fullscreen: string;
+}
+
 export interface ClassicFrontEndPolicy {
   readonly splashDurationTicks: number;
   readonly splashSkipAfterTicks: number;
+  readonly labels: ClassicFrontEndLabels;
+  readonly showContinue: boolean;
+  readonly showLoad: boolean;
+  readonly showOptions: boolean;
+  readonly showCredits: boolean;
+  readonly showQuit: boolean;
+  readonly allowFullscreen: boolean;
 }
 
 export type ClassicFrontEndCommand =
@@ -48,6 +67,23 @@ export interface ClassicFrontEndMenuItem {
 export const DEFAULT_CLASSIC_FRONT_END_POLICY: ClassicFrontEndPolicy = {
   splashDurationTicks: 96,
   splashSkipAfterTicks: 18,
+  labels: {
+    newGame: "NEW GAME",
+    continueGame: "CONTINUE",
+    loadGame: "LOAD GAME",
+    options: "OPTIONS",
+    credits: "CREDITS",
+    quit: "QUIT",
+    quickSave: "QUICK SAVE",
+    back: "BACK",
+    fullscreen: "TOGGLE FULLSCREEN",
+  },
+  showContinue: true,
+  showLoad: true,
+  showOptions: true,
+  showCredits: true,
+  showQuit: true,
+  allowFullscreen: true,
 };
 
 export const createClassicFrontEndState = (
@@ -61,30 +97,45 @@ export const createClassicFrontEndState = (
 
 export const classicFrontEndMenuItems = (
   state: ClassicFrontEndState,
+  policy: ClassicFrontEndPolicy = DEFAULT_CLASSIC_FRONT_END_POLICY,
 ): readonly ClassicFrontEndMenuItem[] => {
   switch (state.screen) {
-    case "title-menu":
-      return [
-        { id: "new", label: "NEW GAME", enabled: true },
-        { id: "continue", label: "CONTINUE", enabled: state.hasSave },
-        { id: "load", label: "LOAD GAME", enabled: state.hasSave },
-        { id: "options", label: "OPTIONS", enabled: true },
-        { id: "credits", label: "CREDITS", enabled: true },
-        { id: "quit", label: "QUIT", enabled: true },
+    case "title-menu": {
+      const items: ClassicFrontEndMenuItem[] = [
+        { id: "new", label: policy.labels.newGame, enabled: true },
       ];
+      if (policy.showContinue) {
+        items.push({ id: "continue", label: policy.labels.continueGame, enabled: state.hasSave });
+      }
+      if (policy.showLoad) {
+        items.push({ id: "load", label: policy.labels.loadGame, enabled: state.hasSave });
+      }
+      if (policy.showOptions) {
+        items.push({ id: "options", label: policy.labels.options, enabled: true });
+      }
+      if (policy.showCredits) {
+        items.push({ id: "credits", label: policy.labels.credits, enabled: true });
+      }
+      if (policy.showQuit) {
+        items.push({ id: "quit", label: policy.labels.quit, enabled: true });
+      }
+      return items;
+    }
     case "load-menu":
       return [
-        { id: "quick-save", label: "QUICK SAVE", enabled: state.hasSave },
-        { id: "back", label: "BACK", enabled: true },
+        { id: "quick-save", label: policy.labels.quickSave, enabled: state.hasSave },
+        { id: "back", label: policy.labels.back, enabled: true },
       ];
     case "options":
       return [
-        { id: "fullscreen", label: "TOGGLE FULLSCREEN", enabled: true },
-        { id: "back", label: "BACK", enabled: true },
+        ...(policy.allowFullscreen
+          ? [{ id: "fullscreen", label: policy.labels.fullscreen, enabled: true }]
+          : []),
+        { id: "back", label: policy.labels.back, enabled: true },
       ];
     case "credits":
     case "quit":
-      return [{ id: "back", label: "RETURN TO TITLE", enabled: true }];
+      return [{ id: "back", label: policy.labels.back, enabled: true }];
     case "publisher-splash":
       return [];
   }
@@ -95,14 +146,17 @@ const firstEnabledIndex = (items: readonly ClassicFrontEndMenuItem[]): number =>
   return index < 0 ? 0 : index;
 };
 
-const selectedItem = (state: ClassicFrontEndState): ClassicFrontEndMenuItem | null =>
-  classicFrontEndMenuItems(state)[state.selectedIndex] ?? null;
+const selectedItem = (
+  state: ClassicFrontEndState,
+  policy: ClassicFrontEndPolicy,
+): ClassicFrontEndMenuItem | null => classicFrontEndMenuItems(state, policy)[state.selectedIndex] ?? null;
 
 const moveSelection = (
   state: ClassicFrontEndState,
   delta: -1 | 1,
+  policy: ClassicFrontEndPolicy,
 ): ClassicFrontEndState => {
-  const items = classicFrontEndMenuItems(state);
+  const items = classicFrontEndMenuItems(state, policy);
   if (items.length === 0) return state;
   let index = state.selectedIndex;
   for (let attempts = 0; attempts < items.length; attempts += 1) {
@@ -115,16 +169,20 @@ const moveSelection = (
 const enterScreen = (
   state: ClassicFrontEndState,
   screen: ClassicFrontEndScreen,
+  policy: ClassicFrontEndPolicy,
 ): ClassicFrontEndState => {
   const candidate = { ...state, screen, selectedIndex: 0 };
   return {
     ...candidate,
-    selectedIndex: firstEnabledIndex(classicFrontEndMenuItems(candidate)),
+    selectedIndex: firstEnabledIndex(classicFrontEndMenuItems(candidate, policy)),
   };
 };
 
-const activate = (state: ClassicFrontEndState): ClassicFrontEndTransition => {
-  const item = selectedItem(state);
+const activate = (
+  state: ClassicFrontEndState,
+  policy: ClassicFrontEndPolicy,
+): ClassicFrontEndTransition => {
+  const item = selectedItem(state, policy);
   if (!item?.enabled) return { state, effect: null };
   switch (state.screen) {
     case "title-menu":
@@ -134,27 +192,27 @@ const activate = (state: ClassicFrontEndState): ClassicFrontEndTransition => {
         case "continue":
           return { state, effect: { kind: "start", mode: "continue" } };
         case "load":
-          return { state: enterScreen(state, "load-menu"), effect: null };
+          return { state: enterScreen(state, "load-menu", policy), effect: null };
         case "options":
-          return { state: enterScreen(state, "options"), effect: null };
+          return { state: enterScreen(state, "options", policy), effect: null };
         case "credits":
-          return { state: enterScreen(state, "credits"), effect: null };
+          return { state: enterScreen(state, "credits", policy), effect: null };
         case "quit":
-          return { state: enterScreen(state, "quit"), effect: null };
+          return { state: enterScreen(state, "quit", policy), effect: null };
         default:
           return { state, effect: null };
       }
     case "load-menu":
       return item.id === "quick-save"
         ? { state, effect: { kind: "start", mode: "continue" } }
-        : { state: enterScreen(state, "title-menu"), effect: null };
+        : { state: enterScreen(state, "title-menu", policy), effect: null };
     case "options":
       return item.id === "fullscreen"
         ? { state, effect: { kind: "request-fullscreen" } }
-        : { state: enterScreen(state, "title-menu"), effect: null };
+        : { state: enterScreen(state, "title-menu", policy), effect: null };
     case "credits":
     case "quit":
-      return { state: enterScreen(state, "title-menu"), effect: null };
+      return { state: enterScreen(state, "title-menu", policy), effect: null };
     case "publisher-splash":
       return { state, effect: null };
   }
@@ -175,34 +233,36 @@ export const transitionClassicFrontEnd = (
       const splashTick = Math.min(policy.splashDurationTicks, state.splashTick + ticks);
       const next = { ...state, splashTick };
       return splashTick >= policy.splashDurationTicks
-        ? { state: enterScreen(next, "title-menu"), effect: null }
+        ? { state: enterScreen(next, "title-menu", policy), effect: null }
         : { state: next, effect: null };
     }
     case "skip-splash":
       return state.screen === "publisher-splash" &&
         state.splashTick >= policy.splashSkipAfterTicks
-        ? { state: enterScreen(state, "title-menu"), effect: null }
+        ? { state: enterScreen(state, "title-menu", policy), effect: null }
         : { state, effect: null };
     case "move-selection":
-      return { state: moveSelection(state, command.delta), effect: null };
+      return { state: moveSelection(state, command.delta, policy), effect: null };
     case "set-selection": {
-      const items = classicFrontEndMenuItems(state);
+      const items = classicFrontEndMenuItems(state, policy);
       const item = items[command.index];
       return item?.enabled
         ? { state: { ...state, selectedIndex: command.index }, effect: null }
         : { state, effect: null };
     }
     case "activate":
-      return activate(state);
+      return activate(state, policy);
     case "back":
       return state.screen === "publisher-splash"
         ? transitionClassicFrontEnd(state, { kind: "skip-splash" }, policy)
         : state.screen === "title-menu"
-          ? { state: enterScreen(state, "quit"), effect: null }
-          : { state: enterScreen(state, "title-menu"), effect: null };
+          ? policy.showQuit
+            ? { state: enterScreen(state, "quit", policy), effect: null }
+            : { state, effect: null }
+          : { state: enterScreen(state, "title-menu", policy), effect: null };
     case "set-save-available": {
       const next = { ...state, hasSave: command.available };
-      const items = classicFrontEndMenuItems(next);
+      const items = classicFrontEndMenuItems(next, policy);
       const selected = items[next.selectedIndex];
       return selected?.enabled
         ? { state: next, effect: null }

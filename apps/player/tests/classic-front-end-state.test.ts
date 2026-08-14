@@ -2,6 +2,7 @@ import { describe, expect, it } from "vitest";
 import {
   classicFrontEndMenuItems,
   createClassicFrontEndState,
+  DEFAULT_CLASSIC_FRONT_END_POLICY,
   transitionClassicFrontEnd,
 } from "../src/classic-front-end-state.js";
 
@@ -95,5 +96,37 @@ describe("classic front-end state machine", () => {
       available: false,
     }).state;
     expect(state.selectedIndex).toBe(0);
+  });
+
+  it("honours authored menu visibility, wording, timing and fullscreen policy", () => {
+    const policy = {
+      ...DEFAULT_CLASSIC_FRONT_END_POLICY,
+      splashDurationTicks: 30,
+      splashSkipAfterTicks: 4,
+      labels: {
+        ...DEFAULT_CLASSIC_FRONT_END_POLICY.labels,
+        newGame: "BEGIN CASE",
+        credits: "WHO MADE THIS",
+      },
+      showContinue: false,
+      showLoad: false,
+      showOptions: true,
+      showCredits: true,
+      showQuit: false,
+      allowFullscreen: false,
+    };
+    let state = createClassicFrontEndState(true);
+    state = transitionClassicFrontEnd(state, { kind: "tick", ticks: 30 }, policy).state;
+
+    expect(classicFrontEndMenuItems(state, policy).map((item) => [item.id, item.label])).toEqual([
+      ["new", "BEGIN CASE"],
+      ["options", "OPTIONS"],
+      ["credits", "WHO MADE THIS"],
+    ]);
+
+    state = transitionClassicFrontEnd(state, { kind: "set-selection", index: 1 }, policy).state;
+    state = transitionClassicFrontEnd(state, { kind: "activate" }, policy).state;
+    expect(state.screen).toBe("options");
+    expect(classicFrontEndMenuItems(state, policy).map((item) => item.id)).toEqual(["back"]);
   });
 });

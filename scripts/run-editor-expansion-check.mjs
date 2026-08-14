@@ -43,6 +43,7 @@ const commands = [
     "packages/runtime-bundle/tests/bitmap-font-runtime.test.ts",
     "packages/runtime-bundle/tests/ui-skin-runtime.test.ts",
     "packages/runtime-bundle/tests/audio-runtime.test.ts",
+    "packages/runtime-bundle/tests/front-end-runtime.test.ts",
     "packages/runtime-bundle/tests/localisation-runtime.test.ts",
     "packages/runtime-bundle/tests/play-feel-profile.test.ts",
     "packages/renderer-pixi/tests",

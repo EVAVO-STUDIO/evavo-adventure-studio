@@ -39,8 +39,15 @@ export const fnv1a64 = (value: string): string => {
 export const runtimeBundleExactFingerprint = (bundle: RuntimeBundle): string =>
   fnv1a64(canonicalSaveGameJson(bundle));
 
+const runtimeBundleSaveFingerprintView = (bundle: RuntimeBundle): RuntimeBundle => {
+  const localisationNeutral = runtimeBundleSaveCompatibilityView(bundle);
+  if (!localisationNeutral.frontEnd) return localisationNeutral;
+  const { frontEnd: _frontEnd, ...withoutFrontEnd } = localisationNeutral;
+  return withoutFrontEnd as RuntimeBundle;
+};
+
 export const runtimeBundleFingerprint = (bundle: RuntimeBundle): string =>
-  runtimeBundleExactFingerprint(runtimeBundleSaveCompatibilityView(bundle));
+  runtimeBundleExactFingerprint(runtimeBundleSaveFingerprintView(bundle));
 
 export const payloadFromSave = (save: SaveGame): SaveGamePayload => ({
   saveVersion: save.saveVersion,

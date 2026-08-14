@@ -13,6 +13,7 @@ import {
   sceneSchema,
   sequenceSchema,
 } from "@evavo/adventure-project-schema";
+import { classicFrontEndManifestSchema } from "@evavo/adventure-project-schema/front-end";
 import { sceneInstanceManifestSchema } from "@evavo/adventure-scene-instances";
 import { uiSkinManifestSchema } from "@evavo/adventure-ui-skin";
 import { z } from "zod";
@@ -93,8 +94,18 @@ export const runtimeBundleSchema = z
     uiSkins: uiSkinManifestSchema.optional(),
     audioMix: audioMixManifestSchema.optional(),
     localisation: runtimeLocalisationPackSchema.optional(),
+    frontEnd: classicFrontEndManifestSchema.optional(),
   })
-  .strict();
+  .strict()
+  .superRefine((bundle, context) => {
+    if (bundle.frontEnd && bundle.frontEnd.projectId !== bundle.projectId) {
+      context.addIssue({
+        code: "custom",
+        path: ["frontEnd", "projectId"],
+        message: `Front-end project '${bundle.frontEnd.projectId}' does not match runtime project '${bundle.projectId}'.`,
+      });
+    }
+  });
 export type RuntimeBundle = z.infer<typeof runtimeBundleSchema>;
 
 export const parseRuntimeBundle = (input: unknown): RuntimeBundle => {

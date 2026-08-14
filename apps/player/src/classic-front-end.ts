@@ -1,3 +1,4 @@
+import type { ClassicFrontEndManifest } from "@evavo/adventure-project-schema/front-end";
 import {
   classicFrontEndMenuItems,
   createClassicFrontEndState,
@@ -5,14 +6,15 @@ import {
   transitionClassicFrontEnd,
   type ClassicFrontEndCommand,
   type ClassicFrontEndEffect,
+  type ClassicFrontEndPolicy,
   type ClassicFrontEndStartMode,
-  type ClassicFrontEndState,
 } from "./classic-front-end-state.js";
 import "./classic-front-end.css";
 
 export interface ClassicFrontEndOptions {
   readonly title: string;
   readonly hasSave: boolean;
+  readonly frontEnd?: ClassicFrontEndManifest;
   readonly notice?: string;
 }
 
@@ -48,11 +50,27 @@ const requestFullscreen = async (): Promise<void> => {
   await target.requestFullscreen();
 };
 
+const policyFromManifest = (manifest?: ClassicFrontEndManifest): ClassicFrontEndPolicy =>
+  manifest
+    ? {
+        splashDurationTicks: manifest.publisher.splashDurationTicks,
+        splashSkipAfterTicks: manifest.publisher.splashSkipAfterTicks,
+        labels: manifest.menu.labels,
+        showContinue: manifest.menu.showContinue,
+        showLoad: manifest.menu.showLoad,
+        showOptions: manifest.menu.showOptions,
+        showCredits: manifest.menu.showCredits,
+        showQuit: manifest.menu.showQuit,
+        allowFullscreen: manifest.options.allowFullscreen,
+      }
+    : DEFAULT_CLASSIC_FRONT_END_POLICY;
+
 export const runClassicFrontEnd = (
   host: HTMLElement,
   options: ClassicFrontEndOptions,
 ): Promise<ClassicFrontEndStartMode> =>
   new Promise((resolve) => {
+    const policy = policyFromManifest(options.frontEnd);
     let state = createClassicFrontEndState(options.hasSave);
     let notice = options.notice ?? null;
     let previousTime = performance.now();
@@ -102,11 +120,7 @@ export const runClassicFrontEnd = (
     };
 
     const apply = (command: ClassicFrontEndCommand): void => {
-      const transition = transitionClassicFrontEnd(
-        state,
-        command,
-        DEFAULT_CLASSIC_FRONT_END_POLICY,
-      );
+      const transition = transitionClassicFrontEnd(state, command, policy);
       state = transition.state;
       applyEffect(transition.effect);
       if (!settled) render();
@@ -116,7 +130,7 @@ export const runClassicFrontEnd = (
       const panel = element("div", "classic-front-end-menu");
       panel.appendChild(element("h2", "classic-front-end-menu-title", heading));
       if (description) panel.appendChild(element("p", "classic-front-end-copy", description));
-      const items = classicFrontEndMenuItems(state);
+      const items = classicFrontEndMenuItems(state, policy);
       const list = element("div", "classic-front-end-menu-items");
       items.forEach((item, index) => {
         const button = element("button", "classic-front-end-menu-item", item.label);
@@ -125,7 +139,7 @@ export const runClassicFrontEnd = (
         button.dataset["selected"] = index === state.selectedIndex ? "true" : "false";
         button.addEventListener("pointerenter", () => apply({ kind: "set-selection", index }));
         button.addEventListener("click", () => {
-          const selection = transitionClassicFrontEnd(state, { kind: "set-selection", index });
+          const selection = transitionClassicFrontEnd(state, { kind: "set-selection", index }, policy);
           state = selection.state;
           apply({ kind: "activate" });
         });
@@ -147,10 +161,18 @@ export const runClassicFrontEnd = (
       frame.dataset["screen"] = state.screen;
       if (state.screen === "publisher-splash") {
         const splash = element("div", "classic-front-end-splash");
-        const mark = element("strong", "classic-front-end-publisher", "EVAVO");
-        const studio = element("span", "classic-front-end-presents", "ADVENTURE STUDIO PRESENTS");
+        const mark = element(
+          "strong",
+          "classic-front-end-publisher",
+          options.frontEnd?.publisher.name ?? "EVAVO",
+        );
+        const studio = element(
+          "span",
+          "classic-front-end-presents",
+          options.frontEnd?.publisher.presents ?? "ADVENTURE STUDIO PRESENTS",
+        );
         splash.append(mark, studio);
-        if (state.splashTick >= DEFAULT_CLASSIC_FRONT_END_POLICY.splashSkipAfterTicks) {
+        if (state.splashTick >= policy.splashSkipAfterTicks) {
           splash.appendChild(element("small", "classic-front-end-skip", "PRESS ANY KEY"));
         }
         frame.appendChild(splash);
@@ -159,7 +181,11 @@ export const runClassicFrontEnd = (
 
       const title = element("header", "classic-front-end-title");
       title.append(
-        element("span", "classic-front-end-kicker", "A CLASSIC POINT & CLICK ADVENTURE"),
+        element(
+          "span",
+          "classic-front-end-kicker",
+          options.frontEnd?.title.kicker ?? "A CLASSIC POINT & CLICK ADVENTURE",
+        ),
         element("h1", "classic-front-end-game-title", options.title),
       );
       frame.appendChild(title);
@@ -171,7 +197,7 @@ export const runClassicFrontEnd = (
         case "load-menu":
           frame.appendChild(
             menu(
-              "LOAD GAME",
+              policy.labels.loadGame,
               state.hasSave
                 ? "One verified browser quick-save slot is available."
                 : "No compatible quick save is available.",
@@ -179,7 +205,7 @@ export const runClassicFrontEnd = (
           );
           break;
         case "options": {
-          const panel = menu("OPTIONS");
+          const panel = menu(policy.labels.options);
           const facts = element("div", "classic-front-end-options-facts");
           facts.append(
             element("span", "", "NATIVE CANVAS  320 × 200"),
@@ -191,13 +217,12 @@ export const runClassicFrontEnd = (
           break;
         }
         case "credits": {
-          const panel = menu("CREDITS");
+          const panel = menu(policy.labels.credits);
           const credits = element("div", "classic-front-end-credits-copy");
-          credits.append(
-            element("p", "", options.title),
-            element("p", "", "RUNNING ON EVAVO ADVENTURE STUDIO"),
-            element("p", "", "ORIGINAL GAME CONTENT REMAINS THE PUBLISHER'S WORK."),
-          );
+          credits.appendChild(element("p", "", options.title));
+          for (const line of options.frontEnd?.credits.lines ?? ["RUNNING ON EVAVO ADVENTURE STUDIO"]) {
+            credits.appendChild(element("p", "", line));
+          }
           panel.insertBefore(credits, panel.querySelector(".classic-front-end-menu-items"));
           frame.appendChild(panel);
           break;
@@ -205,7 +230,7 @@ export const runClassicFrontEnd = (
         case "quit":
           frame.appendChild(
             menu(
-              "QUIT",
+              policy.labels.quit,
               "This browser session is paused. Close the tab or return to the title screen.",
             ),
           );
@@ -243,16 +268,14 @@ export const runClassicFrontEnd = (
     };
 
     const animate = (now: number): void => {
-      if (settled) return;
-      if (state.screen === "publisher-splash") {
-        const elapsed = Math.max(0, Math.min(250, now - previousTime));
-        const exactTicks = tickRemainder + (elapsed * 60) / 1000;
-        const wholeTicks = Math.floor(exactTicks);
-        tickRemainder = exactTicks - wholeTicks;
-        if (wholeTicks > 0) apply({ kind: "tick", ticks: wholeTicks });
-      }
+      if (settled || state.screen !== "publisher-splash") return;
+      const elapsed = Math.max(0, Math.min(250, now - previousTime));
+      const exactTicks = tickRemainder + (elapsed * 60) / 1000;
+      const wholeTicks = Math.floor(exactTicks);
+      tickRemainder = exactTicks - wholeTicks;
+      if (wholeTicks > 0) apply({ kind: "tick", ticks: wholeTicks });
       previousTime = now;
-      animationFrame = requestAnimationFrame(animate);
+      if (state.screen === "publisher-splash") animationFrame = requestAnimationFrame(animate);
     };
 
     window.addEventListener("keydown", onKeyDown);

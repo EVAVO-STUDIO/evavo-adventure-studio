@@ -8,6 +8,10 @@
       "types": "./dist/src/index.d.ts",
       "import": "./dist/src/index.js"
     },
+    "./front-end": {
+      "types": "./dist/src/front-end.d.ts",
+      "import": "./dist/src/front-end.js"
+    },
     "./localisation": {
       "types": "./dist/src/localisation.d.ts",
       "import": "./dist/src/localisation.js"

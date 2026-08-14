@@ -358,6 +358,7 @@ const boot = async (): Promise<void> => {
     let startMode = await runClassicFrontEnd(host, {
       title: bundle.title,
       hasSave: hasSaveGameSlot(window.localStorage, bundle),
+      ...(bundle.frontEnd ? { frontEnd: bundle.frontEnd } : {}),
     });
     if (startMode === "continue") {
       try {
@@ -366,6 +367,7 @@ const boot = async (): Promise<void> => {
         startMode = await runClassicFrontEnd(host, {
           title: bundle.title,
           hasSave: false,
+          ...(bundle.frontEnd ? { frontEnd: bundle.frontEnd } : {}),
           notice: errorText("QUICK SAVE UNAVAILABLE", error),
         });
         if (startMode === "continue") {
