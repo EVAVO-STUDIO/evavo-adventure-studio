@@ -1,0 +1,1 @@
+Temporary implementation note: system-menu integration is completed in the follow-up commit for this tranche. This file exists only to keep the staged menu-state work explicit while the runtime and save-slot integration is assembled.
