@@ -11,6 +11,10 @@
       "types": "./dist/src/runner.d.ts",
       "import": "./dist/src/runner.js"
     },
+    "./localisation": {
+      "types": "./dist/src/localisation-cli.d.ts",
+      "import": "./dist/src/localisation-cli.js"
+    },
     "./runtime-artifacts": {
       "types": "./dist/src/runtime-artifacts.d.ts",
       "import": "./dist/src/runtime-artifacts.js"
