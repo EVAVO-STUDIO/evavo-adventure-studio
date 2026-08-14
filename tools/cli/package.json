@@ -11,6 +11,10 @@
       "types": "./dist/src/runner.d.ts",
       "import": "./dist/src/runner.js"
     },
+    "./lifecycle": {
+      "types": "./dist/src/lifecycle-cli.d.ts",
+      "import": "./dist/src/lifecycle-cli.js"
+    },
     "./localisation": {
       "types": "./dist/src/localisation-cli.d.ts",
       "import": "./dist/src/localisation-cli.js"
