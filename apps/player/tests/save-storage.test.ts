@@ -4,6 +4,8 @@ import { createInitialInteractiveRuntimeWorldState } from "@evavo/adventure-scen
 import { describe, expect, it } from "vitest";
 import {
   hasSaveGameSlot,
+  inspectSaveGameSlot,
+  listSaveGameSlots,
   readSaveGameSlot,
   removeSaveGameSlot,
   SaveGameSlotMissingError,
@@ -123,16 +125,51 @@ describe("browser save slots", () => {
     expect(() => readSaveGameSlot(storage, bundle, 3)).toThrow(SaveGameSlotMissingError);
   });
 
-  it("rejects invalid slots and malformed stored JSON", () => {
+  it("lists deterministic slot summaries without adding wall-clock metadata", () => {
+    const storage = new MemoryStorage();
+    const created = save();
+    writeSaveGameSlot(storage, bundle, created, 2);
+
+    expect(listSaveGameSlots(storage, bundle, 4)).toEqual([
+      { slot: 0, status: "empty" },
+      { slot: 1, status: "empty" },
+      {
+        slot: 2,
+        status: "valid",
+        tick: 0,
+        sceneId: "scene.office",
+        sceneName: "Office",
+        score: 0,
+        inventoryCount: 0,
+        saveFingerprint: created.saveFingerprint,
+      },
+      { slot: 3, status: "empty" },
+    ]);
+  });
+
+  it("reports malformed or incompatible slots as damaged without throwing from inspection", () => {
+    const storage = new MemoryStorage();
+    storage.setItem(saveGameStorageKey(bundle, 4), "not json");
+
+    expect(inspectSaveGameSlot(storage, bundle, 4)).toMatchObject({
+      slot: 4,
+      status: "invalid",
+    });
+    expect(() => readSaveGameSlot(storage, bundle, 4)).toThrow(SyntaxError);
+  });
+
+  it("rejects invalid slots, counts and malformed stored JSON", () => {
     const storage = new MemoryStorage();
     expect(() => saveGameStorageKey(bundle, -1)).toThrow(RangeError);
     expect(() => saveGameStorageKey(bundle, 100)).toThrow(RangeError);
+    expect(() => listSaveGameSlots(storage, bundle, 0)).toThrow(RangeError);
+    expect(() => listSaveGameSlots(storage, bundle, 101)).toThrow(RangeError);
 
     storage.setItem(saveGameStorageKey(bundle), "not json");
     expect(() => readSaveGameSlot(storage, bundle)).toThrow(SyntaxError);
   });
 
-  it("scopes keys to the exact runtime bundle fingerprint", () => {
+  it("scopes keys to the exact runtime bundle compatibility fingerprint", () => {
     const changed = parseRuntimeBundle({ ...bundle, title: "Storage Changed" });
     expect(saveGameStorageKey(changed)).not.toBe(saveGameStorageKey(bundle));
   });
