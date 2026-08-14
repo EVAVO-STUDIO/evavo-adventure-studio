@@ -117,8 +117,10 @@ export const classicSystemMenuItems = (
   }
 };
 
-const firstEnabledIndex = (items: readonly ClassicSystemMenuItem[]): number =>
-  Math.max(0, items.findIndex((item) => item.enabled));
+const firstEnabledIndex = (items: readonly ClassicSystemMenuItem[]): number => {
+  const index = items.findIndex((item) => item.enabled);
+  return index < 0 ? 0 : index;
+};
 
 const normalizedSelection = (
   state: ClassicSystemMenuState,
@@ -148,6 +150,11 @@ const openScreen = (screen: ClassicSystemMenuScreen): ClassicSystemMenuState => 
   screen,
   selectedIndex: 0,
 });
+
+const openNormalizedScreen = (
+  screen: ClassicSystemMenuScreen,
+  snapshots: readonly SaveGameSlotSnapshot[],
+): ClassicSystemMenuState => normalizedSelection(openScreen(screen), snapshots);
 
 export const transitionClassicSystemMenu = (
   state: ClassicSystemMenuState,
@@ -180,13 +187,13 @@ export const transitionClassicSystemMenu = (
         case "resume":
           return { state: current, effect: { kind: "resume" } };
         case "save":
-          return { state: openScreen("save"), effect: null };
+          return { state: openNormalizedScreen("save", snapshots), effect: null };
         case "load":
-          return { state: openScreen("load"), effect: null };
+          return { state: openNormalizedScreen("load", snapshots), effect: null };
         case "options":
-          return { state: openScreen("options"), effect: null };
+          return { state: openNormalizedScreen("options", snapshots), effect: null };
         case "title":
-          return { state: openScreen("title-confirm"), effect: null };
+          return { state: openNormalizedScreen("title-confirm", snapshots), effect: null };
         default:
           return { state: current, effect: null };
       }
