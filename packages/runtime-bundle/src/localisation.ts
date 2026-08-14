@@ -5,7 +5,7 @@ import {
 } from "@evavo/adventure-project-schema";
 import {
   canonicaliseLocalisationManifest,
-  extractLocalisableText,
+  collectLocalisationSourceEntries,
   localeKey,
   type LocalisationIssue,
   type LocalisationLocale,
@@ -14,10 +14,11 @@ import {
   localisationLocaleSchema,
   localisationTextRoleSchema,
   localeTagSchema,
-  validateLocalisationManifest,
+  validateLocalisationManifestWithSupplementalSources,
 } from "@evavo/adventure-project-schema/localisation";
 import { z } from "zod";
 import type { RuntimeBundle } from "./index.js";
+import { localiseGameLifecycleManifest } from "./lifecycle-localisation.js";
 
 export const runtimeLocalisationSourceEntrySchema = z
   .object({
@@ -62,6 +63,94 @@ export class RuntimeLocalisationCompilationError extends Error {
   }
 }
 
+const sameSourceEntry = (
+  left: LocalisationSourceEntry,
+  right: LocalisationSourceEntry,
+): boolean =>
+  left.key === right.key &&
+  left.role === right.role &&
+  left.ownerId === right.ownerId &&
+  left.sourcePath === right.sourcePath &&
+  left.text === right.text;
+
+const packLocaleHasTranslation = (
+  pack: RuntimeLocalisationPack,
+  requestedLocale: string,
+  key: string,
+): boolean => {
+  const locales = new Map(
+    pack.locales.map((locale) => [localeKey(locale.locale), locale] as const),
+  );
+  const visited = new Set<string>();
+  let currentTag = localeKey(requestedLocale);
+
+  while (!visited.has(currentTag)) {
+    visited.add(currentTag);
+    const locale = locales.get(currentTag);
+    if (!locale) break;
+    const translated = locale.entries.find(
+      (entry) => entry.key === key && entry.text.trim().length > 0,
+    );
+    if (translated) return true;
+    if (
+      !locale.fallbackLocale ||
+      localeKey(locale.fallbackLocale) === localeKey(pack.sourceLocale)
+    ) {
+      break;
+    }
+    currentTag = localeKey(locale.fallbackLocale);
+  }
+
+  return false;
+};
+
+export const extendRuntimeLocalisationPack = (
+  pack: RuntimeLocalisationPack,
+  sourceEntries: readonly LocalisationSourceEntry[],
+): RuntimeLocalisationPack => {
+  if (sourceEntries.length === 0) return pack;
+  const byKey = new Map(pack.sourceEntries.map((entry) => [entry.key, entry] as const));
+  const additions: LocalisationSourceEntry[] = [];
+
+  for (const entry of sourceEntries) {
+    const existing = byKey.get(entry.key);
+    if (existing && !sameSourceEntry(existing, entry)) {
+      throw new Error(
+        `Runtime localisation source key '${entry.key}' has conflicting canonical definitions.`,
+      );
+    }
+    if (!existing) {
+      byKey.set(entry.key, entry);
+      additions.push(entry);
+    }
+  }
+
+  if (additions.length === 0) return pack;
+  const releaseIssues: LocalisationIssue[] = [];
+  pack.locales.forEach((locale, localeIndex) => {
+    if (locale.status !== "release") return;
+    for (const entry of additions) {
+      if (packLocaleHasTranslation(pack, locale.locale, entry.key)) continue;
+      releaseIssues.push({
+        severity: "error",
+        code: "missing-localisation-key",
+        path: `locales[${localeIndex}].entries`,
+        message: `Release locale '${locale.locale}' has no translated value for '${entry.key}'.`,
+        locale: locale.locale,
+        key: entry.key,
+      });
+    }
+  });
+  if (releaseIssues.length > 0) {
+    throw new RuntimeLocalisationCompilationError(releaseIssues);
+  }
+
+  return parseRuntimeLocalisationPack({
+    ...pack,
+    sourceEntries: [...byKey.values()].sort((left, right) => left.key.localeCompare(right.key)),
+  });
+};
+
 const supportedLocale = (manifest: LocalisationManifest, locale: string): boolean => {
   const requested = localeKey(locale);
   return (
@@ -74,8 +163,13 @@ export const createRuntimeLocalisationPack = (
   project: AdventureProject,
   manifest: LocalisationManifest,
   defaultLocale = manifest.sourceLocale,
+  supplementalSourceEntries: readonly LocalisationSourceEntry[] = [],
 ): RuntimeLocalisationPack => {
-  const issues = validateLocalisationManifest(project, manifest);
+  const issues = validateLocalisationManifestWithSupplementalSources(
+    project,
+    manifest,
+    supplementalSourceEntries,
+  );
   const errors = issues.filter((issue) => issue.severity === "error");
   if (errors.length > 0) throw new RuntimeLocalisationCompilationError(errors);
   if (!supportedLocale(manifest, defaultLocale)) {
@@ -91,7 +185,7 @@ export const createRuntimeLocalisationPack = (
     sourceLocale: canonical.sourceLocale,
     defaultLocale,
     locales: canonical.locales,
-    sourceEntries: extractLocalisableText(project),
+    sourceEntries: collectLocalisationSourceEntries(project, supplementalSourceEntries),
   });
 };
 
@@ -243,7 +337,10 @@ export const localiseRuntimeBundle = (
   const pack = bundle.localisation;
   if (!pack) return bundle;
   const locale = resolveRuntimeLocale(pack, requestedLocale);
+  const sources = sourceMap(pack);
   const resolve = (key: string): string => resolveRuntimeLocalisedText(pack, locale, key).text;
+  const resolveOptional = (key: string, sourceText: string): string =>
+    sources.has(key) ? resolve(key) : sourceText;
 
   return {
     ...bundle,
@@ -327,6 +424,9 @@ export const localiseRuntimeBundle = (
           ? item.description
           : resolve(`${item.id}.description`),
     })),
+    ...(bundle.lifecycle
+      ? { lifecycle: localiseGameLifecycleManifest(bundle.lifecycle, resolveOptional) }
+      : {}),
   };
 };
 

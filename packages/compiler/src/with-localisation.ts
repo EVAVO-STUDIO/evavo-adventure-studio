@@ -2,7 +2,10 @@ import type { AudioMixManifest } from "@evavo/adventure-audio";
 import type { AssetBuildManifest } from "@evavo/adventure-asset-contract";
 import type { BitmapFontManifest } from "@evavo/adventure-bitmap-font";
 import type { AdventureProject } from "@evavo/adventure-project-schema";
-import type { LocalisationManifest } from "@evavo/adventure-project-schema/localisation";
+import {
+  extractLifecycleLocalisableText,
+  type LocalisationManifest,
+} from "@evavo/adventure-project-schema/localisation";
 import {
   createRuntimeLocalisationPack,
   parseRuntimeBundle,
@@ -43,9 +46,17 @@ export const attachRuntimeLocalisation = (
       `Compiled project '${compiled.bundle.projectId}' does not match localisation source '${project.id}'.`,
     );
   }
+  const lifecycleSourceEntries = compiled.bundle.lifecycle
+    ? extractLifecycleLocalisableText(compiled.bundle.lifecycle)
+    : [];
   const bundle = parseRuntimeBundle({
     ...compiled.bundle,
-    localisation: createRuntimeLocalisationPack(project, localisation, defaultLocale),
+    localisation: createRuntimeLocalisationPack(
+      project,
+      localisation,
+      defaultLocale,
+      lifecycleSourceEntries,
+    ),
   });
   const canonicalJson = canonicalStringify(bundle);
   return {

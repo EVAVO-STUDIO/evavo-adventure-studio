@@ -1,3 +1,4 @@
+import { gameLifecycleSaveCompatibilityView } from "@evavo/adventure-project-schema/lifecycle";
 import type { RuntimeBundle } from "@evavo/adventure-runtime-bundle";
 import { runtimeBundleSaveCompatibilityView } from "@evavo/adventure-runtime-bundle/localisation";
 import { SaveGameIntegrityError } from "./errors.js";
@@ -41,8 +42,14 @@ export const runtimeBundleExactFingerprint = (bundle: RuntimeBundle): string =>
 
 const runtimeBundleSaveFingerprintView = (bundle: RuntimeBundle): RuntimeBundle => {
   const localisationNeutral = runtimeBundleSaveCompatibilityView(bundle);
-  if (!localisationNeutral.frontEnd) return localisationNeutral;
-  const { frontEnd: _frontEnd, ...withoutFrontEnd } = localisationNeutral;
+  const lifecycleNeutral = localisationNeutral.lifecycle
+    ? ({
+        ...localisationNeutral,
+        lifecycle: gameLifecycleSaveCompatibilityView(localisationNeutral.lifecycle),
+      } as RuntimeBundle)
+    : localisationNeutral;
+  if (!lifecycleNeutral.frontEnd) return lifecycleNeutral;
+  const { frontEnd: _frontEnd, ...withoutFrontEnd } = lifecycleNeutral;
   return withoutFrontEnd as RuntimeBundle;
 };
 

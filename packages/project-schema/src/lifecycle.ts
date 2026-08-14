@@ -93,6 +93,30 @@ export const canonicaliseGameLifecycleManifest = (
     }),
   });
 
+const lifecycleCompatibilityLabels: GameLifecycleMenuLabels = {
+  quickRetry: "LIFECYCLE ACTION",
+  loadGame: "LIFECYCLE ACTION",
+  restartGame: "LIFECYCLE ACTION",
+  returnToTitle: "LIFECYCLE ACTION",
+  back: "LIFECYCLE ACTION",
+};
+
+export const gameLifecycleSaveCompatibilityView = (
+  manifest: GameLifecycleManifest,
+): GameLifecycleManifest =>
+  canonicaliseGameLifecycleManifest({
+    ...manifest,
+    outcomes: manifest.outcomes.map((outcome) => ({
+      ...outcome,
+      title: "LIFECYCLE OUTCOME",
+      message: "LIFECYCLE OUTCOME",
+      menu: {
+        ...outcome.menu,
+        labels: lifecycleCompatibilityLabels,
+      },
+    })),
+  });
+
 export const createDefaultFailureLifecycleMenu = (): GameLifecycleMenu => ({
   allowQuickRetry: true,
   allowLoad: true,

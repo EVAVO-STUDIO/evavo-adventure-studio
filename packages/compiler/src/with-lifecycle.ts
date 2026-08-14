@@ -5,7 +5,11 @@ import {
   type GameLifecycleManifest,
   parseGameLifecycleManifest,
 } from "@evavo/adventure-project-schema/lifecycle";
-import { parseRuntimeBundle } from "@evavo/adventure-runtime-bundle";
+import { extractLifecycleLocalisableText } from "@evavo/adventure-project-schema/localisation";
+import {
+  extendRuntimeLocalisationPack,
+  parseRuntimeBundle,
+} from "@evavo/adventure-runtime-bundle";
 import {
   canonicalStringify,
   compileProject,
@@ -33,9 +37,16 @@ export const attachRuntimeLifecycle = (
       `Compiled project '${compiled.bundle.projectId}' does not match lifecycle project '${manifest.projectId}'.`,
     );
   }
+  const localisation = compiled.bundle.localisation
+    ? extendRuntimeLocalisationPack(
+        compiled.bundle.localisation,
+        extractLifecycleLocalisableText(manifest),
+      )
+    : null;
   const bundle = parseRuntimeBundle({
     ...compiled.bundle,
     lifecycle: manifest,
+    ...(localisation ? { localisation } : {}),
   });
   const canonicalJson = canonicalStringify(bundle);
   return {
