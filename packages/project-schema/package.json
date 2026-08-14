@@ -20,6 +20,10 @@
       "types": "./dist/src/lifecycle.d.ts",
       "import": "./dist/src/lifecycle.js"
     },
+    "./lifecycle-editor": {
+      "types": "./dist/src/lifecycle-editor.d.ts",
+      "import": "./dist/src/lifecycle-editor.js"
+    },
     "./localisation": {
       "types": "./dist/src/localisation.d.ts",
       "import": "./dist/src/localisation.js"

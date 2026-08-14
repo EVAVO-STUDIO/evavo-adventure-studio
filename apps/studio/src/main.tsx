@@ -14,6 +14,7 @@ import { StudioErrorBoundary } from "./ErrorBoundary.js";
 import { FontApp } from "./FontApp.js";
 import { FrontEndApp } from "./FrontEndApp.js";
 import { GeometryApp } from "./GeometryApp.js";
+import { LifecycleApp } from "./LifecycleApp.js";
 import { LocalisationApp } from "./LocalisationApp.js";
 import { MotionFeelApp } from "./MotionFeelApp.js";
 import { ObjectApp } from "./ObjectApp.js";
@@ -39,6 +40,8 @@ const application: ReactNode =
     <ClassicGameCreatorApp />
   ) : workspace === "front-end" ? (
     <FrontEndApp />
+  ) : workspace === "lifecycle" ? (
+    <LifecycleApp />
   ) : workspace === "polish" ? (
     <ClassicExperienceApp />
   ) : workspace === "feel" ? (
@@ -92,6 +95,7 @@ const workspaces = [
   { id: "composer", href: "/", label: "Composer" },
   { id: "creator", href: "/?workspace=creator", label: "Creator" },
   { id: "front-end", href: "/?workspace=front-end", label: "Front End" },
+  { id: "lifecycle", href: "/?workspace=lifecycle", label: "Endings" },
   { id: "polish", href: "/?workspace=polish", label: "Polish" },
   { id: "profiles", href: "/?workspace=profiles", label: "Profiles" },
   { id: "showcases", href: "/?workspace=showcases", label: "Showcases" },
@@ -117,6 +121,7 @@ const workspaces = [
 const activeWorkspace =
   workspace === "creator" ||
   workspace === "front-end" ||
+  workspace === "lifecycle" ||
   workspace === "polish" ||
   workspace === "feel" ||
   workspace === "showcases" ||

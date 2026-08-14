@@ -1,0 +1,460 @@
+.lifecycle-app {
+  --lifecycle-panel: #11131a;
+  --lifecycle-panel-2: #171a22;
+  --lifecycle-border: #292d38;
+  --lifecycle-muted: #858a99;
+  --lifecycle-failure: #ff5678;
+  --lifecycle-success: #d7c264;
+}
+
+.lifecycle-toolbar {
+  justify-content: space-between;
+}
+
+.lifecycle-toolbar-summary {
+  display: flex;
+  min-width: 0;
+  flex: 1;
+  flex-direction: column;
+  align-items: center;
+  gap: 2px;
+}
+
+.lifecycle-toolbar-summary strong {
+  overflow: hidden;
+  color: #d8dae1;
+  font-size: 10px;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.lifecycle-workspace-grid {
+  display: grid;
+  min-height: 0;
+  flex: 1;
+  grid-template-columns: 230px minmax(430px, 1fr) 286px;
+  overflow: hidden;
+  border-top: 1px solid #1e222c;
+}
+
+.lifecycle-outcome-sidebar,
+.lifecycle-inspector {
+  min-height: 0;
+  background: var(--lifecycle-panel);
+}
+
+.lifecycle-outcome-sidebar {
+  border-right: 1px solid var(--lifecycle-border);
+}
+
+.lifecycle-inspector {
+  overflow: auto;
+  border-left: 1px solid var(--lifecycle-border);
+}
+
+.lifecycle-outcome-list {
+  display: flex;
+  min-height: 0;
+  flex: 1;
+  flex-direction: column;
+  gap: 2px;
+  padding: 8px;
+  overflow: auto;
+}
+
+.lifecycle-outcome-list > button {
+  position: relative;
+  display: grid;
+  grid-template-columns: 54px minmax(0, 1fr) auto;
+  gap: 3px 7px;
+  align-items: center;
+  padding: 9px 8px;
+  border: 1px solid transparent;
+  background: #0d0f15;
+  color: #c7cad2;
+  font: inherit;
+  text-align: left;
+}
+
+.lifecycle-outcome-list > button:hover,
+.lifecycle-outcome-list > button.is-active {
+  border-color: #3d4250;
+  background: #1a1d26;
+}
+
+.lifecycle-outcome-list > button.is-active {
+  box-shadow: inset 2px 0 #ff244e;
+}
+
+.lifecycle-outcome-list strong {
+  overflow: hidden;
+  font-size: 11px;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.lifecycle-outcome-list small {
+  grid-column: 2 / 4;
+  overflow: hidden;
+  color: #696e7c;
+  font-size: 8px;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.lifecycle-outcome-list b {
+  color: #8d92a0;
+  font-size: 8px;
+}
+
+.lifecycle-kind {
+  padding: 3px 4px;
+  border: 1px solid #353947;
+  font-size: 7px;
+  letter-spacing: 0.08em;
+  text-align: center;
+  text-transform: uppercase;
+}
+
+.lifecycle-kind.is-failure {
+  border-color: #713043;
+  color: var(--lifecycle-failure);
+}
+
+.lifecycle-kind.is-success {
+  border-color: #625a32;
+  color: var(--lifecycle-success);
+}
+
+.lifecycle-canvas-column {
+  min-width: 0;
+  min-height: 0;
+  padding: 14px;
+  overflow: auto;
+  background: #090b10;
+}
+
+.lifecycle-preview-card,
+.lifecycle-copy-card,
+.lifecycle-condition-card {
+  margin-bottom: 12px;
+  border: 1px solid var(--lifecycle-border);
+  background: var(--lifecycle-panel);
+}
+
+.lifecycle-section-heading {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  padding: 10px 12px;
+  border-bottom: 1px solid var(--lifecycle-border);
+}
+
+.lifecycle-section-heading h2 {
+  margin: 2px 0 0;
+  color: #eceef3;
+  font-size: 13px;
+}
+
+.lifecycle-section-heading code,
+.lifecycle-section-heading > span {
+  color: #707685;
+  font-size: 9px;
+}
+
+.lifecycle-preview-stage {
+  display: grid;
+  min-height: 340px;
+  place-items: center;
+  padding: 18px;
+  overflow: auto;
+  background:
+    linear-gradient(45deg, #0b0d12 25%, transparent 25%) 0 0 / 16px 16px,
+    linear-gradient(-45deg, #0b0d12 25%, transparent 25%) 0 8px / 16px 16px,
+    #08090d;
+}
+
+.lifecycle-native-frame {
+  position: relative;
+  width: 640px;
+  height: 400px;
+  max-width: 100%;
+  overflow: hidden;
+  border: 2px solid #3b404e;
+  background: #07080c;
+  box-shadow: 0 22px 70px rgb(0 0 0 / 65%);
+  color: #e8e9ed;
+  font-family: "Courier New", Courier, monospace;
+  image-rendering: pixelated;
+  text-align: center;
+}
+
+.lifecycle-native-frame.is-failure {
+  border-color: #6c293b;
+}
+
+.lifecycle-native-frame.is-success {
+  border-color: #62592f;
+}
+
+.lifecycle-native-scanlines {
+  position: absolute;
+  z-index: 1;
+  inset: 0;
+  pointer-events: none;
+  background: linear-gradient(transparent 50%, rgb(0 0 0 / 18%) 50%) 0 0 / 100% 4px;
+}
+
+.lifecycle-native-kicker {
+  position: absolute;
+  top: 38px;
+  right: 40px;
+  left: 40px;
+  color: #777d8c;
+  font-size: 11px;
+  letter-spacing: 0.15em;
+}
+
+.lifecycle-native-frame h2 {
+  margin: 90px 26px 0;
+  color: #f1f2f5;
+  font-size: 34px;
+  line-height: 1;
+  text-transform: uppercase;
+}
+
+.lifecycle-native-frame.is-failure h2 {
+  color: #ff6b88;
+}
+
+.lifecycle-native-frame.is-success h2 {
+  color: #e1cb6f;
+}
+
+.lifecycle-native-frame > p {
+  width: 470px;
+  max-width: calc(100% - 80px);
+  margin: 18px auto 0;
+  color: #a1a5af;
+  font-size: 12px;
+  line-height: 1.45;
+}
+
+.lifecycle-native-menu {
+  display: grid;
+  width: 380px;
+  max-width: calc(100% - 80px);
+  margin: 28px auto 0;
+  gap: 6px;
+}
+
+.lifecycle-native-menu > div {
+  position: relative;
+  min-height: 34px;
+  padding: 7px 12px 5px 24px;
+  border: 1px solid #282c36;
+  background: #101218;
+  text-align: left;
+}
+
+.lifecycle-native-menu > div.is-selected {
+  border-color: #555b69;
+  background: #181b23;
+}
+
+.lifecycle-native-menu > div.is-selected::before {
+  position: absolute;
+  left: 9px;
+  color: #ff244e;
+  content: ">";
+}
+
+.lifecycle-native-menu strong {
+  display: block;
+  font-size: 11px;
+}
+
+.lifecycle-native-menu small {
+  color: #676c78;
+  font-size: 8px;
+}
+
+.lifecycle-native-frame footer {
+  position: absolute;
+  right: 20px;
+  bottom: 12px;
+  left: 20px;
+  color: #4e5360;
+  font-size: 8px;
+  letter-spacing: 0.1em;
+}
+
+.lifecycle-copy-card,
+.lifecycle-condition-card {
+  padding-bottom: 12px;
+}
+
+.lifecycle-copy-card > .lifecycle-field,
+.lifecycle-condition-card > .lifecycle-field,
+.lifecycle-copy-card > .lifecycle-two-columns,
+.lifecycle-condition-card > .lifecycle-two-columns,
+.lifecycle-condition-card > .lifecycle-condition-row,
+.lifecycle-condition-card > details {
+  margin: 12px 12px 0;
+}
+
+.lifecycle-field {
+  display: flex;
+  min-width: 0;
+  flex-direction: column;
+  gap: 5px;
+}
+
+.lifecycle-field > span {
+  color: #7d8290;
+  font-size: 8px;
+  font-weight: 700;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+}
+
+.lifecycle-field input,
+.lifecycle-field select,
+.lifecycle-field textarea,
+.lifecycle-advanced-condition textarea {
+  width: 100%;
+  border: 1px solid #303440;
+  border-radius: 2px;
+  outline: 0;
+  background: #0c0e14;
+  color: #e1e3e8;
+  font: inherit;
+  font-size: 10px;
+}
+
+.lifecycle-field input,
+.lifecycle-field select {
+  height: 30px;
+  padding: 0 8px;
+}
+
+.lifecycle-field textarea,
+.lifecycle-advanced-condition textarea {
+  padding: 8px;
+  line-height: 1.45;
+  resize: vertical;
+}
+
+.lifecycle-field input:focus,
+.lifecycle-field select:focus,
+.lifecycle-field textarea:focus,
+.lifecycle-advanced-condition textarea:focus {
+  border-color: #ff244e;
+}
+
+.lifecycle-two-columns {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 10px;
+}
+
+.lifecycle-condition-row {
+  display: grid;
+  grid-template-columns: minmax(0, 1.3fr) minmax(100px, 0.6fr) minmax(0, 1fr);
+  gap: 10px;
+}
+
+.lifecycle-advanced-condition {
+  padding: 9px;
+  border: 1px solid #292d38;
+  background: #0d0f15;
+}
+
+.lifecycle-advanced-condition summary {
+  color: #c7c9d0;
+  cursor: pointer;
+  font-size: 10px;
+  font-weight: 700;
+}
+
+.lifecycle-advanced-condition p {
+  color: #6f7481;
+  font-size: 9px;
+  line-height: 1.4;
+}
+
+.lifecycle-advanced-condition textarea {
+  margin-bottom: 8px;
+  font-family: "Courier New", monospace;
+}
+
+.lifecycle-inspector .inspector-heading,
+.lifecycle-inspector > section,
+.lifecycle-notice {
+  padding: 12px;
+  border-bottom: 1px solid var(--lifecycle-border);
+}
+
+.lifecycle-inspector h3 {
+  margin: 0 0 10px;
+  color: #cdd0d8;
+  font-size: 10px;
+  text-transform: uppercase;
+}
+
+.lifecycle-route-toggle {
+  display: flex;
+  gap: 9px;
+  align-items: flex-start;
+  padding: 8px 0;
+  color: #b7bac3;
+}
+
+.lifecycle-route-toggle input {
+  margin-top: 2px;
+  accent-color: #ff244e;
+}
+
+.lifecycle-route-toggle span {
+  display: flex;
+  min-width: 0;
+  flex-direction: column;
+  gap: 2px;
+}
+
+.lifecycle-route-toggle strong {
+  font-size: 10px;
+}
+
+.lifecycle-route-toggle small,
+.lifecycle-danger-zone p {
+  color: #707582;
+  font-size: 8px;
+  line-height: 1.4;
+}
+
+.lifecycle-labels {
+  display: grid;
+  gap: 9px;
+}
+
+.lifecycle-danger-zone .button {
+  width: 100%;
+}
+
+.lifecycle-notice {
+  color: #ff8ca4;
+  font-size: 9px;
+  line-height: 1.4;
+}
+
+@media (max-width: 1050px) {
+  .lifecycle-workspace-grid {
+    grid-template-columns: 190px minmax(420px, 1fr);
+  }
+
+  .lifecycle-inspector {
+    display: none;
+  }
+}
