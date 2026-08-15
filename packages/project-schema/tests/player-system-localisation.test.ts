@@ -9,7 +9,7 @@ import {
 import { describe, expect, it } from "vitest";
 
 describe("player system localisation", () => {
-  it("extracts a stable governed catalogue for pause, save and load presentation", () => {
+  it("extracts a stable governed catalogue for menus, loading and transient status", () => {
     const entries = extractPlayerSystemLocalisableText("project.system-text");
 
     expect(entries).toHaveLength(playerSystemLocalisationFields.length);
@@ -24,6 +24,15 @@ describe("player system localisation", () => {
           text: "GAME PAUSED",
         }),
         expect.objectContaining({
+          key: playerSystemLocalisationKey("aria.gameCanvas"),
+          role: "player-system-heading",
+        }),
+        expect.objectContaining({
+          key: playerSystemLocalisationKey("label.language"),
+          role: "player-system-menu-label",
+          text: "LANGUAGE",
+        }),
+        expect.objectContaining({
           key: playerSystemLocalisationKey("menu.save"),
           role: "player-system-menu-label",
           text: "SAVE GAME",
@@ -31,6 +40,14 @@ describe("player system localisation", () => {
         expect.objectContaining({
           key: playerSystemLocalisationKey("description.load"),
           role: "player-system-description",
+        }),
+        expect.objectContaining({
+          key: playerSystemLocalisationKey("loading.game"),
+          role: "player-system-status",
+        }),
+        expect.objectContaining({
+          key: playerSystemLocalisationKey("status.replayRecorded"),
+          role: "player-system-status",
         }),
         expect.objectContaining({
           key: playerSystemLocalisationKey("status.saveSlotWritten"),
@@ -61,6 +78,23 @@ describe("player system localisation", () => {
     expect(formatPlayerSystemText("LOAD FAILED — {error}")).toBe("LOAD FAILED — {error}");
   });
 
+  it("governs replay counts, cutscene hints and startup errors through stable placeholders", () => {
+    const entries = extractPlayerSystemLocalisableText("project.system-text");
+    const replay = entries.find(
+      (entry) => entry.key === playerSystemLocalisationKey("status.replayRecorded"),
+    );
+    const cutscene = entries.find(
+      (entry) => entry.key === playerSystemLocalisationKey("status.cutsceneNameSkippable"),
+    );
+    const startup = entries.find(
+      (entry) => entry.key === playerSystemLocalisationKey("error.playerCouldNotStart"),
+    );
+
+    expect(replay && localisationPlaceholders(replay.text)).toEqual(["count", "eventLabel"]);
+    expect(cutscene && localisationPlaceholders(cutscene.text)).toEqual(["name"]);
+    expect(startup && localisationPlaceholders(startup.text)).toEqual(["error"]);
+  });
+
   it("provides canonical text through the same resolver contract used by the Player", () => {
     expect(canonicalPlayerSystemText("slot.numbered", { slot: "07" })).toBe("SAVE SLOT 07");
     expect(
@@ -70,5 +104,11 @@ describe("player system localisation", () => {
         itemLabel: canonicalPlayerSystemText("slot.itemPlural"),
       }),
     ).toBe("SCORE 42 • 3 ITEMS");
+    expect(
+      canonicalPlayerSystemText("status.replayRecorded", {
+        count: 1,
+        eventLabel: canonicalPlayerSystemText("status.replayEventSingular"),
+      }),
+    ).toBe("REPLAY RECORDED • 1 EVENT");
   });
 });

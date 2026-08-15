@@ -8,6 +8,7 @@ import {
 } from "@evavo/adventure-audio-web";
 import type { Id, Sequence } from "@evavo/adventure-project-schema";
 import type { GameLifecycleOutcome } from "@evavo/adventure-project-schema/lifecycle";
+import type { PlayerSystemTextResolver } from "@evavo/adventure-project-schema/localisation";
 import type { RuntimeBundle } from "@evavo/adventure-runtime-bundle";
 import {
   type PackagedRuntimeControllerOptions as BasePackagedRuntimeControllerOptions,
@@ -15,9 +16,11 @@ import {
 import { appendNativeStatusPanel } from "@evavo/adventure-runtime-controller/native-status";
 import type { SaveGame } from "@evavo/adventure-save-game";
 import { requestedRuntimeBundleFromSearch } from "./built-in-demos.js";
+import { playerCutsceneStatusText } from "./cutscene-status.js";
 import { resolveActiveGameLifecycleOutcome } from "./lifecycle-outcome.js";
 import { runGameLifecycleScreen } from "./lifecycle-screen.js";
 import { frameWithoutInteractiveChrome } from "./opening-sequence.js";
+import { createPlayerSystemText } from "./player-system-localisation.js";
 import {
   PLAYER_RUNTIME_RESTORED_EVENT,
   type PlayerRuntimeRestoredDetail,
@@ -30,6 +33,7 @@ export interface PackagedRuntimeControllerOptions
   extends BasePackagedRuntimeControllerOptions {
   readonly initialSequenceId?: Id<"sequence"> | null;
   readonly restartSequenceId?: Id<"sequence"> | null;
+  readonly text?: PlayerSystemTextResolver;
 }
 
 const runtimeBundleUrl = (): string | null => {
@@ -100,25 +104,36 @@ const blockingSequenceStatus = (
   bundle: RuntimeBundle,
   controller: AudioPackagedRuntimeController,
   sequenceId: Id<"sequence">,
+  text: PlayerSystemTextResolver,
 ): string => {
   const sequence = bundle.sequences.find((candidate) => candidate.id === sequenceId);
   const active = activeSequenceState(controller, sequenceId);
-  if (!sequence || !active) return "CUTSCENE";
-  const canSkip =
-    sequence.skip.allowed && active.elapsedTicks >= sequence.skip.safeAfterTick;
-  const caption = activeSequenceCaption(sequence, active.elapsedTicks);
-  if (caption) return `${caption}${canSkip ? " • ESC" : ""}`;
-  return `${sequence.name.toUpperCase()}${canSkip ? " • ESC TO SKIP" : ""}`;
+  if (!sequence || !active) return playerCutsceneStatusText(null, text);
+  return playerCutsceneStatusText(
+    {
+      name: sequence.name,
+      caption: activeSequenceCaption(sequence, active.elapsedTicks),
+      canSkip: sequence.skip.allowed && active.elapsedTicks >= sequence.skip.safeAfterTick,
+    },
+    text,
+  );
 };
 
 export const createPackagedRuntimeController = (
   bundle: RuntimeBundle,
   options: PackagedRuntimeControllerOptions = {},
 ): PackagedRuntimeController => {
-  const controller = createAudioPackagedRuntimeController(bundle, options);
+  const {
+    initialSequenceId: requestedInitialSequenceId,
+    restartSequenceId: requestedRestartSequenceId,
+    text: requestedText,
+    ...controllerOptions
+  } = options;
+  const text = requestedText ?? createPlayerSystemText(bundle);
+  const controller = createAudioPackagedRuntimeController(bundle, controllerOptions);
   const bundleUrl = runtimeBundleUrl();
-  const openingSequenceId = options.initialSequenceId ?? null;
-  const restartSequenceId = options.restartSequenceId ?? openingSequenceId;
+  const openingSequenceId = requestedInitialSequenceId ?? null;
+  const restartSequenceId = requestedRestartSequenceId ?? openingSequenceId;
   const initialSave: SaveGame | null = (() => {
     try {
       return controller.createSaveGame();
@@ -259,7 +274,7 @@ export const createPackagedRuntimeController = (
     return appendNativeStatusPanel(
       stripped,
       bundle,
-      blockingSequenceStatus(bundle, controller, sequenceId),
+      blockingSequenceStatus(bundle, controller, sequenceId, text),
     );
   };
 
@@ -317,7 +332,7 @@ export const createPackagedRuntimeController = (
       if (lifecycleOutcome) return lifecycleOutcome.title;
       const sequenceId = controller.activeBlockingSequenceId();
       return sequenceId
-        ? blockingSequenceStatus(bundle, controller, sequenceId)
+        ? blockingSequenceStatus(bundle, controller, sequenceId, text)
         : controller.statusText();
     },
     createFrame: (externalTick) => {

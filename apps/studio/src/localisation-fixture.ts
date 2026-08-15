@@ -56,9 +56,19 @@ const frenchTranslations: Readonly<Record<string, string>> = {
   [lifecycleLocalisationKey("outcome.case-closed", "menu.loadGame")]: "CHARGER",
   [lifecycleLocalisationKey("outcome.case-closed", "menu.returnToTitle")]:
     "RETOUR AU TITRE",
+  [playerSystemLocalisationKey("aria.gameCanvas")]: "Canevas natif du jeu d’aventure",
+  [playerSystemLocalisationKey("aria.languageSelector")]: "Langue du jeu",
+  [playerSystemLocalisationKey("label.language")]: "LANGUE",
+  [playerSystemLocalisationKey("description.languageReload")]:
+    "Changer de langue recharge la présentation. Les sauvegardes rapides restent compatibles.",
   [playerSystemLocalisationKey("heading.paused")]: "JEU EN PAUSE",
   [playerSystemLocalisationKey("heading.save")]: "SAUVEGARDER",
   [playerSystemLocalisationKey("heading.load")]: "CHARGER",
+  [playerSystemLocalisationKey("loading.runtimeBundle")]:
+    "Chargement du paquet d’exécution…",
+  [playerSystemLocalisationKey("loading.game")]: "Chargement du jeu…",
+  [playerSystemLocalisationKey("error.playerCouldNotStart")]:
+    "Le lecteur n’a pas pu démarrer — {error}",
   [playerSystemLocalisationKey("menu.resume")]: "REPRENDRE",
   [playerSystemLocalisationKey("menu.save")]: "SAUVEGARDER",
   [playerSystemLocalisationKey("menu.load")]: "CHARGER",
@@ -71,10 +81,58 @@ const frenchTranslations: Readonly<Record<string, string>> = {
   [playerSystemLocalisationKey("slot.valid")]: "{title} — {scene} TOUR {tick}",
   [playerSystemLocalisationKey("slot.itemSingular")]: "OBJET",
   [playerSystemLocalisationKey("slot.itemPlural")]: "OBJETS",
+  [playerSystemLocalisationKey("status.loadingGameData")]:
+    "CHARGEMENT DES DONNÉES DU JEU",
+  [playerSystemLocalisationKey("status.titleScreen")]: "ÉCRAN TITRE",
+  [playerSystemLocalisationKey("status.restoringGame")]:
+    "RESTAURATION DE LA PARTIE",
+  [playerSystemLocalisationKey("status.startingOpening")]:
+    "DÉMARRAGE DE L’INTRODUCTION",
+  [playerSystemLocalisationKey("status.startingNewGame")]:
+    "DÉMARRAGE D’UNE NOUVELLE PARTIE",
+  [playerSystemLocalisationKey("status.playerCouldNotStart")]:
+    "LE LECTEUR N’A PAS PU DÉMARRER",
+  [playerSystemLocalisationKey("status.gameRestored")]: "PARTIE RESTAURÉE",
+  [playerSystemLocalisationKey("status.gameSaved")]: "PARTIE SAUVEGARDÉE",
+  [playerSystemLocalisationKey("status.gamePaused")]: "JEU EN PAUSE",
+  [playerSystemLocalisationKey("status.gameResumed")]: "PARTIE REPRISE",
+  [playerSystemLocalisationKey("status.quickSaveRestored")]:
+    "SAUVEGARDE RAPIDE RESTAURÉE",
+  [playerSystemLocalisationKey("status.saveSlotRestored")]:
+    "EMPLACEMENT {slot} RESTAURÉ",
+  [playerSystemLocalisationKey("status.quickSaveUnavailable")]:
+    "SAUVEGARDE RAPIDE INDISPONIBLE — {error}",
+  [playerSystemLocalisationKey("status.saveSlotUnavailable")]:
+    "EMPLACEMENT {slot} INDISPONIBLE — {error}",
+  [playerSystemLocalisationKey("status.replayRecording")]: "REPLAY EN COURS",
+  [playerSystemLocalisationKey("status.replayRecorded")]:
+    "REPLAY ENREGISTRÉ • {count} {eventLabel}",
+  [playerSystemLocalisationKey("status.replayEventSingular")]: "ÉVÉNEMENT",
+  [playerSystemLocalisationKey("status.replayEventPlural")]: "ÉVÉNEMENTS",
+  [playerSystemLocalisationKey("status.noCompletedReplay")]:
+    "AUCUN REPLAY TERMINÉ À EXPORTER",
+  [playerSystemLocalisationKey("status.replayExported")]: "REPLAY EXPORTÉ",
+  [playerSystemLocalisationKey("status.replayFailed")]:
+    "ÉCHEC DU REPLAY — {error}",
+  [playerSystemLocalisationKey("status.cutscene")]: "CINÉMATIQUE",
+  [playerSystemLocalisationKey("status.cutsceneSkipped")]:
+    "CINÉMATIQUE PASSÉE",
+  [playerSystemLocalisationKey("status.cutsceneCannotSkip")]:
+    "LA CINÉMATIQUE NE PEUT PAS ENCORE ÊTRE PASSÉE",
+  [playerSystemLocalisationKey("status.cutsceneCaptionSkippable")]:
+    "{caption} • ÉCHAP",
+  [playerSystemLocalisationKey("status.cutsceneNameSkippable")]:
+    "{name} • ÉCHAP POUR PASSER",
+  [playerSystemLocalisationKey("status.systemMenuFailed")]:
+    "ÉCHEC DU MENU SYSTÈME — {error}",
   [playerSystemLocalisationKey("status.quickSaveWritten")]:
     "SAUVEGARDE RAPIDE ENREGISTRÉE.",
   [playerSystemLocalisationKey("status.saveSlotWritten")]:
     "EMPLACEMENT {slot} ENREGISTRÉ.",
+  [playerSystemLocalisationKey("status.saveFailed")]:
+    "ÉCHEC DE LA SAUVEGARDE — {error}",
+  [playerSystemLocalisationKey("status.loadFailed")]:
+    "ÉCHEC DU CHARGEMENT — {error}",
 };
 
 export const studioLocalisationManifest: LocalisationManifest = canonicaliseLocalisationManifest({

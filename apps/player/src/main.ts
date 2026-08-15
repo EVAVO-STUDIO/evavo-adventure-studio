@@ -1,5 +1,9 @@
 import { advanceFixedStepClock, createFixedStepClock } from "@evavo/adventure-core/fixed-step";
 import type { Id, Point } from "@evavo/adventure-project-schema";
+import {
+  canonicalPlayerSystemText,
+  type PlayerSystemTextResolver,
+} from "@evavo/adventure-project-schema/localisation";
 import type { NativeCanvas, ResolvedFrame } from "@evavo/adventure-render-contract";
 import { PixiWebGLRenderer } from "@evavo/adventure-renderer-pixi";
 import { PixiAssetTextureStore } from "@evavo/adventure-renderer-pixi/texture-store";
@@ -14,9 +18,14 @@ import {
   configuredOpeningSequenceId,
   requestedNewGameOpeningSequenceId,
 } from "./opening-sequence.js";
-import { createPackagedRuntimeController, type PackagedRuntimeController } from "./packaged-controller.js";
+import {
+  createPackagedRuntimeController,
+  type PackagedRuntimeController,
+} from "./packaged-controller.js";
 import { type ParserKeyInput, parserKeyInputFromKeyboardEvent } from "./parser.js";
 import { createPlayerReplayRecorder, type ReplayRecordingStatus } from "./replay-recorder.js";
+import { createPlayerStatusRail } from "./player-status-rail.js";
+import { createPlayerSystemText } from "./player-system-localisation.js";
 import { loadRuntimeBundle } from "./runtime-loader.js";
 import { createPackagedRuntimeRenderer } from "./runtime-renderer.js";
 import {
@@ -68,6 +77,7 @@ interface MountedPlayer {
   readonly persistence?: PlayerPersistence;
   readonly replay?: PlayerReplayControls;
   readonly statusText?: () => string;
+  readonly text?: PlayerSystemTextResolver;
   readonly bundle?: RuntimeBundle;
   readonly disposeAdditional?: () => Promise<void>;
 }
@@ -77,13 +87,17 @@ interface PackagedPlayerSession {
   readonly initialTick: number;
 }
 
-const updateStatus = (text: string): void => {
+let activeSystemText: PlayerSystemTextResolver = canonicalPlayerSystemText;
+
+const errorStatusHoldMilliseconds = 4200;
+
+const statusRail = createPlayerStatusRail((text) => {
   const status = document.querySelector<HTMLElement>(".player-status > span:nth-of-type(2)");
   if (status) status.textContent = text;
-};
+});
 
-const errorText = (prefix: string, error: unknown): string =>
-  `${prefix} • ${error instanceof Error ? error.message : String(error)}`;
+const errorMessage = (error: unknown): string =>
+  error instanceof Error ? error.message : String(error);
 
 const downloadText = (fileName: string, text: string): void => {
   const url = URL.createObjectURL(new Blob([text], { type: "application/json;charset=utf-8" }));
@@ -97,7 +111,11 @@ const downloadText = (fileName: string, text: string): void => {
   URL.revokeObjectURL(url);
 };
 
-const nativePointer = (host: HTMLElement, canvas: NativeCanvas, event: PointerEvent): Point | null => {
+const nativePointer = (
+  host: HTMLElement,
+  canvas: NativeCanvas,
+  event: PointerEvent,
+): Point | null => {
   const bounds = host.getBoundingClientRect();
   return mapClientPointToNative(
     { x: event.clientX, y: event.clientY },
@@ -119,12 +137,13 @@ const mountPlayer = async (
   if (!Number.isSafeInteger(initialLogicalTick) || initialLogicalTick < 0) {
     throw new RangeError("Player initial logical tick must be a non-negative safe integer.");
   }
+  const text = player.text ?? canonicalPlayerSystemText;
   const initialFrame = player.createFrame(initialLogicalTick);
   await player.renderer.initialize(
     { target: host, devicePixelRatio: window.devicePixelRatio },
     initialFrame.canvas,
   );
-  if (player.statusText) updateStatus(player.statusText());
+  if (player.statusText) statusRail.replace(player.statusText());
 
   let clock = createFixedStepClock();
   let logicalTick = initialLogicalTick;
@@ -168,7 +187,7 @@ const mountPlayer = async (
       player.replay?.recordActivation(logicalTick, point);
       player.input.activate(point);
     }
-    if (player.statusText) updateStatus(player.statusText());
+    if (player.statusText) statusRail.replace(player.statusText());
     event.preventDefault();
   };
   const onPointerUp = (event: PointerEvent): void => {
@@ -191,9 +210,12 @@ const mountPlayer = async (
       clock = createFixedStepClock();
       previousTime = performance.now();
       player.renderer.render(player.createFrame(logicalTick));
-      updateStatus("GAME RESTORED");
+      statusRail.announce(text("status.gameRestored"));
     } catch (error) {
-      updateStatus(errorText("LOAD FAILED", error));
+      statusRail.announce(
+        text("status.loadFailed", { error: errorMessage(error) }),
+        errorStatusHoldMilliseconds,
+      );
     }
   };
 
@@ -201,9 +223,12 @@ const mountPlayer = async (
     if (!player.persistence) return;
     try {
       player.persistence.saveQuickSlot();
-      updateStatus("GAME SAVED");
+      statusRail.announce(text("status.gameSaved"));
     } catch (error) {
-      updateStatus(errorText("SAVE FAILED", error));
+      statusRail.announce(
+        text("status.saveFailed", { error: errorMessage(error) }),
+        errorStatusHoldMilliseconds,
+      );
     }
   };
 
@@ -212,13 +237,20 @@ const mountPlayer = async (
     try {
       if (player.replay.status().recording) {
         const replay = player.replay.finish();
-        updateStatus(`REPLAY RECORDED • ${replay.events.length} EVENTS`);
+        const count = replay.events.length;
+        const eventLabel = text(
+          count === 1 ? "status.replayEventSingular" : "status.replayEventPlural",
+        );
+        statusRail.announce(text("status.replayRecorded", { count, eventLabel }));
       } else {
         player.replay.start();
-        updateStatus("REPLAY RECORDING");
+        statusRail.announce(text("status.replayRecording"));
       }
     } catch (error) {
-      updateStatus(errorText("REPLAY FAILED", error));
+      statusRail.announce(
+        text("status.replayFailed", { error: errorMessage(error) }),
+        errorStatusHoldMilliseconds,
+      );
     }
   };
 
@@ -226,11 +258,11 @@ const mountPlayer = async (
     if (!player.replay) return;
     const json = player.replay.latestReplayJson();
     if (!json) {
-      updateStatus("NO COMPLETED REPLAY TO EXPORT");
+      statusRail.announce(text("status.noCompletedReplay"));
       return;
     }
     downloadText(player.replay.fileName, json);
-    updateStatus("REPLAY EXPORTED");
+    statusRail.announce(text("status.replayExported"));
   };
 
   const openSystemMenu = (): void => {
@@ -245,7 +277,7 @@ const mountPlayer = async (
     systemMenuActive = true;
     player.input?.setPressed(false);
     player.input?.setPointer(null);
-    updateStatus("GAME PAUSED");
+    statusRail.replace(text("status.gamePaused"));
 
     void runClassicSystemMenu(host, {
       bundle: player.bundle,
@@ -255,22 +287,25 @@ const mountPlayer = async (
         player.replay?.cancel();
         return player.persistence?.loadSlot(slot) ?? logicalTick;
       },
+      text,
     })
       .then((result) => {
         if (result.kind === "return-to-title") {
           window.location.reload();
           return;
         }
+        systemMenuActive = false;
         if (result.kind === "loaded") {
           logicalTick = result.tick;
           player.renderer.render(player.createFrame(logicalTick));
-          updateStatus(result.slot === 0 ? "QUICK SAVE RESTORED" : `SAVE SLOT ${result.slot} RESTORED`);
-        } else if (player.statusText) {
-          updateStatus(player.statusText());
+          statusRail.announce(
+            result.slot === 0
+              ? text("status.quickSaveRestored")
+              : text("status.saveSlotRestored", { slot: result.slot }),
+          );
         } else {
-          updateStatus("GAME RESUMED");
+          statusRail.announce(text("status.gameResumed"));
         }
-        systemMenuActive = false;
         clock = createFixedStepClock();
         previousTime = performance.now();
         host.focus();
@@ -280,7 +315,10 @@ const mountPlayer = async (
         systemMenuActive = false;
         clock = createFixedStepClock();
         previousTime = performance.now();
-        updateStatus(errorText("SYSTEM MENU FAILED", error));
+        statusRail.announce(
+          text("status.systemMenuFailed", { error: errorMessage(error) }),
+          errorStatusHoldMilliseconds,
+        );
         host.focus();
       });
   };
@@ -292,10 +330,12 @@ const mountPlayer = async (
     if (sequenceId) {
       if (event.key === "Escape" && player.input?.skipNarrativeSequence) {
         const result = player.input.skipNarrativeSequence(sequenceId);
-        updateStatus(
-          result.kind === "skipped"
-            ? "CUTSCENE SKIPPED"
-            : (player.statusText?.() ?? "CUTSCENE CANNOT BE SKIPPED YET"),
+        statusRail.announce(
+          text(
+            result.kind === "skipped"
+              ? "status.cutsceneSkipped"
+              : "status.cutsceneCannotSkip",
+          ),
         );
       }
       event.preventDefault();
@@ -333,7 +373,7 @@ const mountPlayer = async (
     const input = parserKeyInputFromKeyboardEvent(event);
     if (!input || !player.input?.handleKey?.(input)) return;
     player.replay?.recordParserInput(logicalTick, input);
-    if (player.statusText) updateStatus(player.statusText());
+    if (player.statusText) statusRail.replace(player.statusText());
     event.preventDefault();
   };
 
@@ -365,7 +405,7 @@ const mountPlayer = async (
     logicalTick += advanced.ticksToRun;
     previousTime = now;
     player.renderer.render(player.createFrame(logicalTick));
-    if (player.statusText) updateStatus(player.statusText());
+    if (player.statusText) statusRail.refresh(player.statusText());
     animationFrame = requestAnimationFrame(renderLoop);
   };
 
@@ -398,6 +438,7 @@ const packagedPlayer = async (
   bundle: RuntimeBundle,
   bundleUrl: string,
   requestedActorInstanceId: string | null,
+  text: PlayerSystemTextResolver,
   initialSave?: SaveGame,
   initialSequenceId?: Id<"sequence"> | null,
   restartSequenceId?: Id<"sequence"> | null,
@@ -406,6 +447,7 @@ const packagedPlayer = async (
   await textures.loadRuntimeAssets(bundle.assets, bundleUrl);
   const controller: PackagedRuntimeController = createPackagedRuntimeController(bundle, {
     requestedActorInstanceId,
+    text,
     ...(initialSequenceId ? { initialSequenceId } : {}),
     ...(restartSequenceId ? { restartSequenceId } : {}),
   });
@@ -414,11 +456,19 @@ const packagedPlayer = async (
     : controller.worldState().story.tick;
   const recorder = createPlayerReplayRecorder(bundle);
   const persistence: PlayerPersistence = {
-    saveQuickSlot: () => writeSaveGameSlot(window.localStorage, bundle, controller.createSaveGame()),
+    saveQuickSlot: () =>
+      writeSaveGameSlot(window.localStorage, bundle, controller.createSaveGame()),
     loadQuickSlot: () => controller.restoreSaveGame(readSaveGameSlot(window.localStorage, bundle)),
     hasQuickSlot: () => hasSaveGameSlot(window.localStorage, bundle),
-    saveSlot: (slot) => writeSaveGameSlot(window.localStorage, bundle, controller.createSaveGame(), slot),
-    loadSlot: (slot) => controller.restoreSaveGame(readSaveGameSlot(window.localStorage, bundle, slot)),
+    saveSlot: (slot) =>
+      writeSaveGameSlot(
+        window.localStorage,
+        bundle,
+        controller.createSaveGame(),
+        slot,
+      ),
+    loadSlot: (slot) =>
+      controller.restoreSaveGame(readSaveGameSlot(window.localStorage, bundle, slot)),
     listSlots: () => listSaveGameSlots(window.localStorage, bundle, 10),
   };
   const replay: PlayerReplayControls = {
@@ -442,6 +492,7 @@ const packagedPlayer = async (
       persistence,
       replay,
       statusText: controller.statusText,
+      text,
       bundle,
       disposeAdditional: () => textures.dispose(),
     },
@@ -454,6 +505,7 @@ const laboratoryPlayer = (): MountedPlayer => ({
   }),
   ticksPerSecond: 60,
   createFrame: createLaboratoryFrame,
+  text: canonicalPlayerSystemText,
 });
 
 const boot = async (): Promise<void> => {
@@ -469,14 +521,16 @@ const boot = async (): Promise<void> => {
 
   const bundleUrl = new URL(bundleParameter, window.location.href).href;
   host.dataset["mode"] = "runtime-loading";
-  host.textContent = "Loading runtime bundle…";
-  updateStatus("LOADING GAME DATA");
+  host.textContent = activeSystemText("loading.runtimeBundle");
+  statusRail.replace(activeSystemText("status.loadingGameData"));
   const bundle = await loadRuntimeBundle(bundleUrl);
+  activeSystemText = createPlayerSystemText(bundle);
+  const text = activeSystemText;
   host.textContent = "";
 
   let initialSave: SaveGame | undefined;
   if (!classicFrontEndSkipped(window.location.search)) {
-    updateStatus("TITLE SCREEN");
+    statusRail.replace(text("status.titleScreen"));
     const snapshots = (): readonly SaveGameSlotSnapshot[] =>
       listSaveGameSlots(window.localStorage, bundle, 10);
     let request = await runClassicFrontEnd(host, {
@@ -494,10 +548,13 @@ const boot = async (): Promise<void> => {
           snapshots,
           skipSplash: true,
           ...(bundle.frontEnd ? { frontEnd: bundle.frontEnd } : {}),
-          notice: errorText(
-            request.slot === 0 ? "QUICK SAVE UNAVAILABLE" : `SAVE SLOT ${request.slot} UNAVAILABLE`,
-            error,
-          ),
+          notice:
+            request.slot === 0
+              ? text("status.quickSaveUnavailable", { error: errorMessage(error) })
+              : text("status.saveSlotUnavailable", {
+                  slot: request.slot,
+                  error: errorMessage(error),
+                }),
         });
       }
     }
@@ -513,25 +570,28 @@ const boot = async (): Promise<void> => {
     initialSave !== undefined,
   );
   host.dataset["mode"] = "runtime-loading";
-  host.textContent = "Loading game…";
-  updateStatus(
-    initialSave
-      ? "RESTORING GAME"
-      : initialSequenceId
-        ? "STARTING OPENING"
-        : "STARTING NEW GAME",
+  host.textContent = text("loading.game");
+  statusRail.replace(
+    text(
+      initialSave
+        ? "status.restoringGame"
+        : initialSequenceId
+          ? "status.startingOpening"
+          : "status.startingNewGame",
+    ),
   );
   const session = await packagedPlayer(
     bundle,
     bundleUrl,
     requestedActorFromSearch(window.location.search),
+    text,
     initialSave,
     initialSequenceId,
     restartSequenceId,
   );
   host.textContent = "";
   host.dataset["mode"] = "runtime-bundle";
-  host.setAttribute("aria-label", "Native adventure game canvas");
+  host.setAttribute("aria-label", text("aria.gameCanvas"));
   await mountPlayer(host, session.player, session.initialTick);
 };
 
@@ -540,6 +600,9 @@ void boot().catch((error: unknown) => {
   const host = document.querySelector<HTMLElement>("#player-host");
   if (host) {
     host.dataset["mode"] = "error";
-    host.textContent = error instanceof Error ? error.message : "The player could not start.";
+    host.textContent = activeSystemText("error.playerCouldNotStart", {
+      error: errorMessage(error),
+    });
+    statusRail.replace(activeSystemText("status.playerCouldNotStart"));
   }
 });

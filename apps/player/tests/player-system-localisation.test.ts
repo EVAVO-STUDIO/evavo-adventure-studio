@@ -35,6 +35,18 @@ const pack = parseRuntimeLocalisationPack({
           text: "SAUVEGARDER",
         },
         {
+          key: playerSystemLocalisationKey("label.language"),
+          text: "LANGUE",
+        },
+        {
+          key: playerSystemLocalisationKey("aria.languageSelector"),
+          text: "Langue du jeu",
+        },
+        {
+          key: playerSystemLocalisationKey("loading.game"),
+          text: "Chargement du jeu…",
+        },
+        {
           key: playerSystemLocalisationKey("slot.numbered"),
           text: "EMPLACEMENT {slot}",
         },
@@ -49,6 +61,18 @@ const pack = parseRuntimeLocalisationPack({
         {
           key: playerSystemLocalisationKey("slot.itemPlural"),
           text: "OBJETS",
+        },
+        {
+          key: playerSystemLocalisationKey("status.replayRecorded"),
+          text: "REPLAY ENREGISTRÉ • {count} {eventLabel}",
+        },
+        {
+          key: playerSystemLocalisationKey("status.replayEventPlural"),
+          text: "ÉVÉNEMENTS",
+        },
+        {
+          key: playerSystemLocalisationKey("status.cutsceneNameSkippable"),
+          text: "{name} • ÉCHAP POUR PASSER",
         },
       ],
     },
@@ -71,13 +95,29 @@ describe("Player system text", () => {
     const text = createPlayerSystemText(null, "fr-FR");
     expect(text("menu.resume")).toBe("RESUME GAME");
     expect(text("slot.numbered", { slot: "03" })).toBe("SAVE SLOT 03");
+    expect(text("loading.runtimeBundle")).toBe("Loading runtime bundle…");
   });
 
   it("resolves authored translations and preserves source fallback", () => {
     const text = createPlayerSystemText({ localisation: pack }, "fr-FR");
     expect(text("menu.resume")).toBe("REPRENDRE");
     expect(text("heading.paused")).toBe("GAME PAUSED");
+    expect(text("label.language")).toBe("LANGUE");
+    expect(text("aria.languageSelector")).toBe("Langue du jeu");
+    expect(text("loading.game")).toBe("Chargement du jeu…");
     expect(text("slot.numbered", { slot: "03" })).toBe("EMPLACEMENT 03");
+  });
+
+  it("formats replay and cutscene status with translated inflection and hints", () => {
+    const text = createPlayerSystemText({ localisation: pack }, "fr-FR");
+    const eventLabel = text("status.replayEventPlural");
+
+    expect(text("status.replayRecorded", { count: 4, eventLabel })).toBe(
+      "REPLAY ENREGISTRÉ • 4 ÉVÉNEMENTS",
+    );
+    expect(
+      text("status.cutsceneNameSkippable", { name: "LE REGISTRE ROUGE" }),
+    ).toBe("LE REGISTRE ROUGE • ÉCHAP POUR PASSER");
   });
 
   it("feeds translated labels and deterministic slot summaries into menu state", () => {

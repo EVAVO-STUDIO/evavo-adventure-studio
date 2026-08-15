@@ -1,3 +1,4 @@
+import type { PlayerSystemTextResolver } from "@evavo/adventure-project-schema/localisation";
 import {
   localiseRuntimeFrontEnd,
   type RuntimeBundle,
@@ -7,6 +8,7 @@ import {
   resolveRuntimeLocale,
   runtimeLocaleOptions,
 } from "@evavo/adventure-runtime-bundle/localisation";
+import { createPlayerSystemText } from "./player-system-localisation.js";
 import "./localisation.css";
 
 export interface LocalePreferenceStorage {
@@ -25,13 +27,17 @@ export const requestedRuntimeLocale = (
   if (!bundle.localisation) return null;
   const query = new URLSearchParams(search).get("locale");
   const stored = storage?.getItem(runtimeLocaleStorageKey(bundle.projectId)) ?? null;
-  return resolveRuntimeLocale(bundle.localisation, query ?? stored ?? bundle.localisation.defaultLocale);
+  return resolveRuntimeLocale(
+    bundle.localisation,
+    query ?? stored ?? bundle.localisation.defaultLocale,
+  );
 };
 
 const mountRuntimeLocaleSelector = (
   bundle: RuntimeBundle,
   selectedLocale: string,
   storage: LocalePreferenceStorage,
+  text: PlayerSystemTextResolver,
 ): void => {
   const pack = bundle.localisation;
   if (!pack || typeof document === "undefined" || typeof window === "undefined") return;
@@ -41,12 +47,12 @@ const mountRuntimeLocaleSelector = (
   const label = document.createElement("label");
   label.className = "runtime-locale-selector";
   label.dataset["runtimeLocaleSelector"] = "true";
-  label.title = "Changing language reloads the presentation. Quick saves remain compatible.";
+  label.title = text("description.languageReload");
 
   const caption = document.createElement("span");
-  caption.textContent = "LANGUAGE";
+  caption.textContent = text("label.language");
   const select = document.createElement("select");
-  select.setAttribute("aria-label", "Game language");
+  select.setAttribute("aria-label", text("aria.languageSelector"));
 
   for (const option of runtimeLocaleOptions(pack)) {
     const element = document.createElement("option");
@@ -73,6 +79,7 @@ export const localiseRuntimeBundleForBrowser = (bundle: RuntimeBundle): RuntimeB
   const locale = requestedRuntimeLocale(bundle, window.location.search, window.localStorage);
   const selected = locale ?? bundle.localisation.defaultLocale;
   if (typeof document !== "undefined") document.documentElement.lang = selected;
-  mountRuntimeLocaleSelector(bundle, selected, window.localStorage);
+  const text = createPlayerSystemText(bundle, selected);
+  mountRuntimeLocaleSelector(bundle, selected, window.localStorage, text);
   return localiseRuntimeFrontEnd(localiseRuntimeBundle(bundle, selected), selected);
 };
