@@ -9,10 +9,12 @@ import {
   createPseudoLocalisationLocale,
   extractFrontEndLocalisableText,
   extractLifecycleLocalisableText,
+  extractPlayerSystemLocalisableText,
   frontEndLocalisationKey,
   lifecycleLocalisationKey,
   type LocalisationManifest,
   type LocalisationSourceEntry,
+  playerSystemLocalisationKey,
 } from "@evavo/adventure-project-schema/localisation";
 import { studioBitmapFonts, studioFontProject } from "./font-fixture.js";
 import { studioFrontEndManifest } from "./front-end-fixture.js";
@@ -21,6 +23,7 @@ import { studioLifecycleManifest } from "./lifecycle-fixture.js";
 export const studioLocalisationSupplementalSources: readonly LocalisationSourceEntry[] = [
   ...extractFrontEndLocalisableText(studioFrontEndManifest),
   ...extractLifecycleLocalisableText(studioLifecycleManifest),
+  ...extractPlayerSystemLocalisableText(studioFontProject.id),
 ].sort((left, right) => left.key.localeCompare(right.key));
 
 const sourceEntries = collectLocalisationSourceEntries(
@@ -53,6 +56,25 @@ const frenchTranslations: Readonly<Record<string, string>> = {
   [lifecycleLocalisationKey("outcome.case-closed", "menu.loadGame")]: "CHARGER",
   [lifecycleLocalisationKey("outcome.case-closed", "menu.returnToTitle")]:
     "RETOUR AU TITRE",
+  [playerSystemLocalisationKey("heading.paused")]: "JEU EN PAUSE",
+  [playerSystemLocalisationKey("heading.save")]: "SAUVEGARDER",
+  [playerSystemLocalisationKey("heading.load")]: "CHARGER",
+  [playerSystemLocalisationKey("menu.resume")]: "REPRENDRE",
+  [playerSystemLocalisationKey("menu.save")]: "SAUVEGARDER",
+  [playerSystemLocalisationKey("menu.load")]: "CHARGER",
+  [playerSystemLocalisationKey("menu.options")]: "OPTIONS",
+  [playerSystemLocalisationKey("menu.returnToTitle")]: "RETOUR AU TITRE",
+  [playerSystemLocalisationKey("menu.back")]: "RETOUR",
+  [playerSystemLocalisationKey("slot.quick")]: "SAUVEGARDE RAPIDE",
+  [playerSystemLocalisationKey("slot.numbered")]: "EMPLACEMENT {slot}",
+  [playerSystemLocalisationKey("slot.empty")]: "{title} — VIDE",
+  [playerSystemLocalisationKey("slot.valid")]: "{title} — {scene} TOUR {tick}",
+  [playerSystemLocalisationKey("slot.itemSingular")]: "OBJET",
+  [playerSystemLocalisationKey("slot.itemPlural")]: "OBJETS",
+  [playerSystemLocalisationKey("status.quickSaveWritten")]:
+    "SAUVEGARDE RAPIDE ENREGISTRÉE.",
+  [playerSystemLocalisationKey("status.saveSlotWritten")]:
+    "EMPLACEMENT {slot} ENREGISTRÉ.",
 };
 
 export const studioLocalisationManifest: LocalisationManifest = canonicaliseLocalisationManifest({
@@ -96,6 +118,7 @@ export const studioLocalisationTextFitProfile: LocalisationTextFitProfile =
           "lifecycle-title",
           "lifecycle-menu-label",
           "front-end-menu-label",
+          "player-system-menu-label",
         ],
         fontId: "bitmap-font.dialogue",
         maxWidth: 180,
@@ -109,7 +132,11 @@ export const studioLocalisationTextFitProfile: LocalisationTextFitProfile =
       },
       {
         id: "text-fit.front-end-heading",
-        roles: ["front-end-publisher", "front-end-title"],
+        roles: [
+          "front-end-publisher",
+          "front-end-title",
+          "player-system-heading",
+        ],
         fontId: "bitmap-font.dialogue",
         maxWidth: 260,
         maxHeight: 30,
@@ -131,6 +158,8 @@ export const studioLocalisationTextFitProfile: LocalisationTextFitProfile =
           "action-say",
           "inventory-description",
           "lifecycle-message",
+          "player-system-description",
+          "player-system-status",
         ],
         fontId: "bitmap-font.dialogue",
         maxWidth: 284,
@@ -144,9 +173,9 @@ export const studioLocalisationTextFitProfile: LocalisationTextFitProfile =
       },
       {
         id: "text-fit.front-end-credit",
-        roles: ["front-end-credit"],
+        roles: ["front-end-credit", "player-system-footer"],
         fontId: "bitmap-font.dialogue",
-        maxWidth: 260,
+        maxWidth: 300,
         maxHeight: 50,
         maxLines: 4,
         alignment: "center",

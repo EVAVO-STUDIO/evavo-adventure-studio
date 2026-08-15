@@ -5,8 +5,10 @@ import type { AdventureProject } from "@evavo/adventure-project-schema";
 import {
   extractFrontEndLocalisableText,
   extractLifecycleLocalisableText,
+  extractPlayerSystemLocalisableText,
   type LocalisationManifest,
   type LocalisationSourceEntry,
+  playerSystemLocalisationPrefix,
 } from "@evavo/adventure-project-schema/localisation";
 import {
   createRuntimeLocalisationPack,
@@ -37,14 +39,25 @@ const fnv1a64 = (value: string): string => {
   return hash.toString(16).padStart(16, "0");
 };
 
+export const localisationRequestsPlayerSystemText = (
+  localisation: LocalisationManifest,
+): boolean =>
+  localisation.locales.some((locale) =>
+    locale.entries.some((entry) => entry.key.startsWith(playerSystemLocalisationPrefix)),
+  );
+
 const supplementalLocalisationSources = (
   compiled: CompiledProject,
+  localisation: LocalisationManifest,
 ): readonly LocalisationSourceEntry[] => [
   ...(compiled.bundle.frontEnd
     ? extractFrontEndLocalisableText(compiled.bundle.frontEnd)
     : []),
   ...(compiled.bundle.lifecycle
     ? extractLifecycleLocalisableText(compiled.bundle.lifecycle)
+    : []),
+  ...(localisationRequestsPlayerSystemText(localisation)
+    ? extractPlayerSystemLocalisableText(compiled.bundle.projectId)
     : []),
 ];
 
@@ -65,7 +78,7 @@ export const attachRuntimeLocalisation = (
       project,
       localisation,
       defaultLocale,
-      supplementalLocalisationSources(compiled),
+      supplementalLocalisationSources(compiled, localisation),
     ),
   });
   const canonicalJson = canonicalStringify(bundle);

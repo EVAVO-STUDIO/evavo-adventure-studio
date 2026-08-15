@@ -1,3 +1,7 @@
+import {
+  canonicalPlayerSystemText,
+  type PlayerSystemTextResolver,
+} from "@evavo/adventure-project-schema/localisation";
 import type { SaveGameSlotSnapshot } from "./save-storage.js";
 
 export type ClassicSystemMenuScreen =
@@ -44,68 +48,96 @@ export const createClassicSystemMenuState = (): ClassicSystemMenuState => ({
   selectedIndex: 0,
 });
 
-const slotTitle = (slot: number): string =>
-  slot === 0 ? "QUICK SAVE" : `SAVE SLOT ${slot.toString().padStart(2, "0")}`;
+const slotTitle = (slot: number, text: PlayerSystemTextResolver): string =>
+  slot === 0
+    ? text("slot.quick")
+    : text("slot.numbered", { slot: slot.toString().padStart(2, "0") });
 
-export const classicSystemMenuSlotLabel = (snapshot: SaveGameSlotSnapshot): string => {
-  const title = slotTitle(snapshot.slot);
-  if (snapshot.status === "empty") return `${title}  —  EMPTY`;
-  if (snapshot.status === "invalid") return `${title}  —  DAMAGED SAVE`;
-  return `${title}  —  ${snapshot.sceneName}  TICK ${snapshot.tick}`;
+export const classicSystemMenuSlotLabel = (
+  snapshot: SaveGameSlotSnapshot,
+  text: PlayerSystemTextResolver = canonicalPlayerSystemText,
+): string => {
+  const title = slotTitle(snapshot.slot, text);
+  if (snapshot.status === "empty") return text("slot.empty", { title });
+  if (snapshot.status === "invalid") return text("slot.damaged", { title });
+  return text("slot.valid", {
+    title,
+    scene: snapshot.sceneName,
+    tick: snapshot.tick,
+  });
 };
 
-const rootItems = (snapshots: readonly SaveGameSlotSnapshot[]): readonly ClassicSystemMenuItem[] => [
-  { id: "resume", label: "RESUME GAME", enabled: true },
-  { id: "save", label: "SAVE GAME", enabled: true },
+const rootItems = (
+  snapshots: readonly SaveGameSlotSnapshot[],
+  text: PlayerSystemTextResolver,
+): readonly ClassicSystemMenuItem[] => [
+  { id: "resume", label: text("menu.resume"), enabled: true },
+  { id: "save", label: text("menu.save"), enabled: true },
   {
     id: "load",
-    label: "LOAD GAME",
+    label: text("menu.load"),
     enabled: snapshots.some((snapshot) => snapshot.status === "valid"),
   },
-  { id: "options", label: "OPTIONS", enabled: true },
-  { id: "title", label: "RETURN TO TITLE", enabled: true },
+  { id: "options", label: text("menu.options"), enabled: true },
+  { id: "title", label: text("menu.returnToTitle"), enabled: true },
 ];
 
 const slotItems = (
   snapshots: readonly SaveGameSlotSnapshot[],
   mode: "save" | "load",
+  text: PlayerSystemTextResolver,
 ): readonly ClassicSystemMenuItem[] => [
   ...snapshots.map((snapshot) => ({
     id: `${mode}-slot-${snapshot.slot}`,
-    label: classicSystemMenuSlotLabel(snapshot),
+    label: classicSystemMenuSlotLabel(snapshot, text),
     enabled: mode === "save" || snapshot.status === "valid",
     slot: snapshot.slot,
     ...(snapshot.status === "valid"
       ? {
-          detail: `SCORE ${snapshot.score}  •  ${snapshot.inventoryCount} ITEM${snapshot.inventoryCount === 1 ? "" : "S"}`,
+          detail: text("slot.detail", {
+            score: snapshot.score,
+            count: snapshot.inventoryCount,
+            itemLabel: text(
+              snapshot.inventoryCount === 1 ? "slot.itemSingular" : "slot.itemPlural",
+            ),
+          }),
         }
       : snapshot.status === "invalid"
         ? { detail: snapshot.message }
         : {}),
   })),
-  { id: "back", label: "BACK", enabled: true },
+  { id: "back", label: text("menu.back"), enabled: true },
 ];
 
 export const classicSystemMenuItems = (
   state: ClassicSystemMenuState,
   snapshots: readonly SaveGameSlotSnapshot[],
+  text: PlayerSystemTextResolver = canonicalPlayerSystemText,
 ): readonly ClassicSystemMenuItem[] => {
   switch (state.screen) {
     case "root":
-      return rootItems(snapshots);
+      return rootItems(snapshots, text);
     case "save":
-      return slotItems(snapshots, "save");
+      return slotItems(snapshots, "save", text);
     case "load":
-      return slotItems(snapshots, "load");
+      return slotItems(snapshots, "load", text);
     case "options":
       return [
-        { id: "fullscreen", label: "TOGGLE FULLSCREEN", enabled: true },
-        { id: "back", label: "BACK", enabled: true },
+        { id: "fullscreen", label: text("menu.fullscreen"), enabled: true },
+        { id: "back", label: text("menu.back"), enabled: true },
       ];
     case "title-confirm":
       return [
-        { id: "confirm-title", label: "YES — RETURN TO TITLE", enabled: true },
-        { id: "back", label: "NO — KEEP PLAYING", enabled: true },
+        {
+          id: "confirm-title",
+          label: text("menu.confirmReturnToTitle"),
+          enabled: true,
+        },
+        {
+          id: "back",
+          label: text("menu.cancelReturnToTitle"),
+          enabled: true,
+        },
       ];
   }
 };
@@ -118,8 +150,9 @@ const firstEnabledIndex = (items: readonly ClassicSystemMenuItem[]): number => {
 const normalizedSelection = (
   state: ClassicSystemMenuState,
   snapshots: readonly SaveGameSlotSnapshot[],
+  text: PlayerSystemTextResolver,
 ): ClassicSystemMenuState => {
-  const items = classicSystemMenuItems(state, snapshots);
+  const items = classicSystemMenuItems(state, snapshots, text);
   if (items[state.selectedIndex]?.enabled) return state;
   return { ...state, selectedIndex: firstEnabledIndex(items) };
 };
@@ -128,8 +161,9 @@ const moveSelection = (
   state: ClassicSystemMenuState,
   snapshots: readonly SaveGameSlotSnapshot[],
   delta: -1 | 1,
+  text: PlayerSystemTextResolver,
 ): ClassicSystemMenuState => {
-  const items = classicSystemMenuItems(state, snapshots);
+  const items = classicSystemMenuItems(state, snapshots, text);
   if (items.length === 0) return state;
   let index = state.selectedIndex;
   for (let attempts = 0; attempts < items.length; attempts += 1) {
@@ -147,19 +181,21 @@ const openScreen = (screen: ClassicSystemMenuScreen): ClassicSystemMenuState => 
 const openNormalizedScreen = (
   screen: ClassicSystemMenuScreen,
   snapshots: readonly SaveGameSlotSnapshot[],
-): ClassicSystemMenuState => normalizedSelection(openScreen(screen), snapshots);
+  text: PlayerSystemTextResolver,
+): ClassicSystemMenuState => normalizedSelection(openScreen(screen), snapshots, text);
 
 export const transitionClassicSystemMenu = (
   state: ClassicSystemMenuState,
   command: ClassicSystemMenuCommand,
   snapshots: readonly SaveGameSlotSnapshot[],
+  text: PlayerSystemTextResolver = canonicalPlayerSystemText,
 ): ClassicSystemMenuTransition => {
-  const current = normalizedSelection(state, snapshots);
+  const current = normalizedSelection(state, snapshots, text);
   if (command.kind === "move-selection") {
-    return { state: moveSelection(current, snapshots, command.delta), effect: null };
+    return { state: moveSelection(current, snapshots, command.delta, text), effect: null };
   }
   if (command.kind === "set-selection") {
-    const items = classicSystemMenuItems(current, snapshots);
+    const items = classicSystemMenuItems(current, snapshots, text);
     const item = items[command.index];
     return item?.enabled
       ? { state: { ...current, selectedIndex: command.index }, effect: null }
@@ -171,7 +207,7 @@ export const transitionClassicSystemMenu = (
       : { state: openScreen("root"), effect: null };
   }
 
-  const item = classicSystemMenuItems(current, snapshots)[current.selectedIndex];
+  const item = classicSystemMenuItems(current, snapshots, text)[current.selectedIndex];
   if (!item?.enabled) return { state: current, effect: null };
 
   switch (current.screen) {
@@ -180,13 +216,16 @@ export const transitionClassicSystemMenu = (
         case "resume":
           return { state: current, effect: { kind: "resume" } };
         case "save":
-          return { state: openNormalizedScreen("save", snapshots), effect: null };
+          return { state: openNormalizedScreen("save", snapshots, text), effect: null };
         case "load":
-          return { state: openNormalizedScreen("load", snapshots), effect: null };
+          return { state: openNormalizedScreen("load", snapshots, text), effect: null };
         case "options":
-          return { state: openNormalizedScreen("options", snapshots), effect: null };
+          return { state: openNormalizedScreen("options", snapshots, text), effect: null };
         case "title":
-          return { state: openNormalizedScreen("title-confirm", snapshots), effect: null };
+          return {
+            state: openNormalizedScreen("title-confirm", snapshots, text),
+            effect: null,
+          };
         default:
           return { state: current, effect: null };
       }

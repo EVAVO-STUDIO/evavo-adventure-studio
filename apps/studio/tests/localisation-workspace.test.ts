@@ -1,6 +1,7 @@
 import {
   frontEndLocalisationKey,
   lifecycleLocalisationKey,
+  playerSystemLocalisationKey,
 } from "@evavo/adventure-project-schema/localisation";
 import { describe, expect, it } from "vitest";
 import {
@@ -55,44 +56,54 @@ describe("localisation workspace", () => {
     expect(localisationWorkspaceIsDirty(saved)).toBe(false);
   });
 
-  it("catalogues front-end and lifecycle sidecars with native fit rules", () => {
+  it("catalogues front-end, lifecycle and Player system sidecars with native fit rules", () => {
     const state = createState();
     const report = localisationWorkspaceReport(state);
     const keys = localisationWorkspaceSourceEntries(state).map((source) => source.key);
     const frontEndKey = frontEndLocalisationKey("menu.newGame");
     const lifecycleKey = lifecycleLocalisationKey("outcome.case-closed", "message");
+    const playerSystemKey = playerSystemLocalisationKey("menu.resume");
 
-    expect(keys).toEqual(expect.arrayContaining([frontEndKey, lifecycleKey]));
+    expect(keys).toEqual(
+      expect.arrayContaining([frontEndKey, lifecycleKey, playerSystemKey]),
+    );
     expect(report.sourceEntries.map((source) => source.key)).toEqual(keys);
     expect(
       report.issues.filter(
         (issue) =>
           issue.code === "missing-text-fit-rule" &&
           issue.key !== undefined &&
-          (issue.key.startsWith("frontEnd.") || issue.key.startsWith("lifecycle.")),
+          (issue.key.startsWith("frontEnd.") ||
+            issue.key.startsWith("lifecycle.") ||
+            issue.key.startsWith("playerSystem.")),
       ),
     ).toEqual([]);
   });
 
-  it("edits a supplemental front-end translation through normal history", () => {
-    const key = frontEndLocalisationKey("menu.newGame");
-    const initial = localisationWorkspaceReducer(createState(), {
+  it("edits supplemental translations through normal history", () => {
+    const frontEndKey = frontEndLocalisationKey("menu.newGame");
+    const playerSystemKey = playerSystemLocalisationKey("menu.resume");
+    let state = localisationWorkspaceReducer(createState(), {
       type: "select-key",
-      key,
+      key: frontEndKey,
     });
-    expect(selectedLocalisationSource(initial).role).toBe("front-end-menu-label");
+    expect(selectedLocalisationSource(state).role).toBe("front-end-menu-label");
 
-    const edited = localisationWorkspaceReducer(initial, {
+    state = localisationWorkspaceReducer(state, {
       type: "execute",
-      command: replaceSelectedTranslationCommand(initial, "COMMENCER"),
+      command: replaceSelectedTranslationCommand(state, "COMMENCER"),
       notice: "Edited front-end translation.",
     });
-    expect(selectedLocalisationText(edited)).toBe("COMMENCER");
+    expect(selectedLocalisationText(state)).toBe("COMMENCER");
 
-    const undone = localisationWorkspaceReducer(edited, { type: "undo" });
-    expect(selectedLocalisationText(undone)).toBe("NOUVELLE PARTIE");
-    const redone = localisationWorkspaceReducer(undone, { type: "redo" });
-    expect(selectedLocalisationText(redone)).toBe("COMMENCER");
+    state = localisationWorkspaceReducer(state, { type: "undo" });
+    expect(selectedLocalisationText(state)).toBe("NOUVELLE PARTIE");
+    state = localisationWorkspaceReducer(state, { type: "redo" });
+    expect(selectedLocalisationText(state)).toBe("COMMENCER");
+
+    state = localisationWorkspaceReducer(state, { type: "select-key", key: playerSystemKey });
+    expect(selectedLocalisationSource(state).role).toBe("player-system-menu-label");
+    expect(selectedLocalisationText(state)).toBe("REPRENDRE");
   });
 
   it("adds a complete draft locale and keeps selection stable", () => {
@@ -114,7 +125,9 @@ describe("localisation workspace", () => {
   it("filters the catalogue by core text, sidecar role and active findings", () => {
     let state = createState();
     state = localisationWorkspaceReducer(state, { type: "set-query", query: "project.title" });
-    expect(filteredLocalisationSources(state).map((source) => source.key)).toEqual(["project.title"]);
+    expect(filteredLocalisationSources(state).map((source) => source.key)).toEqual([
+      "project.title",
+    ]);
 
     state = localisationWorkspaceReducer(state, {
       type: "set-query",
@@ -123,6 +136,14 @@ describe("localisation workspace", () => {
     const frontEndSources = filteredLocalisationSources(state);
     expect(frontEndSources.length).toBeGreaterThan(0);
     expect(frontEndSources.every((source) => source.role === "front-end-menu-label")).toBe(true);
+
+    state = localisationWorkspaceReducer(state, {
+      type: "set-query",
+      query: "player-system-menu-label",
+    });
+    const systemSources = filteredLocalisationSources(state);
+    expect(systemSources.length).toBeGreaterThan(0);
+    expect(systemSources.every((source) => source.role === "player-system-menu-label")).toBe(true);
 
     state = localisationWorkspaceReducer(state, { type: "set-query", query: "" });
     state = localisationWorkspaceReducer(state, { type: "set-findings-only", value: true });

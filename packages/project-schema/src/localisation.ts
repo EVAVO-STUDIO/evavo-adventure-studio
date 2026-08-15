@@ -8,3 +8,4 @@ export * from "./localisation-resolve.js";
 export * from "./localisation-supplemental.js";
 export * from "./localisation-types.js";
 export * from "./localisation-validate.js";
+export * from "./player-system-localisation.js";

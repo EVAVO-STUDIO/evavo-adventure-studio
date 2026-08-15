@@ -42,6 +42,7 @@ const commands = [
     "packages/compiler/tests/with-lifecycle.test.ts",
     "packages/compiler/tests/lifecycle-localisation-order.test.ts",
     "packages/compiler/tests/with-localisation.test.ts",
+    "packages/compiler/tests/player-system-localisation.test.ts",
     "packages/compiler/tests/with-opening.test.ts",
     "packages/compiler/tests/with-play-feel.test.ts",
     "packages/runtime-bundle/tests/bitmap-font-runtime.test.ts",

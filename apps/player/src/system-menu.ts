@@ -1,4 +1,6 @@
+import type { PlayerSystemTextResolver } from "@evavo/adventure-project-schema/localisation";
 import type { RuntimeBundle } from "@evavo/adventure-runtime-bundle";
+import { createPlayerSystemText } from "./player-system-localisation.js";
 import type { SaveGameSlotSnapshot } from "./save-storage.js";
 import {
   classicSystemMenuItems,
@@ -14,6 +16,7 @@ export interface ClassicSystemMenuOptions {
   readonly snapshots: () => readonly SaveGameSlotSnapshot[];
   readonly saveSlot: (slot: number) => void;
   readonly loadSlot: (slot: number) => number;
+  readonly text?: PlayerSystemTextResolver;
 }
 
 export type ClassicSystemMenuResult =
@@ -52,31 +55,37 @@ const requestFullscreen = async (): Promise<void> => {
   await target.requestFullscreen();
 };
 
-const screenHeading = (state: ClassicSystemMenuState): string => {
+const screenHeading = (
+  state: ClassicSystemMenuState,
+  text: PlayerSystemTextResolver,
+): string => {
   switch (state.screen) {
     case "root":
-      return "GAME PAUSED";
+      return text("heading.paused");
     case "save":
-      return "SAVE GAME";
+      return text("heading.save");
     case "load":
-      return "LOAD GAME";
+      return text("heading.load");
     case "options":
-      return "OPTIONS";
+      return text("heading.options");
     case "title-confirm":
-      return "RETURN TO TITLE?";
+      return text("heading.returnToTitle");
   }
 };
 
-const screenDescription = (state: ClassicSystemMenuState): string | null => {
+const screenDescription = (
+  state: ClassicSystemMenuState,
+  text: PlayerSystemTextResolver,
+): string | null => {
   switch (state.screen) {
     case "save":
-      return "Choose a slot. Existing saves in that slot will be replaced.";
+      return text("description.save");
     case "load":
-      return "Choose a compatible save to restore its exact logical game state.";
+      return text("description.load");
     case "options":
-      return "System display settings do not alter game state or replay history.";
+      return text("description.options");
     case "title-confirm":
-      return "Unsaved progress since the last save will be lost.";
+      return text("description.returnToTitle");
     case "root":
       return null;
   }
@@ -87,6 +96,7 @@ export const runClassicSystemMenu = (
   options: ClassicSystemMenuOptions,
 ): Promise<ClassicSystemMenuResult> =>
   new Promise((resolve) => {
+    const text = options.text ?? createPlayerSystemText(options.bundle);
     let state = createClassicSystemMenuState();
     let notice: string | null = null;
     let settled = false;
@@ -96,7 +106,7 @@ export const runClassicSystemMenu = (
     const frame = element("section", "classic-system-menu-frame");
     frame.setAttribute("role", "dialog");
     frame.setAttribute("aria-modal", "true");
-    frame.setAttribute("aria-label", `${options.bundle.title} system menu`);
+    frame.setAttribute("aria-label", text("aria.systemMenu", { title: options.bundle.title }));
     stage.append(shade, frame);
     host.appendChild(stage);
 
@@ -129,21 +139,26 @@ export const runClassicSystemMenu = (
         case "request-fullscreen":
           void requestFullscreen()
             .then(() => {
-              notice = document.fullscreenElement ? "FULLSCREEN ENABLED." : "FULLSCREEN DISABLED.";
+              notice = document.fullscreenElement
+                ? text("status.fullscreenEnabled")
+                : text("status.fullscreenDisabled");
               render();
             })
             .catch(() => {
-              notice = "FULLSCREEN IS NOT AVAILABLE IN THIS HOST.";
+              notice = text("status.fullscreenUnavailable");
               render();
             });
           return;
         case "save-slot":
           try {
             options.saveSlot(effect.slot);
-            notice = effect.slot === 0 ? "QUICK SAVE WRITTEN." : `SAVE SLOT ${effect.slot} WRITTEN.`;
+            notice =
+              effect.slot === 0
+                ? text("status.quickSaveWritten")
+                : text("status.saveSlotWritten", { slot: effect.slot });
             render();
           } catch (error) {
-            notice = `SAVE FAILED — ${errorText(error)}`;
+            notice = text("status.saveFailed", { error: errorText(error) });
             render();
           }
           return;
@@ -152,7 +167,7 @@ export const runClassicSystemMenu = (
             const tick = options.loadSlot(effect.slot);
             complete({ kind: "loaded", tick, slot: effect.slot });
           } catch (error) {
-            notice = `LOAD FAILED — ${errorText(error)}`;
+            notice = text("status.loadFailed", { error: errorText(error) });
             render();
           }
           return;
@@ -160,7 +175,12 @@ export const runClassicSystemMenu = (
     };
 
     const apply = (command: Parameters<typeof transitionClassicSystemMenu>[1]): void => {
-      const transition = transitionClassicSystemMenu(state, command, options.snapshots());
+      const transition = transitionClassicSystemMenu(
+        state,
+        command,
+        options.snapshots(),
+        text,
+      );
       state = transition.state;
       applyEffect(transition.effect);
       if (!settled && !transition.effect) render();
@@ -168,17 +188,19 @@ export const runClassicSystemMenu = (
 
     const render = (): void => {
       const snapshots = options.snapshots();
-      const items = classicSystemMenuItems(state, snapshots);
+      const items = classicSystemMenuItems(state, snapshots, text);
       frame.replaceChildren();
       frame.dataset["screen"] = state.screen;
 
       const heading = element("header", "classic-system-menu-heading");
       heading.append(
         element("span", "classic-system-menu-kicker", options.bundle.title),
-        element("h2", "classic-system-menu-title", screenHeading(state)),
+        element("h2", "classic-system-menu-title", screenHeading(state, text)),
       );
-      const description = screenDescription(state);
-      if (description) heading.appendChild(element("p", "classic-system-menu-description", description));
+      const description = screenDescription(state, text);
+      if (description) {
+        heading.appendChild(element("p", "classic-system-menu-description", description));
+      }
       frame.appendChild(heading);
 
       const list = element("div", "classic-system-menu-items");
@@ -196,6 +218,7 @@ export const runClassicSystemMenu = (
             state,
             { kind: "set-selection", index },
             options.snapshots(),
+            text,
           );
           state = selected.state;
           apply({ kind: "activate" });
@@ -206,7 +229,7 @@ export const runClassicSystemMenu = (
 
       if (notice) frame.appendChild(element("div", "classic-system-menu-notice", notice));
       frame.appendChild(
-        element("footer", "classic-system-menu-footer", "↑ ↓ SELECT   ENTER CHOOSE   ESC BACK / RESUME"),
+        element("footer", "classic-system-menu-footer", text("footer.controls")),
       );
     };
 
