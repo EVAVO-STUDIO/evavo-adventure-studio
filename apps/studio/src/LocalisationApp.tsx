@@ -8,6 +8,7 @@ import {
   studioBitmapFonts,
   studioFontProject,
   studioLocalisationManifest,
+  studioLocalisationSupplementalSources,
   studioLocalisationTextFitProfile,
 } from "./localisation-fixture.js";
 import {
@@ -77,6 +78,12 @@ const downloadManifest = (state: LocalisationWorkspaceState): void => {
 const issueTone = (severity: "error" | "warning"): string =>
   severity === "error" ? "is-error" : "is-warning";
 
+const sourceSurface = (key: string): string => {
+  if (key.startsWith("frontEnd.")) return "Classic front end";
+  if (key.startsWith("lifecycle.")) return "Lifecycle outcome";
+  return "Project";
+};
+
 export const LocalisationApp = () => {
   const [state, dispatch] = useReducer(
     localisationWorkspaceReducer,
@@ -85,6 +92,7 @@ export const LocalisationApp = () => {
       studioLocalisationManifest,
       studioBitmapFonts,
       studioLocalisationTextFitProfile,
+      studioLocalisationSupplementalSources,
     ),
   );
   const [newLocale, setNewLocale] = useState("");
@@ -202,7 +210,8 @@ export const LocalisationApp = () => {
         <div className="localisation-toolbar-summary">
           <span className="eyebrow">TRANSLATION CONTROL</span>
           <strong>
-            {report.sourceEntries.length} strings · {report.errorCount} errors · {report.warningCount} warnings
+            {report.sourceEntries.length} strings · {state.supplementalSourceEntries.length} sidecar
+            strings · {report.errorCount} errors · {report.warningCount} warnings
           </strong>
         </div>
         <div className="toolbar-group">
@@ -299,7 +308,11 @@ export const LocalisationApp = () => {
                   <span className="localisation-string-role">{candidate.role}</span>
                   <strong>{candidate.text}</strong>
                   <small>{candidate.key}</small>
-                  <span className={`localisation-string-state ${direct.trim() ? "is-translated" : "is-missing"}`}>
+                  <span
+                    className={`localisation-string-state ${
+                      direct.trim() ? "is-translated" : "is-missing"
+                    }`}
+                  >
                     {direct.trim() ? "DIRECT" : "MISSING"}
                     {count > 0 ? ` · ${count} FINDING${count === 1 ? "" : "S"}` : ""}
                   </span>
@@ -419,6 +432,7 @@ export const LocalisationApp = () => {
           <section className="localisation-source-inspector">
             <span className="eyebrow">SOURCE CONTRACT</span>
             <dl>
+              <div><dt>Surface</dt><dd>{sourceSurface(source.key)}</dd></div>
               <div><dt>Owner</dt><dd>{source.ownerId}</dd></div>
               <div><dt>Path</dt><dd>{source.sourcePath}</dd></div>
               <div><dt>Role</dt><dd>{source.role}</dd></div>

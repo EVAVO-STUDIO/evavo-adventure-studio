@@ -1,8 +1,13 @@
+import {
+  frontEndLocalisationKey,
+  lifecycleLocalisationKey,
+} from "@evavo/adventure-project-schema/localisation";
 import { describe, expect, it } from "vitest";
 import {
   studioBitmapFonts,
   studioFontProject,
   studioLocalisationManifest,
+  studioLocalisationSupplementalSources,
   studioLocalisationTextFitProfile,
 } from "../src/localisation-fixture.js";
 import {
@@ -12,8 +17,10 @@ import {
   localisationWorkspaceIsDirty,
   localisationWorkspaceReducer,
   localisationWorkspaceReport,
+  localisationWorkspaceSourceEntries,
   removeSelectedLocaleCommand,
   replaceSelectedTranslationCommand,
+  selectedLocalisationSource,
   selectedLocalisationText,
 } from "../src/localisation-workspace.js";
 
@@ -23,6 +30,7 @@ const createState = () =>
     studioLocalisationManifest,
     studioBitmapFonts,
     studioLocalisationTextFitProfile,
+    studioLocalisationSupplementalSources,
   );
 
 describe("localisation workspace", () => {
@@ -47,6 +55,46 @@ describe("localisation workspace", () => {
     expect(localisationWorkspaceIsDirty(saved)).toBe(false);
   });
 
+  it("catalogues front-end and lifecycle sidecars with native fit rules", () => {
+    const state = createState();
+    const report = localisationWorkspaceReport(state);
+    const keys = localisationWorkspaceSourceEntries(state).map((source) => source.key);
+    const frontEndKey = frontEndLocalisationKey("menu.newGame");
+    const lifecycleKey = lifecycleLocalisationKey("outcome.case-closed", "message");
+
+    expect(keys).toEqual(expect.arrayContaining([frontEndKey, lifecycleKey]));
+    expect(report.sourceEntries.map((source) => source.key)).toEqual(keys);
+    expect(
+      report.issues.filter(
+        (issue) =>
+          issue.code === "missing-text-fit-rule" &&
+          issue.key !== undefined &&
+          (issue.key.startsWith("frontEnd.") || issue.key.startsWith("lifecycle.")),
+      ),
+    ).toEqual([]);
+  });
+
+  it("edits a supplemental front-end translation through normal history", () => {
+    const key = frontEndLocalisationKey("menu.newGame");
+    const initial = localisationWorkspaceReducer(createState(), {
+      type: "select-key",
+      key,
+    });
+    expect(selectedLocalisationSource(initial).role).toBe("front-end-menu-label");
+
+    const edited = localisationWorkspaceReducer(initial, {
+      type: "execute",
+      command: replaceSelectedTranslationCommand(initial, "COMMENCER"),
+      notice: "Edited front-end translation.",
+    });
+    expect(selectedLocalisationText(edited)).toBe("COMMENCER");
+
+    const undone = localisationWorkspaceReducer(edited, { type: "undo" });
+    expect(selectedLocalisationText(undone)).toBe("NOUVELLE PARTIE");
+    const redone = localisationWorkspaceReducer(undone, { type: "redo" });
+    expect(selectedLocalisationText(redone)).toBe("COMMENCER");
+  });
+
   it("adds a complete draft locale and keeps selection stable", () => {
     const initial = createState();
     const addition = insertLocalisationLocaleCommand(initial, "de-DE", "Deutsch");
@@ -63,10 +111,18 @@ describe("localisation workspace", () => {
     ).toBe(localisationWorkspaceReport(added).sourceEntries.length);
   });
 
-  it("filters the catalogue by text and active findings", () => {
+  it("filters the catalogue by core text, sidecar role and active findings", () => {
     let state = createState();
     state = localisationWorkspaceReducer(state, { type: "set-query", query: "project.title" });
     expect(filteredLocalisationSources(state).map((source) => source.key)).toEqual(["project.title"]);
+
+    state = localisationWorkspaceReducer(state, {
+      type: "set-query",
+      query: "front-end-menu-label",
+    });
+    const frontEndSources = filteredLocalisationSources(state);
+    expect(frontEndSources.length).toBeGreaterThan(0);
+    expect(frontEndSources.every((source) => source.role === "front-end-menu-label")).toBe(true);
 
     state = localisationWorkspaceReducer(state, { type: "set-query", query: "" });
     state = localisationWorkspaceReducer(state, { type: "set-findings-only", value: true });
@@ -86,7 +142,13 @@ describe("localisation workspace", () => {
       command: removeSelectedLocaleCommand(pseudo),
     });
 
-    expect(removed.history.document.manifest.locales.some((locale) => locale.locale === "qps-ploc")).toBe(false);
-    expect(removed.history.document.manifest.locales.some((locale) => locale.locale === removed.selectedLocale)).toBe(true);
+    expect(
+      removed.history.document.manifest.locales.some((locale) => locale.locale === "qps-ploc"),
+    ).toBe(false);
+    expect(
+      removed.history.document.manifest.locales.some(
+        (locale) => locale.locale === removed.selectedLocale,
+      ),
+    ).toBe(true);
   });
 });

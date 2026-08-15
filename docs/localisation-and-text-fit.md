@@ -1,18 +1,31 @@
-# Localisation, runtime locale packs and native text fit
+# Localisation, authored sidecars, runtime locale packs and native text fit
 
-Adventure Studio treats translated text as governed production data rather than a late spreadsheet export. Canonical project text remains the source of truth; localisation may change presentation text, but it cannot add actions, alter IDs, change conditions, award score, mutate inventory or affect deterministic story state.
+Adventure Studio treats translated text as governed production data rather than a late spreadsheet export. Canonical source text remains the authority; localisation may change presentation copy, but it cannot add actions, alter IDs, change conditions, award score, mutate inventory or affect deterministic story state.
 
 ## Canonical source catalogue
 
-`@evavo/adventure-project-schema/localisation` extracts a deterministic catalogue from the project. It covers project, scene, hotspot, actor, dialogue, sequence and inventory names; fallback responses; dialogue lines and choices; spoken `say` actions; cinematic speech; and inventory descriptions.
+`@evavo/adventure-project-schema/localisation` extracts a deterministic catalogue from an adventure project. It covers project, scene, hotspot, actor, dialogue, sequence and inventory names; fallback responses; dialogue lines and choices; spoken `say` actions; cinematic speech; and inventory descriptions.
 
 Each entry retains a stable key, role, owner ID, source path and canonical text. Target manifests are project-scoped, use BCP 47-compatible locale tags, preserve exact placeholders, and declare `draft`, `review` or `release` status. Explicit fallback targets are validated for missing locales and cycles.
 
-Release locales must resolve every source key without falling back to canonical source. Review locales report missing text as warnings. Draft locales may remain incomplete.
+Release locales must resolve every governed source key without falling back to canonical source. Review locales report missing text as warnings. Draft locales may remain incomplete.
+
+## Authored supplemental surfaces
+
+Not every localisable string belongs directly to `project.json`. Adventure Studio therefore supports explicit supplemental source adapters instead of copying sidecar text into the core project model.
+
+The current authored adapters cover:
+
+- classic front-end publisher, title-screen, menu and credits copy;
+- lifecycle outcome titles, messages and menu labels.
+
+`extractFrontEndLocalisableText` and `extractLifecycleLocalisableText` produce the same `LocalisationSourceEntry` contract used by core project extraction. `collectLocalisationSourceEntries` combines core and supplemental sources with deterministic ordering, while supplemental-aware template, pseudo-localisation, resolution, coverage and validation helpers preserve the same release rules.
+
+The adapter boundary is deliberate. A sidecar can participate in localisation without gaining permission to change its behavior policy, timing, conditions or runtime identity.
 
 ## Headless localisation editing
 
-The localisation module also exposes deterministic editing commands and history state for Studio, CLI and automation surfaces. Commands cover locale insertion, removal and replacement plus translation entry upsert/removal. Every applied command returns an exact inverse, enabling deterministic undo and redo without keeping browser-only mutation state.
+The localisation module exposes deterministic editing commands and history state for Studio, CLI and automation surfaces. Commands cover locale insertion, removal and replacement plus translation entry upsert/removal. Every applied command returns an exact inverse, enabling deterministic undo and redo without keeping browser-only mutation state.
 
 The editor contract provides:
 
@@ -23,17 +36,23 @@ The editor contract provides:
 - schema-validated command payloads for automation;
 - canonical dirty-state comparison and explicit saved/exported snapshots.
 
-Semantic translation findings remain diagnostics rather than mutation blockers. This means an editor can temporarily contain missing translations or placeholder mistakes while still surfacing them immediately through validation.
+Translation findings remain diagnostics rather than mutation blockers. An editor can therefore contain missing translations or placeholder mistakes temporarily while surfacing them immediately through validation.
+
+New target locales may be created from a combined core-and-sidecar source catalogue. Existing manifests that predate a supplemental adapter can still author a newly selected sidecar key because translation commands upsert missing entries deterministically.
 
 ## Pseudo-localisation
 
-The deterministic pseudo-localiser accents visible characters, preserves placeholders byte-for-byte, expands text by a configurable ratio and adds visible boundary markers. It is intended to expose clipped strings, unsupported glyphs and text that escaped the source catalogue before translation begins.
+The deterministic pseudo-localiser accents visible characters, preserves placeholders byte-for-byte, expands text by a configurable ratio and adds visible boundary markers. It is intended to expose clipped strings, unsupported glyphs and copy that escaped the governed source catalogue before translation begins.
+
+Pseudo-localisation accepts the same supplemental source adapters as normal locale templates, so front-end and lifecycle copy receive the same expansion and glyph-pressure testing as in-game dialogue.
 
 ## Native bitmap text fit
 
 `@evavo/adventure-bitmap-font/localisation` evaluates resolved target strings with the same integer glyph advances, kerning, line height, wrapping and fallback-glyph rules used by the bitmap renderer. A fit profile assigns native width, height, line count and font constraints to text roles.
 
 The resulting report records exact native dimensions, overflow, line count, fallback code points, source fallback, governing rule and selected font. CSS or operating-system font metrics are not accepted as shipping evidence for a native-pixel interface.
+
+Supplemental source roles participate in the same audit. Front-end publisher and title copy, compact menu labels, credits lines, lifecycle titles, lifecycle menu labels and lifecycle messages can each use constraints matched to the native surface that will render them.
 
 ## Localisation Studio workspace
 
@@ -43,19 +62,23 @@ The visual authoring surface is available at:
 /?workspace=localisation
 ```
 
-It uses the same project-schema localisation commands, source extraction, validation and bitmap text-fit audit as headless tooling. The workspace provides:
+It uses the same project-schema localisation commands, combined source catalogue, validation and bitmap text-fit audit as headless tooling. The workspace provides:
 
 - target-locale selection with direct and resolved coverage;
 - creation and guarded removal of target locales;
 - draft, review and release status authoring;
 - explicit fallback-locale authoring;
-- source-catalogue search and findings-only filtering;
+- a combined project, classic-front-end and lifecycle source catalogue;
+- source-catalogue search and findings-only filtering across every governed surface;
 - side-by-side canonical source and target translation editing;
-- placeholder evidence and source ownership paths;
+- explicit source-surface, owner, role and path evidence;
+- placeholder evidence;
 - deterministic pseudo-localisation pressure previews;
 - native pixel width, height, line and glyph-gap evidence;
 - per-string errors and warnings;
 - undo, redo, dirty-state tracking and deterministic JSON export.
+
+The Studio fixture includes real front-end and lifecycle adapters, translated French examples, complete pseudo-localisation and native text-fit rules for every supplemental role. The toolbar reports both the total governed catalogue and the number of sidecar strings, while the inspector identifies which surface owns the selected key.
 
 The React workspace does not invent a second localisation model. Editing is performed through the headless command/history contract and diagnostics are derived from the canonical manifest after each change.
 
@@ -65,12 +88,14 @@ The source project and a validated localisation manifest compile into an optiona
 
 - source and default locale;
 - canonically ordered target locales and direct translations;
-- the source catalogue required for deterministic fallback;
+- the complete core-and-sidecar source catalogue required for deterministic fallback;
 - no commands, conditions or mutable runtime state.
 
-`localiseRuntimeBundle` produces a presentation projection of the same runtime bundle. It replaces only supported text fields while retaining scene IDs, dialogue nodes, interaction IDs, sequence cues, object identity and every non-text gameplay value. Missing or unsupported locale requests resolve through the authored default and finally the canonical source locale.
+`localiseRuntimeBundle` produces a presentation projection of the same runtime bundle. It replaces only supported project text fields while retaining scene IDs, dialogue nodes, interaction IDs, sequence cues, object identity and every non-text gameplay value.
 
-The compiler entry point `@evavo/adventure-compiler/with-localisation` can attach a validated locale pack to an existing compilation or compile a project with localisation in one operation.
+Dedicated runtime adapters localise classic front-end and lifecycle sidecars from the same pack without changing splash timing, menu visibility, outcome conditions or retry policy. Missing or unsupported locale requests resolve through the authored default and finally the canonical source locale.
+
+The compiler entry point `@evavo/adventure-compiler/with-localisation` can attach a validated locale pack to an existing compilation or compile a project with localisation in one operation. Compiler sidecar attachment remains order-safe: front-end and lifecycle sources are included when present before localisation, and draft packs can be extended when a supported sidecar is attached later. Release packs fail closed when newly attached governed copy lacks translations.
 
 ## Player language selection
 
@@ -82,7 +107,7 @@ The query form is:
 ?bundle=/game/runtime.bundle.json&locale=fr-FR
 ```
 
-Quick saves remain available across language selection. Changing language does not enter the command log and is not a replay event.
+The selected projection now covers gameplay text, classic front-end publisher/title/menu/credits copy and lifecycle outcome presentation. Quick saves remain available across language selection. Changing language does not enter the command log and is not a replay event.
 
 ## Save and replay compatibility
 
@@ -103,16 +128,26 @@ Focused executable coverage includes:
 ```text
 packages/project-schema/tests/localisation.test.ts
 packages/project-schema/tests/localisation-editor.test.ts
+packages/project-schema/tests/front-end-localisation.test.ts
+packages/project-schema/tests/lifecycle-localisation.test.ts
 packages/bitmap-font/tests/localisation.test.ts
 packages/runtime-bundle/tests/localisation-runtime.test.ts
+packages/runtime-bundle/tests/front-end-localisation.test.ts
+packages/runtime-bundle/tests/lifecycle-localisation-runtime.test.ts
 packages/compiler/tests/with-localisation.test.ts
+packages/compiler/tests/front-end-localisation.test.ts
+packages/compiler/tests/lifecycle-localisation-order.test.ts
 packages/save-game/tests/localisation-compatibility.test.ts
 apps/player/tests/localisation.test.ts
 apps/studio/tests/localisation-workspace.test.ts
 ```
 
+The Localisation Studio workspace test now verifies that front-end and lifecycle sources are selectable, searchable, editable through normal undo/redo history, included in newly created locale templates and governed by native text-fit rules.
+
 The governed Editor Expansion command includes these tests, strict TypeScript compilation and the Player and Studio production builds. A successful source or type pass does not replace 1× native visual review with the final bitmap atlas and translated content.
 
 ## Current boundary
 
-This tranche governs canonical project text. Stateful-object copy in `scene-instances.json`, interface-skin labels, external subtitle files and storefront metadata remain separate surfaces. They should join the catalogue through explicit adapters rather than by duplicating strings into the runtime pack.
+The governed catalogue now covers canonical project text, classic front-end publisher/title/menu/credits copy and lifecycle outcome presentation.
+
+Stateful-object copy in `scene-instances.json`, built-in pause/system-menu status copy, interface-skin labels, external subtitle files and storefront metadata remain separate surfaces. They should join the catalogue through explicit adapters rather than by duplicating strings into the runtime pack.

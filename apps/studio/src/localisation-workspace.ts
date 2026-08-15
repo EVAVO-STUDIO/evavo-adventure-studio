@@ -9,6 +9,7 @@ import {
 } from "@evavo/adventure-bitmap-font/localisation";
 import type { AdventureProject } from "@evavo/adventure-project-schema";
 import {
+  collectLocalisationSourceEntries,
   createLocalisationEditorHistory,
   createLocalisationTemplate,
   executeLocalisationEditorCommand,
@@ -29,6 +30,7 @@ export interface LocalisationWorkspaceState {
   readonly project: AdventureProject;
   readonly fonts: BitmapFontManifest;
   readonly fitProfile: LocalisationTextFitProfile;
+  readonly supplementalSourceEntries: readonly LocalisationSourceEntry[];
   readonly history: LocalisationEditorHistoryState;
   readonly selectedLocale: string;
   readonly selectedKey: string;
@@ -60,8 +62,13 @@ const firstLocale = (manifest: LocalisationManifest): LocalisationLocale => {
   return locale;
 };
 
-const firstSource = (project: AdventureProject): LocalisationSourceEntry => {
-  const source = extractLocalisableText(project)[0];
+const firstSource = (
+  project: AdventureProject,
+  supplementalSourceEntries: readonly LocalisationSourceEntry[],
+): LocalisationSourceEntry => {
+  const source =
+    extractLocalisableText(project)[0] ??
+    collectLocalisationSourceEntries(project, supplementalSourceEntries)[0];
   if (!source) throw new Error("Adventure projects require at least one localisable source string.");
   return source;
 };
@@ -71,15 +78,17 @@ export const createLocalisationWorkspace = (
   manifest: LocalisationManifest,
   fonts: BitmapFontManifest,
   fitProfile: LocalisationTextFitProfile,
+  supplementalSourceEntries: readonly LocalisationSourceEntry[] = [],
 ): LocalisationWorkspaceState => {
   const history = createLocalisationEditorHistory(manifest);
   return {
     project,
     fonts,
     fitProfile,
+    supplementalSourceEntries: [...supplementalSourceEntries],
     history,
     selectedLocale: firstLocale(history.document.manifest).locale,
-    selectedKey: firstSource(project).key,
+    selectedKey: firstSource(project, supplementalSourceEntries).key,
     query: "",
     findingsOnly: false,
     notice: null,
@@ -90,6 +99,11 @@ export const localisationWorkspaceManifest = (
   state: LocalisationWorkspaceState,
 ): LocalisationManifest => state.history.document.manifest;
 
+export const localisationWorkspaceSourceEntries = (
+  state: LocalisationWorkspaceState,
+): readonly LocalisationSourceEntry[] =>
+  collectLocalisationSourceEntries(state.project, state.supplementalSourceEntries);
+
 export const selectedLocalisationLocale = (
   state: LocalisationWorkspaceState,
 ): LocalisationLocale => localisationLocaleByTag(localisationWorkspaceManifest(state), state.selectedLocale);
@@ -97,7 +111,9 @@ export const selectedLocalisationLocale = (
 export const selectedLocalisationSource = (
   state: LocalisationWorkspaceState,
 ): LocalisationSourceEntry => {
-  const source = extractLocalisableText(state.project).find((entry) => entry.key === state.selectedKey);
+  const source = localisationWorkspaceSourceEntries(state).find(
+    (entry) => entry.key === state.selectedKey,
+  );
   if (!source) throw new Error(`Localisation source '${state.selectedKey}' does not exist.`);
   return source;
 };
@@ -113,6 +129,7 @@ export const localisationWorkspaceReport = (
     localisationWorkspaceManifest(state),
     state.fonts,
     state.fitProfile,
+    state.supplementalSourceEntries,
   );
 
 export const selectedLocalisationFit = (
@@ -151,7 +168,7 @@ export const filteredLocalisationSources = (
 ): readonly LocalisationSourceEntry[] => {
   const query = state.query.trim().toLowerCase();
   const findings = state.findingsOnly ? issueKeySet(state, report) : null;
-  return extractLocalisableText(state.project).filter((source) => {
+  return localisationWorkspaceSourceEntries(state).filter((source) => {
     if (findings && !findings.has(source.key)) return false;
     if (!query) return true;
     return [source.key, source.role, source.sourcePath, source.text].some((value) =>
@@ -170,11 +187,11 @@ const selectionAfterHistory = (
   const locale = history.document.manifest.locales.find(
     (candidate) => candidate.locale.toLowerCase() === state.selectedLocale.toLowerCase(),
   );
-  const sources = extractLocalisableText(state.project);
+  const sources = localisationWorkspaceSourceEntries(state);
   const source = sources.find((candidate) => candidate.key === state.selectedKey);
   return {
     selectedLocale: (locale ?? firstLocale(history.document.manifest)).locale,
-    selectedKey: (source ?? firstSource(state.project)).key,
+    selectedKey: (source ?? firstSource(state.project, state.supplementalSourceEntries)).key,
   };
 };
 
@@ -193,7 +210,9 @@ export const localisationWorkspaceReducer = (
       }
       return { ...state, selectedLocale: action.locale, notice: null };
     case "select-key":
-      if (!extractLocalisableText(state.project).some((source) => source.key === action.key)) return state;
+      if (!localisationWorkspaceSourceEntries(state).some((source) => source.key === action.key)) {
+        return state;
+      }
       return { ...state, selectedKey: action.key, notice: null };
     case "set-query":
       return { ...state, query: action.query, notice: null };
@@ -267,6 +286,7 @@ export const insertLocalisationLocaleCommand = (
     state.project,
     localisationWorkspaceManifest(state).sourceLocale,
     [{ locale: localeTag, ...(label ? { label } : {}), status: "draft" }],
+    state.supplementalSourceEntries,
   );
   const locale = template.locales[0];
   if (!locale) throw new Error(`Unable to create localisation locale '${localeTag}'.`);
