@@ -1,4 +1,7 @@
-import type { RuntimeBundle } from "@evavo/adventure-runtime-bundle";
+import {
+  localiseRuntimeFrontEnd,
+  type RuntimeBundle,
+} from "@evavo/adventure-runtime-bundle";
 import {
   localiseRuntimeBundle,
   resolveRuntimeLocale,
@@ -71,5 +74,5 @@ export const localiseRuntimeBundleForBrowser = (bundle: RuntimeBundle): RuntimeB
   const selected = locale ?? bundle.localisation.defaultLocale;
   if (typeof document !== "undefined") document.documentElement.lang = selected;
   mountRuntimeLocaleSelector(bundle, selected, window.localStorage);
-  return localiseRuntimeBundle(bundle, selected);
+  return localiseRuntimeFrontEnd(localiseRuntimeBundle(bundle, selected), selected);
 };

@@ -3,8 +3,10 @@ import type { AssetBuildManifest } from "@evavo/adventure-asset-contract";
 import type { BitmapFontManifest } from "@evavo/adventure-bitmap-font";
 import type { AdventureProject } from "@evavo/adventure-project-schema";
 import {
+  extractFrontEndLocalisableText,
   extractLifecycleLocalisableText,
   type LocalisationManifest,
+  type LocalisationSourceEntry,
 } from "@evavo/adventure-project-schema/localisation";
 import {
   createRuntimeLocalisationPack,
@@ -35,6 +37,17 @@ const fnv1a64 = (value: string): string => {
   return hash.toString(16).padStart(16, "0");
 };
 
+const supplementalLocalisationSources = (
+  compiled: CompiledProject,
+): readonly LocalisationSourceEntry[] => [
+  ...(compiled.bundle.frontEnd
+    ? extractFrontEndLocalisableText(compiled.bundle.frontEnd)
+    : []),
+  ...(compiled.bundle.lifecycle
+    ? extractLifecycleLocalisableText(compiled.bundle.lifecycle)
+    : []),
+];
+
 export const attachRuntimeLocalisation = (
   compiled: CompiledProject,
   project: AdventureProject,
@@ -46,16 +59,13 @@ export const attachRuntimeLocalisation = (
       `Compiled project '${compiled.bundle.projectId}' does not match localisation source '${project.id}'.`,
     );
   }
-  const lifecycleSourceEntries = compiled.bundle.lifecycle
-    ? extractLifecycleLocalisableText(compiled.bundle.lifecycle)
-    : [];
   const bundle = parseRuntimeBundle({
     ...compiled.bundle,
     localisation: createRuntimeLocalisationPack(
       project,
       localisation,
       defaultLocale,
-      lifecycleSourceEntries,
+      supplementalLocalisationSources(compiled),
     ),
   });
   const canonicalJson = canonicalStringify(bundle);

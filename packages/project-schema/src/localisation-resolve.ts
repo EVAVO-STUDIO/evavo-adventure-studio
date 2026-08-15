@@ -16,12 +16,12 @@ export interface LocalisationMaps {
   readonly entriesByLocale: ReadonlyMap<string, ReadonlyMap<string, LocalisationEntry>>;
 }
 
-export const buildLocalisationMaps = (
-  project: AdventureProject,
+export const buildLocalisationMapsFromSources = (
+  sourceEntries: readonly LocalisationSourceEntry[],
   manifest: LocalisationManifest,
 ): LocalisationMaps => {
   const sourceByKey = new Map<string, LocalisationSourceEntry>();
-  for (const entry of extractLocalisableText(project)) {
+  for (const entry of sourceEntries) {
     if (!sourceByKey.has(entry.key)) sourceByKey.set(entry.key, entry);
   }
 
@@ -39,6 +39,11 @@ export const buildLocalisationMaps = (
   }
   return { sourceByKey, localeByTag, entriesByLocale };
 };
+
+export const buildLocalisationMaps = (
+  project: AdventureProject,
+  manifest: LocalisationManifest,
+): LocalisationMaps => buildLocalisationMapsFromSources(extractLocalisableText(project), manifest);
 
 export interface ResolvedLocalisedText {
   readonly key: string;
@@ -92,6 +97,14 @@ export const resolveFromMaps = (
   };
 };
 
+export const resolveLocalisedTextFromSources = (
+  sourceEntries: readonly LocalisationSourceEntry[],
+  manifest: LocalisationManifest,
+  locale: string,
+  key: string,
+): ResolvedLocalisedText =>
+  resolveFromMaps(manifest, buildLocalisationMapsFromSources(sourceEntries, manifest), locale, key);
+
 export const resolveLocalisedText = (
   project: AdventureProject,
   manifest: LocalisationManifest,
@@ -110,18 +123,18 @@ export interface LocalisationCoverageSummary {
   readonly resolvedCoverage: number;
 }
 
-export const summariseLocalisationCoverage = (
-  project: AdventureProject,
+export const summariseLocalisationCoverageFromSources = (
+  sourceEntries: readonly LocalisationSourceEntry[],
   manifest: LocalisationManifest,
 ): readonly LocalisationCoverageSummary[] => {
-  const maps = buildLocalisationMaps(project, manifest);
-  const sourceEntries = [...maps.sourceByKey.values()];
+  const maps = buildLocalisationMapsFromSources(sourceEntries, manifest);
+  const canonicalSources = [...maps.sourceByKey.values()];
   return manifest.locales.map((locale) => {
     const directEntries = maps.entriesByLocale.get(localeKey(locale.locale));
     let direct = 0;
     let fallback = 0;
     let sourceFallback = 0;
-    for (const source of sourceEntries) {
+    for (const source of canonicalSources) {
       const entry = directEntries?.get(source.key);
       if (entry && entry.text.trim().length > 0) {
         direct += 1;
@@ -131,7 +144,7 @@ export const summariseLocalisationCoverage = (
       if (resolved.sourceFallback) sourceFallback += 1;
       else fallback += 1;
     }
-    const total = sourceEntries.length;
+    const total = canonicalSources.length;
     return {
       locale: locale.locale,
       status: locale.status,
@@ -144,3 +157,9 @@ export const summariseLocalisationCoverage = (
     };
   });
 };
+
+export const summariseLocalisationCoverage = (
+  project: AdventureProject,
+  manifest: LocalisationManifest,
+): readonly LocalisationCoverageSummary[] =>
+  summariseLocalisationCoverageFromSources(extractLocalisableText(project), manifest);

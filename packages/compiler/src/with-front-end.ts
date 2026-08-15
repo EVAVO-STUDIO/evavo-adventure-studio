@@ -4,7 +4,11 @@ import {
   type ClassicFrontEndManifest,
   parseClassicFrontEndManifest,
 } from "@evavo/adventure-project-schema/front-end";
-import { parseRuntimeBundle } from "@evavo/adventure-runtime-bundle";
+import { extractFrontEndLocalisableText } from "@evavo/adventure-project-schema/localisation";
+import {
+  extendRuntimeLocalisationPack,
+  parseRuntimeBundle,
+} from "@evavo/adventure-runtime-bundle";
 import {
   canonicalStringify,
   compileProject,
@@ -32,9 +36,16 @@ export const attachRuntimeFrontEnd = (
       `Compiled project '${compiled.bundle.projectId}' does not match front-end project '${manifest.projectId}'.`,
     );
   }
+  const localisation = compiled.bundle.localisation
+    ? extendRuntimeLocalisationPack(
+        compiled.bundle.localisation,
+        extractFrontEndLocalisableText(manifest),
+      )
+    : null;
   const bundle = parseRuntimeBundle({
     ...compiled.bundle,
     frontEnd: manifest,
+    ...(localisation ? { localisation } : {}),
   });
   const canonicalJson = canonicalStringify(bundle);
   return {

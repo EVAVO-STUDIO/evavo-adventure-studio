@@ -1,6 +1,7 @@
 import type { AdventureProject, Id } from "./index.js";
 import { extractLocalisableText } from "./localisation-extract.js";
 import { localeKey } from "./localisation-resolve.js";
+import { collectLocalisationSourceEntries } from "./localisation-supplemental.js";
 import { localisationManifestSchema } from "./localisation-types.js";
 import type {
   LocalisationEntry,
@@ -21,8 +22,10 @@ export const createLocalisationTemplate = (
   project: AdventureProject,
   sourceLocale: string,
   targets: readonly LocalisationTargetDefinition[],
-): LocalisationManifest =>
-  localisationManifestSchema.parse({
+  supplementalSourceEntries: readonly LocalisationSourceEntry[] = [],
+): LocalisationManifest => {
+  const sourceEntries = collectLocalisationSourceEntries(project, supplementalSourceEntries);
+  return localisationManifestSchema.parse({
     manifestVersion: 1,
     projectId: project.id,
     sourceLocale,
@@ -31,9 +34,10 @@ export const createLocalisationTemplate = (
       ...(target.label === undefined ? {} : { label: target.label }),
       status: target.status ?? "draft",
       ...(target.fallbackLocale === undefined ? {} : { fallbackLocale: target.fallbackLocale }),
-      entries: extractLocalisableText(project).map((entry) => ({ key: entry.key, text: "" })),
+      entries: sourceEntries.map((entry) => ({ key: entry.key, text: "" })),
     })),
-  });
+  }) as LocalisationManifest;
+};
 
 export const canonicaliseLocalisationManifest = (
   manifest: LocalisationManifest,
@@ -83,11 +87,15 @@ export const localisationLocaleByTag = (
 export const localisationSourceByKey = (
   project: AdventureProject,
   key: string,
+  supplementalSourceEntries: readonly LocalisationSourceEntry[] = [],
 ): LocalisationSourceEntry => {
-  const entry = extractLocalisableText(project).find((candidate) => candidate.key === key);
+  const entries =
+    supplementalSourceEntries.length === 0
+      ? extractLocalisableText(project)
+      : collectLocalisationSourceEntries(project, supplementalSourceEntries);
+  const entry = entries.find((candidate) => candidate.key === key);
   if (!entry) throw new Error(`Localisation key '${key}' does not exist.`);
   return entry;
 };
 
 export const localisationProjectId = (manifest: LocalisationManifest): Id<"project"> => manifest.projectId;
-

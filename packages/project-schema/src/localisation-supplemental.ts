@@ -1,6 +1,12 @@
 import type { AdventureProject } from "./index.js";
 import { extractLocalisableText, localisationPlaceholders } from "./localisation-extract.js";
-import { localeKey } from "./localisation-resolve.js";
+import {
+  buildLocalisationMapsFromSources,
+  resolveFromMaps,
+  summariseLocalisationCoverageFromSources,
+  type LocalisationCoverageSummary,
+  type ResolvedLocalisedText,
+} from "./localisation-resolve.js";
 import type {
   LocalisationEntry,
   LocalisationLocale,
@@ -39,10 +45,31 @@ export const collectLocalisationSourceEntries = (
     left.key.localeCompare(right.key),
   );
 
-interface SupplementalResolution {
-  readonly sourceFallback: boolean;
-  readonly resolvedLocale: string;
-}
+export const resolveLocalisedTextWithSupplementalSources = (
+  project: AdventureProject,
+  manifest: LocalisationManifest,
+  requestedLocale: string,
+  key: string,
+  supplementalSourceEntries: readonly LocalisationSourceEntry[] = [],
+): ResolvedLocalisedText => {
+  const sourceEntries = collectLocalisationSourceEntries(project, supplementalSourceEntries);
+  return resolveFromMaps(
+    manifest,
+    buildLocalisationMapsFromSources(sourceEntries, manifest),
+    requestedLocale,
+    key,
+  );
+};
+
+export const summariseLocalisationCoverageWithSupplementalSources = (
+  project: AdventureProject,
+  manifest: LocalisationManifest,
+  supplementalSourceEntries: readonly LocalisationSourceEntry[] = [],
+): readonly LocalisationCoverageSummary[] =>
+  summariseLocalisationCoverageFromSources(
+    collectLocalisationSourceEntries(project, supplementalSourceEntries),
+    manifest,
+  );
 
 const localeEntries = (
   locale: LocalisationLocale,
@@ -52,40 +79,6 @@ const localeEntries = (
     if (!entries.has(entry.key)) entries.set(entry.key, entry);
   }
   return entries;
-};
-
-const resolveSupplementalEntry = (
-  manifest: LocalisationManifest,
-  requestedLocale: string,
-  key: string,
-): SupplementalResolution => {
-  const locales = new Map(
-    manifest.locales.map((locale) => [localeKey(locale.locale), locale] as const),
-  );
-  const entries = new Map(
-    manifest.locales.map((locale) => [localeKey(locale.locale), localeEntries(locale)] as const),
-  );
-  const visited = new Set<string>();
-  let currentTag = localeKey(requestedLocale);
-
-  while (!visited.has(currentTag)) {
-    visited.add(currentTag);
-    const locale = locales.get(currentTag);
-    if (!locale) break;
-    const translated = entries.get(currentTag)?.get(key);
-    if (translated && translated.text.trim().length > 0) {
-      return { sourceFallback: false, resolvedLocale: locale.locale };
-    }
-    if (
-      !locale.fallbackLocale ||
-      localeKey(locale.fallbackLocale) === localeKey(manifest.sourceLocale)
-    ) {
-      break;
-    }
-    currentTag = localeKey(locale.fallbackLocale);
-  }
-
-  return { sourceFallback: true, resolvedLocale: manifest.sourceLocale };
 };
 
 export const validateLocalisationManifestWithSupplementalSources = (
@@ -129,6 +122,9 @@ export const validateLocalisationManifestWithSupplementalSources = (
     accepted.push(entry);
   });
 
+  const sourceEntries = collectLocalisationSourceEntries(project, accepted);
+  const maps = buildLocalisationMapsFromSources(sourceEntries, manifest);
+
   manifest.locales.forEach((locale, localeIndex) => {
     const entries = localeEntries(locale);
     for (const source of accepted) {
@@ -155,7 +151,7 @@ export const validateLocalisationManifestWithSupplementalSources = (
         continue;
       }
 
-      const resolved = resolveSupplementalEntry(manifest, locale.locale, source.key);
+      const resolved = resolveFromMaps(manifest, maps, locale.locale, source.key);
       if (!resolved.sourceFallback) {
         if (locale.status === "release") {
           issues.push(

@@ -75,6 +75,10 @@ export const localisationTextRoleSchema = z.enum([
   "lifecycle-title",
   "lifecycle-message",
   "lifecycle-menu-label",
+  "front-end-publisher",
+  "front-end-title",
+  "front-end-menu-label",
+  "front-end-credit",
 ]);
 export type LocalisationTextRole =
   | "project-title"
@@ -93,7 +97,11 @@ export type LocalisationTextRole =
   | "inventory-description"
   | "lifecycle-title"
   | "lifecycle-message"
-  | "lifecycle-menu-label";
+  | "lifecycle-menu-label"
+  | "front-end-publisher"
+  | "front-end-title"
+  | "front-end-menu-label"
+  | "front-end-credit";
 
 export interface LocalisationSourceEntry {
   readonly key: string;

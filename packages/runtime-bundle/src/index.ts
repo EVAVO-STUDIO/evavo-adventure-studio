@@ -156,6 +156,7 @@ export const parseRuntimeBundle = (input: unknown): RuntimeBundle => {
 
 export * from "./audio-validation.js";
 export * from "./font-validation.js";
+export * from "./front-end-localisation.js";
 export * from "./instance-validation.js";
 export * from "./localisation.js";
 export * from "./ui-validation.js";

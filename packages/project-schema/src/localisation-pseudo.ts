@@ -1,6 +1,10 @@
 import type { AdventureProject } from "./index.js";
-import { extractLocalisableText } from "./localisation-extract.js";
-import type { LocalisationLocale, LocalisationStatus } from "./localisation-types.js";
+import { collectLocalisationSourceEntries } from "./localisation-supplemental.js";
+import type {
+  LocalisationLocale,
+  LocalisationSourceEntry,
+  LocalisationStatus,
+} from "./localisation-types.js";
 
 export interface PseudoLocalisationOptions {
   readonly expansionRatio?: number;
@@ -105,11 +109,12 @@ export interface PseudoLocalisationLocaleOptions extends PseudoLocalisationOptio
 export const createPseudoLocalisationLocale = (
   project: AdventureProject,
   options: PseudoLocalisationLocaleOptions = {},
+  supplementalSourceEntries: readonly LocalisationSourceEntry[] = [],
 ): LocalisationLocale => ({
   locale: options.locale ?? "qps-ploc",
   label: options.label ?? "Pseudo-localised",
   status: options.status ?? "draft",
-  entries: extractLocalisableText(project).map((entry) => ({
+  entries: collectLocalisationSourceEntries(project, supplementalSourceEntries).map((entry) => ({
     key: entry.key,
     text: pseudoLocaliseText(entry.text, options),
   })),

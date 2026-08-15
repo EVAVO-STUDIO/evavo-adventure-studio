@@ -1,3 +1,4 @@
+export * from "./front-end-localisation.js";
 export * from "./lifecycle-localisation.js";
 export * from "./localisation-authoring.js";
 export * from "./localisation-editor.js";

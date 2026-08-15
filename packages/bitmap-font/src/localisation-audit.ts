@@ -1,11 +1,13 @@
 import type { AdventureProject, Id } from "@evavo/adventure-project-schema";
 import {
+  buildLocalisationMapsFromSources,
+  collectLocalisationSourceEntries,
+  resolveFromMaps,
+  summariseLocalisationCoverageFromSources,
   type LocalisationManifest,
+  type LocalisationSourceEntry,
   type LocalisationTextRole,
-  extractLocalisableText,
-  resolveLocalisedText,
-  summariseLocalisationCoverage,
-  validateLocalisationManifest,
+  validateLocalisationManifestWithSupplementalSources,
 } from "@evavo/adventure-project-schema/localisation";
 import type { BitmapFontDefinition, BitmapFontManifest } from "./index.js";
 import { layoutBitmapText } from "./layout.js";
@@ -91,6 +93,7 @@ export const auditLocalisedTextFit = (
   localisation: LocalisationManifest,
   fonts: BitmapFontManifest,
   profile: LocalisationTextFitProfile,
+  supplementalSourceEntries: readonly LocalisationSourceEntry[] = [],
 ): LocalisationAuditReport => {
   const fitIssues: LocalisationTextFitIssue[] = [];
   if (profile.projectId !== project.id) {
@@ -129,7 +132,8 @@ export const auditLocalisedTextFit = (
     }
   });
 
-  const sourceEntries = extractLocalisableText(project);
+  const sourceEntries = collectLocalisationSourceEntries(project, supplementalSourceEntries);
+  const maps = buildLocalisationMapsFromSources(sourceEntries, localisation);
   const fitResults: LocalisationTextFitResult[] = [];
   localisation.locales.forEach((locale, localeIndex) => {
     sourceEntries.forEach((source) => {
@@ -148,7 +152,7 @@ export const auditLocalisedTextFit = (
       }
       const font = fontsById.get(rule.fontId);
       if (!font) return;
-      const resolved = resolveLocalisedText(project, localisation, locale.locale, source.key);
+      const resolved = resolveFromMaps(localisation, maps, locale.locale, source.key);
       const layout = layoutBitmapText(font, resolved.text, {
         maxWidth: rule.maxWidth,
         alignment: rule.alignment,
@@ -222,7 +226,11 @@ export const auditLocalisedTextFit = (
   });
 
   const issues: LocalisationAuditIssue[] = [
-    ...validateLocalisationManifest(project, localisation),
+    ...validateLocalisationManifestWithSupplementalSources(
+      project,
+      localisation,
+      supplementalSourceEntries,
+    ),
     ...fitIssues,
   ].sort((left, right) =>
     `${left.severity}:${left.locale ?? ""}:${left.key ?? ""}:${left.path}:${left.code}`.localeCompare(
@@ -235,7 +243,7 @@ export const auditLocalisedTextFit = (
     projectId: project.id,
     sourceLocale: localisation.sourceLocale,
     sourceEntries,
-    coverage: summariseLocalisationCoverage(project, localisation),
+    coverage: summariseLocalisationCoverageFromSources(sourceEntries, localisation),
     fitResults: fitResults.sort((left, right) =>
       `${left.locale}:${left.key}`.localeCompare(`${right.locale}:${right.key}`),
     ),
