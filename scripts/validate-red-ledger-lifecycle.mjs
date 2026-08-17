@@ -22,6 +22,10 @@ const controllerCompatibilityTestSource = readFileSync(
   join(repository, "apps/player/tests/runtime-controller-compatibility.test.ts"),
   "utf8",
 );
+const lifecycleCompilerSource = readFileSync(
+  join(repository, "packages/compiler/src/with-lifecycle.ts"),
+  "utf8",
+);
 const errors = [];
 
 const requireValue = (condition, message) => {
@@ -40,6 +44,11 @@ requireValue(bundle?.projectId === projectId, "Red Ledger runtime project ID has
 requireValue(
   bundle.lifecycle === undefined,
   "The checked-in bundle must not also define lifecycle while the built-in sidecar contract is active.",
+);
+requireValue(
+  bundle.localisation === undefined,
+  "A localised Red Ledger bundle must embed lifecycle through " +
+    "compileProjectWithLifecycle instead of a sidecar.",
 );
 requireValue(
   Array.isArray(lifecycle?.outcomes) && lifecycle.outcomes.length === 1,
@@ -203,6 +212,16 @@ for (const [label, sourceText, tokens] of [
       "SharedPackagedRuntimeController",
       "PlayerPackagedRuntimeController",
       "expect(playerController).not.toBe(sharedController)",
+    ],
+  ],
+  [
+    "canonical lifecycle compiler",
+    lifecycleCompilerSource,
+    [
+      "attachRuntimeLifecycle",
+      "compileProjectWithLifecycle",
+      "extendRuntimeLocalisationPack",
+      "extractLifecycleLocalisableText",
     ],
   ],
 ]) {
