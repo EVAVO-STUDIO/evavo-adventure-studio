@@ -9,7 +9,11 @@ import {
 } from "@evavo/adventure-design/production-showcases";
 import { useEffect, useMemo, useState } from "react";
 import { profileStyle } from "./production-profile-preview.js";
-import { NativeShowcasePlate, PlateButton, ShowcaseFamilyButton } from "./showcase-gallery-components.js";
+import {
+  NativeShowcasePlate,
+  PlateButton,
+  ShowcaseFamilyButton,
+} from "./showcase-gallery-components.js";
 import "./showcase-gallery.css";
 import "./showcase-gallery-native.css";
 
@@ -65,7 +69,7 @@ export const ShowcaseGalleryApp = () => {
         <aside className="scg-family-rail">
           <header>
             <span className="scg-eyebrow">ORIGINAL NATIVE PROTOTYPES</span>
-            <h1>Seven visibly different games.</h1>
+            <h1>Nine visibly different games.</h1>
             <p>
               Every example carries its own screen composition, actor language, interface, puzzle grammar,
               splash and system treatment.
