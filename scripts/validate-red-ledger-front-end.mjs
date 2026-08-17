@@ -22,6 +22,10 @@ const runtimeLoaderTestSource = readFileSync(
   join(repository, "apps/player/tests/runtime-loader.test.ts"),
   "utf8",
 );
+const redLedgerFrontEndTestSource = readFileSync(
+  join(repository, "apps/player/tests/red-ledger-front-end.test.ts"),
+  "utf8",
+);
 const frontEndCompilerSource = readFileSync(
   join(repository, "packages/compiler/src/with-front-end.ts"),
   "utf8",
@@ -178,6 +182,17 @@ for (const [label, sourceText, tokens] of [
       "expect(loaded.frontEnd).toEqual(frontEnd)",
       "already defines frontEnd data",
       "reports front-end sidecar HTTP failures",
+    ],
+  ],
+  [
+    "Red Ledger front-end journey tests",
+    redLedgerFrontEndTestSource,
+    [
+      "parseClassicFrontEndManifest",
+      '"CONTINUE INVESTIGATION"',
+      '"CASE FILES"',
+      'request: { kind: "load", slot: 0 }',
+      'expect(loadMenu.screen).toBe("load-menu")',
     ],
   ],
   [
