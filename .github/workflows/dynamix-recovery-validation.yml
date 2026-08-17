@@ -1,0 +1,77 @@
+name: Dynamix recovered candidate validation
+
+on:
+  push:
+    branches:
+      - agent/dynamix-mainline-candidate-20260818
+
+permissions:
+  contents: read
+
+concurrency:
+  group: dynamix-recovery-${{ github.ref }}
+  cancel-in-progress: false
+
+jobs:
+  validate:
+    name: ${{ matrix.runner }} candidate
+    strategy:
+      fail-fast: false
+      matrix:
+        runner:
+          - ubuntu-24.04
+          - windows-2022
+    runs-on: ${{ matrix.runner }}
+    timeout-minutes: 50
+    env:
+      CI: "true"
+      BASE_SHA: 4be02bb481c34b260bfd9601d8d54a116127b869
+
+    steps:
+      - name: Check out the exact recovery carrier
+        uses: actions/checkout@08eba0b27e820071cde6df949e0beb9ba4906955 # v4.3.0
+        with:
+          ref: ${{ github.sha }}
+          fetch-depth: 0
+          persist-credentials: false
+
+      - name: Set up exact Node.js
+        uses: actions/setup-node@49933ea5288caeca8642d1e84afbd3f7d6820020 # v4.4.0
+        with:
+          node-version-file: .nvmrc
+
+      - name: Activate exact pnpm
+        shell: pwsh
+        run: |
+          $ErrorActionPreference = "Stop"
+          corepack enable
+          corepack prepare pnpm@11.17.0 --activate
+          node --version
+          pnpm --version
+
+      - name: Copy the tracked candidate worker outside the source tree
+        shell: pwsh
+        run: |
+          $ErrorActionPreference = "Stop"
+          Copy-Item -LiteralPath ".github/dynamix-prepare-candidate.ps1" `
+            -Destination (Join-Path $env:RUNNER_TEMP "dynamix-prepare-candidate.ps1") `
+            -Force
+
+      - name: Reconstruct, format and fully validate the candidate
+        shell: pwsh
+        run: |
+          & pwsh -NoProfile -NonInteractive -File `
+            (Join-Path $env:RUNNER_TEMP "dynamix-prepare-candidate.ps1") `
+            -BaseSha $env:BASE_SHA `
+            -CandidateRoot (Join-Path $env:RUNNER_TEMP "dynamix-candidate") `
+            -RunnerLabel "${{ matrix.runner }}"
+          if ($LASTEXITCODE -ne 0) { throw "Candidate worker failed with exit code $LASTEXITCODE" }
+
+      - name: Upload the exact validated candidate
+        if: success()
+        uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4.6.2
+        with:
+          name: dynamix-mainline-candidate-${{ matrix.runner }}-${{ github.sha }}
+          path: ${{ runner.temp }}/dynamix-candidate
+          if-no-files-found: error
+          retention-days: 7
