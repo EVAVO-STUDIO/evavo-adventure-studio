@@ -150,7 +150,8 @@ if (nodeVersion !== expected.node || nvmVersion !== expected.node) {
 
 const expectedScripts = {
   "release:check": "node scripts/check-ci-release-readiness.mjs --full",
-  "source:check": "node scripts/check-ci-release-readiness.mjs --source && pnpm run check:toolchain",
+  "source:check":
+    "node scripts/check-ci-release-readiness.mjs --source && pnpm run check:toolchain && node scripts/validate-red-ledger-runtime.mjs",
   "check:editor-expansion": "pnpm run release:check && node scripts/run-editor-expansion-check.mjs",
   check:
     "pnpm run release:check && pnpm run check:toolchain && biome check . && tsc -b --pretty false && vitest run && pnpm run build:player && pnpm run build:studio",
