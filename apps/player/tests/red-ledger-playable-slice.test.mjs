@@ -2,10 +2,16 @@ import { readFileSync } from "node:fs";
 import { parseRuntimeBundle } from "@evavo/adventure-runtime-bundle";
 import { createPackagedRuntimeController } from "@evavo/adventure-runtime-controller";
 import { describe, expect, it } from "vitest";
+import { resolveActiveGameLifecycleOutcome } from "../src/lifecycle-outcome.js";
 
 const bundleUrl = new URL("../public/demos/the-red-ledger/runtime.bundle.json", import.meta.url);
+const lifecycleUrl = new URL("../public/demos/the-red-ledger/lifecycle.json", import.meta.url);
 
-const loadBundle = () => parseRuntimeBundle(JSON.parse(readFileSync(bundleUrl, "utf8")));
+const loadBundle = () =>
+  parseRuntimeBundle({
+    ...JSON.parse(readFileSync(bundleUrl, "utf8")),
+    lifecycle: JSON.parse(readFileSync(lifecycleUrl, "utf8")),
+  });
 
 const click = (controller, point) => {
   controller.setPointer(point);
@@ -16,7 +22,10 @@ const settle = (controller, fromTick, limit = 1800) => {
   let tick = fromTick;
   for (let step = 0; step < limit; step += 1) {
     const world = controller.worldState();
-    if (Object.keys(world.movements).length === 0 && Object.keys(world.pendingObjectCommands).length === 0) {
+    if (
+      Object.keys(world.movements).length === 0 &&
+      Object.keys(world.pendingObjectCommands).length === 0
+    ) {
       return tick;
     }
     tick += 1;
@@ -31,12 +40,14 @@ const activateAndSettle = (controller, tick, point) => {
 };
 
 describe("The Red Ledger playable runtime slice", () => {
-  it("plays the complete evidence chain across three rooms without a dead end", () => {
+  it("plays the complete evidence chain into its governed ending without a dead end", () => {
     const bundle = loadBundle();
     const controller = createPackagedRuntimeController(bundle, {
       requestedActorInstanceId: "actor-instance.red-ledger.archivist",
     });
     let tick = 0;
+
+    expect(resolveActiveGameLifecycleOutcome(bundle, controller.worldState().story)).toBeNull();
 
     tick = activateAndSettle(controller, tick, { x: 138, y: 123 });
     expect(controller.worldState().story.flags["red-ledger.account-inspected"]).toBe(true);
@@ -69,7 +80,9 @@ describe("The Red Ledger playable runtime slice", () => {
     expect(controller.worldState().story.currentSceneId).toBe("scene.red-ledger.archive");
 
     tick = activateAndSettle(controller, tick, { x: 208, y: 110 });
-    expect(controller.worldState().story.activeDialogue?.nodeId).toBe("dialogue-node.red-ledger.clerk.root");
+    expect(controller.worldState().story.activeDialogue?.nodeId).toBe(
+      "dialogue-node.red-ledger.clerk.root",
+    );
 
     click(controller, { x: 50, y: 147 });
     expect(controller.worldState().story.activeDialogue?.nodeId).toBe(
@@ -94,6 +107,11 @@ describe("The Red Ledger playable runtime slice", () => {
       "item.red-ledger.harbour-record",
       "item.red-ledger.chapel-copy",
     ]);
+    expect(resolveActiveGameLifecycleOutcome(bundle, completed.story)).toMatchObject({
+      id: "outcome.red-ledger.case-proved",
+      kind: "success",
+      title: "CASE PROVED",
+    });
 
     const save = controller.createSaveGame();
     const restored = createPackagedRuntimeController(bundle, {
@@ -103,6 +121,9 @@ describe("The Red Ledger playable runtime slice", () => {
     expect(restored.worldState()).toEqual(completed);
     expect(restored.worldState().actorInstances["actor-instance.red-ledger.archivist"]?.sceneId).toBe(
       "scene.red-ledger.alley",
+    );
+    expect(resolveActiveGameLifecycleOutcome(bundle, restored.worldState().story)?.id).toBe(
+      "outcome.red-ledger.case-proved",
     );
   });
 });
