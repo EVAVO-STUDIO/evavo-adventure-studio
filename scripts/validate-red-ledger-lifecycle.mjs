@@ -14,6 +14,14 @@ const packagedControllerSource = readFileSync(
   join(repository, "apps/player/src/packaged-controller.ts"),
   "utf8",
 );
+const playableSliceTestSource = readFileSync(
+  join(repository, "apps/player/tests/red-ledger-playable-slice.test.mjs"),
+  "utf8",
+);
+const controllerCompatibilityTestSource = readFileSync(
+  join(repository, "apps/player/tests/runtime-controller-compatibility.test.ts"),
+  "utf8",
+);
 const errors = [];
 
 const requireValue = (condition, message) => {
@@ -176,11 +184,36 @@ for (const [label, sourceText, tokens] of [
       "function openLifecycle(outcome: GameLifecycleOutcome)",
     ],
   ],
+  [
+    "playable terminal journey",
+    playableSliceTestSource,
+    [
+      '"../src/packaged-controller.js"',
+      '"../public/demos/the-red-ledger/lifecycle.json"',
+      "resolveActiveGameLifecycleOutcome",
+      'expect(controller.statusText()).toBe("CASE PROVED")',
+      "expect(controller.worldState()).toEqual(completed)",
+      "restored.createFrame(completed.story.tick)",
+    ],
+  ],
+  [
+    "controller compatibility boundary",
+    controllerCompatibilityTestSource,
+    [
+      "SharedPackagedRuntimeController",
+      "PlayerPackagedRuntimeController",
+      "expect(playerController).not.toBe(sharedController)",
+    ],
+  ],
 ]) {
   for (const token of tokens) {
     requireValue(sourceText.includes(token), `${label} is missing '${token}'.`);
   }
 }
+requireValue(
+  !controllerCompatibilityTestSource.includes("expect(playerController).toBe(sharedController)"),
+  "Controller compatibility test still requires the lifecycle wrapper to equal the shared controller.",
+);
 
 if (errors.length > 0) {
   console.error(`Red Ledger lifecycle validation failed with ${errors.length} issue(s):`);
