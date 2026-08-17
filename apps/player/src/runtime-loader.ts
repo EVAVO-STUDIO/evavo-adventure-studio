@@ -24,37 +24,95 @@ export interface RuntimeBundleFetchResponse {
 
 export type RuntimeBundleFetch = (input: string) => Promise<RuntimeBundleFetchResponse>;
 
-export const loadRuntimeBundle = async (
-  bundleUrl: string,
-  fetchBundle: RuntimeBundleFetch = async (input) => fetch(input),
-): Promise<RuntimeBundle> => {
+export interface RuntimeBundleRequest {
+  readonly bundleUrl: string;
+  readonly lifecycleUrl: string | null;
+}
+
+export const runtimeBundleRequestFromUrl = (bundleUrl: string): RuntimeBundleRequest => {
+  let parsed: URL;
+  try {
+    parsed = new URL(bundleUrl);
+  } catch {
+    return { bundleUrl, lifecycleUrl: null };
+  }
+
+  const hash = new URLSearchParams(parsed.hash.startsWith("#") ? parsed.hash.slice(1) : parsed.hash);
+  const lifecyclePath = hash.get("lifecycle")?.trim() ?? "";
+  parsed.hash = "";
+  return {
+    bundleUrl: parsed.href,
+    lifecycleUrl: lifecyclePath ? new URL(lifecyclePath, parsed).href : null,
+  };
+};
+
+const fetchJson = async (
+  resourceUrl: string,
+  fetchBundle: RuntimeBundleFetch,
+): Promise<unknown> => {
   let response: RuntimeBundleFetchResponse;
   try {
-    response = await fetchBundle(bundleUrl);
+    response = await fetchBundle(resourceUrl);
   } catch (error) {
-    throw new RuntimeBundleFetchError(bundleUrl, error instanceof Error ? error.message : String(error));
+    throw new RuntimeBundleFetchError(
+      resourceUrl,
+      error instanceof Error ? error.message : String(error),
+    );
   }
 
   if (!response.ok) {
     throw new RuntimeBundleFetchError(
-      bundleUrl,
+      resourceUrl,
       `${response.status} ${response.statusText}`.trim(),
       response.status,
     );
   }
 
-  let input: unknown;
   try {
-    input = await response.json();
+    return await response.json();
   } catch (error) {
     throw new RuntimeBundleFetchError(
-      bundleUrl,
+      resourceUrl,
       `invalid JSON: ${error instanceof Error ? error.message : String(error)}`,
       response.status,
     );
   }
+};
 
-  return localiseRuntimeBundleForBrowser(parseRuntimeBundle(input));
+const attachLifecycleSidecar = (
+  input: unknown,
+  lifecycle: unknown,
+  bundleUrl: string,
+): unknown => {
+  if (!input || typeof input !== "object" || Array.isArray(input)) {
+    throw new RuntimeBundleFetchError(
+      bundleUrl,
+      "bundle JSON must be an object before a lifecycle sidecar can be attached",
+    );
+  }
+  if (Object.hasOwn(input, "lifecycle")) {
+    throw new RuntimeBundleFetchError(
+      bundleUrl,
+      "bundle already defines lifecycle data and cannot also use a lifecycle sidecar",
+    );
+  }
+  return { ...input, lifecycle };
+};
+
+export const loadRuntimeBundle = async (
+  bundleUrl: string,
+  fetchBundle: RuntimeBundleFetch = async (input) => fetch(input),
+): Promise<RuntimeBundle> => {
+  const request = runtimeBundleRequestFromUrl(bundleUrl);
+  const input = await fetchJson(request.bundleUrl, fetchBundle);
+  const compiledInput = request.lifecycleUrl
+    ? attachLifecycleSidecar(
+        input,
+        await fetchJson(request.lifecycleUrl, fetchBundle),
+        request.bundleUrl,
+      )
+    : input;
+  return localiseRuntimeBundleForBrowser(parseRuntimeBundle(compiledInput));
 };
 
 const renderNodeId = (value: string): Id<"render-node"> => value as Id<"render-node">;
