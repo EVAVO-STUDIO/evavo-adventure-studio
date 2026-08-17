@@ -14,21 +14,64 @@ describe("adventure production showcases", () => {
       "storybook-icon-vga",
       "comic-scifi-icon-vga",
       "gothic-investigation-vga",
+      "gothic-rpg-vga",
+      "procedural-investigation-vga",
       "verb-panel-cartoon-vga",
       "pulp-archaeology-vga",
       "cinematic-pulp-vga",
       "neo-noir-lowres",
     ]);
     expect(
-      adventureProductionShowcases.flatMap((showcase) => validateAdventureProductionShowcase(showcase)),
+      adventureProductionShowcases.flatMap((showcase) =>
+        validateAdventureProductionShowcase(showcase),
+      ),
     ).toEqual([]);
 
     for (const showcase of adventureProductionShowcases) {
-      expect(showcase.plates.map((plate) => plate.kind)).toEqual(["title", "gameplay", "dialogue", "system"]);
+      expect(showcase.plates.map((plate) => plate.kind)).toEqual([
+        "title",
+        "gameplay",
+        "dialogue",
+        "system",
+      ]);
       expect(showcase.plates.every((plate) => plate.visualProofs.length >= 3)).toBe(true);
       expect(showcase.puzzleBeats.length).toBeGreaterThan(0);
       expect(showcase.originalAssetsOnly).toBe(true);
     }
+  });
+
+  it("keeps the new RPG and procedural proofs materially separate", () => {
+    const hollowVale = adventureProductionShowcases.find(
+      (showcase) => showcase.id === "the-hollow-vale",
+    );
+    const openCase = adventureProductionShowcases.find(
+      (showcase) => showcase.id === "open-case",
+    );
+    if (!hollowVale || !openCase) throw new Error("Specialist showcases are missing.");
+
+    expect(hollowVale).toMatchObject({
+      profileId: "gothic-rpg-vga",
+      title: "The Hollow Vale",
+      originalAssetsOnly: true,
+    });
+    expect(hollowVale.puzzleBeats.map((beat) => beat.grammar)).toEqual([
+      "multi-route",
+      "hybrid-action",
+    ]);
+    expect(JSON.stringify(hollowVale)).toContain("resource");
+    expect(JSON.stringify(hollowVale)).toContain("class");
+
+    expect(openCase).toMatchObject({
+      profileId: "procedural-investigation-vga",
+      title: "Open Case",
+      originalAssetsOnly: true,
+    });
+    expect(openCase.puzzleBeats.map((beat) => beat.grammar)).toEqual([
+      "research-deduction",
+      "topic-investigation",
+    ]);
+    expect(JSON.stringify(openCase)).toContain("custody");
+    expect(JSON.stringify(openCase)).toContain("procedure");
   });
 
   it("keeps runtime showcase data free of commercial titles and publisher names", () => {
@@ -38,6 +81,7 @@ describe("adventure production showcases", () => {
       "space quest",
       "quest for glory",
       "gabriel knight",
+      "police quest",
       "gemini rue",
       "monkey island",
       "fate of atlantis",
@@ -53,9 +97,12 @@ describe("adventure production showcases", () => {
 
   it("resolves showcases deterministically by profile identity", () => {
     for (const showcase of adventureProductionShowcases) {
-      expect(adventureProductionShowcaseByProfileId(showcase.profileId, adventureProductionShowcases)).toBe(
-        showcase,
-      );
+      expect(
+        adventureProductionShowcaseByProfileId(
+          showcase.profileId,
+          adventureProductionShowcases,
+        ),
+      ).toBe(showcase);
     }
   });
 
