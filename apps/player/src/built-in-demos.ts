@@ -1,11 +1,13 @@
 export interface BuiltInRuntimeDemoDescriptor {
   readonly bundlePath: string;
+  readonly frontEndPath?: string;
   readonly lifecyclePath?: string;
 }
 
 export const builtInRuntimeDemos = {
   "red-ledger": {
     bundlePath: "/demos/the-red-ledger/runtime.bundle.json",
+    frontEndPath: "front-end.json",
     lifecyclePath: "lifecycle.json",
   },
 } as const satisfies Record<string, BuiltInRuntimeDemoDescriptor>;
@@ -13,9 +15,11 @@ export const builtInRuntimeDemos = {
 export type BuiltInRuntimeDemoId = keyof typeof builtInRuntimeDemos;
 
 const runtimeDemoRequestPath = (descriptor: BuiltInRuntimeDemoDescriptor): string => {
-  if (!descriptor.lifecyclePath) return descriptor.bundlePath;
-  const hash = new URLSearchParams({ lifecycle: descriptor.lifecyclePath });
-  return `${descriptor.bundlePath}#${hash.toString()}`;
+  const hash = new URLSearchParams();
+  if (descriptor.frontEndPath) hash.set("frontEnd", descriptor.frontEndPath);
+  if (descriptor.lifecyclePath) hash.set("lifecycle", descriptor.lifecyclePath);
+  const encoded = hash.toString();
+  return encoded ? `${descriptor.bundlePath}#${encoded}` : descriptor.bundlePath;
 };
 
 export const builtInRuntimeDemoBundlePath = (demoId: string | null): string | null => {

@@ -1,0 +1,40 @@
+{
+  "manifestVersion": 1,
+  "projectId": "project.red-ledger.playable-slice",
+  "publisher": {
+    "name": "EVAVO",
+    "presents": "ADVENTURE STUDIO PRESENTS",
+    "splashDurationTicks": 96,
+    "splashSkipAfterTicks": 18
+  },
+  "title": {
+    "kicker": "A RAIN-SOAKED ARCHIVE MYSTERY"
+  },
+  "menu": {
+    "labels": {
+      "newGame": "OPEN THE CASE",
+      "continueGame": "CONTINUE INVESTIGATION",
+      "loadGame": "CASE FILES",
+      "options": "OPTIONS",
+      "credits": "CREDITS",
+      "quit": "QUIT",
+      "quickSave": "QUICK SAVE",
+      "back": "BACK",
+      "fullscreen": "TOGGLE FULLSCREEN"
+    },
+    "showContinue": true,
+    "showLoad": true,
+    "showOptions": true,
+    "showCredits": true,
+    "showQuit": true
+  },
+  "options": {
+    "allowFullscreen": true
+  },
+  "credits": {
+    "lines": [
+      "AN ORIGINAL EVAVO ADVENTURE",
+      "BUILT WITH EVAVO ADVENTURE STUDIO"
+    ]
+  }
+}

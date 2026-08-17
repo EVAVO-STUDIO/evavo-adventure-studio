@@ -168,7 +168,7 @@ for (const [label, sourceText, tokens] of [
     [
       'bundlePath: "/demos/the-red-ledger/runtime.bundle.json"',
       'lifecyclePath: "lifecycle.json"',
-      "new URLSearchParams({ lifecycle: descriptor.lifecyclePath })",
+      'hash.set("lifecycle", descriptor.lifecyclePath)',
     ],
   ],
   [
@@ -177,8 +177,10 @@ for (const [label, sourceText, tokens] of [
     [
       "runtimeBundleRequestFromUrl",
       'hash.get("lifecycle")',
-      "attachLifecycleSidecar",
-      'Object.hasOwn(input, "lifecycle")',
+      'type RuntimeBundleSidecarKey = "frontEnd" | "lifecycle"',
+      "attachRuntimeSidecar",
+      "Object.hasOwn(input, sidecar)",
+      '"lifecycle",',
       "await fetchJson(request.lifecycleUrl, fetchBundle)",
     ],
   ],

@@ -5,18 +5,18 @@ import {
   requestedRuntimeBundleFromSearch,
 } from "../src/built-in-demos.js";
 
+const redLedgerRequest =
+  "/demos/the-red-ledger/runtime.bundle.json#frontEnd=front-end.json&lifecycle=lifecycle.json";
+
 describe("built-in runtime demos", () => {
-  it("maps the Red Ledger route to its bundle and governed lifecycle sidecar", () => {
+  it("maps the Red Ledger route to its bundle and governed presentation sidecars", () => {
     expect(builtInRuntimeDemos["red-ledger"]).toEqual({
       bundlePath: "/demos/the-red-ledger/runtime.bundle.json",
+      frontEndPath: "front-end.json",
       lifecyclePath: "lifecycle.json",
     });
-    expect(builtInRuntimeDemoBundlePath("red-ledger")).toBe(
-      "/demos/the-red-ledger/runtime.bundle.json#lifecycle=lifecycle.json",
-    );
-    expect(requestedRuntimeBundleFromSearch("?demo=red-ledger")).toBe(
-      "/demos/the-red-ledger/runtime.bundle.json#lifecycle=lifecycle.json",
-    );
+    expect(builtInRuntimeDemoBundlePath("red-ledger")).toBe(redLedgerRequest);
+    expect(requestedRuntimeBundleFromSearch("?demo=red-ledger")).toBe(redLedgerRequest);
   });
 
   it("keeps an explicit bundle URL authoritative", () => {
@@ -25,12 +25,13 @@ describe("built-in runtime demos", () => {
     ).toBe("/fixtures/custom.runtime.json");
   });
 
-  it("allows explicit bundle URLs to carry their own lifecycle sidecar", () => {
+  it("allows explicit bundle URLs to carry their own presentation sidecars", () => {
     expect(
       requestedRuntimeBundleFromSearch(
-        "?bundle=https%3A%2F%2Fexample.test%2Fgame.bundle.json%23lifecycle%3Dending.json",
+        "?bundle=https%3A%2F%2Fexample.test%2Fgame.bundle.json%23" +
+          "frontEnd%3Dmenu.json%26lifecycle%3Dending.json",
       ),
-    ).toBe("https://example.test/game.bundle.json#lifecycle=ending.json");
+    ).toBe("https://example.test/game.bundle.json#frontEnd=menu.json&lifecycle=ending.json");
   });
 
   it("falls back to the rendering lab for unknown or empty routes", () => {

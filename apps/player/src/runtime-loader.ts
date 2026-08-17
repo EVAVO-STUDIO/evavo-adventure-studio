@@ -26,6 +26,7 @@ export type RuntimeBundleFetch = (input: string) => Promise<RuntimeBundleFetchRe
 
 export interface RuntimeBundleRequest {
   readonly bundleUrl: string;
+  readonly frontEndUrl: string | null;
   readonly lifecycleUrl: string | null;
 }
 
@@ -34,14 +35,16 @@ export const runtimeBundleRequestFromUrl = (bundleUrl: string): RuntimeBundleReq
   try {
     parsed = new URL(bundleUrl);
   } catch {
-    return { bundleUrl, lifecycleUrl: null };
+    return { bundleUrl, frontEndUrl: null, lifecycleUrl: null };
   }
 
   const hash = new URLSearchParams(parsed.hash.startsWith("#") ? parsed.hash.slice(1) : parsed.hash);
+  const frontEndPath = hash.get("frontEnd")?.trim() ?? "";
   const lifecyclePath = hash.get("lifecycle")?.trim() ?? "";
   parsed.hash = "";
   return {
     bundleUrl: parsed.href,
+    frontEndUrl: frontEndPath ? new URL(frontEndPath, parsed).href : null,
     lifecycleUrl: lifecyclePath ? new URL(lifecyclePath, parsed).href : null,
   };
 };
@@ -79,24 +82,27 @@ const fetchJson = async (
   }
 };
 
-const attachLifecycleSidecar = (
+type RuntimeBundleSidecarKey = "frontEnd" | "lifecycle";
+
+const attachRuntimeSidecar = (
   input: unknown,
-  lifecycle: unknown,
+  sidecar: RuntimeBundleSidecarKey,
+  value: unknown,
   bundleUrl: string,
 ): unknown => {
   if (!input || typeof input !== "object" || Array.isArray(input)) {
     throw new RuntimeBundleFetchError(
       bundleUrl,
-      "bundle JSON must be an object before a lifecycle sidecar can be attached",
+      `bundle JSON must be an object before the ${sidecar} sidecar can be attached`,
     );
   }
-  if (Object.hasOwn(input, "lifecycle")) {
+  if (Object.hasOwn(input, sidecar)) {
     throw new RuntimeBundleFetchError(
       bundleUrl,
-      "bundle already defines lifecycle data and cannot also use a lifecycle sidecar",
+      `bundle already defines ${sidecar} data and cannot also use a ${sidecar} sidecar`,
     );
   }
-  return { ...input, lifecycle };
+  return { ...input, [sidecar]: value };
 };
 
 export const loadRuntimeBundle = async (
@@ -104,14 +110,23 @@ export const loadRuntimeBundle = async (
   fetchBundle: RuntimeBundleFetch = async (input) => fetch(input),
 ): Promise<RuntimeBundle> => {
   const request = runtimeBundleRequestFromUrl(bundleUrl);
-  const input = await fetchJson(request.bundleUrl, fetchBundle);
-  const compiledInput = request.lifecycleUrl
-    ? attachLifecycleSidecar(
-        input,
-        await fetchJson(request.lifecycleUrl, fetchBundle),
-        request.bundleUrl,
-      )
-    : input;
+  let compiledInput = await fetchJson(request.bundleUrl, fetchBundle);
+  if (request.frontEndUrl) {
+    compiledInput = attachRuntimeSidecar(
+      compiledInput,
+      "frontEnd",
+      await fetchJson(request.frontEndUrl, fetchBundle),
+      request.bundleUrl,
+    );
+  }
+  if (request.lifecycleUrl) {
+    compiledInput = attachRuntimeSidecar(
+      compiledInput,
+      "lifecycle",
+      await fetchJson(request.lifecycleUrl, fetchBundle),
+      request.bundleUrl,
+    );
+  }
   return localiseRuntimeBundleForBrowser(parseRuntimeBundle(compiledInput));
 };
 

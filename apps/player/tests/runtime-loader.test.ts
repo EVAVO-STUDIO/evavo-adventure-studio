@@ -77,6 +77,38 @@ const bundle = {
   sequences: [],
 };
 
+const frontEnd = {
+  manifestVersion: 1,
+  projectId: "project.player-fixture",
+  publisher: {
+    name: "EVAVO",
+    presents: "ADVENTURE STUDIO PRESENTS",
+    splashDurationTicks: 96,
+    splashSkipAfterTicks: 18,
+  },
+  title: { kicker: "A PLAYER FIXTURE" },
+  menu: {
+    labels: {
+      newGame: "NEW GAME",
+      continueGame: "CONTINUE",
+      loadGame: "LOAD GAME",
+      options: "OPTIONS",
+      credits: "CREDITS",
+      quit: "QUIT",
+      quickSave: "QUICK SAVE",
+      back: "BACK",
+      fullscreen: "TOGGLE FULLSCREEN",
+    },
+    showContinue: true,
+    showLoad: true,
+    showOptions: true,
+    showCredits: true,
+    showQuit: true,
+  },
+  options: { allowFullscreen: true },
+  credits: { lines: ["BUILT WITH EVAVO ADVENTURE STUDIO"] },
+};
+
 const lifecycle = {
   manifestVersion: 1,
   projectId: "project.player-fixture",
@@ -154,24 +186,27 @@ describe("packaged runtime loading", () => {
     expect(loaded.assets[0]?.outputFiles[0]?.runtimePath).toBe("assets/office.png");
   });
 
-  it("resolves lifecycle sidecars from client-only bundle URL metadata", () => {
+  it("resolves presentation sidecars from client-only bundle URL metadata", () => {
     expect(
       runtimeBundleRequestFromUrl(
-        "https://example.test/release/game.bundle.json#lifecycle=manifests%2Fending.json",
+        "https://example.test/release/game.bundle.json#" +
+          "frontEnd=manifests%2Ffront-end.json&lifecycle=manifests%2Fending.json",
       ),
     ).toEqual({
       bundleUrl: "https://example.test/release/game.bundle.json",
+      frontEndUrl: "https://example.test/release/manifests/front-end.json",
       lifecycleUrl: "https://example.test/release/manifests/ending.json",
     });
   });
 
-  it("attaches and parses a governed lifecycle sidecar before returning the bundle", async () => {
+  it("attaches and parses governed presentation sidecars before returning the bundle", async () => {
     const requests: string[] = [];
     const loaded = await loadRuntimeBundle(
-      "https://example.test/release/game.bundle.json#lifecycle=lifecycle.json",
+      "https://example.test/release/game.bundle.json#frontEnd=front-end.json&lifecycle=lifecycle.json",
       responseMap(
         {
           "https://example.test/release/game.bundle.json": bundle,
+          "https://example.test/release/front-end.json": frontEnd,
           "https://example.test/release/lifecycle.json": lifecycle,
         },
         requests,
@@ -180,9 +215,23 @@ describe("packaged runtime loading", () => {
 
     expect(requests).toEqual([
       "https://example.test/release/game.bundle.json",
+      "https://example.test/release/front-end.json",
       "https://example.test/release/lifecycle.json",
     ]);
+    expect(loaded.frontEnd).toEqual(frontEnd);
     expect(loaded.lifecycle).toEqual(lifecycle);
+  });
+
+  it("rejects a sidecar when the runtime bundle already owns front-end data", async () => {
+    await expect(
+      loadRuntimeBundle(
+        "https://example.test/release/game.bundle.json#frontEnd=front-end.json",
+        responseMap({
+          "https://example.test/release/game.bundle.json": { ...bundle, frontEnd },
+          "https://example.test/release/front-end.json": frontEnd,
+        }),
+      ),
+    ).rejects.toThrow("already defines frontEnd data");
   });
 
   it("rejects a sidecar when the runtime bundle already owns lifecycle data", async () => {
@@ -195,6 +244,19 @@ describe("packaged runtime loading", () => {
         }),
       ),
     ).rejects.toThrow("already defines lifecycle data");
+  });
+
+  it("reports front-end sidecar HTTP failures against the sidecar URL", async () => {
+    await expect(
+      loadRuntimeBundle(
+        "https://example.test/release/game.bundle.json#frontEnd=missing.json",
+        responseMap({ "https://example.test/release/game.bundle.json": bundle }),
+      ),
+    ).rejects.toMatchObject({
+      name: "RuntimeBundleFetchError",
+      status: 404,
+      bundleUrl: "https://example.test/release/missing.json",
+    });
   });
 
   it("reports lifecycle sidecar HTTP failures against the sidecar URL", async () => {
