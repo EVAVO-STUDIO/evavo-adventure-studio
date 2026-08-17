@@ -5,6 +5,8 @@ export type AdventureProductionShowcaseId =
   | "the-glass-finch"
   | "vacuum-courtesy"
   | "the-red-ledger"
+  | "the-hollow-vale"
+  | "open-case"
   | "saltwake-island"
   | "the-sunken-dial"
   | "jade-horizon"
