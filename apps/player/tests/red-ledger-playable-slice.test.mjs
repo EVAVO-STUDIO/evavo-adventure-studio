@@ -1,8 +1,8 @@
 import { readFileSync } from "node:fs";
 import { parseRuntimeBundle } from "@evavo/adventure-runtime-bundle";
-import { createPackagedRuntimeController } from "@evavo/adventure-runtime-controller";
 import { describe, expect, it } from "vitest";
 import { resolveActiveGameLifecycleOutcome } from "../src/lifecycle-outcome.js";
+import { createPackagedRuntimeController } from "../src/packaged-controller.js";
 
 const bundleUrl = new URL("../public/demos/the-red-ledger/runtime.bundle.json", import.meta.url);
 const lifecycleUrl = new URL("../public/demos/the-red-ledger/lifecycle.json", import.meta.url);
@@ -112,6 +112,11 @@ describe("The Red Ledger playable runtime slice", () => {
       kind: "success",
       title: "CASE PROVED",
     });
+    expect(controller.statusText()).toBe("CASE PROVED");
+
+    controller.setPointer({ x: 17, y: 100 });
+    controller.activate({ x: 17, y: 100 });
+    expect(controller.worldState()).toEqual(completed);
 
     const save = controller.createSaveGame();
     const restored = createPackagedRuntimeController(bundle, {
@@ -125,5 +130,7 @@ describe("The Red Ledger playable runtime slice", () => {
     expect(resolveActiveGameLifecycleOutcome(bundle, restored.worldState().story)?.id).toBe(
       "outcome.red-ledger.case-proved",
     );
+    restored.createFrame(completed.story.tick);
+    expect(restored.statusText()).toBe("CASE PROVED");
   });
 });
