@@ -9,6 +9,7 @@ import { ArtDirectionApp } from "./ArtDirectionApp.js";
 import { AudioApp } from "./AudioApp.js";
 import { ClassicExperienceApp } from "./ClassicExperienceApp.js";
 import { ClassicGameCreatorApp } from "./ClassicGameCreatorApp.js";
+import { CompatibilityLabApp } from "./CompatibilityLabApp.js";
 import { DialogueApp } from "./DialogueApp.js";
 import { StudioErrorBoundary } from "./ErrorBoundary.js";
 import { FontApp } from "./FontApp.js";
@@ -38,6 +39,8 @@ const workspace = new URLSearchParams(window.location.search).get("workspace");
 const application: ReactNode =
   workspace === "creator" ? (
     <ClassicGameCreatorApp />
+  ) : workspace === "compatibility" ? (
+    <CompatibilityLabApp />
   ) : workspace === "front-end" ? (
     <FrontEndApp />
   ) : workspace === "lifecycle" ? (
@@ -94,6 +97,7 @@ switcher.setAttribute("aria-label", "Adventure Studio workspaces");
 const workspaces = [
   { id: "composer", href: "/", label: "Composer" },
   { id: "creator", href: "/?workspace=creator", label: "Creator" },
+  { id: "compatibility", href: "/?workspace=compatibility", label: "Fidelity" },
   { id: "front-end", href: "/?workspace=front-end", label: "Front End" },
   { id: "lifecycle", href: "/?workspace=lifecycle", label: "Endings" },
   { id: "polish", href: "/?workspace=polish", label: "Polish" },
@@ -120,6 +124,7 @@ const workspaces = [
 ] as const;
 const activeWorkspace =
   workspace === "creator" ||
+  workspace === "compatibility" ||
   workspace === "front-end" ||
   workspace === "lifecycle" ||
   workspace === "polish" ||

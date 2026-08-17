@@ -44,6 +44,10 @@
       "types": "./dist/src/production-showcases.d.ts",
       "import": "./dist/src/production-showcases.js"
     },
+    "./reference-fidelity": {
+      "types": "./dist/src/reference-fidelity.d.ts",
+      "import": "./dist/src/reference-fidelity.js"
+    },
     "./classic-game-creator": {
       "types": "./dist/src/classic-game-creator.d.ts",
       "import": "./dist/src/classic-game-creator.js"

@@ -8,6 +8,7 @@ The project is designed around the production grammar of classic Sierra, LucasAr
 
 - **Authentic presentation:** integer-scaled low-resolution rendering, palette-aware art, bitmap typography, deliberate animation timing, scene transitions, cursor language and era-appropriate UI layouts.
 - **Profile-driven identity:** seven original production families connect canvas, palette, scene grammar, actor performance, interface, puzzles, audio, publisher splash and showcase direction instead of applying one generic retro filter.
+- **Title-specific reference fidelity:** separate KQ5, QFG4, Gabriel Knight, Police Quest IV and Fate of Atlantis packs bind exact engine dialects, release variants, subsystems, executable scenarios and evidence requirements without adding commercial content to the generic profiles.
 - **Original showcase proof:** every production family includes title, gameplay, dialogue and system plates with native composition, actor, prop, UI and recoverable puzzle intent.
 - **Deterministic play feel:** authored acceleration, braking, cornering, footfall phase, camera response, command buffering and fixed-step frame pacing make each family play differently without letting monitor cadence alter story state.
 - **Deterministic audio production:** authored buses, voice limits, cue loop points, fades, ducking, room soundscapes, cinematic cues, speech bindings and performance markers share the fixed-tick runtime and save-state contract.
@@ -54,6 +55,7 @@ The top-level `/card-game-studio/` path is ignored defensively so an accidental 
 - [Authentic pixel rendering](docs/pixel-rendering.md)
 - [Authentic classic-adventure production principles](docs/classic-adventure-authenticity.md)
 - [Adventure production profiles](docs/production-profiles.md)
+- [Title-specific reference fidelity](docs/reference-fidelity.md)
 - [Native showcase gallery](docs/native-showcase-gallery.md)
 - [Classic adventure play feel and frame timing](docs/classic-adventure-play-feel.md)
 - [Adventure Design Director](docs/adventure-design.md)
@@ -134,6 +136,11 @@ Studio routes currently include:
 
 ```text
 /?workspace=composer
+/?workspace=creator
+/?workspace=compatibility
+/?workspace=front-end
+/?workspace=lifecycle
+/?workspace=polish
 /?workspace=profiles
 /?workspace=showcases
 /?workspace=feel
@@ -148,6 +155,7 @@ Studio routes currently include:
 /?workspace=animation
 /?workspace=art
 /?workspace=fonts
+/?workspace=localisation
 /?workspace=interface
 /?workspace=audio
 /?workspace=dialogue

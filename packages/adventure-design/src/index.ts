@@ -3,6 +3,7 @@ export * from "./parse.js";
 export * from "./production-profiles.js";
 export * from "./production-showcases.js";
 export * from "./progression.js";
+export * from "./reference-fidelity.js";
 export * from "./scene-readability.js";
 export * from "./scene-staging.js";
 export * from "./types.js";
