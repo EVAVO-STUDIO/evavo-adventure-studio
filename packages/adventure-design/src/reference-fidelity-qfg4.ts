@@ -1,5 +1,12 @@
 import { commonCapabilities } from "./reference-fidelity-common-capabilities.js";
-import { commonScenarios, ids, pack, scenario, titleCapability, variant } from "./reference-fidelity-foundation.js";
+import {
+  commonScenarios,
+  ids,
+  pack,
+  scenario,
+  titleCapability,
+  variant,
+} from "./reference-fidelity-foundation.js";
 
 const qfg4Specific = [
   titleCapability(
@@ -59,64 +66,71 @@ const qfg4Specific = [
 ] as const;
 
 export const qfg4ReferenceTitlePack = pack({
-    id: "reference.qfg4.dos-vga",
-    titleId: "quest-for-glory-iv",
-    referenceTitle: "Quest for Glory IV",
-    label: "Quest for Glory IV technical grammar",
-    summary:
-      "SCI32 Gothic exploration with classes, skills, resources, schedules, combat " +
-      "and character transfer.",
-    engineDialectId: "sierra-sci32-vga",
-    profileId: "gothic-investigation-vga",
-    variants: [
-      variant(
-        "qfg4.dos.floppy.en",
-        "quest-for-glory-iv",
-        "sierra-sci32-vga",
-        "floppy",
-        "DOS VGA floppy",
-        ["Interpreter, audio and combat timing are measured independently from the CD release."],
-      ),
-      variant(
-        "qfg4.dos.cd.en",
-        "quest-for-glory-iv",
-        "sierra-sci32-vga",
-        "cd",
-        "DOS VGA CD",
-        ["Speech, music and release-specific fixes require their own reference trace."],
-      ),
+  id: "reference.qfg4.dos-vga",
+  titleId: "quest-for-glory-iv",
+  referenceTitle: "Quest for Glory IV",
+  label: "Quest for Glory IV technical grammar",
+  summary:
+    "SCI32 Gothic exploration with classes, skills, resources, schedules, combat " +
+    "and character transfer.",
+  engineDialectId: "sierra-sci32-vga",
+  profileId: "gothic-rpg-vga",
+  variants: [
+    variant(
+      "qfg4.dos.floppy.en",
+      "quest-for-glory-iv",
+      "sierra-sci32-vga",
+      "floppy",
+      "DOS VGA floppy",
+      ["Interpreter, audio and combat timing are measured independently from the CD release."],
+    ),
+    variant(
+      "qfg4.dos.cd.en",
+      "quest-for-glory-iv",
+      "sierra-sci32-vga",
+      "cd",
+      "DOS VGA CD",
+      ["Speech, music and release-specific fixes require their own reference trace."],
+    ),
+  ],
+  capabilities: [...commonCapabilities, ...qfg4Specific],
+  scenarios: [
+    ...commonScenarios("scenario.qfg4", ids(qfg4Specific)),
+    scenario(
+      "scenario.qfg4.class-route",
+      "Class-specific route proof",
+      "Prove that class identity changes available actions, resource pressure and puzzle outcomes.",
+      [
+        "rpg-attributes",
+        "skill-checks",
+        "class-specific-solutions",
+        "health-stamina-mana",
+        "combat-system",
+        "day-night-schedule",
+      ],
+      [
+        "Start equivalent fighter, magic and stealth character states.",
+        "Resolve one shared obstacle through three materially different action chains.",
+        "Save and replay each branch, then compare later room and schedule consequences.",
+      ],
+      "Each class reaches a valid but distinct consequence without sharing an " +
+        "implausible generic solution.",
+    ),
+  ],
+  originalProof: {
+    showcaseId: "showcase.hollow-vale",
+    title: "The Hollow Vale",
+    profileId: "gothic-rpg-vga",
+    status: "planned",
+    originalAssetsOnly: true,
+    featuredSystems: [
+      "classes",
+      "skill growth",
+      "day and night",
+      "combat",
+      "character transfer",
     ],
-    capabilities: [...commonCapabilities, ...qfg4Specific],
-    scenarios: [
-      ...commonScenarios("scenario.qfg4", ids(qfg4Specific)),
-      scenario(
-        "scenario.qfg4.class-route",
-        "Class-specific route proof",
-        "Prove that class identity changes available actions, resource pressure and puzzle outcomes.",
-        [
-          "rpg-attributes",
-          "skill-checks",
-          "class-specific-solutions",
-          "health-stamina-mana",
-          "combat-system",
-          "day-night-schedule",
-        ],
-        [
-          "Start equivalent fighter, magic and stealth character states.",
-          "Resolve one shared obstacle through three materially different action chains.",
-          "Save and replay each branch, then compare later room and schedule consequences.",
-        ],
-        "Each class reaches a valid but distinct consequence without sharing an " +
-          "implausible generic solution.",
-      ),
-    ],
-    originalProof: {
-      showcaseId: "showcase.hollow-vale",
-      title: "The Hollow Vale",
-      profileId: "gothic-investigation-vga",
-      status: "planned",
-      originalAssetsOnly: true,
-      featuredSystems: ["classes", "skill growth", "day and night", "combat", "character transfer"],
-      note: "This requires a new original RPG showcase; it must not be represented by The Red Ledger.",
-    },
-  });
+    note:
+      "The original four-plate production contract now exists; playable RPG runtime proof remains the next milestone.",
+  },
+});
