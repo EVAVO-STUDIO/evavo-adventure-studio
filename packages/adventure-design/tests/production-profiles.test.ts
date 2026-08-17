@@ -46,20 +46,24 @@ const matchingProject = (
 const clone = <T>(value: T): T => JSON.parse(JSON.stringify(value)) as T;
 
 describe("adventure production profiles", () => {
-  it("ships seven valid, distinct and original production families", () => {
+  it("ships nine valid, distinct and original production families", () => {
     expect(adventureProductionProfileIds()).toEqual([
       "storybook-icon-vga",
       "comic-scifi-icon-vga",
       "gothic-investigation-vga",
+      "gothic-rpg-vga",
+      "procedural-investigation-vga",
       "verb-panel-cartoon-vga",
       "pulp-archaeology-vga",
       "cinematic-pulp-vga",
       "neo-noir-lowres",
     ]);
-    expect(new Set(adventureProductionProfiles.map((entry) => entry.family)).size).toBe(7);
-    expect(adventureProductionProfiles.flatMap((entry) => validateAdventureProductionProfile(entry))).toEqual(
-      [],
-    );
+    expect(new Set(adventureProductionProfiles.map((entry) => entry.family)).size).toBe(9);
+    expect(
+      adventureProductionProfiles.flatMap((entry) =>
+        validateAdventureProductionProfile(entry),
+      ),
+    ).toEqual([]);
 
     const serialized = JSON.stringify(adventureProductionProfiles).toLocaleLowerCase("en-US");
     for (const term of [
@@ -67,6 +71,7 @@ describe("adventure production profiles", () => {
       "space quest",
       "quest for glory",
       "gabriel knight",
+      "police quest",
       "gemini rue",
       "monkey island",
       "fate of atlantis",
@@ -107,6 +112,33 @@ describe("adventure production profiles", () => {
         }),
       );
     }
+  });
+
+  it("keeps RPG, investigation and procedure as materially separate contracts", () => {
+    const rpg = adventureProductionProfileById("gothic-rpg-vga");
+    const investigation = adventureProductionProfileById("gothic-investigation-vga");
+    const procedure = adventureProductionProfileById("procedural-investigation-vga");
+
+    expect(rpg.family).toBe("gothic-rpg");
+    expect(rpg.puzzleGrammars).toEqual(
+      expect.arrayContaining(["multi-route", "hybrid-action", "relationship-branch"]),
+    );
+    expect(rpg.showcase.title).toBe("The Hollow Vale");
+
+    expect(investigation.family).toBe("portrait-investigation");
+    expect(investigation.puzzleGrammars).toContain("topic-investigation");
+    expect(investigation.showcase.title).toBe("The Red Ledger");
+
+    expect(procedure.family).toBe("procedural-investigation");
+    expect(procedure.puzzleGrammars).toEqual(
+      expect.arrayContaining(["research-deduction", "topic-investigation"]),
+    );
+    expect(procedure.showcase.title).toBe("Open Case");
+
+    expect(rpg.interface.family).toBe("top-icon-bar");
+    expect(procedure.interface.family).toBe("top-icon-bar");
+    expect(rpg.interface.persistentChromePercent).toBe(0);
+    expect(procedure.interface.persistentChromePercent).toBe(0);
   });
 
   it("blocks incompatible canvas, rendering, interaction and art doctrine", () => {
@@ -160,7 +192,9 @@ describe("adventure production profiles", () => {
         expectedStart += beat.durationTicks;
       }
       expect(expectedStart).toBe(profile.splash.totalTicks);
-      expect(profile.splash.skippableAfterTick).toBeLessThanOrEqual(profile.splash.totalTicks);
+      expect(profile.splash.skippableAfterTick).toBeLessThanOrEqual(
+        profile.splash.totalTicks,
+      );
     }
 
     const storybook = adventureProductionProfileById("storybook-icon-vga");
