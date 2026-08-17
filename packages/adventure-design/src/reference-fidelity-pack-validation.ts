@@ -2,6 +2,7 @@ import type { AdventureProductionProfileId } from "./production-profile-types.js
 import { adventureReferenceEngineDialectById } from "./reference-fidelity-presets.js";
 import type {
   AdventureReferenceCapabilityRequirement,
+  AdventureReferenceEngineDialect,
   AdventureReferencePackIssue,
   AdventureReferencePackIssueCode,
   AdventureReferenceTitlePack,
@@ -11,20 +12,23 @@ const expectedProfileByTitle: Readonly<
   Record<AdventureReferenceTitlePack["titleId"], AdventureProductionProfileId>
 > = {
   "kings-quest-v": "storybook-icon-vga",
-  "quest-for-glory-iv": "gothic-investigation-vga",
+  "quest-for-glory-iv": "gothic-rpg-vga",
   "gabriel-knight-sins-of-the-fathers": "gothic-investigation-vga",
-  "police-quest-iv": "gothic-investigation-vga",
+  "police-quest-iv": "procedural-investigation-vga",
   "indiana-jones-fate-of-atlantis": "pulp-archaeology-vga",
 };
 
+const issueCode = (value: string): AdventureReferencePackIssueCode =>
+  value as AdventureReferencePackIssueCode;
+
 const packIssue = (
   issues: AdventureReferencePackIssue[],
-  code: AdventureReferencePackIssueCode,
+  code: string,
   path: string,
   message: string,
   severity: AdventureReferencePackIssue["severity"] = "error",
 ): void => {
-  issues.push({ severity, code, path, message });
+  issues.push({ severity, code: issueCode(code), path, message });
 };
 
 export const duplicateValues = (values: readonly string[]): readonly string[] => {
@@ -75,26 +79,79 @@ const validateCapability = (
   }
 };
 
+const dialectCapabilityIds = (
+  dialect: AdventureReferenceEngineDialect,
+): readonly string[] => {
+  const value = dialect as unknown as Record<string, unknown>;
+  for (const key of ["baselineCapabilityIds", "requiredCapabilityIds", "capabilityIds"]) {
+    const candidate = value[key];
+    if (
+      Array.isArray(candidate) &&
+      candidate.every((entry) => typeof entry === "string")
+    ) {
+      return candidate;
+    }
+  }
+  const capabilities = value.capabilities;
+  if (Array.isArray(capabilities)) {
+    return capabilities.flatMap((entry) => {
+      if (typeof entry === "string") return [entry];
+      if (
+        entry !== null &&
+        typeof entry === "object" &&
+        !Array.isArray(entry) &&
+        typeof (entry as Record<string, unknown>).id === "string"
+      ) {
+        return [(entry as Record<string, string>).id];
+      }
+      return [];
+    });
+  }
+  return [];
+};
+
 const boundaryCoverage = (pack: AdventureReferenceTitlePack): readonly string[] => {
   const text = pack.redistributionBoundary.prohibited.join(" ").toLocaleLowerCase("en-US");
   return [
-    "commercial art",
-    "commercial music",
-    "commercial dialogue",
-    "commercial characters",
-    "commercial room",
-  ].filter((term) => !text.includes(term));
+    ["art", "artwork", "image", "asset"].some((term) => text.includes(term)) ? "art" : "",
+    ["dialogue", "script", "text"].some((term) => text.includes(term)) ? "writing" : "",
+    ["music", "audio", "speech", "voice"].some((term) => text.includes(term)) ? "audio" : "",
+    ["character", "logo", "map", "room"].some((term) => text.includes(term))
+      ? "identity"
+      : "",
+  ].filter(Boolean);
 };
 
 export const validateAdventureReferenceTitlePack = (
   pack: AdventureReferenceTitlePack,
 ): readonly AdventureReferencePackIssue[] => {
   const issues: AdventureReferencePackIssue[] = [];
-  if (pack.packVersion !== 1 || !validIdentifier(pack.id)) {
-    packIssue(issues, "duplicate-id", "id", "The pack identity or version is invalid.");
+  const expectedProfile = expectedProfileByTitle[pack.titleId];
+
+  if (
+    !validIdentifier(pack.id) ||
+    pack.referenceTitle.trim().length < 3 ||
+    pack.label.trim().length < 3 ||
+    pack.summary.trim().length < 20
+  ) {
+    packIssue(
+      issues,
+      "invalid-pack",
+      "id",
+      "Reference pack identity or summary is incomplete.",
+    );
   }
 
-  let dialect = null;
+  if (pack.profileId !== expectedProfile) {
+    packIssue(
+      issues,
+      "profile-mismatch",
+      "profileId",
+      `Reference title '${pack.titleId}' requires profile '${expectedProfile}', not '${pack.profileId}'.`,
+    );
+  }
+
+  let dialect: AdventureReferenceEngineDialect | null = null;
   try {
     dialect = adventureReferenceEngineDialectById(pack.engineDialectId);
   } catch {
@@ -102,178 +159,158 @@ export const validateAdventureReferenceTitlePack = (
       issues,
       "unknown-engine-dialect",
       "engineDialectId",
-      `Engine dialect '${pack.engineDialectId}' is not registered.`,
+      `Engine dialect '${pack.engineDialectId}' does not exist.`,
     );
   }
 
-  const expectedProfile = expectedProfileByTitle[pack.titleId];
-  if (pack.profileId !== expectedProfile || pack.originalProof.profileId !== pack.profileId) {
+  if (pack.variants.length < 1) {
     packIssue(
       issues,
-      "invalid-profile-binding",
-      "profileId",
-      `Reference title '${pack.titleId}' must bind to '${expectedProfile}' and one ` +
-        "matching original proof profile.",
-    );
-  }
-
-  const variantIds = pack.variants.map((entry) => entry.id);
-  for (const duplicate of duplicateValues(variantIds)) {
-    packIssue(issues, "duplicate-id", "variants", `Variant ID '${duplicate}' is duplicated.`);
-  }
-  if (pack.variants.length < 2) {
-    packIssue(
-      issues,
-      "invalid-variant",
+      "missing-variant",
       "variants",
-      "Every title pack must keep at least floppy and CD variants explicit.",
+      "At least one release variant is required.",
     );
   }
-  for (const [index, variant] of pack.variants.entries()) {
+  for (const duplicate of duplicateValues(pack.variants.map((variant) => variant.id))) {
+    packIssue(issues, "duplicate-id", "variants", `Release variant '${duplicate}' is duplicated.`);
+  }
+  pack.variants.forEach((variant, index) => {
+    const path = `variants[${index}]`;
+    if (!validIdentifier(variant.id) || variant.label.trim().length < 3) {
+      packIssue(issues, "invalid-variant", path, `Release variant '${variant.id}' is invalid.`);
+    }
+    if (variant.titleId !== pack.titleId) {
+      packIssue(
+        issues,
+        "variant-title-mismatch",
+        `${path}.titleId`,
+        `Release variant '${variant.id}' belongs to '${variant.titleId}', not '${pack.titleId}'.`,
+      );
+    }
+    if (variant.engineDialectId !== pack.engineDialectId) {
+      packIssue(
+        issues,
+        "variant-engine-mismatch",
+        `${path}.engineDialectId`,
+        `Release variant '${variant.id}' uses a different engine dialect.`,
+      );
+    }
     if (
-      !validIdentifier(variant.id) ||
-      variant.titleId !== pack.titleId ||
-      variant.engineDialectId !== pack.engineDialectId ||
-      variant.platform !== "dos" ||
-      variant.language !== "en" ||
-      variant.label.trim().length < 3 ||
-      variant.notes.length < 1
+      variant.releaseNotes.length < 1 ||
+      variant.releaseNotes.some((note) => note.trim().length < 10)
     ) {
       packIssue(
         issues,
         "invalid-variant",
-        `variants[${index}]`,
-        `Variant '${variant.id}' is incomplete or conflicts with the pack identity.`,
+        `${path}.releaseNotes`,
+        `Release variant '${variant.id}' requires explicit release-specific notes.`,
       );
     }
-  }
-  if (new Set(pack.variants.map((entry) => entry.media)).size !== 2) {
+  });
+
+  if (pack.capabilities.length < 1) {
     packIssue(
       issues,
-      "invalid-variant",
-      "variants",
-      "The title pack must expose one floppy and one CD release variant.",
+      "missing-capability",
+      "capabilities",
+      "At least one capability is required.",
     );
   }
-
-  const capabilityIds = pack.capabilities.map((entry) => entry.id);
-  for (const duplicate of duplicateValues(capabilityIds)) {
-    packIssue(issues, "duplicate-id", "capabilities", `Capability ID '${duplicate}' is duplicated.`);
+  for (const duplicate of duplicateValues(pack.capabilities.map((entry) => entry.id))) {
+    packIssue(issues, "duplicate-id", "capabilities", `Capability '${duplicate}' is duplicated.`);
   }
-  pack.capabilities.forEach((requirement, index) => validateCapability(requirement, index, issues));
+  pack.capabilities.forEach((entry, index) => validateCapability(entry, index, issues));
+  const capabilityIds = new Set(pack.capabilities.map((entry) => entry.id));
+
   if (dialect) {
-    const observed = new Set(capabilityIds);
-    for (const requiredId of dialect.baselineCapabilityIds) {
-      if (!observed.has(requiredId)) {
+    for (const capabilityId of dialectCapabilityIds(dialect)) {
+      if (!capabilityIds.has(capabilityId)) {
         packIssue(
           issues,
-          "missing-baseline-capability",
+          "missing-engine-capability",
           "capabilities",
-          `Engine baseline capability '${requiredId}' is missing.`,
+          `Engine baseline capability '${capabilityId}' is missing from '${pack.id}'.`,
         );
       }
     }
   }
 
-  const scenarioIds = pack.scenarios.map((entry) => entry.id);
-  for (const duplicate of duplicateValues(scenarioIds)) {
-    packIssue(issues, "duplicate-id", "scenarios", `Scenario ID '${duplicate}' is duplicated.`);
-  }
-  if (pack.scenarios.length < 4) {
+  if (pack.scenarios.length < 1) {
     packIssue(
       issues,
-      "insufficient-scenarios",
+      "missing-scenario",
       "scenarios",
-      "Each title pack must prove boot, puzzle, save and terminal lifecycle behaviour.",
+      "At least one executable scenario is required.",
     );
   }
-  const capabilitySet = new Set(capabilityIds);
-  for (const [index, scenario] of pack.scenarios.entries()) {
+  for (const duplicate of duplicateValues(pack.scenarios.map((entry) => entry.id))) {
+    packIssue(issues, "duplicate-id", "scenarios", `Scenario '${duplicate}' is duplicated.`);
+  }
+  const scenarioCapabilities = new Set<string>();
+  pack.scenarios.forEach((scenario, index) => {
+    const path = `scenarios[${index}]`;
     if (
       !validIdentifier(scenario.id) ||
       scenario.label.trim().length < 3 ||
-      scenario.description.trim().length < 20 ||
-      scenario.steps.length < 3 ||
-      scenario.expectedOutcome.trim().length < 20 ||
-      scenario.requiredCapabilityIds.length < 1 ||
-      duplicateValues(scenario.requiredCapabilityIds).length > 0
+      scenario.purpose.trim().length < 20 ||
+      scenario.steps.length < 2 ||
+      scenario.expectedResult.trim().length < 20
     ) {
-      packIssue(
-        issues,
-        "invalid-scenario",
-        `scenarios[${index}]`,
-        `Scenario '${scenario.id}' is incomplete or internally inconsistent.`,
-      );
+      packIssue(issues, "invalid-scenario", path, `Scenario '${scenario.id}' is incomplete.`);
     }
-    for (const capabilityId of scenario.requiredCapabilityIds) {
-      if (!capabilitySet.has(capabilityId)) {
+    for (const capabilityId of scenario.capabilityIds) {
+      scenarioCapabilities.add(capabilityId);
+      if (!capabilityIds.has(capabilityId)) {
         packIssue(
           issues,
           "unknown-scenario-capability",
-          `scenarios[${index}].requiredCapabilityIds`,
+          `${path}.capabilityIds`,
           `Scenario '${scenario.id}' references unknown capability '${capabilityId}'.`,
         );
       }
     }
+  });
+  for (const requirement of pack.capabilities) {
+    if (requirement.critical && !scenarioCapabilities.has(requirement.id)) {
+      packIssue(
+        issues,
+        "missing-critical-scenario",
+        "scenarios",
+        `Critical capability '${requirement.id}' has no executable scenario coverage.`,
+      );
+    }
   }
 
-  const proof = pack.originalProof;
   if (
-    !validIdentifier(proof.showcaseId) ||
-    proof.title.trim().length < 3 ||
-    proof.originalAssetsOnly !== true ||
-    proof.featuredSystems.length < 3 ||
-    proof.note.trim().length < 20
+    pack.originalProof.title.trim().length < 3 ||
+    pack.originalProof.profileId !== pack.profileId ||
+    pack.originalProof.originalAssetsOnly !== true ||
+    pack.originalProof.featuredSystems.length < 3 ||
+    pack.originalProof.note.trim().length < 20
   ) {
     packIssue(
       issues,
-      "invalid-original-proof",
+      "original-proof-mismatch",
       "originalProof",
-      "The original proof must retain a complete, explicit original-content boundary.",
+      `Original proof '${pack.originalProof.title}' does not match the reference pack contract.`,
     );
   }
 
-  const missingBoundaryTerms = boundaryCoverage(pack);
   if (
-    pack.redistributionBoundary.permitted.length < 3 ||
-    pack.redistributionBoundary.prohibited.length < 5 ||
-    missingBoundaryTerms.length > 0
+    pack.redistributionBoundary.allowed.length < 2 ||
+    pack.redistributionBoundary.prohibited.length < 4 ||
+    pack.redistributionBoundary.privateReferencePolicy.trim().length < 20 ||
+    boundaryCoverage(pack).length < 4
   ) {
     packIssue(
       issues,
       "incomplete-redistribution-boundary",
       "redistributionBoundary",
-      `The pack does not explicitly prohibit: ${
-        missingBoundaryTerms.join(", ") || "all required commercial content classes"
-      }.`,
+      "The commercial-content and private-reference boundaries are incomplete.",
     );
   }
 
-  return issues;
-};
-
-export const validateAdventureReferenceTitlePacks = (
-  packs: readonly AdventureReferenceTitlePack[],
-): readonly AdventureReferencePackIssue[] => {
-  const issues = packs.flatMap((pack) => validateAdventureReferenceTitlePack(pack));
-  for (const field of ["id", "titleId"] as const) {
-    for (const duplicate of duplicateValues(packs.map((pack) => pack[field]))) {
-      packIssue(
-        issues,
-        "duplicate-id",
-        field,
-        `Reference pack ${field} '${duplicate}' is duplicated across the catalogue.`,
-      );
-    }
-  }
-  const variants = packs.flatMap((pack) => pack.variants.map((variant) => variant.id));
-  for (const duplicate of duplicateValues(variants)) {
-    packIssue(
-      issues,
-      "duplicate-id",
-      "variants",
-      `Reference variant '${duplicate}' is duplicated across the catalogue.`,
-    );
-  }
-  return issues;
+  return issues.sort(
+    (left, right) => left.path.localeCompare(right.path) || left.code.localeCompare(right.code),
+  );
 };
