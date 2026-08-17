@@ -20,6 +20,10 @@ import { playerCutsceneStatusText } from "./cutscene-status.js";
 import { resolveActiveGameLifecycleOutcome } from "./lifecycle-outcome.js";
 import { runGameLifecycleScreen } from "./lifecycle-screen.js";
 import { frameWithoutInteractiveChrome } from "./opening-sequence.js";
+import {
+  installPlayerPlaytestBridge,
+  type PlayerPlaytestWindow,
+} from "./playtest-automation.js";
 import { createPlayerSystemText } from "./player-system-localisation.js";
 import {
   PLAYER_RUNTIME_RESTORED_EVENT,
@@ -280,7 +284,7 @@ export const createPackagedRuntimeController = (
 
   flushAudio();
 
-  return {
+  const playerController: PackagedRuntimeController = {
     ...controller,
     setPointer: (position) => {
       if (lifecycleOutcome || controller.activeBlockingSequenceId()) return;
@@ -353,4 +357,14 @@ export const createPackagedRuntimeController = (
     },
     drainAudioCommands: () => controller.drainAudioCommands(),
   };
+
+  if (typeof window !== "undefined") {
+    installPlayerPlaytestBridge(
+      window as unknown as PlayerPlaytestWindow,
+      bundle,
+      playerController,
+    );
+  }
+
+  return playerController;
 };

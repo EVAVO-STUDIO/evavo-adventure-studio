@@ -1,0 +1,196 @@
+{
+  "planVersion": 1,
+  "projectId": "project.red-ledger.playable-slice",
+  "route": "/?demo=red-ledger&playtest=1",
+  "shell": {
+    "capture": "red-ledger-00-title",
+    "title": "The Red Ledger: Impossible Date",
+    "primaryAction": "OPEN THE CASE"
+  },
+  "runtime": {
+    "actorInstanceId": "actor-instance.red-ledger.archivist",
+    "maxSettleTicks": 1800,
+    "steps": [
+      {
+        "id": "archive-start",
+        "kind": "checkpoint",
+        "capture": "red-ledger-01-archive-start",
+        "expect": {
+          "sceneId": "scene.red-ledger.archive",
+          "score": 0,
+          "inventory": [],
+          "controlledActor": {
+            "sceneId": "scene.red-ledger.archive",
+            "x": 58,
+            "y": 152
+          }
+        }
+      },
+      {
+        "id": "inspect-impossible-account",
+        "kind": "activate",
+        "position": { "x": 138, "y": 123 }
+      },
+      {
+        "id": "open-harbour-drawer",
+        "kind": "activate",
+        "position": { "x": 88, "y": 137 }
+      },
+      {
+        "id": "archive-evidence",
+        "kind": "checkpoint",
+        "capture": "red-ledger-02-archive-evidence",
+        "expect": {
+          "sceneId": "scene.red-ledger.archive",
+          "score": 15,
+          "inventory": ["item.red-ledger.harbour-record"],
+          "flags": {
+            "red-ledger.account-inspected": true,
+            "red-ledger.paper-record-found": true
+          }
+        }
+      },
+      {
+        "id": "enter-river-chapel",
+        "kind": "activate",
+        "position": { "x": 294, "y": 100 }
+      },
+      {
+        "id": "chapel-arrival",
+        "kind": "checkpoint",
+        "capture": "red-ledger-03-river-chapel",
+        "expect": {
+          "sceneId": "scene.red-ledger.chapel",
+          "score": 15,
+          "controlledActor": {
+            "sceneId": "scene.red-ledger.chapel"
+          }
+        }
+      },
+      {
+        "id": "stage-in-chapel",
+        "kind": "activate",
+        "position": { "x": 250, "y": 160 }
+      },
+      {
+        "id": "chapel-staging",
+        "kind": "checkpoint",
+        "expect": {
+          "sceneId": "scene.red-ledger.chapel",
+          "controlledActor": {
+            "sceneId": "scene.red-ledger.chapel",
+            "x": 250,
+            "y": 160
+          }
+        }
+      },
+      {
+        "id": "inspect-chapel-registry",
+        "kind": "activate",
+        "position": { "x": 172, "y": 115 }
+      },
+      {
+        "id": "chapel-proof",
+        "kind": "checkpoint",
+        "capture": "red-ledger-04-chapel-proof",
+        "expect": {
+          "sceneId": "scene.red-ledger.chapel",
+          "score": 25,
+          "inventory": [
+            "item.red-ledger.harbour-record",
+            "item.red-ledger.chapel-copy"
+          ],
+          "flags": {
+            "red-ledger.chapel-proof": true
+          }
+        }
+      },
+      {
+        "id": "return-to-archive",
+        "kind": "activate",
+        "position": { "x": 15, "y": 100 }
+      },
+      {
+        "id": "question-night-clerk",
+        "kind": "activate",
+        "position": { "x": 208, "y": 110 }
+      },
+      {
+        "id": "clerk-interview",
+        "kind": "checkpoint",
+        "capture": "red-ledger-05-clerk-interview",
+        "expect": {
+          "sceneId": "scene.red-ledger.archive",
+          "activeDialogueNodeId": "dialogue-node.red-ledger.clerk.root"
+        }
+      },
+      {
+        "id": "prove-contradiction",
+        "kind": "activate",
+        "position": { "x": 50, "y": 147 }
+      },
+      {
+        "id": "contradiction-proved",
+        "kind": "checkpoint",
+        "capture": "red-ledger-06-contradiction",
+        "expect": {
+          "sceneId": "scene.red-ledger.archive",
+          "score": 50,
+          "activeDialogueNodeId": "dialogue-node.red-ledger.clerk.confrontation",
+          "flags": {
+            "red-ledger.alley-unlocked": true
+          },
+          "objectStates": {
+            "object.red-ledger.archive.alley-door": "object-state.red-ledger.alley-door.open"
+          }
+        }
+      },
+      {
+        "id": "close-clerk-interview",
+        "kind": "activate",
+        "position": { "x": 50, "y": 110 }
+      },
+      {
+        "id": "enter-service-alley",
+        "kind": "activate",
+        "position": { "x": 17, "y": 100 }
+      },
+      {
+        "id": "black-alley",
+        "kind": "checkpoint",
+        "capture": "red-ledger-07-black-alley",
+        "expect": {
+          "sceneId": "scene.red-ledger.alley",
+          "score": 50,
+          "activeDialogueNodeId": null,
+          "controlledActor": {
+            "sceneId": "scene.red-ledger.alley"
+          }
+        }
+      },
+      {
+        "id": "inspect-contradiction-ledger",
+        "kind": "activate",
+        "position": { "x": 229, "y": 120 }
+      },
+      {
+        "id": "case-proved",
+        "kind": "checkpoint",
+        "capture": "red-ledger-08-case-proved",
+        "expect": {
+          "sceneId": "scene.red-ledger.alley",
+          "score": 100,
+          "inventory": [
+            "item.red-ledger.harbour-record",
+            "item.red-ledger.chapel-copy"
+          ],
+          "flags": {
+            "red-ledger.slice-complete": true
+          },
+          "lifecycleOutcomeId": "outcome.red-ledger.case-proved",
+          "statusText": "CASE PROVED"
+        }
+      }
+    ]
+  }
+}
