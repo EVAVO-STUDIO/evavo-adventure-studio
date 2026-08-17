@@ -1,5 +1,12 @@
 import { commonCapabilities } from "./reference-fidelity-common-capabilities.js";
-import { commonScenarios, ids, pack, scenario, titleCapability, variant } from "./reference-fidelity-foundation.js";
+import {
+  commonScenarios,
+  ids,
+  pack,
+  scenario,
+  titleCapability,
+  variant,
+} from "./reference-fidelity-foundation.js";
 
 const pq4Specific = [
   titleCapability(
@@ -41,57 +48,69 @@ const pq4Specific = [
 ] as const;
 
 export const pq4ReferenceTitlePack = pack({
-    id: "reference.pq4.dos-vga",
-    titleId: "police-quest-iv",
-    referenceTitle: "Police Quest IV",
-    label: "Police Quest IV technical grammar",
-    summary:
-      "SCI32 procedural investigation with evidence handling, case state, interrogation " +
-      "and failure recovery.",
-    engineDialectId: "sierra-sci32-vga",
-    profileId: "gothic-investigation-vga",
-    variants: [
-      variant(
-        "pq4.dos.floppy.en",
-        "police-quest-iv",
-        "sierra-sci32-vga",
-        "floppy",
-        "DOS VGA floppy",
-        ["Procedure feedback and evidence presentation are measured against the floppy release."],
-      ),
-      variant(
-        "pq4.dos.cd.en",
-        "police-quest-iv",
-        "sierra-sci32-vga",
-        "cd",
-        "DOS VGA CD",
-        ["Voiced interrogation and release-specific presentation require separate evidence."],
-      ),
+  id: "reference.pq4.dos-vga",
+  titleId: "police-quest-iv",
+  referenceTitle: "Police Quest IV",
+  label: "Police Quest IV technical grammar",
+  summary:
+    "SCI32 procedural investigation with evidence handling, case state, interrogation " +
+    "and failure recovery.",
+  engineDialectId: "sierra-sci32-vga",
+  profileId: "procedural-investigation-vga",
+  variants: [
+    variant(
+      "pq4.dos.floppy.en",
+      "police-quest-iv",
+      "sierra-sci32-vga",
+      "floppy",
+      "DOS VGA floppy",
+      ["Procedure feedback and evidence presentation are measured against the floppy release."],
+    ),
+    variant(
+      "pq4.dos.cd.en",
+      "police-quest-iv",
+      "sierra-sci32-vga",
+      "cd",
+      "DOS VGA CD",
+      ["Voiced interrogation and release-specific presentation require separate evidence."],
+    ),
+  ],
+  capabilities: [...commonCapabilities, ...pq4Specific],
+  scenarios: [
+    ...commonScenarios("scenario.pq4", ids(pq4Specific)),
+    scenario(
+      "scenario.pq4.evidence-procedure",
+      "Evidence and procedure proof",
+      "Prove that evidence collection and procedural order alter case progress and failure feedback.",
+      [
+        "procedure-checks",
+        "evidence-chain",
+        "case-state",
+        "procedural-failure",
+        "location-progression",
+      ],
+      [
+        "Attempt evidence handling in an invalid order and retain the procedural explanation.",
+        "Recover without losing unrelated case state.",
+        "Complete collection and analysis, then verify the new location and interrogation topic.",
+      ],
+      "Correct procedure advances the case graph while incorrect procedure remains " +
+        "explainable and recoverable.",
+    ),
+  ],
+  originalProof: {
+    showcaseId: "showcase.open-case",
+    title: "Open Case",
+    profileId: "procedural-investigation-vga",
+    status: "planned",
+    originalAssetsOnly: true,
+    featuredSystems: [
+      "procedure checks",
+      "evidence chain",
+      "case graph",
+      "interrogation",
     ],
-    capabilities: [...commonCapabilities, ...pq4Specific],
-    scenarios: [
-      ...commonScenarios("scenario.pq4", ids(pq4Specific)),
-      scenario(
-        "scenario.pq4.evidence-procedure",
-        "Evidence and procedure proof",
-        "Prove that evidence collection and procedural order alter case progress and failure feedback.",
-        ["procedure-checks", "evidence-chain", "case-state", "procedural-failure", "location-progression"],
-        [
-          "Attempt evidence handling in an invalid order and retain the procedural explanation.",
-          "Recover without losing unrelated case state.",
-          "Complete collection and analysis, then verify the new location and interrogation topic.",
-        ],
-        "Correct procedure advances the case graph while incorrect procedure remains " +
-          "explainable and recoverable.",
-      ),
-    ],
-    originalProof: {
-      showcaseId: "showcase.open-case",
-      title: "Open Case",
-      profileId: "gothic-investigation-vga",
-      status: "planned",
-      originalAssetsOnly: true,
-      featuredSystems: ["procedure checks", "evidence chain", "case graph", "interrogation"],
-      note: "Build a dedicated original procedural crime investigation rather than re-skinning Red Ledger.",
-    },
-  });
+    note:
+      "The original four-plate production contract now exists; playable procedural runtime proof remains the next milestone.",
+  },
+});
