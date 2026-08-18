@@ -1,6 +1,7 @@
 import type { AdventureProductionProfileId } from "./production-profile-types.js";
 import { adventureReferenceEngineDialectById } from "./reference-fidelity-presets.js";
 import type {
+  AdventureReferenceCapabilityId,
   AdventureReferenceCapabilityRequirement,
   AdventureReferenceEngineDialect,
   AdventureReferencePackIssue,
@@ -16,6 +17,8 @@ const expectedProfileByTitle: Readonly<
   "gabriel-knight-sins-of-the-fathers": "gothic-investigation-vga",
   "police-quest-iv": "procedural-investigation-vga",
   "indiana-jones-fate-of-atlantis": "pulp-archaeology-vga",
+  "heart-of-china": "cinematic-pulp-vga",
+  "rise-of-the-dragon": "cinematic-pulp-vga",
 };
 
 const issueCode = (value: string): AdventureReferencePackIssueCode =>
@@ -81,7 +84,7 @@ const validateCapability = (
 
 const dialectCapabilityIds = (
   dialect: AdventureReferenceEngineDialect,
-): readonly string[] => {
+): readonly AdventureReferenceCapabilityId[] => {
   const value = dialect as unknown as Record<string, unknown>;
   for (const key of ["baselineCapabilityIds", "requiredCapabilityIds", "capabilityIds"]) {
     const candidate = value[key];
@@ -89,20 +92,20 @@ const dialectCapabilityIds = (
       Array.isArray(candidate) &&
       candidate.every((entry) => typeof entry === "string")
     ) {
-      return candidate;
+      return candidate as AdventureReferenceCapabilityId[];
     }
   }
   const capabilities = value.capabilities;
   if (Array.isArray(capabilities)) {
-    return capabilities.flatMap((entry) => {
-      if (typeof entry === "string") return [entry];
+    return capabilities.flatMap<AdventureReferenceCapabilityId>((entry) => {
+      if (typeof entry === "string") return [entry as AdventureReferenceCapabilityId];
       if (
         entry !== null &&
         typeof entry === "object" &&
         !Array.isArray(entry) &&
         typeof (entry as Record<string, unknown>).id === "string"
       ) {
-        return [(entry as Record<string, string>).id];
+        return [(entry as Record<string, string>).id as AdventureReferenceCapabilityId];
       }
       return [];
     });
@@ -196,13 +199,13 @@ export const validateAdventureReferenceTitlePack = (
       );
     }
     if (
-      variant.releaseNotes.length < 1 ||
-      variant.releaseNotes.some((note) => note.trim().length < 10)
+      variant.notes.length < 1 ||
+      variant.notes.some((note) => note.trim().length < 10)
     ) {
       packIssue(
         issues,
         "invalid-variant",
-        `${path}.releaseNotes`,
+        `${path}.notes`,
         `Release variant '${variant.id}' requires explicit release-specific notes.`,
       );
     }
@@ -252,19 +255,19 @@ export const validateAdventureReferenceTitlePack = (
     if (
       !validIdentifier(scenario.id) ||
       scenario.label.trim().length < 3 ||
-      scenario.purpose.trim().length < 20 ||
+      scenario.description.trim().length < 20 ||
       scenario.steps.length < 2 ||
-      scenario.expectedResult.trim().length < 20
+      scenario.expectedOutcome.trim().length < 20
     ) {
       packIssue(issues, "invalid-scenario", path, `Scenario '${scenario.id}' is incomplete.`);
     }
-    for (const capabilityId of scenario.capabilityIds) {
+    for (const capabilityId of scenario.requiredCapabilityIds) {
       scenarioCapabilities.add(capabilityId);
       if (!capabilityIds.has(capabilityId)) {
         packIssue(
           issues,
           "unknown-scenario-capability",
-          `${path}.capabilityIds`,
+          `${path}.requiredCapabilityIds`,
           `Scenario '${scenario.id}' references unknown capability '${capabilityId}'.`,
         );
       }
@@ -297,9 +300,8 @@ export const validateAdventureReferenceTitlePack = (
   }
 
   if (
-    pack.redistributionBoundary.allowed.length < 2 ||
+    pack.redistributionBoundary.permitted.length < 2 ||
     pack.redistributionBoundary.prohibited.length < 4 ||
-    pack.redistributionBoundary.privateReferencePolicy.trim().length < 20 ||
     boundaryCoverage(pack).length < 4
   ) {
     packIssue(

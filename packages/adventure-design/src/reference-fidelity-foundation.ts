@@ -58,13 +58,25 @@ export const adventureReferenceEngineDialects: readonly AdventureReferenceEngine
       "Alternate routes and companion state require deterministic state-graph evidence.",
     ],
   ),
+  dialect(
+    "dynamix-dgds-vga",
+    "Dynamix DGDS VGA dialect",
+    "Full-screen cinematic rooms, authored panels, route and relationship state, " +
+      "clock pressure and action inserts.",
+    [
+      "Heart of China and Rise of the Dragon require separate title capability graphs " +
+        "over the shared DGDS dialect.",
+      "The original proof must preserve 320 by 200 indexed VGA, hard editorial cuts and deterministic state.",
+      "Action inserts require explicit telegraphs, bounded input windows and safe retry anchors.",
+    ],
+  ),
 ] as const;
 
 export const variant = (
   id: string,
   titleId: AdventureReferenceTitleId,
   engineDialectId: AdventureReferenceEngineDialectId,
-  media: "floppy" | "cd",
+  media: AdventureReferenceVariant["media"],
   label: string,
   notes: readonly string[],
 ): AdventureReferenceVariant => ({

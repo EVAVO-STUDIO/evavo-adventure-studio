@@ -5,15 +5,18 @@ export type AdventureReferenceTitleId =
   | "quest-for-glory-iv"
   | "gabriel-knight-sins-of-the-fathers"
   | "police-quest-iv"
-  | "indiana-jones-fate-of-atlantis";
+  | "indiana-jones-fate-of-atlantis"
+  | "heart-of-china"
+  | "rise-of-the-dragon";
 
 export type AdventureReferenceEngineDialectId =
   | "sierra-sci1-vga"
   | "sierra-sci32-vga"
-  | "lucasarts-scumm5-vga";
+  | "lucasarts-scumm5-vga"
+  | "dynamix-dgds-vga";
 
 export type AdventureReferencePlatform = "dos";
-export type AdventureReferenceMedia = "floppy" | "cd";
+export type AdventureReferenceMedia = "floppy" | "cd" | "digital";
 export type AdventureReferenceLanguage = "en";
 
 export type AdventureReferenceCapabilityCategory =
@@ -26,7 +29,10 @@ export type AdventureReferenceCapabilityCategory =
   | "rpg"
   | "investigation"
   | "procedure"
-  | "routing";
+  | "routing"
+  | "cinematic"
+  | "action"
+  | "time";
 
 export type AdventureReferenceEvidenceKind =
   | "contract"
@@ -96,7 +102,20 @@ export type AdventureReferenceCapabilityId =
   | "alternative-puzzle-solutions"
   | "dialogue-tree"
   | "action-fight-system"
-  | "route-dependent-world-state";
+  | "route-dependent-world-state"
+  | "full-screen-cinematic-panels"
+  | "protagonist-switching"
+  | "relationship-state"
+  | "route-time-costs"
+  | "editorial-travel-montage"
+  | "knowledge-separation"
+  | "action-sequence-windows"
+  | "action-telegraph-timing"
+  | "safe-action-retry"
+  | "visible-game-clock"
+  | "scheduled-contact-windows"
+  | "time-costed-actions"
+  | "deadline-outcomes";
 
 export interface AdventureReferenceEngineDialect {
   readonly dialectVersion: 1;
