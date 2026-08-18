@@ -11,6 +11,7 @@ import { ClassicExperienceApp } from "./ClassicExperienceApp.js";
 import { ClassicGameCreatorApp } from "./ClassicGameCreatorApp.js";
 import { CompatibilityLabApp } from "./CompatibilityLabApp.js";
 import { DialogueApp } from "./DialogueApp.js";
+import { DynamixCinematicLabApp } from "./DynamixCinematicLabApp.js";
 import { StudioErrorBoundary } from "./ErrorBoundary.js";
 import { FontApp } from "./FontApp.js";
 import { FrontEndApp } from "./FrontEndApp.js";
@@ -41,6 +42,8 @@ const application: ReactNode =
     <ClassicGameCreatorApp />
   ) : workspace === "compatibility" ? (
     <CompatibilityLabApp />
+  ) : workspace === "dynamix" ? (
+    <DynamixCinematicLabApp />
   ) : workspace === "front-end" ? (
     <FrontEndApp />
   ) : workspace === "lifecycle" ? (
@@ -98,6 +101,7 @@ const workspaces = [
   { id: "composer", href: "/", label: "Composer" },
   { id: "creator", href: "/?workspace=creator", label: "Creator" },
   { id: "compatibility", href: "/?workspace=compatibility", label: "Fidelity" },
+  { id: "dynamix", href: "/?workspace=dynamix", label: "DGDS" },
   { id: "front-end", href: "/?workspace=front-end", label: "Front End" },
   { id: "lifecycle", href: "/?workspace=lifecycle", label: "Endings" },
   { id: "polish", href: "/?workspace=polish", label: "Polish" },
@@ -125,6 +129,7 @@ const workspaces = [
 const activeWorkspace =
   workspace === "creator" ||
   workspace === "compatibility" ||
+  workspace === "dynamix" ||
   workspace === "front-end" ||
   workspace === "lifecycle" ||
   workspace === "polish" ||
