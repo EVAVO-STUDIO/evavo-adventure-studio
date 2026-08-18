@@ -1,4 +1,5 @@
 export * from "./authenticity.js";
+export * from "./dynamix-cinematic.js";
 export * from "./parse.js";
 export * from "./production-profiles.js";
 export * from "./production-showcases.js";
