@@ -4,6 +4,7 @@ export type AdventureReferenceTitleId =
   | "kings-quest-v"
   | "quest-for-glory-iv"
   | "gabriel-knight-sins-of-the-fathers"
+  | "police-quest-i-vga-remake"
   | "police-quest-iv"
   | "indiana-jones-fate-of-atlantis"
   | "heart-of-china"
