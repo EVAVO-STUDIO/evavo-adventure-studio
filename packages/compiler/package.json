@@ -20,6 +20,14 @@
       "types": "./dist/src/with-instances.d.ts",
       "import": "./dist/src/with-instances.js"
     },
+    "./with-staging": {
+      "types": "./dist/src/with-staging.d.ts",
+      "import": "./dist/src/with-staging.js"
+    },
+    "./scene-staging": {
+      "types": "./dist/src/with-staging.d.ts",
+      "import": "./dist/src/with-staging.js"
+    },
     "./with-lifecycle": {
       "types": "./dist/src/with-lifecycle.d.ts",
       "import": "./dist/src/with-lifecycle.js"
