@@ -11,7 +11,7 @@ const imageAsset = {
 };
 
 describe("indexed map compiler", () => {
-  it("compiles one immutable byte per native pixel with deterministic hashing", async () => {
+  it("compiles one immutable byte per native pixel with deterministic hashing and source-index bounds", async () => {
     const source = new Uint8Array([
       0, 1, 2, 3,
       4, 5, 6, 7,
@@ -20,7 +20,7 @@ describe("indexed map compiler", () => {
     const first = await compileIndexMap(source, 4, 2);
     const second = await compileIndexMap(source, 4, 2);
 
-    expect(first).toMatchObject({ width: 4, height: 2 });
+    expect(first).toMatchObject({ width: 4, height: 2, maximumSourceIndex: 7 });
     expect(first.data.byteLength).toBe(8);
     expect(first.sha256).toBe(second.sha256);
     expect(first.data).not.toBe(source);
@@ -28,13 +28,18 @@ describe("indexed map compiler", () => {
     expect([...source]).toEqual(original);
   });
 
+  it("finds the actual highest used index rather than assuming a 256-colour surface", async () => {
+    const compiled = await compileIndexMap(new Uint8Array([0, 0, 3, 0]), 2, 2);
+    expect(compiled.maximumSourceIndex).toBe(3);
+  });
+
   it("rejects invalid dimensions and byte-count mismatches", async () => {
     await expect(compileIndexMap(new Uint8Array(8), 0, 2)).rejects.toThrow(/positive safe integers/u);
     await expect(compileIndexMap(new Uint8Array(7), 4, 2)).rejects.toThrow(/expected exactly 8/u);
   });
 
-  it("creates a schema-validated indexed sidecar record with frame metadata", async () => {
-    const compiled = await compileIndexMap(new Uint8Array(8), 4, 2);
+  it("creates a schema-validated indexed sidecar record with maximum source index", async () => {
+    const compiled = await compileIndexMap(new Uint8Array([0, 1, 2, 3, 0, 1, 2, 3]), 4, 2);
     const record = createIndexedAssetSidecarRecord(imageAsset as never, compiled, {
       runtimePath: "assets/actor/test.idx",
       transparentIndex: 0,
@@ -58,6 +63,7 @@ describe("indexed map compiler", () => {
       height: 2,
       indexRuntimePath: "assets/actor/test.idx",
       indexByteLength: 8,
+      maximumSourceIndex: 3,
       transparentIndex: 0,
       defaultPalette: {
         paletteAssetId: "asset.palette.actor",
