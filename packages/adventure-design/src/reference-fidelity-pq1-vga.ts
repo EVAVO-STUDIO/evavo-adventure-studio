@@ -63,7 +63,7 @@ export const pq1VgaReferenceTitlePack = pack({
     "Early Sierra SCI1 VGA procedural adventure: grounded contemporary rooms, compact icon interaction, " +
     "real-world proportions, readable police procedure, score/failure feedback and economical actor staging.",
   engineDialectId: "sierra-sci1-vga",
-  profileId: "procedural-investigation-vga",
+  profileId: "early-procedural-icon-vga",
   variants: [
     variant(
       "pq1-vga.dos.floppy.en",
@@ -125,7 +125,7 @@ export const pq1VgaReferenceTitlePack = pack({
   originalProof: {
     showcaseId: "showcase.night-shift",
     title: "Night Shift",
-    profileId: "procedural-investigation-vga",
+    profileId: "early-procedural-icon-vga",
     status: "planned",
     originalAssetsOnly: true,
     featuredSystems: [
