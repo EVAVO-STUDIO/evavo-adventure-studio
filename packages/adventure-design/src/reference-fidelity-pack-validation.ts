@@ -13,6 +13,7 @@ const expectedProfileByTitle: Readonly<
   Record<AdventureReferenceTitlePack["titleId"], AdventureProductionProfileId>
 > = {
   "kings-quest-v": "storybook-icon-vga",
+  "police-quest-i-vga-remake": "early-procedural-icon-vga",
   "quest-for-glory-iv": "gothic-rpg-vga",
   "gabriel-knight-sins-of-the-fathers": "gothic-investigation-vga",
   "police-quest-iv": "procedural-investigation-vga",
