@@ -191,6 +191,7 @@ export const entryChoreographySchema = z
     entranceId: idSchema("entrance"),
     spawnPosition: pointSchema.optional(),
     entryPath: z.array(pointSchema).default([]),
+    speedPixelsPerSecond: z.number().positive().default(48),
     entryAnimationState: z.string().min(1).optional(),
     arrivalFacing: facingSchema.optional(),
     arrivalAnimationState: z.string().min(1).optional(),
