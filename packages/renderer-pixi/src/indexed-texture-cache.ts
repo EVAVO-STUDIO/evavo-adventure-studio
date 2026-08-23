@@ -3,7 +3,10 @@ import type { Id } from "@evavo/adventure-project-schema";
 import type { IndexedPaletteDitherTransition } from "@evavo/adventure-render-contract";
 import type { Texture } from "pixi.js";
 import type { PixiTextureResolver } from "./index.js";
-import { expandDitheredIndexedPixels } from "./indexed-dither.js";
+import {
+  expandDitheredIndexedPixels,
+  quantizeIndexedDitherCoverage,
+} from "./indexed-dither.js";
 import { expandIndexedPixels } from "./indexed-pixels.js";
 import type { PixiIndexedTextureResolver } from "./indexed-renderer.js";
 
@@ -46,15 +49,17 @@ const assertPaletteBytes = (assetId: Id<"asset">, entries: Uint8Array): Uint8Arr
   return new Uint8Array(entries);
 };
 
-const ditherKey = (transition: IndexedPaletteDitherTransition): string =>
-  [
+const ditherKey = (transition: IndexedPaletteDitherTransition): string => {
+  const coverage = quantizeIndexedDitherCoverage(transition.coverage, transition.matrix);
+  return [
     transition.targetPaletteAssetId,
     transition.targetPaletteOffset,
-    transition.coverage.toFixed(6),
+    coverage,
     transition.matrix,
     Math.floor(transition.origin.x),
     Math.floor(transition.origin.y),
   ].join(":");
+};
 
 export class PixiIndexedTextureCache implements PixiIndexedTextureResolver {
   private readonly textureFactory: IndexedTextureFactory;
