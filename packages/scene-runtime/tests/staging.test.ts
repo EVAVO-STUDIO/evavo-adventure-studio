@@ -1,7 +1,7 @@
 import type { RuntimeBundle } from "@evavo/adventure-runtime-bundle";
-import type { NavigableRuntimeWorldState } from "../src/movement-types.js";
 import type { SceneStaging } from "@evavo/adventure-scene-instances/staging";
 import { describe, expect, it } from "vitest";
+import type { NavigableRuntimeWorldState } from "../src/movement-types.js";
 import {
   findStagedNavigationRoute,
   preferredRouteCostMultiplier,
@@ -63,6 +63,7 @@ const staging: SceneStaging = {
       },
     ],
   },
+  interactionComfortRegionsByObject: {},
   interactionChoreographies: [],
   entryChoreographies: [],
   paletteLightZones: [],
