@@ -67,6 +67,7 @@ export interface PackagedRuntimeController {
   worldState(): InteractiveRuntimeWorldState;
   cameraState(): ProfiledRuntimeCameraState | null;
   parserState(): ParserBufferState;
+  drainSceneAudioCueIds(): readonly string[];
 }
 
 export interface PackagedRuntimeControllerOptions {
@@ -84,10 +85,10 @@ export class ControlledActorSaveMismatchError extends Error {
   ) {
     super(
       `Save game controlled actor '${savedActorInstanceId ?? "none"}' does not ` +
-        `match this player controller '${controllerActorInstanceId ?? "none"}'.`,
+        `match this player controller '${controlledActorInstanceId ?? "none"}'.`,
     );
     this.name = "ControlledActorSaveMismatchError";
-    this.controllerActorInstanceId = controllerActorInstanceId;
+    this.controllerActorInstanceId = controlledActorInstanceId;
     this.savedActorInstanceId = savedActorInstanceId;
   }
 }
@@ -198,6 +199,29 @@ export const createPackagedRuntimeController = (
     pressed: false,
   };
   let status = selectionStatus(selection);
+  let sceneAudioCueIds: string[] = [];
+
+  const collectSceneAudioCues = (input: {
+    readonly movementEvents?: readonly {
+      readonly kind: string;
+      readonly footstepCueId?: string;
+    }[];
+    readonly choreographyEvents?: readonly {
+      readonly kind: string;
+      readonly cueId?: string;
+    }[];
+  }): void => {
+    for (const event of input.movementEvents ?? []) {
+      if (event.kind === "movement-footfall" && event.footstepCueId) {
+        sceneAudioCueIds.push(event.footstepCueId);
+      }
+    }
+    for (const event of input.choreographyEvents ?? []) {
+      if (event.kind === "choreography-sound-requested" && event.cueId) {
+        sceneAudioCueIds.push(event.cueId);
+      }
+    }
+  };
 
   const interactionState = (): RuntimeUiInteractionState => ({
     ...(selectedVerbId ? { activeVerbId: selectedVerbId } : {}),
@@ -391,13 +415,12 @@ export const createPackagedRuntimeController = (
       );
       switch (queued.kind) {
         case "queued":
+          collectSceneAudioCues({ choreographyEvents: queued.choreographyEvents });
+          applyWorldState(queued.state, queued.runtimeEvents ?? []);
+          applyCommandStatus(queued.event);
+          return;
         case "resolved":
-          applyWorldState(
-            queued.state,
-            queued.kind === "queued"
-              ? queued.runtimeEvents ?? []
-              : runtimeEventsFromCommand(queued.event),
-          );
+          applyWorldState(queued.state, runtimeEventsFromCommand(queued.event));
           applyCommandStatus(queued.event);
           return;
         case "missing-target":
@@ -596,6 +619,7 @@ export const createPackagedRuntimeController = (
     hoveredDialogueChoiceId = null;
     verbCoinPosition = null;
     cursor = { position: null, cursorId: "walk", pressed: false };
+    sceneAudioCueIds = [];
     renderedTick = world.story.tick;
     baseFrame = resolveRuntimeSceneFrame(bundle, world, {
       camera: resolvedProfiledRuntimeCamera(bundle, cameraState),
@@ -622,6 +646,11 @@ export const createPackagedRuntimeController = (
     worldState: () => world,
     cameraState: () => cameraState,
     parserState: () => parser,
+    drainSceneAudioCueIds: () => {
+      const drained = sceneAudioCueIds;
+      sceneAudioCueIds = [];
+      return drained;
+    },
     createFrame: (tick) => {
       if (tick < renderedTick) {
         throw new RangeError("Packaged player logical time cannot move backwards.");
@@ -629,6 +658,10 @@ export const createPackagedRuntimeController = (
       const delta = tick - renderedTick;
       for (let offset = 0; offset < delta; offset += 1) {
         const advanced = advanceInteractiveRuntimeWorld(bundle, world, 1);
+        collectSceneAudioCues({
+          movementEvents: advanced.movementEvents,
+          choreographyEvents: advanced.choreographyEvents,
+        });
         applyWorldState(advanced.state, advanced.runtimeEvents);
         renderedTick = world.story.tick;
         for (const event of advanced.commandEvents) {
