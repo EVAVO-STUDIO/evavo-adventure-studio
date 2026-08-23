@@ -158,10 +158,13 @@ describe("indexed asset sidecar", () => {
       ...compiled,
       assets: compiled.assets.map((asset) =>
         asset.assetId === "asset.palette.actor"
-          ? compiled.assets.find((candidate) => candidate.assetId === "asset.actor.index-map")!
+          ? {
+              ...compiled.assets.find((candidate) => candidate.assetId === "asset.actor.index-map")!,
+              assetId: "asset.palette.actor",
+            }
           : asset,
       ),
-    };
+    } as typeof compiled;
     expect(validateIndexedAssetManifest({ id: "project.indexed-test" }, wrongPaletteKind, indexed)).toEqual(
       expect.arrayContaining([expect.objectContaining({ code: "palette-kind-mismatch" })]),
     );
