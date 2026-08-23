@@ -15,5 +15,5 @@ export const resolveClassicRuntimeSceneFrame = (
 ): ResolvedFrame => {
   const frame = resolveBaseRuntimeSceneFrame(bundle, world, options);
   const sceneId: Id<"scene"> = options.sceneId ?? world.story.currentSceneId;
-  return applySceneOcclusionToFrame(bundle, frame, sceneId);
+  return applySceneOcclusionToFrame(bundle, frame, sceneId, world);
 };
