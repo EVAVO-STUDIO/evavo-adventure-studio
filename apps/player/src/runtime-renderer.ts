@@ -51,9 +51,9 @@ class PackagedIndexedRuntimeRenderer extends PixiIndexedWebGLRenderer {
   }
 
   override async destroy(): Promise<void> {
+    await super.destroy();
     this.indexedTextures.clearResolvedTextures((texture) => texture.destroy(true));
     this.loaded = false;
-    await super.destroy();
   }
 }
 
