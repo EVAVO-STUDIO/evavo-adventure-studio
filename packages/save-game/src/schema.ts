@@ -160,6 +160,20 @@ const pendingCommandSchema = z
     objectInstanceId: idSchema("object"),
     verb: z.string().min(1),
     itemId: idSchema("item").nullable(),
+    approachSlotId: idSchema("approach-slot").optional(),
+    approachFacing: z.string().min(1).optional(),
+    approachAnimationState: z.string().min(1).optional(),
+  })
+  .strict();
+
+const activeInteractionChoreographySchema = z
+  .object({
+    choreographyId: idSchema("interaction-choreography"),
+    interactionId: idSchema("interaction"),
+    actorInstanceId: idSchema("actor-instance"),
+    beatIndex: z.number().int().nonnegative(),
+    holdTicksRemaining: z.number().int().nonnegative(),
+    waitingForAnimation: z.boolean(),
   })
   .strict();
 
@@ -174,6 +188,10 @@ export const interactiveWorldSaveSchema = z
     pendingObjectCommands: z.record(
       z.string().min(1),
       pendingCommandSchema,
+    ),
+    activeInteractionChoreographies: z.record(
+      z.string().min(1),
+      activeInteractionChoreographySchema,
     ),
   })
   .strict() as z.ZodType<InteractiveRuntimeWorldState>;
