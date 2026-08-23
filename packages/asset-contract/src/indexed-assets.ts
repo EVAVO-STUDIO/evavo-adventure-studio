@@ -139,8 +139,7 @@ export type IndexedAssetManifestIssueCode =
   | "palette-missing"
   | "palette-kind-mismatch"
   | "palette-primary-output-missing"
-  | "palette-offset-overflow"
-  | "transparent-index-overflow";
+  | "palette-offset-overflow";
 
 export interface IndexedAssetManifestIssue {
   readonly severity: "error";
@@ -314,18 +313,6 @@ export const validateIndexedAssetManifest = (
         resolvedMaximum === null
           ? `Palette offset ${record.defaultPalette.paletteOffset} is outside palette '${palette.assetId}' entry range 0–${palette.metadata.entries - 1}.`
           : `Indexed source maximum ${record.maximumSourceIndex} plus palette offset ${record.defaultPalette.paletteOffset} resolves to ${resolvedMaximum}; palette '${palette.assetId}' contains ${palette.metadata.entries} entries.`,
-      );
-    }
-    if (
-      record.transparentIndex !== undefined &&
-      record.maximumSourceIndex !== undefined &&
-      record.transparentIndex > record.maximumSourceIndex
-    ) {
-      indexedIssue(
-        issues,
-        "transparent-index-overflow",
-        `${recordPath}.transparentIndex`,
-        `Transparent source index ${record.transparentIndex} exceeds declared maximum source index ${record.maximumSourceIndex}.`,
       );
     }
   });
