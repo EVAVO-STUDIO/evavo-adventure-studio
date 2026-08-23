@@ -1,5 +1,5 @@
 import { evaluateCondition } from "@evavo/adventure-core";
-import type { Actor, Id, Point } from "@evavo/adventure-project-schema";
+import type { Actor, Id, NavigationArea, Point } from "@evavo/adventure-project-schema";
 import type { RuntimeBundle } from "@evavo/adventure-runtime-bundle";
 import type { NavigationPortal, NavigationRouteSegment } from "@evavo/adventure-scene/navigation";
 import type { SceneNavigationPortal } from "@evavo/adventure-scene-instances";
@@ -165,14 +165,51 @@ export const completeMovementAnimation = (
   };
 };
 
+const activeNavigationModifiers = (
+  bundle: RuntimeBundle,
+  state: NavigableRuntimeWorldState,
+  sceneId: Id<"scene">,
+) => {
+  const staging = bundle.sceneStaging?.scenes.find((candidate) => candidate.sceneId === sceneId);
+  if (!staging) return [];
+  return staging.navigationStateModifiers.filter((modifier) => {
+    const currentState = state.story.objectStates[modifier.objectId];
+    return currentState !== undefined && modifier.activeStateIds.some((stateId) => stateId === currentState);
+  });
+};
+
+export const enabledNavigationAreas = (
+  bundle: RuntimeBundle,
+  state: NavigableRuntimeWorldState,
+  sceneId: Id<"scene">,
+): readonly NavigationArea[] => {
+  const scene = bundle.scenes.find((candidate) => candidate.id === sceneId);
+  if (!scene) return [];
+  const disabled = new Set(
+    activeNavigationModifiers(bundle, state, sceneId).flatMap((modifier) => modifier.disabledAreaIds),
+  );
+  return scene.navigationAreas.filter(
+    (area) =>
+      !disabled.has(area.id) &&
+      (!area.enabledWhen || evaluateCondition(area.enabledWhen, state.story)),
+  );
+};
+
 export const enabledPortals = (
   bundle: RuntimeBundle,
   state: NavigableRuntimeWorldState,
   sceneId: Id<"scene">,
 ): readonly NavigationPortal[] => {
   const composition = bundle.sceneInstances?.scenes.find((candidate) => candidate.sceneId === sceneId);
+  const disabled = new Set(
+    activeNavigationModifiers(bundle, state, sceneId).flatMap((modifier) => modifier.disabledPortalIds),
+  );
   return (composition?.navigationPortals ?? [])
-    .filter((portal) => !portal.enabledWhen || evaluateCondition(portal.enabledWhen, state.story))
+    .filter(
+      (portal) =>
+        !disabled.has(portal.id) &&
+        (!portal.enabledWhen || evaluateCondition(portal.enabledWhen, state.story)),
+    )
     .map((portal) => ({
       id: portal.id,
       fromAreaId: portal.fromAreaId,
