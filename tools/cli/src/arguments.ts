@@ -181,21 +181,34 @@ const sharedInputs = (
 > => {
   const artDirectionPath = optionalValue(options, "--art-direction");
   const artEvidencePath = optionalValue(options, "--art-evidence");
+  const indexedAssetsPath = optionalValue(options, "--indexed-assets");
+  const paletteMapsPath = optionalValue(options, "--palette-maps");
+  const hasAssetManifest = options.values.has("--asset-manifest");
   if (artEvidencePath && !artDirectionPath) {
     throw new CliUsageError(
       "Option '--art-evidence' requires '--art-direction'.",
     );
   }
-  if (artEvidencePath && !options.values.has("--asset-manifest")) {
+  if (artEvidencePath && !hasAssetManifest) {
     throw new CliUsageError(
       "Option '--art-evidence' requires '--asset-manifest'.",
+    );
+  }
+  if (indexedAssetsPath && !hasAssetManifest) {
+    throw new CliUsageError(
+      "Option '--indexed-assets' requires '--asset-manifest'.",
+    );
+  }
+  if (paletteMapsPath && !hasAssetManifest) {
+    throw new CliUsageError(
+      "Option '--palette-maps' requires '--asset-manifest'.",
     );
   }
   return {
     sceneInstancesPath: optionalValue(options, "--scene-instances"),
     sceneStagingPath: optionalValue(options, "--scene-staging"),
-    indexedAssetsPath: optionalValue(options, "--indexed-assets"),
-    paletteMapsPath: optionalValue(options, "--palette-maps"),
+    indexedAssetsPath,
+    paletteMapsPath,
     artDirectionPath,
     artEvidencePath,
     bitmapFontsPath: optionalValue(options, "--bitmap-fonts"),
