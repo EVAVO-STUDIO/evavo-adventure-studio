@@ -15,6 +15,10 @@
     "./staging": {
       "types": "./dist/src/staging.d.ts",
       "import": "./dist/src/staging.js"
+    },
+    "./staging-validation": {
+      "types": "./dist/src/staging-validation.d.ts",
+      "import": "./dist/src/staging-validation.js"
     }
   },
   "files": [
