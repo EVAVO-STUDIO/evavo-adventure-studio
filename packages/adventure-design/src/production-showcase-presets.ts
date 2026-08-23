@@ -2,6 +2,7 @@ import { coldMeridianShowcase } from "./production-showcase-cold-meridian.js";
 import { glassFinchShowcase } from "./production-showcase-glass-finch.js";
 import { hollowValeShowcase } from "./production-showcase-hollow-vale.js";
 import { jadeHorizonShowcase } from "./production-showcase-jade-horizon.js";
+import { nightShiftShowcase } from "./production-showcase-night-shift.js";
 import { openCaseShowcase } from "./production-showcase-open-case.js";
 import { redLedgerShowcase } from "./production-showcase-red-ledger.js";
 import { saltwakeIslandShowcase } from "./production-showcase-saltwake-island.js";
@@ -14,6 +15,7 @@ export const adventureProductionShowcases: readonly AdventureProductionShowcase[
   vacuumCourtesyShowcase,
   redLedgerShowcase,
   hollowValeShowcase,
+  nightShiftShowcase,
   openCaseShowcase,
   saltwakeIslandShowcase,
   sunkenDialShowcase,
