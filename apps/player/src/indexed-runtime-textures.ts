@@ -10,8 +10,10 @@ const runtimeUrl = (bundleUrl: string, runtimePath: string): string =>
 const hex = (bytes: ArrayBuffer): string =>
   [...new Uint8Array(bytes)].map((value) => value.toString(16).padStart(2, "0")).join("");
 
-const sha256 = async (bytes: Uint8Array): Promise<string> =>
-  hex(await crypto.subtle.digest("SHA-256", bytes.buffer.slice(bytes.byteOffset, bytes.byteOffset + bytes.byteLength)));
+const sha256 = async (bytes: Uint8Array): Promise<string> => {
+  const owned = new Uint8Array(bytes);
+  return hex(await crypto.subtle.digest("SHA-256", owned.buffer));
+};
 
 const fetchVerifiedBytes = async (
   url: string,
