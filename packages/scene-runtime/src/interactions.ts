@@ -14,7 +14,10 @@ import type {
   ObjectStateDefinition,
   SceneObjectInstance,
 } from "@evavo/adventure-scene-instances";
-import type { InteractionComfortRegion } from "@evavo/adventure-scene-instances/staging";
+import {
+  type InteractionComfortRegion,
+  sampleDepthScale,
+} from "@evavo/adventure-scene-instances/staging";
 import type { RuntimeWorldState } from "./index.js";
 import { stagingForScene } from "./staging.js";
 
@@ -124,6 +127,30 @@ const objectOrder = (
   };
 };
 
+const stagedObjectScale = (
+  bundle: RuntimeBundle,
+  world: RuntimeWorldState,
+  scene: RuntimeBundle["scenes"][number],
+  point: Point,
+  fallbackScale: number,
+): number => {
+  const staging = stagingForScene(bundle.sceneStaging, scene.id);
+  if (!staging) return fallbackScale;
+  const area = scene.navigationAreas
+    .filter((candidate) => !candidate.enabledWhen || evaluateCondition(candidate.enabledWhen, world.story))
+    .filter((candidate) => pointInPolygon(point, candidate.shape))
+    .sort((left, right) => {
+      if (left.elevation !== right.elevation) return right.elevation - left.elevation;
+      return left.id.localeCompare(right.id);
+    })[0];
+  if (!area) return fallbackScale;
+  const override = staging.navigationScaleOverrides.find((candidate) => candidate.areaId === area.id);
+  if (!override) return fallbackScale;
+  if (override.mode === "fixed") return override.fixedScale ?? fallbackScale;
+  const curve = staging.depthScaleCurves.find((candidate) => candidate.id === override.curveId);
+  return curve ? sampleDepthScale(curve, point.y) : fallbackScale;
+};
+
 export const resolveSceneObjectHotspots = (
   bundle: RuntimeBundle,
   world: RuntimeWorldState,
@@ -152,7 +179,7 @@ export const resolveSceneObjectHotspots = (
 
     const anchor = quantizeNativePoint(instance.position, bundle.presentation.pixelMotionPolicy, "entity");
     const perspective = resolveScaleAtY(scene.depthBands, anchor.y);
-    const scale = (perspective?.scale ?? 1) * instance.scaleMultiplier;
+    const scale = stagedObjectScale(bundle, world, scene, anchor, perspective?.scale ?? 1) * instance.scaleMultiplier;
     const pivot = localShapePivot(state);
     const shape = transformPolygon(state.interactionShape, anchor, pivot, scale, instance.mirrored);
     const walkTo = state.walkToOffset
