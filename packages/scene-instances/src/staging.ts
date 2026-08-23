@@ -200,6 +200,20 @@ export const entryChoreographySchema = z
   .strict();
 export type EntryChoreography = z.infer<typeof entryChoreographySchema>;
 
+const occlusionPlaneScaleSchema = z.preprocess((value) => {
+  if (
+    value !== null &&
+    typeof value === "object" &&
+    !Array.isArray(value) &&
+    typeof (value as { x?: unknown }).x === "number" &&
+    typeof (value as { y?: unknown }).y === "number"
+  ) {
+    const { x, y } = value as { x: number; y: number };
+    return x === y ? x : value;
+  }
+  return value;
+}, z.number().positive());
+
 export const occlusionPlaneSchema = z
   .object({
     id: idSchema("occlusion-plane"),
@@ -210,7 +224,7 @@ export const occlusionPlaneSchema = z
     elevation: z.number().finite().default(0),
     zOffset: z.number().finite().default(0),
     opacity: z.number().min(0).max(1).default(1),
-    scale: z.number().positive().default(1),
+    scale: occlusionPlaneScaleSchema.default(1),
     mirrored: z.boolean().default(false),
     enabledWhen: conditionSchema.optional(),
   })
