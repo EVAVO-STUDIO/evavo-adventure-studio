@@ -54,13 +54,6 @@ export type SceneCommandEvent =
       readonly verb: string;
     }
   | {
-      readonly kind: "object-command-choreography-started";
-      readonly actorInstanceId: Id<"actor-instance">;
-      readonly objectInstanceId: Id<"object">;
-      readonly choreographyId: Id<"interaction-choreography">;
-      readonly verb: string;
-    }
-  | {
       readonly kind: "object-command-executed";
       readonly actorInstanceId: Id<"actor-instance">;
       readonly objectInstanceId: Id<"object">;
@@ -100,14 +93,9 @@ export type QueueSceneObjectCommandResult =
   | {
       readonly kind: "queued";
       readonly state: InteractiveRuntimeWorldState;
-      readonly movement: Extract<BeginActorMovementResult, { readonly kind: "started" }>;
+      readonly movement: Extract<BeginActorMovementResult, { readonly kind: "started" }> | null;
       readonly event: Extract<SceneCommandEvent, { readonly kind: "object-command-queued" }>;
-    }
-  | {
-      readonly kind: "choreography";
-      readonly state: InteractiveRuntimeWorldState;
-      readonly event: Extract<SceneCommandEvent, { readonly kind: "object-command-choreography-started" }>;
-      readonly choreographyEvents: readonly InteractionChoreographyEvent[];
+      readonly choreographyEvents?: readonly InteractionChoreographyEvent[];
     }
   | {
       readonly kind: "resolved";
@@ -115,9 +103,7 @@ export type QueueSceneObjectCommandResult =
       readonly execution: Exclude<SceneObjectCommandExecution, { readonly kind: "missing-target" }>;
       readonly event: Exclude<
         SceneCommandEvent,
-        | { readonly kind: "object-command-queued" }
-        | { readonly kind: "object-command-choreography-started" }
-        | { readonly kind: "object-command-aborted" }
+        { readonly kind: "object-command-queued" } | { readonly kind: "object-command-aborted" }
       >;
     }
   | {
@@ -249,15 +235,20 @@ const executePendingCommand = (
   };
 };
 
+interface BegunPendingChoreography {
+  readonly state: InteractiveRuntimeWorldState;
+  readonly choreographyEvents: readonly InteractionChoreographyEvent[];
+}
+
 const beginPendingChoreography = (
   bundle: RuntimeBundle,
   state: InteractiveRuntimeWorldState,
   pending: PendingSceneObjectCommand,
-): QueueSceneObjectCommandResult | null => {
+): BegunPendingChoreography | null => {
   const target = resolveSceneObjectHotspots(bundle, state).find(
     (candidate) => candidate.objectInstanceId === pending.objectInstanceId,
   );
-  if (!target) return { kind: "missing-target", state, objectInstanceId: pending.objectInstanceId };
+  if (!target) return null;
 
   const resolution = resolveHotspotCommand(
     state.story,
@@ -287,28 +278,28 @@ const beginPendingChoreography = (
     choreography,
   );
   if (!started.active) return null;
-  const nextState: InteractiveRuntimeWorldState = {
-    ...state,
-    story: started.state.story,
-    actorInstances: started.state.actorInstances,
-    activeInteractionChoreographies: {
-      ...state.activeInteractionChoreographies,
-      [pendingKey(pending.actorInstanceId)]: started.active,
-    },
-  };
   return {
-    kind: "choreography",
-    state: nextState,
-    event: {
-      kind: "object-command-choreography-started",
-      actorInstanceId: pending.actorInstanceId,
-      objectInstanceId: pending.objectInstanceId,
-      choreographyId: choreography.id,
-      verb: pending.verb,
+    state: {
+      ...state,
+      story: started.state.story,
+      actorInstances: started.state.actorInstances,
+      activeInteractionChoreographies: {
+        ...state.activeInteractionChoreographies,
+        [pendingKey(pending.actorInstanceId)]: started.active,
+      },
     },
     choreographyEvents: started.choreographyEvents,
   };
 };
+
+const queuedEvent = (
+  pending: PendingSceneObjectCommand,
+): Extract<SceneCommandEvent, { readonly kind: "object-command-queued" }> => ({
+  kind: "object-command-queued",
+  actorInstanceId: pending.actorInstanceId,
+  objectInstanceId: pending.objectInstanceId,
+  verb: pending.verb,
+});
 
 const resolveAfterApproach = (
   bundle: RuntimeBundle,
@@ -316,8 +307,16 @@ const resolveAfterApproach = (
   pending: PendingSceneObjectCommand,
 ): QueueSceneObjectCommandResult => {
   const stagedState = orientActorForPendingCommand(bundle, state, pending);
-  const choreographed = beginPendingChoreography(bundle, stagedState, pending);
-  if (choreographed) return choreographed;
+  const choreography = beginPendingChoreography(bundle, stagedState, pending);
+  if (choreography) {
+    return {
+      kind: "queued",
+      state: choreography.state,
+      movement: null,
+      event: queuedEvent(pending),
+      choreographyEvents: choreography.choreographyEvents,
+    };
+  }
   const resolved = executePendingCommand(bundle, stagedState, pending);
   if (resolved.execution.kind === "missing-target") {
     return { kind: "missing-target", state: stagedState, objectInstanceId: pending.objectInstanceId };
@@ -328,9 +327,7 @@ const resolveAfterApproach = (
     execution: resolved.execution,
     event: resolved.event as Exclude<
       SceneCommandEvent,
-      | { readonly kind: "object-command-queued" }
-      | { readonly kind: "object-command-choreography-started" }
-      | { readonly kind: "object-command-aborted" }
+      { readonly kind: "object-command-queued" } | { readonly kind: "object-command-aborted" }
     >,
   };
 };
@@ -393,12 +390,38 @@ export const queueSceneObjectCommand = (
   };
   const destination = approach?.slot.position ?? target.hotspot.walkTo;
   if (!destination) {
-    return resolveAfterApproach(bundle, state, pending);
+    const stateWithPending = {
+      ...state,
+      pendingObjectCommands: {
+        ...state.pendingObjectCommands,
+        [pendingKey(actorInstanceId)]: pending,
+      },
+    };
+    const resolved = resolveAfterApproach(bundle, stateWithPending, pending);
+    if (resolved.kind !== "queued") {
+      const pendingObjectCommands = { ...resolved.state.pendingObjectCommands };
+      delete pendingObjectCommands[pendingKey(actorInstanceId)];
+      return { ...resolved, state: { ...resolved.state, pendingObjectCommands } };
+    }
+    return resolved;
   }
 
   const movement = beginActorMovement(bundle, state, actorInstanceId, destination);
   if (movement.kind === "already-there") {
-    return resolveAfterApproach(bundle, state, pending);
+    const stateWithPending = {
+      ...state,
+      pendingObjectCommands: {
+        ...state.pendingObjectCommands,
+        [pendingKey(actorInstanceId)]: pending,
+      },
+    };
+    const resolved = resolveAfterApproach(bundle, stateWithPending, pending);
+    if (resolved.kind !== "queued") {
+      const pendingObjectCommands = { ...resolved.state.pendingObjectCommands };
+      delete pendingObjectCommands[pendingKey(actorInstanceId)];
+      return { ...resolved, state: { ...resolved.state, pendingObjectCommands } };
+    }
+    return resolved;
   }
   if (movement.kind !== "started") {
     return { kind: "movement-rejected", state, movement };
@@ -412,13 +435,7 @@ export const queueSceneObjectCommand = (
     },
     activeInteractionChoreographies: state.activeInteractionChoreographies,
   };
-  const event = {
-    kind: "object-command-queued" as const,
-    actorInstanceId,
-    objectInstanceId,
-    verb,
-  };
-  return { kind: "queued", state: nextState, movement, event };
+  return { kind: "queued", state: nextState, movement, event: queuedEvent(pending) };
 };
 
 export const advanceInteractiveRuntimeWorld = (
@@ -460,12 +477,12 @@ export const advanceInteractiveRuntimeWorld = (
       command,
     );
     state = resolved.state;
-    if (resolved.kind === "choreography") {
+    if (resolved.kind === "queued" && resolved.state.activeInteractionChoreographies[pendingKey(command.actorInstanceId)]) {
       active[pendingKey(command.actorInstanceId)] = resolved.state.activeInteractionChoreographies[
         pendingKey(command.actorInstanceId)
       ]!;
       commandEvents.push(resolved.event);
-      choreographyEvents.push(...resolved.choreographyEvents);
+      choreographyEvents.push(...(resolved.choreographyEvents ?? []));
       continue;
     }
     delete pending[pendingKey(command.actorInstanceId)];
