@@ -10,11 +10,19 @@ import type { AdventureProject } from "@evavo/adventure-project-schema";
 import { CliDataError, type CliDiagnostic, errorCode, sortDiagnostics } from "./diagnostics.js";
 import { sha256 } from "./hashing.js";
 
+export interface IndexedRuntimeArtifact {
+  readonly assetId: string;
+  readonly runtimePath: string;
+  readonly data: Uint8Array;
+  readonly sha256: string;
+}
+
 export interface LoadedIndexedAssets {
   readonly path: string | null;
   readonly manifest: IndexedAssetManifest | null;
   readonly diagnostics: readonly CliDiagnostic[];
   readonly evidencePaths: readonly string[];
+  readonly artifacts: readonly IndexedRuntimeArtifact[];
 }
 
 const schemaPath = (path: readonly PropertyKey[]): string => {
@@ -102,7 +110,9 @@ export const loadIndexedAssets = async (
   project: AdventureProject,
   assetManifest: AssetBuildManifest,
 ): Promise<LoadedIndexedAssets> => {
-  if (!inputPath) return { path: null, manifest: null, diagnostics: [], evidencePaths: [] };
+  if (!inputPath) {
+    return { path: null, manifest: null, diagnostics: [], evidencePaths: [], artifacts: [] };
+  }
   const path = resolve(inputPath);
   const manifest = await loadManifestFile(path);
   const diagnostics: CliDiagnostic[] = validateIndexedAssetManifest(project, assetManifest, manifest).map(
@@ -110,6 +120,7 @@ export const loadIndexedAssets = async (
   );
   const baseDirectory = dirname(path);
   const evidencePaths: string[] = [];
+  const artifacts: IndexedRuntimeArtifact[] = [];
 
   for (let index = 0; index < manifest.assets.length; index += 1) {
     const record = manifest.assets[index];
@@ -148,6 +159,12 @@ export const loadIndexedAssets = async (
         message: `Index map '${filePath}' has SHA-256 '${digest}'; expected '${record.indexSha256}'.`,
       });
     }
+    artifacts.push({
+      assetId: record.assetId,
+      runtimePath: record.indexRuntimePath,
+      data,
+      sha256: digest,
+    });
   }
 
   return {
@@ -155,5 +172,8 @@ export const loadIndexedAssets = async (
     manifest,
     diagnostics: sortDiagnostics(diagnostics),
     evidencePaths: [...evidencePaths].sort((left, right) => left.localeCompare(right)),
+    artifacts: [...artifacts].sort(
+      (left, right) => left.runtimePath.localeCompare(right.runtimePath) || left.assetId.localeCompare(right.assetId),
+    ),
   };
 };
