@@ -1,7 +1,11 @@
 import type { RuntimeBundle } from "@evavo/adventure-runtime-bundle";
 import { describe, expect, it } from "vitest";
 import type { RuntimeWorldState } from "../src/index.js";
-import { resolvePaletteLightTreatment } from "../src/lighting.js";
+import {
+  paletteZoneBoundaryDistance,
+  paletteZoneDitherCoverage,
+  resolvePaletteLightTreatment,
+} from "../src/lighting.js";
 
 const asId = <T extends string>(value: string): string & { readonly __id: T } => value as never;
 
@@ -83,6 +87,8 @@ const world = (lampOn: boolean) =>
     },
   }) as unknown as RuntimeWorldState;
 
+const lampZone = bundle.sceneStaging.scenes[0]!.paletteLightZones[1]!;
+
 describe("VGA palette lighting", () => {
   it("selects the highest-priority enabled zone and resolves its concrete palette binding", () => {
     expect(
@@ -97,6 +103,7 @@ describe("VGA palette lighting", () => {
       paletteAssetId: "asset.palette.scene",
       paletteOffset: 16,
       blendMode: "hard",
+      ditherCoverage: 1,
     });
 
     expect(
@@ -112,7 +119,18 @@ describe("VGA palette lighting", () => {
       paletteOffset: 64,
       blendMode: "ordered-dither",
       priority: 5,
+      ditherCoverage: 1,
     });
+  });
+
+  it("ramps ordered palette coverage over eight native pixels from the polygon boundary", () => {
+    expect(paletteZoneBoundaryDistance(lampZone, { x: 50, y: 25 })).toBe(0);
+    expect(paletteZoneBoundaryDistance(lampZone, { x: 50, y: 29 })).toBe(4);
+    expect(paletteZoneBoundaryDistance(lampZone, { x: 50, y: 33 })).toBe(8);
+    expect(paletteZoneDitherCoverage(lampZone, { x: 50, y: 25 })).toBe(0);
+    expect(paletteZoneDitherCoverage(lampZone, { x: 50, y: 29 })).toBe(0.5);
+    expect(paletteZoneDitherCoverage(lampZone, { x: 50, y: 33 })).toBe(1);
+    expect(paletteZoneDitherCoverage(lampZone, { x: 10, y: 10 })).toBe(0);
   });
 
   it("returns no concrete treatment when a symbolic map is not bound", () => {
