@@ -38,6 +38,10 @@ import {
 } from "./instance-validation.js";
 import { runtimeLocalisationPackSchema } from "./localisation.js";
 import {
+  RuntimePaletteMapValidationError,
+  validateRuntimePaletteMaps,
+} from "./palette-map-validation.js";
+import {
   RuntimeUiSkinValidationError,
   validateRuntimeUiSkins,
 } from "./ui-validation.js";
@@ -160,6 +164,10 @@ export const parseRuntimeBundle = (input: unknown): RuntimeBundle => {
   if (sceneInstanceIssues.length > 0) {
     throw new RuntimeSceneInstanceValidationError(sceneInstanceIssues);
   }
+  const paletteMapIssues = validateRuntimePaletteMaps(bundle);
+  if (paletteMapIssues.length > 0) {
+    throw new RuntimePaletteMapValidationError(paletteMapIssues);
+  }
   const bitmapFontIssues = validateRuntimeBitmapFonts(bundle);
   if (bitmapFontIssues.length > 0) {
     throw new RuntimeBitmapFontValidationError(bitmapFontIssues);
@@ -177,5 +185,6 @@ export * from "./font-validation.js";
 export * from "./front-end-localisation.js";
 export * from "./instance-validation.js";
 export * from "./localisation.js";
+export * from "./palette-map-validation.js";
 export * from "./ui-validation.js";
 export * from "./validation.js";
