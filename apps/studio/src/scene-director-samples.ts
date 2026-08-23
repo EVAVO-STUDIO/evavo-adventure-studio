@@ -14,6 +14,23 @@ import {
 } from "./scene-director-palette-maps.js";
 import { studioSceneStaging } from "./scene-staging-fixture.js";
 
+const withPaletteAsset = (
+  project: AdventureProject,
+  assetId: string,
+  path: string,
+): AdventureProject =>
+  ({
+    ...project,
+    assets: [
+      ...project.assets,
+      {
+        id: assetId,
+        path,
+        kind: "palette",
+      },
+    ],
+  }) as AdventureProject;
+
 export interface SceneDirectorSample {
   readonly id: string;
   readonly label: string;
@@ -29,7 +46,11 @@ export const sceneDirectorSamples: readonly SceneDirectorSample[] = [
     id: "red-ledger",
     label: "The Red Ledger",
     productionLanguage: "Gothic investigation VGA",
-    project: studioProject,
+    project: withPaletteAsset(
+      studioProject,
+      "asset.palette.red-ledger.actor-lighting",
+      "palettes/red-ledger-actor-lighting.pal",
+    ),
     sceneInstances: studioSceneInstances,
     staging: studioSceneStaging,
     paletteMaps: redLedgerDirectorPaletteMaps,
@@ -38,7 +59,11 @@ export const sceneDirectorSamples: readonly SceneDirectorSample[] = [
     id: "night-shift",
     label: "Night Shift",
     productionLanguage: "Early procedural icon VGA",
-    project: nightShiftDirectorProject,
+    project: withPaletteAsset(
+      nightShiftDirectorProject,
+      "asset.palette.night-shift.actor-lighting",
+      "palettes/night-shift-actor-lighting.pal",
+    ),
     sceneInstances: nightShiftDirectorInstances,
     staging: nightShiftDirectorStaging,
     paletteMaps: nightShiftDirectorPaletteMaps,
