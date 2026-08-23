@@ -1,6 +1,7 @@
 import { isAbsolute, relative, resolve } from "node:path";
 import { createArtVisualEvidenceFromAssetManifest } from "@evavo/adventure-asset-pipeline/art-evidence";
 import { compileProjectWithInstances } from "@evavo/adventure-compiler/scene-instances";
+import { attachSceneStaging } from "@evavo/adventure-compiler/scene-staging";
 import {
   CLI_HELP,
   type CliCommand,
@@ -47,6 +48,10 @@ import {
   loadSceneInstances,
 } from "./scene-inputs.js";
 import {
+  type LoadedSceneStaging,
+  loadSceneStaging,
+} from "./staging-inputs.js";
+import {
   type LoadedUiSkins,
   loadUiSkins,
   uiSkinInputPaths,
@@ -80,6 +85,7 @@ const writeResult = (
 interface CombinedInputState {
   readonly base: LoadedInputs;
   readonly sceneInstances: LoadedSceneInstances;
+  readonly sceneStaging: LoadedSceneStaging;
   readonly art: LoadedArtInputs;
   readonly bitmapFonts: LoadedBitmapFonts;
   readonly uiSkins: LoadedUiSkins;
@@ -91,6 +97,7 @@ const loadCombinedInputs = async (
   projectPath: string,
   assetManifestPath: string | null,
   sceneInstancesPath: string | null,
+  sceneStagingPath: string | null,
   artDirectionPath: string | null,
   artEvidencePath: string | null,
   bitmapFontsPath: string | null,
@@ -102,6 +109,11 @@ const loadCombinedInputs = async (
     sceneInstancesPath,
     base.project,
     base.assetManifest,
+  );
+  const sceneStaging = await loadSceneStaging(
+    sceneStagingPath,
+    base.project,
+    sceneInstances.manifest,
   );
   const art = await loadArtInputs(
     artDirectionPath,
@@ -127,6 +139,7 @@ const loadCombinedInputs = async (
   return {
     base,
     sceneInstances,
+    sceneStaging,
     art,
     bitmapFonts,
     uiSkins,
@@ -134,6 +147,7 @@ const loadCombinedInputs = async (
     diagnostics: sortDiagnostics([
       ...base.diagnostics,
       ...sceneInstances.diagnostics,
+      ...sceneStaging.diagnostics,
       ...art.diagnostics,
       ...bitmapFonts.diagnostics,
       ...uiSkins.diagnostics,
@@ -145,6 +159,7 @@ const loadCombinedInputs = async (
 const allInputPaths = (loaded: CombinedInputState): readonly string[] => [
   ...inputPaths(loaded.base),
   ...(loaded.sceneInstances.path ? [loaded.sceneInstances.path] : []),
+  ...(loaded.sceneStaging.path ? [loaded.sceneStaging.path] : []),
   ...artInputPaths(loaded.art),
   ...bitmapFontInputPaths(loaded.bitmapFonts),
   ...uiSkinInputPaths(loaded.uiSkins),
@@ -159,6 +174,7 @@ const runValidate = async (
     command.projectPath,
     command.assetManifestPath,
     command.sceneInstancesPath,
+    command.sceneStagingPath,
     command.artDirectionPath,
     command.artEvidencePath,
     command.bitmapFontsPath,
@@ -174,6 +190,7 @@ const runValidate = async (
     projectPath: command.projectPath,
     assetManifestPath: command.assetManifestPath,
     sceneInstancesPath: command.sceneInstancesPath,
+    sceneStagingPath: command.sceneStagingPath,
     artDirectionPath: command.artDirectionPath,
     artEvidencePath: command.artEvidencePath,
     bitmapFontsPath: command.bitmapFontsPath,
@@ -265,6 +282,28 @@ const requireCompiledInputs = (
   return loaded.base.assetManifest;
 };
 
+const compileCombinedProject = (
+  loaded: CombinedInputState,
+  assetManifest: NonNullable<LoadedInputs["assetManifest"]>,
+) => {
+  const base = compileProjectWithInstances(
+    loaded.base.project,
+    assetManifest,
+    loaded.sceneInstances.manifest,
+    loaded.bitmapFonts.manifest ?? undefined,
+    loaded.uiSkins.manifest ?? undefined,
+    loaded.audioMix.manifest ?? undefined,
+  );
+  return loaded.sceneStaging.manifest
+    ? attachSceneStaging(
+        loaded.base.project,
+        base,
+        loaded.sceneStaging.manifest,
+        loaded.sceneInstances.manifest,
+      )
+    : base;
+};
+
 const runCompile = async (
   command: Extract<CliCommand, { readonly kind: "compile" }>,
   environment: CliEnvironment,
@@ -280,6 +319,7 @@ const runCompile = async (
     command.projectPath,
     command.assetManifestPath,
     command.sceneInstancesPath,
+    command.sceneStagingPath,
     command.artDirectionPath,
     command.artEvidencePath,
     command.bitmapFontsPath,
@@ -292,14 +332,7 @@ const runCompile = async (
     ...(command.reportPath ? [command.reportPath] : []),
   ]);
 
-  const compiled = compileProjectWithInstances(
-    loaded.base.project,
-    assetManifest,
-    loaded.sceneInstances.manifest,
-    loaded.bitmapFonts.manifest ?? undefined,
-    loaded.uiSkins.manifest ?? undefined,
-    loaded.audioMix.manifest ?? undefined,
-  );
+  const compiled = compileCombinedProject(loaded, assetManifest);
   const report = {
     reportVersion: 1 as const,
     command: "compile" as const,
@@ -309,6 +342,7 @@ const runCompile = async (
     assetManifestFingerprint: assetManifest.fingerprint,
     assetCompilerVersion: assetManifest.compilerVersion,
     sceneInstancesPath: loaded.sceneInstances.path,
+    sceneStagingPath: loaded.sceneStaging.path,
     artDirectionPath: loaded.art.artDirectionPath,
     artEvidencePath: loaded.art.artEvidencePath,
     artProfile: loaded.art.manifest?.profile.preset ?? null,
@@ -341,6 +375,7 @@ const runCompile = async (
     `Compiled project '${loaded.base.project.id}'.`,
     `Bundle: ${resolve(command.outputPath)}`,
     `Fingerprint: ${compiled.fingerprint}`,
+    ...(loaded.sceneStaging.manifest ? ["Classic scene staging: embedded"] : []),
     ...(loaded.art.manifest
       ? [`Art profile: ${loaded.art.manifest.profile.preset}`]
       : []),
@@ -370,6 +405,7 @@ const runPackage = async (
     command.projectPath,
     command.assetManifestPath,
     command.sceneInstancesPath,
+    command.sceneStagingPath,
     command.artDirectionPath,
     command.artEvidencePath,
     command.bitmapFontsPath,
@@ -382,14 +418,7 @@ const runPackage = async (
   }
   assertReleaseDirectorySafe(loaded, command.outputDirectory);
 
-  const compiled = compileProjectWithInstances(
-    loaded.base.project,
-    assetManifest,
-    loaded.sceneInstances.manifest,
-    loaded.bitmapFonts.manifest ?? undefined,
-    loaded.uiSkins.manifest ?? undefined,
-    loaded.audioMix.manifest ?? undefined,
-  );
+  const compiled = compileCombinedProject(loaded, assetManifest);
   const artifacts = await readVerifiedRuntimeOutputs(
     loaded.base.manifestPath,
     assetManifest,
@@ -410,6 +439,7 @@ const runPackage = async (
     releaseFingerprint: release.fingerprint,
     assetManifestFingerprint: assetManifest.fingerprint,
     sceneInstancesPath: loaded.sceneInstances.path,
+    sceneStagingPath: loaded.sceneStaging.path,
     artDirectionPath: loaded.art.artDirectionPath,
     artEvidencePath: loaded.art.artEvidencePath,
     artProfile: loaded.art.manifest?.profile.preset ?? null,
@@ -429,6 +459,7 @@ const runPackage = async (
     `Files: ${release.files.length}`,
     `Bundle fingerprint: ${compiled.fingerprint}`,
     `Release fingerprint: ${release.fingerprint}`,
+    ...(loaded.sceneStaging.manifest ? ["Classic scene staging: embedded"] : []),
     ...(loaded.art.manifest
       ? [`Art profile: ${loaded.art.manifest.profile.preset}`]
       : []),
