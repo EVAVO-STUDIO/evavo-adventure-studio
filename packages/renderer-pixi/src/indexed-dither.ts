@@ -1,3 +1,4 @@
+import type { Point } from "@evavo/adventure-project-schema";
 import type { IndexedPaletteDitherTransition } from "@evavo/adventure-render-contract";
 import {
   type IndexedPixelPalette,
@@ -43,6 +44,9 @@ const assertCoverage = (coverage: number): number => {
   return coverage;
 };
 
+const positiveModulo = (value: number, divisor: number): number =>
+  ((value % divisor) + divisor) % divisor;
+
 export const quantizeIndexedDitherCoverage = (
   coverage: number,
   matrix: IndexedPaletteDitherTransition["matrix"],
@@ -53,8 +57,16 @@ export const quantizeIndexedDitherCoverage = (
   return Math.round(normalized * states) / states;
 };
 
-const positiveModulo = (value: number, divisor: number): number =>
-  ((value % divisor) + divisor) % divisor;
+export const normalizeIndexedDitherOrigin = (
+  origin: Point,
+  matrix: IndexedPaletteDitherTransition["matrix"],
+): Point => {
+  const { size } = matrixFor(matrix);
+  return {
+    x: positiveModulo(Math.floor(origin.x), size),
+    y: positiveModulo(Math.floor(origin.y), size),
+  };
+};
 
 export interface IndexedDitherExpansionOptions {
   readonly basePaletteOffset: number;
@@ -84,13 +96,15 @@ export const expandDitheredIndexedPixels = (
   const output = new Uint8Array(base.length);
   const { size, values } = matrixFor(options.matrix);
   const thresholdCount = size * size;
-  const originX = Math.floor(options.originX ?? 0);
-  const originY = Math.floor(options.originY ?? 0);
+  const origin = normalizeIndexedDitherOrigin(
+    { x: options.originX ?? 0, y: options.originY ?? 0 },
+    options.matrix,
+  );
 
   for (let y = 0; y < surface.height; y += 1) {
     for (let x = 0; x < surface.width; x += 1) {
-      const matrixX = positiveModulo(x + originX, size);
-      const matrixY = positiveModulo(y + originY, size);
+      const matrixX = positiveModulo(x + origin.x, size);
+      const matrixY = positiveModulo(y + origin.y, size);
       const thresholdIndex = matrixY * size + matrixX;
       const threshold = ((values[thresholdIndex] ?? 0) + 0.5) / thresholdCount;
       const source = coverage >= threshold ? target : base;
