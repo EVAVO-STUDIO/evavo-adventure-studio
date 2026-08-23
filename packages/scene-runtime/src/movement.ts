@@ -69,6 +69,7 @@ export const beginActorMovement = (
     areas,
     portals,
     { snapEnd: options.snapDestination ?? true },
+    runtime.actorId,
   );
   if (routeResult.kind !== "route") {
     return { kind: "unreachable", routeResult, state };
