@@ -28,6 +28,10 @@
       "types": "./dist/src/indexed-texture-cache.d.ts",
       "import": "./dist/src/indexed-texture-cache.js"
     },
+    "./indexed-buffer-texture": {
+      "types": "./dist/src/indexed-buffer-texture.d.ts",
+      "import": "./dist/src/indexed-buffer-texture.js"
+    },
     "./texture-store": {
       "types": "./dist/src/texture-store.d.ts",
       "import": "./dist/src/texture-store.js"
