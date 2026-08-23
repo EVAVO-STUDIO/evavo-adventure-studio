@@ -6,7 +6,6 @@ export type RuntimeIndexedAssetIssueCode =
   | "missing-palette-asset"
   | "invalid-palette-asset-kind"
   | "palette-offset-overflow"
-  | "transparent-index-overflow"
   | "duplicate-runtime-path";
 
 export interface RuntimeIndexedAssetIssue {
@@ -85,18 +84,6 @@ export const validateRuntimeIndexedAssets = (
           resolvedMaximum === null
             ? `Indexed asset '${record.assetId}' palette offset ${record.defaultPalette.paletteOffset} is outside palette '${palette.assetId}'.`
             : `Indexed asset '${record.assetId}' maximum source index ${record.maximumSourceIndex} plus offset ${record.defaultPalette.paletteOffset} resolves to ${resolvedMaximum}; palette '${palette.assetId}' has ${palette.metadata.entries} entries.`,
-        );
-      }
-      if (
-        record.transparentIndex !== undefined &&
-        record.maximumSourceIndex !== undefined &&
-        record.transparentIndex > record.maximumSourceIndex
-      ) {
-        addIssue(
-          issues,
-          "transparent-index-overflow",
-          `${path}.transparentIndex`,
-          `Indexed asset '${record.assetId}' transparent index ${record.transparentIndex} exceeds declared maximum source index ${record.maximumSourceIndex}.`,
         );
       }
     }
