@@ -140,6 +140,19 @@ const finishEntry = (
   return { state, active: null, events: [completionEvent(active)] };
 };
 
+const deferredImmediateCompletion = (
+  active: ActiveEntryChoreography,
+): ActiveEntryChoreography => ({
+  ...active,
+  points: [],
+  nextPointIndex: 0,
+  entryAnimationState: null,
+  arrivalFacing: null,
+  arrivalAnimationState: null,
+  unlockControlAt: "path-end",
+  waitingForArrivalAnimation: false,
+});
+
 export const beginEntryChoreography = (
   bundle: RuntimeBundle,
   world: RuntimeWorldState,
@@ -192,7 +205,14 @@ export const beginEntryChoreography = (
   };
   if (choreography.unlockControlAt === "spawn" || points.length === 0) {
     const finished = finishEntry(bundle, state, active);
-    return { ...finished, events: [started, ...finished.events] };
+    if (finished.active) {
+      return { ...finished, events: [started, ...finished.events] };
+    }
+    return {
+      state: finished.state,
+      active: deferredImmediateCompletion(active),
+      events: [started],
+    };
   }
   return { state, active, events: [started] };
 };
