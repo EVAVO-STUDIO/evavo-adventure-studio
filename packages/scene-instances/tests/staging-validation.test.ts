@@ -44,7 +44,17 @@ const instances: SceneInstanceManifest = {
           mirrored: false,
         },
       ],
-      navigationPortals: [],
+      navigationPortals: [
+        {
+          id: asId<"navigation-portal">("portal.office"),
+          fromAreaId: asId<"navigation-area">("navigation.office"),
+          toAreaId: asId<"navigation-area">("navigation.office"),
+          fromPoint: { x: 20, y: 20 },
+          toPoint: { x: 30, y: 20 },
+          bidirectional: true,
+          traversalCost: 0,
+        },
+      ],
     },
   ],
 };
@@ -75,6 +85,15 @@ const validStaging = (): SceneStagingManifest => ({
           areaId: asId<"navigation-area">("navigation.office"),
           mode: "curve",
           curveId: asId<"depth-scale-curve">("curve.office"),
+        },
+      ],
+      navigationStateModifiers: [
+        {
+          id: asId<"navigation-state-modifier">("modifier.desk.closed"),
+          objectId: asId<"object">("object.desk"),
+          activeStateIds: [asId<"object-state">("state.desk.closed")],
+          disabledAreaIds: [],
+          disabledPortalIds: [asId<"navigation-portal">("portal.office")],
         },
       ],
       approachSlotsByObject: {
@@ -163,7 +182,7 @@ describe("scene staging validation", () => {
     expect(validateSceneStagingManifest(context, validStaging())).toEqual([]);
   });
 
-  it("rejects missing objects, areas, entrances and unreachable approach geometry", () => {
+  it("rejects missing objects, states, areas, portals, entrances and unreachable approach geometry", () => {
     const invalid = validStaging();
     invalid.scenes[0] = {
       ...invalid.scenes[0]!,
@@ -172,6 +191,15 @@ describe("scene staging validation", () => {
           areaId: asId<"navigation-area">("navigation.missing"),
           mode: "fixed",
           fixedScale: 1,
+        },
+      ],
+      navigationStateModifiers: [
+        {
+          id: asId<"navigation-state-modifier">("modifier.invalid"),
+          objectId: asId<"object">("object.desk"),
+          activeStateIds: [asId<"object-state">("state.desk.missing")],
+          disabledAreaIds: [asId<"navigation-area">("navigation.also-missing")],
+          disabledPortalIds: [asId<"navigation-portal">("portal.missing")],
         },
       ],
       approachSlotsByObject: {
@@ -214,6 +242,8 @@ describe("scene staging validation", () => {
 
     const codes = validateSceneStagingManifest(context, invalid).map((issue) => issue.code);
     expect(codes).toContain("missing-staging-navigation-area");
+    expect(codes).toContain("missing-staging-navigation-portal");
+    expect(codes).toContain("missing-staging-object-state");
     expect(codes.filter((code) => code === "missing-staging-object").length).toBeGreaterThanOrEqual(2);
     expect(codes).toContain("invalid-staging-approach-position");
     expect(codes).toContain("missing-staging-entrance");
