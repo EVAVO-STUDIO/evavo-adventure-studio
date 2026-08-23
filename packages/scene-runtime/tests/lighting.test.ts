@@ -6,6 +6,22 @@ import { resolvePaletteLightTreatment } from "../src/lighting.js";
 const asId = <T extends string>(value: string): string & { readonly __id: T } => value as never;
 
 const bundle = {
+  paletteMaps: {
+    manifestVersion: 1,
+    projectId: asId<"project">("project.test"),
+    maps: [
+      {
+        id: "palette.cool-shadow",
+        paletteAssetId: asId<"asset">("asset.palette.scene"),
+        paletteOffset: 16,
+      },
+      {
+        id: "palette.warm-lamp",
+        paletteAssetId: asId<"asset">("asset.palette.scene"),
+        paletteOffset: 64,
+      },
+    ],
+  },
   sceneStaging: {
     manifestVersion: 1,
     projectId: asId<"project">("project.test"),
@@ -68,7 +84,7 @@ const world = (lampOn: boolean) =>
   }) as unknown as RuntimeWorldState;
 
 describe("VGA palette lighting", () => {
-  it("selects the highest-priority enabled zone at a native point", () => {
+  it("selects the highest-priority enabled zone and resolves its concrete palette binding", () => {
     expect(
       resolvePaletteLightTreatment(
         bundle,
@@ -76,7 +92,12 @@ describe("VGA palette lighting", () => {
         asId<"scene">("scene.alley"),
         { x: 50, y: 50 },
       ),
-    ).toMatchObject({ paletteMapId: "palette.cool-shadow", blendMode: "hard" });
+    ).toMatchObject({
+      paletteMapId: "palette.cool-shadow",
+      paletteAssetId: "asset.palette.scene",
+      paletteOffset: 16,
+      blendMode: "hard",
+    });
 
     expect(
       resolvePaletteLightTreatment(
@@ -85,6 +106,30 @@ describe("VGA palette lighting", () => {
         asId<"scene">("scene.alley"),
         { x: 50, y: 50 },
       ),
-    ).toMatchObject({ paletteMapId: "palette.warm-lamp", blendMode: "ordered-dither", priority: 5 });
+    ).toMatchObject({
+      paletteMapId: "palette.warm-lamp",
+      paletteAssetId: "asset.palette.scene",
+      paletteOffset: 64,
+      blendMode: "ordered-dither",
+      priority: 5,
+    });
+  });
+
+  it("returns no concrete treatment when a symbolic map is not bound", () => {
+    const unbound = {
+      ...bundle,
+      paletteMaps: {
+        ...bundle.paletteMaps,
+        maps: [],
+      },
+    } as RuntimeBundle;
+    expect(
+      resolvePaletteLightTreatment(
+        unbound,
+        world(false),
+        asId<"scene">("scene.alley"),
+        { x: 50, y: 50 },
+      ),
+    ).toBeNull();
   });
 });
