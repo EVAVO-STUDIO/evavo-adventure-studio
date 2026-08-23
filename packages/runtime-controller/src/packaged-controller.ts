@@ -225,9 +225,11 @@ export const createPackagedRuntimeController = (
   ): InteractiveRuntimeWorldState => {
     const movements = { ...state.movements };
     const pendingObjectCommands = { ...state.pendingObjectCommands };
+    const activeInteractionChoreographies = { ...state.activeInteractionChoreographies };
     delete movements[actorInstanceId];
     delete pendingObjectCommands[actorInstanceId];
-    return { ...state, movements, pendingObjectCommands };
+    delete activeInteractionChoreographies[actorInstanceId];
+    return { ...state, movements, pendingObjectCommands, activeInteractionChoreographies };
   };
 
   const reconcileControlledActorTransition = (
@@ -356,8 +358,10 @@ export const createPackagedRuntimeController = (
     actorInstanceId: Id<"actor-instance">,
   ): InteractiveRuntimeWorldState => {
     const pendingObjectCommands = { ...state.pendingObjectCommands };
+    const activeInteractionChoreographies = { ...state.activeInteractionChoreographies };
     delete pendingObjectCommands[actorInstanceId];
-    return { ...state, pendingObjectCommands };
+    delete activeInteractionChoreographies[actorInstanceId];
+    return { ...state, pendingObjectCommands, activeInteractionChoreographies };
   };
 
   const applyCommandStatus = (event: SceneCommandEvent): void => {
@@ -388,7 +392,12 @@ export const createPackagedRuntimeController = (
       switch (queued.kind) {
         case "queued":
         case "resolved":
-          applyWorldState(queued.state, runtimeEventsFromCommand(queued.event));
+          applyWorldState(
+            queued.state,
+            queued.kind === "queued"
+              ? queued.runtimeEvents ?? []
+              : runtimeEventsFromCommand(queued.event),
+          );
           applyCommandStatus(queued.event);
           return;
         case "missing-target":
@@ -498,6 +507,7 @@ export const createPackagedRuntimeController = (
               {
                 ...movement.state,
                 pendingObjectCommands: world.pendingObjectCommands,
+                activeInteractionChoreographies: world.activeInteractionChoreographies,
               },
               controlledActorInstanceId,
             ),
