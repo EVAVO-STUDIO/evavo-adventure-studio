@@ -14,7 +14,9 @@ import type {
   ObjectStateDefinition,
   SceneObjectInstance,
 } from "@evavo/adventure-scene-instances";
+import type { InteractionComfortRegion } from "@evavo/adventure-scene-instances/staging";
 import type { RuntimeWorldState } from "./index.js";
+import { stagingForScene } from "./staging.js";
 
 export interface ResolvedSceneObjectHotspot {
   readonly objectInstanceId: Id<"object">;
@@ -180,6 +182,38 @@ export const resolveSceneObjectHotspots = (
   return resolved.sort((left, right) => compareRenderOrder(left.order, right.order));
 };
 
+interface ComfortCandidate {
+  readonly target: ResolvedSceneObjectHotspot;
+  readonly region: InteractionComfortRegion;
+}
+
+const comfortCandidatesAtPoint = (
+  bundle: RuntimeBundle,
+  world: RuntimeWorldState,
+  sceneId: Id<"scene">,
+  point: Point,
+  hotspots: readonly ResolvedSceneObjectHotspot[],
+): readonly ComfortCandidate[] => {
+  const staging = stagingForScene(bundle.sceneStaging, sceneId);
+  if (!staging) return [];
+  const targets = new Map(hotspots.map((target) => [target.objectInstanceId as string, target] as const));
+  const candidates: ComfortCandidate[] = [];
+  for (const [objectId, regions] of Object.entries(staging.interactionComfortRegionsByObject)) {
+    const target = targets.get(objectId);
+    if (!target) continue;
+    for (const region of regions) {
+      if (region.enabledWhen && !evaluateCondition(region.enabledWhen, world.story)) continue;
+      if (pointInPolygon(point, region.shape)) candidates.push({ target, region });
+    }
+  }
+  return candidates.sort((left, right) => {
+    if (left.region.priority !== right.region.priority) return right.region.priority - left.region.priority;
+    const render = compareRenderOrder(left.target.order, right.target.order);
+    if (render !== 0) return -render;
+    return left.region.id.localeCompare(right.region.id);
+  });
+};
+
 export const hitTestSceneObject = (
   bundle: RuntimeBundle,
   world: RuntimeWorldState,
@@ -187,13 +221,17 @@ export const hitTestSceneObject = (
   sceneId: Id<"scene"> = world.story.currentSceneId,
 ): ResolvedSceneObjectHotspot | null => {
   const hotspots = resolveSceneObjectHotspots(bundle, world, sceneId);
+
+  // Exact authored visible geometry always wins. Comfort regions are only a fallback
+  // for tiny native-resolution props and therefore cannot steal an exact click.
   for (let index = hotspots.length - 1; index >= 0; index -= 1) {
     const target = hotspots[index];
     if (target && pointInPolygon(point, target.hotspot.shape)) {
       return target;
     }
   }
-  return null;
+
+  return comfortCandidatesAtPoint(bundle, world, sceneId, point)[0]?.target ?? null;
 };
 
 export const executeSceneObjectCommand = (
