@@ -20,6 +20,9 @@ const show = (
   ...modes: readonly SceneDirectorMode[]
 ): boolean => mode === "debug" || modes.includes(mode);
 
+const svgId = (value: string): string => value.replace(/[^a-zA-Z0-9_-]+/gu, "-");
+const shortId = (value: string): string => value.split(".").at(-1) ?? value;
+
 const FacingRay = ({ point, facing }: { readonly point: Point; readonly facing: string }) => {
   const vectors: Readonly<Record<string, Point>> = {
     north: { x: 0, y: -10 },
@@ -70,6 +73,13 @@ const DirectorSvg = ({
         <marker id="dir-arrow" markerWidth="6" markerHeight="6" refX="5" refY="3" orient="auto">
           <path d="M0 0L6 3L0 6Z" className="dir-arrow" />
         </marker>
+        {overlay.lightZones
+          .filter(({ zone }) => zone.blendMode === "ordered-dither")
+          .map(({ zone }) => (
+            <clipPath key={zone.id} id={`dir-light-clip-${svgId(zone.id)}`}>
+              <polygon points={points(zone.shape.points)} />
+            </clipPath>
+          ))}
       </defs>
 
       <rect className="dir-room-bg" width="100%" height="100%" />
@@ -131,14 +141,26 @@ const DirectorSvg = ({
         : null}
 
       {show(mode, "light")
-        ? staging?.paletteLightZones.map((zone) => (
-            <g key={zone.id} className="dir-light-zone">
-              <polygon points={points(zone.shape.points)} />
-              <text x={zone.shape.points[0]?.x ?? 0} y={(zone.shape.points[0]?.y ?? 0) - 3}>
-                {zone.paletteMapId} · {zone.blendMode}
-              </text>
-            </g>
-          ))
+        ? overlay.lightZones.map(({ zone, map, bindingStatus }) => {
+            const clipId = `dir-light-clip-${svgId(zone.id)}`;
+            const target = map ? `${shortId(map.paletteAssetId)} +${map.paletteOffset}` : zone.paletteMapId;
+            const transition = zone.blendMode === "ordered-dither" ? "B4 · 8px" : "hard";
+            return (
+              <g key={zone.id} className={`dir-light-zone is-${bindingStatus}`}>
+                <polygon className="dir-light-zone-shape" points={points(zone.shape.points)} />
+                {zone.blendMode === "ordered-dither" ? (
+                  <polygon
+                    className="dir-light-dither-band"
+                    points={points(zone.shape.points)}
+                    clipPath={`url(#${clipId})`}
+                  />
+                ) : null}
+                <text x={zone.shape.points[0]?.x ?? 0} y={(zone.shape.points[0]?.y ?? 0) - 3}>
+                  {target} · {transition} · {bindingStatus}
+                </text>
+              </g>
+            );
+          })
         : null}
 
       {show(mode, "depth")
