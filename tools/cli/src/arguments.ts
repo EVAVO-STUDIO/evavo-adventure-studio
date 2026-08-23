@@ -185,24 +185,16 @@ const sharedInputs = (
   const paletteMapsPath = optionalValue(options, "--palette-maps");
   const hasAssetManifest = options.values.has("--asset-manifest");
   if (artEvidencePath && !artDirectionPath) {
-    throw new CliUsageError(
-      "Option '--art-evidence' requires '--art-direction'.",
-    );
+    throw new CliUsageError("Option '--art-evidence' requires '--art-direction'.");
   }
   if (artEvidencePath && !hasAssetManifest) {
-    throw new CliUsageError(
-      "Option '--art-evidence' requires '--asset-manifest'.",
-    );
+    throw new CliUsageError("Option '--art-evidence' requires '--asset-manifest'.");
   }
   if (indexedAssetsPath && !hasAssetManifest) {
-    throw new CliUsageError(
-      "Option '--indexed-assets' requires '--asset-manifest'.",
-    );
+    throw new CliUsageError("Option '--indexed-assets' requires '--asset-manifest'.");
   }
   if (paletteMapsPath && !hasAssetManifest) {
-    throw new CliUsageError(
-      "Option '--palette-maps' requires '--asset-manifest'.",
-    );
+    throw new CliUsageError("Option '--palette-maps' requires '--asset-manifest'.");
   }
   return {
     sceneInstancesPath: optionalValue(options, "--scene-instances"),
@@ -219,19 +211,10 @@ const sharedInputs = (
 
 export const parseCliArguments = (argv: readonly string[]): CliCommand => {
   const [command, ...tokens] = argv;
-  if (
-    !command ||
-    command === "help" ||
-    command === "--help" ||
-    command === "-h"
-  ) {
+  if (!command || command === "help" || command === "--help" || command === "-h") {
     return { kind: "help" };
   }
-  if (
-    command === "version" ||
-    command === "--version" ||
-    command === "-v"
-  ) {
+  if (command === "version" || command === "--version" || command === "-v") {
     if (tokens.length > 0) {
       throw new CliUsageError("The version command does not accept options.");
     }
@@ -252,12 +235,7 @@ export const parseCliArguments = (argv: readonly string[]): CliCommand => {
     case "compile":
       assertAllowedOptions(
         options,
-        new Set([
-          ...PROJECT_INPUT_OPTIONS,
-          "--out",
-          "--output",
-          "--report",
-        ]),
+        new Set([...PROJECT_INPUT_OPTIONS, "--out", "--output", "--report"]),
         JSON_FLAG,
       );
       return {
@@ -300,3 +278,31 @@ export const parseCliArguments = (argv: readonly string[]): CliCommand => {
       throw new CliUsageError(`Unknown command '${command}'.`);
   }
 };
+
+const indexedOptions =
+  " [--indexed-assets <indexed-assets.json>] [--palette-maps <palette-maps.json>]";
+const sharedOptions =
+  " [--scene-instances <scene-instances.json>] [--scene-staging <scene-staging.json>]" +
+  indexedOptions +
+  " [--art-direction <art-direction.json>] [--art-evidence <art-evidence.json>]" +
+  " [--bitmap-fonts <bitmap-fonts.json>] [--ui-skins <ui-skins.json>] [--audio-mix <audio-mix.json>]";
+
+export const CLI_HELP = `EVAVO Adventure Studio CLI
+
+Usage:
+  evavo-adventure validate --project <project.json> [--asset-manifest <assets.json>]${sharedOptions} [--json]
+  evavo-adventure compile --project <project.json> --asset-manifest <assets.json>${sharedOptions} --out <game.bundle.json> [--report <report.json>] [--json]
+  evavo-adventure package --project <project.json> --asset-manifest <assets.json>${sharedOptions} --out <release-directory> [--json]
+  evavo-adventure art-evidence --project <project.json> --asset-manifest <assets.json> --out <art-evidence.json> [--json]
+  evavo-adventure version
+
+Indexed VGA inputs:
+  --indexed-assets  Versioned one-byte-per-pixel index-map sidecar. Requires --asset-manifest.
+  --palette-maps    Palette-map registry used by staged VGA light zones. Requires --asset-manifest.
+
+Exit codes:
+  0  success
+  1  project, asset, indexed-palette, scene, art, font, interface or audio validation failed
+  2  invalid command-line usage
+  3  unexpected internal failure
+`;
