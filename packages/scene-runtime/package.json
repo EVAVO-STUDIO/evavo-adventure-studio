@@ -32,6 +32,10 @@
       "types": "./dist/src/occlusion.d.ts",
       "import": "./dist/src/occlusion.js"
     },
+    "./lighting": {
+      "types": "./dist/src/lighting.d.ts",
+      "import": "./dist/src/lighting.js"
+    },
     "./scene-transition": {
       "types": "./dist/src/scene-transition.d.ts",
       "import": "./dist/src/scene-transition.js"
