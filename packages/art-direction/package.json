@@ -15,6 +15,10 @@
     "./evidence": {
       "types": "./dist/src/evidence.d.ts",
       "import": "./dist/src/evidence.js"
+    },
+    "./period-vga-audit": {
+      "types": "./dist/src/period-vga-audit.d.ts",
+      "import": "./dist/src/period-vga-audit.js"
     }
   },
   "files": [
