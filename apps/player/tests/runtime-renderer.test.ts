@@ -1,8 +1,14 @@
 import { bitmapFontManifestSchema } from "@evavo/adventure-bitmap-font";
 import type { Id } from "@evavo/adventure-project-schema";
-import type { PixiAssetTextureStore } from "@evavo/adventure-renderer-pixi/texture-store";
+import { PixiWebGLRenderer } from "@evavo/adventure-renderer-pixi";
+import { PixiIndexedWebGLRenderer } from "@evavo/adventure-renderer-pixi/indexed-renderer";
+import { PixiAssetTextureStore } from "@evavo/adventure-renderer-pixi/texture-store";
+import type { RuntimeBundle } from "@evavo/adventure-runtime-bundle";
 import { describe, expect, it } from "vitest";
-import { createPackagedRendererOptions } from "../src/runtime-renderer.js";
+import {
+  createPackagedRendererOptions,
+  createPackagedRuntimeRenderer,
+} from "../src/runtime-renderer.js";
 
 const id = <T extends string>(value: string): Id<T> => value as Id<T>;
 const textures = {} as PixiAssetTextureStore;
@@ -45,6 +51,34 @@ const bitmapFonts = bitmapFontManifestSchema.parse({
   ],
 });
 
+const baseBundle = {
+  projectId: "project.renderer-test",
+  presentation,
+} as unknown as RuntimeBundle;
+
+const indexedBundle = {
+  ...baseBundle,
+  indexedAssets: {
+    manifestVersion: 1,
+    projectId: "project.renderer-test",
+    assets: [
+      {
+        assetId: "asset.actor",
+        width: 1,
+        height: 1,
+        indexRuntimePath: "indexed/actor.idx",
+        indexSha256: "a".repeat(64),
+        indexByteLength: 1,
+        defaultPalette: {
+          paletteAssetId: "asset.palette.base",
+          paletteOffset: 0,
+        },
+        frames: [],
+      },
+    ],
+  },
+} as unknown as RuntimeBundle;
+
 describe("packaged runtime renderer options", () => {
   it("preserves fontless bundle compatibility", () => {
     const options = createPackagedRendererOptions({ presentation }, textures);
@@ -63,5 +97,24 @@ describe("packaged runtime renderer options", () => {
     expect(
       resolver?.getFont(id<"bitmap-font">("bitmap-font.dialogue"), id<"asset">("asset.other")),
     ).toBeNull();
+  });
+
+  it("keeps legacy bundles on the normal Pixi renderer", () => {
+    const store = new PixiAssetTextureStore();
+    const renderer = createPackagedRuntimeRenderer(baseBundle, store);
+    expect(renderer).toBeInstanceOf(PixiWebGLRenderer);
+    expect(renderer).not.toBeInstanceOf(PixiIndexedWebGLRenderer);
+  });
+
+  it("selects the indexed Pixi subclass once the texture store has a bundle URL", async () => {
+    const store = new PixiAssetTextureStore();
+    await store.loadRuntimeAssets([], "https://example.test/release/game.bundle.json");
+    const renderer = createPackagedRuntimeRenderer(indexedBundle, store);
+    expect(renderer).toBeInstanceOf(PixiIndexedWebGLRenderer);
+  });
+
+  it("fails early when indexed metadata has no retained bundle URL", () => {
+    const store = new PixiAssetTextureStore();
+    expect(() => createPackagedRuntimeRenderer(indexedBundle, store)).toThrow(/bundle URL/u);
   });
 });
