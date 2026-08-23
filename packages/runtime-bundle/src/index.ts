@@ -1,5 +1,6 @@
 import { audioMixManifestSchema } from "@evavo/adventure-audio";
 import { sha256Schema } from "@evavo/adventure-asset-contract";
+import { indexedAssetManifestSchema } from "@evavo/adventure-asset-contract/indexed-assets";
 import { runtimeAssetRecordSchema } from "@evavo/adventure-asset-contract/runtime-asset";
 import { bitmapFontManifestSchema } from "@evavo/adventure-bitmap-font";
 import { registerBitmapFontsForAssetCollection } from "@evavo/adventure-bitmap-font/runtime-registry";
@@ -32,6 +33,10 @@ import {
   RuntimeBitmapFontValidationError,
   validateRuntimeBitmapFonts,
 } from "./font-validation.js";
+import {
+  RuntimeIndexedAssetValidationError,
+  validateRuntimeIndexedAssets,
+} from "./indexed-asset-validation.js";
 import {
   RuntimeSceneInstanceValidationError,
   validateRuntimeSceneInstances,
@@ -95,6 +100,7 @@ export const runtimeBundleSchema = z
     assetManifestFingerprint: sha256Schema,
     assetCompilerVersion: z.string().min(1),
     assets: z.array(runtimeAssetRecordSchema),
+    indexedAssets: indexedAssetManifestSchema.optional(),
     inventoryItems: z.array(inventoryItemSchema),
     actors: z.array(actorSchema),
     scenes: z.array(compiledSceneSchema).min(1),
@@ -113,6 +119,13 @@ export const runtimeBundleSchema = z
   })
   .strict()
   .superRefine((bundle, context) => {
+    if (bundle.indexedAssets && bundle.indexedAssets.projectId !== bundle.projectId) {
+      context.addIssue({
+        code: "custom",
+        path: ["indexedAssets", "projectId"],
+        message: `Indexed-asset project '${bundle.indexedAssets.projectId}' does not match runtime project '${bundle.projectId}'.`,
+      });
+    }
     if (bundle.sceneStaging && bundle.sceneStaging.projectId !== bundle.projectId) {
       context.addIssue({
         code: "custom",
@@ -164,6 +177,10 @@ export const parseRuntimeBundle = (input: unknown): RuntimeBundle => {
   if (sceneInstanceIssues.length > 0) {
     throw new RuntimeSceneInstanceValidationError(sceneInstanceIssues);
   }
+  const indexedAssetIssues = validateRuntimeIndexedAssets(bundle);
+  if (indexedAssetIssues.length > 0) {
+    throw new RuntimeIndexedAssetValidationError(indexedAssetIssues);
+  }
   const paletteMapIssues = validateRuntimePaletteMaps(bundle);
   if (paletteMapIssues.length > 0) {
     throw new RuntimePaletteMapValidationError(paletteMapIssues);
@@ -183,6 +200,7 @@ export const parseRuntimeBundle = (input: unknown): RuntimeBundle => {
 export * from "./audio-validation.js";
 export * from "./font-validation.js";
 export * from "./front-end-localisation.js";
+export * from "./indexed-asset-validation.js";
 export * from "./instance-validation.js";
 export * from "./localisation.js";
 export * from "./palette-map-validation.js";
