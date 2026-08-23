@@ -89,6 +89,22 @@ const validStaging = (): SceneStagingManifest => ({
           },
         ],
       },
+      interactionComfortRegionsByObject: {
+        "object.desk": [
+          {
+            id: asId<"interaction-comfort-region">("comfort.desk"),
+            shape: {
+              points: [
+                { x: 48, y: 48 },
+                { x: 72, y: 48 },
+                { x: 72, y: 72 },
+                { x: 48, y: 72 },
+              ],
+            },
+            priority: 0,
+          },
+        ],
+      },
       interactionChoreographies: [
         {
           id: asId<"interaction-choreography">("choreo.desk.use"),
@@ -170,6 +186,22 @@ describe("scene staging validation", () => {
           },
         ],
       },
+      interactionComfortRegionsByObject: {
+        "object.also-missing": [
+          {
+            id: asId<"interaction-comfort-region">("comfort.missing"),
+            shape: {
+              points: [
+                { x: 140, y: 140 },
+                { x: 160, y: 140 },
+                { x: 160, y: 160 },
+                { x: 140, y: 160 },
+              ],
+            },
+            priority: 0,
+          },
+        ],
+      },
       entryChoreographies: [
         {
           entranceId: asId<"entrance">("entrance.missing"),
@@ -182,7 +214,7 @@ describe("scene staging validation", () => {
 
     const codes = validateSceneStagingManifest(context, invalid).map((issue) => issue.code);
     expect(codes).toContain("missing-staging-navigation-area");
-    expect(codes).toContain("missing-staging-object");
+    expect(codes.filter((code) => code === "missing-staging-object").length).toBeGreaterThanOrEqual(2);
     expect(codes).toContain("invalid-staging-approach-position");
     expect(codes).toContain("missing-staging-entrance");
   });
