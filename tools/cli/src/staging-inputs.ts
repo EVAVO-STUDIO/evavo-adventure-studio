@@ -109,6 +109,7 @@ export const loadSceneStaging = async (
       projectId: project.id,
       scenes: project.scenes,
       actors: project.actors,
+      assets: project.assets,
       sequences: project.sequences,
       sceneInstances,
     },
