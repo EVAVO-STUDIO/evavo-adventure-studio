@@ -114,6 +114,17 @@ export const navigationScaleOverrideSchema = z
   });
 export type NavigationScaleOverride = z.infer<typeof navigationScaleOverrideSchema>;
 
+export const navigationStateModifierSchema = z
+  .object({
+    id: idSchema("navigation-state-modifier"),
+    objectId: idSchema("object"),
+    activeStateIds: z.array(idSchema("object-state")).min(1),
+    disabledAreaIds: z.array(idSchema("navigation-area")).default([]),
+    disabledPortalIds: z.array(idSchema("navigation-portal")).default([]),
+  })
+  .strict();
+export type NavigationStateModifier = z.infer<typeof navigationStateModifierSchema>;
+
 export const approachSlotSchema = z
   .object({
     id: idSchema("approach-slot"),
@@ -208,6 +219,7 @@ export const sceneStagingSchema = z
     surfaceZones: z.array(surfaceZoneSchema).default([]),
     depthScaleCurves: z.array(depthScaleCurveSchema).default([]),
     navigationScaleOverrides: z.array(navigationScaleOverrideSchema).default([]),
+    navigationStateModifiers: z.array(navigationStateModifierSchema).default([]),
     approachSlotsByObject: z.record(idSchema("object"), z.array(approachSlotSchema)).default({}),
     interactionComfortRegionsByObject: z
       .record(idSchema("object"), z.array(interactionComfortRegionSchema))
