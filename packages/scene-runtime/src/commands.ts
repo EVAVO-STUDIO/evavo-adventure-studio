@@ -13,6 +13,11 @@ import {
   type InteractionChoreographyEvent,
 } from "./choreography.js";
 import { applyDialogueRequestEvents } from "./dialogue.js";
+import {
+  advanceEntryChoreography,
+  type ActiveEntryChoreography,
+  type EntryChoreographyEvent,
+} from "./entry.js";
 import { setActorInstanceAnimation } from "./index.js";
 import {
   executeSceneObjectCommand,
@@ -44,6 +49,7 @@ export interface PendingSceneObjectCommand {
 export interface InteractiveRuntimeWorldState extends NavigableRuntimeWorldState {
   readonly pendingObjectCommands: Readonly<Record<string, PendingSceneObjectCommand>>;
   readonly activeInteractionChoreographies: Readonly<Record<string, ActiveInteractionChoreography>>;
+  readonly activeEntryChoreographies: Readonly<Record<string, ActiveEntryChoreography>>;
 }
 
 export type SceneCommandEvent =
@@ -87,6 +93,7 @@ export interface InteractiveRuntimeWorldTransition {
   readonly movementEvents: readonly ActorMovementEvent[];
   readonly commandEvents: readonly SceneCommandEvent[];
   readonly choreographyEvents: readonly InteractionChoreographyEvent[];
+  readonly entryEvents: readonly EntryChoreographyEvent[];
   readonly runtimeEvents: readonly RuntimeEvent[];
 }
 
@@ -344,6 +351,7 @@ export const createInitialInteractiveRuntimeWorldState = (
   ...createInitialNavigableRuntimeWorldState(bundle, seed),
   pendingObjectCommands: {},
   activeInteractionChoreographies: {},
+  activeEntryChoreographies: {},
 });
 
 export const queueSceneObjectCommand = (
@@ -439,6 +447,7 @@ export const queueSceneObjectCommand = (
       [pendingKey(actorInstanceId)]: pending,
     },
     activeInteractionChoreographies: state.activeInteractionChoreographies,
+    activeEntryChoreographies: state.activeEntryChoreographies,
   };
   return { kind: "queued", state: nextState, movement, event: queuedEvent(pending) };
 };
@@ -449,16 +458,20 @@ export const advanceInteractiveRuntimeWorld = (
   ticks: number,
 ): InteractiveRuntimeWorldTransition => {
   const activeAtStart = { ...world.activeInteractionChoreographies };
+  const entriesAtStart = { ...world.activeEntryChoreographies };
   const advanced = advanceNavigableRuntimeWorld(bundle, world, ticks);
   let state: InteractiveRuntimeWorldState = {
     ...advanced.state,
     pendingObjectCommands: world.pendingObjectCommands,
     activeInteractionChoreographies: world.activeInteractionChoreographies,
+    activeEntryChoreographies: world.activeEntryChoreographies,
   };
   const pending = { ...state.pendingObjectCommands };
   const active = { ...state.activeInteractionChoreographies };
+  const entries = { ...state.activeEntryChoreographies };
   const commandEvents: SceneCommandEvent[] = [];
   const choreographyEvents: InteractionChoreographyEvent[] = [];
+  const entryEvents: EntryChoreographyEvent[] = [];
   const runtimeEvents: RuntimeEvent[] = [];
 
   for (const movementEvent of advanced.movementEvents) {
@@ -479,7 +492,12 @@ export const advanceInteractiveRuntimeWorld = (
 
     const resolved = resolveAfterApproach(
       bundle,
-      { ...state, pendingObjectCommands: pending, activeInteractionChoreographies: active },
+      {
+        ...state,
+        pendingObjectCommands: pending,
+        activeInteractionChoreographies: active,
+        activeEntryChoreographies: entries,
+      },
       command,
     );
     state = resolved.state;
@@ -531,7 +549,12 @@ export const advanceInteractiveRuntimeWorld = (
     delete pending[key];
     const resolved = executePendingCommand(
       bundle,
-      { ...state, pendingObjectCommands: pending, activeInteractionChoreographies: active },
+      {
+        ...state,
+        pendingObjectCommands: pending,
+        activeInteractionChoreographies: active,
+        activeEntryChoreographies: entries,
+      },
       command,
     );
     state = resolved.state;
@@ -541,16 +564,29 @@ export const advanceInteractiveRuntimeWorld = (
     }
   }
 
+  for (const [key, entry] of Object.entries(entriesAtStart).sort(([left], [right]) =>
+    left.localeCompare(right),
+  )) {
+    if (!entries[key]) continue;
+    const advancedEntry = advanceEntryChoreography(bundle, state, entry, ticks);
+    state = { ...state, actorInstances: advancedEntry.state.actorInstances };
+    entryEvents.push(...advancedEntry.events);
+    if (advancedEntry.active) entries[key] = advancedEntry.active;
+    else delete entries[key];
+  }
+
   return {
     state: {
       ...state,
       pendingObjectCommands: pending,
       activeInteractionChoreographies: active,
+      activeEntryChoreographies: entries,
     },
     animationEvents: advanced.animationEvents,
     movementEvents: advanced.movementEvents,
     commandEvents,
     choreographyEvents,
+    entryEvents,
     runtimeEvents,
   };
 };
