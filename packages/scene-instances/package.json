@@ -12,6 +12,10 @@
       "types": "./dist/src/compiled-mapping.d.ts",
       "import": "./dist/src/compiled-mapping.js"
     },
+    "./palette-maps": {
+      "types": "./dist/src/palette-maps.d.ts",
+      "import": "./dist/src/palette-maps.js"
+    },
     "./staging": {
       "types": "./dist/src/staging.d.ts",
       "import": "./dist/src/staging.js"
