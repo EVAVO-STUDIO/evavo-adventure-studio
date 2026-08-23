@@ -13,6 +13,7 @@ import {
   preferredLaneCostMultiplierAtPoint,
   sampleDepthScale,
   selectApproachSlot,
+  type ActorFootprint,
   type ApproachSelectionResult,
   type SceneStaging,
   type SceneStagingManifest,
@@ -20,6 +21,8 @@ import {
 } from "@evavo/adventure-scene-instances/staging";
 import type { NavigableRuntimeWorldState } from "./movement-types.js";
 import { enabledNavigationAreas, enabledPortals } from "./movement-shared.js";
+
+const EPSILON = 1e-7;
 
 export const stagingForScene = (
   manifest: SceneStagingManifest | undefined,
@@ -46,6 +49,56 @@ export const resolveInteractionApproach = (
 export interface RuntimeInteractionApproachResult extends ApproachSelectionResult {
   readonly sceneId: Id<"scene">;
 }
+
+export const actorFootprintFor = (
+  staging: SceneStaging | null,
+  actorId: Id<"actor"> | string | null,
+): ActorFootprint | null => (staging && actorId ? staging.actorFootprints[actorId] ?? null : null);
+
+const footprintFitsAtPoint = (
+  point: Point,
+  area: NavigationArea,
+  footprint: ActorFootprint,
+): boolean => {
+  const halfWidth = footprint.width / 2 + footprint.clearance;
+  const halfDepth = footprint.depth / 2 + footprint.clearance;
+  const offsets: readonly Point[] = [
+    { x: 0, y: 0 },
+    { x: halfWidth, y: 0 },
+    { x: -halfWidth, y: 0 },
+    { x: 0, y: halfDepth },
+    { x: 0, y: -halfDepth },
+    { x: halfWidth * 0.7071, y: halfDepth * 0.7071 },
+    { x: -halfWidth * 0.7071, y: halfDepth * 0.7071 },
+    { x: halfWidth * 0.7071, y: -halfDepth * 0.7071 },
+    { x: -halfWidth * 0.7071, y: -halfDepth * 0.7071 },
+  ];
+  return offsets.every((offset) =>
+    pointInPolygon({ x: point.x + offset.x, y: point.y + offset.y }, area.shape),
+  );
+};
+
+export const routeHasFootprintClearance = (
+  route: NavigationRoute,
+  areas: readonly NavigationArea[],
+  footprint: ActorFootprint | null,
+): boolean => {
+  if (!footprint) return true;
+  const areasById = new Map(areas.map((area) => [area.id as string, area] as const));
+  for (const segment of route.segments) {
+    if (segment.kind !== "walk" || !segment.areaId) continue;
+    const area = areasById.get(segment.areaId);
+    if (!area) return false;
+    for (const progress of [0, 0.25, 0.5, 0.75, 1]) {
+      const point = {
+        x: segment.from.x + (segment.to.x - segment.from.x) * progress,
+        y: segment.from.y + (segment.to.y - segment.from.y) * progress,
+      };
+      if (!footprintFitsAtPoint(point, area, footprint)) return false;
+    }
+  }
+  return true;
+};
 
 export const resolveRuntimeInteractionApproach = (
   bundle: RuntimeBundle,
@@ -74,7 +127,17 @@ export const resolveRuntimeInteractionApproach = (
     verb,
     ...(itemId ? { itemId } : {}),
     reachable: (point) =>
-      findNavigationRoute(actor.position, point, areas, portals, { snapEnd: false }).kind === "route",
+      findStagedNavigationRoute(
+        bundle,
+        world,
+        scene.id,
+        actor.position,
+        point,
+        areas,
+        portals,
+        { snapEnd: false },
+        actor.actorId,
+      ).kind === "route",
   });
   return selected ? { ...selected, sceneId: scene.id } : null;
 };
@@ -140,6 +203,12 @@ const combineRoutes = (first: NavigationRoute, second: NavigationRoute): Navigat
   };
 };
 
+interface RouteCandidate {
+  readonly key: string;
+  readonly route: NavigationRoute;
+  readonly score: number;
+}
+
 export const findStagedNavigationRoute = (
   bundle: RuntimeBundle,
   world: NavigableRuntimeWorldState,
@@ -149,6 +218,7 @@ export const findStagedNavigationRoute = (
   areas: readonly NavigationArea[],
   portals: readonly NavigationPortal[],
   options: NavigationRouteOptions = {},
+  actorId: Id<"actor"> | string | null = null,
 ): NavigationRouteResult => {
   const baseline = findNavigationRoute(startPoint, endPoint, areas, portals, options);
   if (baseline.kind !== "route") return baseline;
@@ -161,11 +231,13 @@ export const findStagedNavigationRoute = (
       (lane) => !lane.enabledWhen || evaluateCondition(lane.enabledWhen, world.story),
     ),
   };
-  if (staging.preferredWalkLanes.length === 0) return baseline;
-
-  let selected = baseline.route;
-  let selectedScore = routeScore(staging, selected);
-  let selectedKey = "baseline";
+  const footprint = actorFootprintFor(staging, actorId);
+  const candidates: RouteCandidate[] = [];
+  const addCandidate = (key: string, route: NavigationRoute): void => {
+    if (!routeHasFootprintClearance(route, areas, footprint)) return;
+    candidates.push({ key, route, score: routeScore(staging, route) });
+  };
+  addCandidate("baseline", baseline.route);
 
   for (const lane of staging.preferredWalkLanes) {
     for (let index = 0; index < lane.points.length; index += 1) {
@@ -181,16 +253,36 @@ export const findStagedNavigationRoute = (
         snapEnd: options.snapEnd,
       });
       if (second.kind !== "route") continue;
-      const candidate = combineRoutes(first.route, second.route);
-      const score = routeScore(staging, candidate);
-      const key = `${lane.id}:${index}`;
-      if (score < selectedScore - 1e-7 || (Math.abs(score - selectedScore) <= 1e-7 && key < selectedKey)) {
-        selected = candidate;
-        selectedScore = score;
-        selectedKey = key;
-      }
+      addCandidate(`${lane.id}:${index}`, combineRoutes(first.route, second.route));
     }
   }
 
-  return { kind: "route", route: selected };
+  if (footprint) {
+    const waypoints = areas
+      .flatMap((area) => area.shape.points.map((point, index) => ({ point, key: `${area.id}:${index}` })))
+      .sort((left, right) => left.key.localeCompare(right.key));
+    for (const waypoint of waypoints) {
+      const first = findNavigationRoute(startPoint, waypoint.point, areas, portals, {
+        snapStart: options.snapStart,
+        snapEnd: false,
+      });
+      if (first.kind !== "route") continue;
+      const second = findNavigationRoute(waypoint.point, endPoint, areas, portals, {
+        snapStart: false,
+        snapEnd: options.snapEnd,
+      });
+      if (second.kind !== "route") continue;
+      addCandidate(`clearance:${waypoint.key}`, combineRoutes(first.route, second.route));
+    }
+  }
+
+  const selected = candidates.sort((left, right) => {
+    if (Math.abs(left.score - right.score) > EPSILON) return left.score - right.score;
+    if (Math.abs(left.route.distance - right.route.distance) > EPSILON) {
+      return left.route.distance - right.route.distance;
+    }
+    return left.key.localeCompare(right.key);
+  })[0];
+
+  return selected ? { kind: "route", route: selected.route } : { kind: "unreachable", reason: "no-connected-route" };
 };
