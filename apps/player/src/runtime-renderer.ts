@@ -1,5 +1,4 @@
 import { createBitmapFontResolver } from "@evavo/adventure-bitmap-font/render";
-import type { RendererAdapter } from "@evavo/adventure-render-contract";
 import {
   type PixiRendererOptions,
   type PixiTextureResolver,
@@ -24,7 +23,7 @@ export const createPackagedRuntimeRenderer = (
   bundle: RuntimeBundle,
   textures: PixiAssetTextureStore,
   indexedTextures: PixiIndexedTextureCache | null = null,
-): RendererAdapter => {
+): PixiWebGLRenderer => {
   const options = createPackagedRendererOptions(bundle, indexedTextures ?? textures);
   if (!bundle.indexedAssets || bundle.indexedAssets.assets.length === 0) {
     return new PixiWebGLRenderer(options);
