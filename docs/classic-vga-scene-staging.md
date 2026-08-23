@@ -46,7 +46,7 @@ Footprints are an authored navigation constraint, not a physics simulation. The 
 
 The mathematically shortest route is not always the best-looking route.
 
-`PreferredWalkLane` describes a polyline with a soft influence radius and cost multiplier. It allows a route solver to prefer visually intentional movement such as:
+`PreferredWalkLane` describes a polyline with a soft influence radius and cost multiplier. It allows the route solver to prefer visually intentional movement such as:
 
 - following a carpet runner;
 - staying on a pavement;
@@ -56,6 +56,8 @@ The mathematically shortest route is not always the best-looking route.
 - preserving a dramatic foreground composition.
 
 A preferred lane never makes another valid route impossible. It biases route cost rather than becoming a compulsory spline.
+
+The runtime now evaluates the normal visibility-graph route plus deterministic lane-directed candidates. With no staging manifest, routing remains identical to the legacy path solver.
 
 ## Perspective and scale curves
 
@@ -92,7 +94,7 @@ Each `ApproachSlot` defines:
 - preferred status;
 - optional state condition.
 
-The runtime chooses deterministically: preferred valid slots first, then reachable distance, then stable ID ordering.
+The runtime chooses deterministically: preferred valid slots first, then reachable distance, then stable ID ordering. The existing object `walkTo` remains the compatibility fallback when staging does not provide a usable slot.
 
 This supports interactions such as:
 
@@ -101,6 +103,23 @@ This supports interactions such as:
 - pushing furniture from behind;
 - inserting an item from a precise side;
 - examining an object from a readable pose without forcing every verb to use that pose.
+
+## Native click comfort
+
+A period-authentic 320x200 prop can be visually tiny without becoming frustrating to click.
+
+`InteractionComfortRegion` provides an optional invisible native-scene polygon for a placed object. Comfort regions use **absolute scene coordinates**. They do not scale or mirror with the object's sprite. This is deliberate: the designer authors the exact forgiving screen-space area after reviewing the final room at 1x native size.
+
+The object's normal `interactionShape` remains local object geometry. It is transformed with the object's pivot, perspective scale and mirroring exactly as before.
+
+Hit arbitration is strict:
+
+1. exact visible interaction shapes are tested front-to-back;
+2. if any exact shape contains the pointer, it wins immediately;
+3. only an exact miss enables comfort-region testing;
+4. comfort regions resolve by authored priority, then front-to-back render order, then stable region ID.
+
+A comfort region therefore cannot steal a click from a real visible hotspot. It provides usability without glowing outlines, hotspot sparkles or other modern assist treatment.
 
 ## Interaction choreography
 
@@ -164,12 +183,18 @@ A room entrance is an authored beat, not only a coordinate.
 
 This supports walking through a doorway, descending stairs, emerging from behind a foreground element, stepping out of a lift or entering from off-screen without special-case room scripts.
 
-## Runtime integration
+## Runtime and compiler integration
 
 The staging contracts are exported from:
 
 ```ts
 @evavo/adventure-scene-instances/staging
+```
+
+Semantic validation is exported from:
+
+```ts
+@evavo/adventure-scene-instances/staging-validation
 ```
 
 Runtime-facing resolution helpers are exported from:
@@ -178,27 +203,72 @@ Runtime-facing resolution helpers are exported from:
 @evavo/adventure-scene-runtime/staging
 ```
 
-The initial runtime helpers provide:
+The staging-aware frame resolver is exported from:
 
-- deterministic object approach selection;
-- piecewise perspective scale resolution by navigation area;
-- preferred-lane cost sampling;
-- surface-zone lookup.
+```ts
+@evavo/adventure-scene-runtime/staged-frame
+```
 
-These helpers are intentionally renderer-independent so player, testkit and future editor previews can evaluate the same decisions.
+The compiler can validate, canonicalise and attach a staging manifest through:
 
-## Integration sequence
+```ts
+@evavo/adventure-compiler/scene-staging
+```
+
+Staging is optional in runtime bundles, preserving older packaged games. When present, its project ID must match the bundle project ID.
+
+## CLI workflow
+
+Staging can be supplied as its own sidecar rather than being mixed into the reusable scene-instance document:
+
+```powershell
+pnpm cli -- validate `
+  --project .\game\project.json `
+  --scene-instances .\game\scene-instances.json `
+  --scene-staging .\game\scene-staging.json
+
+pnpm cli -- compile `
+  --project .\game\project.json `
+  --asset-manifest .\game\build\assets.manifest.json `
+  --scene-instances .\game\scene-instances.json `
+  --scene-staging .\game\scene-staging.json `
+  --out .\game\build\game.bundle.json
+
+pnpm cli -- package `
+  --project .\game\project.json `
+  --asset-manifest .\game\build\assets.manifest.json `
+  --scene-instances .\game\scene-instances.json `
+  --scene-staging .\game\scene-staging.json `
+  --out .\game\release
+```
+
+The CLI validates staging references against the real project and placed scene instances. The staging file is also part of output-overwrite and release-directory safety checks.
+
+## Implemented runtime slice
+
+The current staging runtime provides:
+
+- deterministic verb/item-specific object approach selection;
+- reachability checks before an approach slot is selected;
+- arrival facing and optional approach animation state;
+- piecewise perspective scale resolution by active navigation area;
+- preferred-lane route selection over the existing deterministic visibility graph;
+- surface-zone lookup;
+- native click-comfort fallback with exact-hotspot precedence;
+- optional staging storage in compiled runtime bundles.
+
+## Remaining integration sequence
 
 The next runtime/editor slices should build on the contracts in this order:
 
-1. route solver samples preferred-lane cost and actor footprint clearance;
-2. interaction controller asks for an approach slot before queuing movement;
-3. movement runtime applies per-area perspective scale and surface state;
-4. interaction runtime executes choreography beats after arrival;
-5. scene transitions execute entry choreography before unlocking input;
+1. apply actor footprint clearance directly to route feasibility;
+2. execute full interaction choreography beats after arrival rather than only arrival facing/animation;
+3. apply surface movement/audio state during movement;
+4. execute entry choreography before unlocking input;
+5. make staged perspective the default packaged-player frame path;
 6. renderer consumes ordered occlusion planes and palette-light zones;
 7. Scene Director edits every layer visually on the native canvas;
-8. validation rejects unreachable approaches, invalid scale curves, impossible footprint corridors and choreography references that cannot execute;
+8. validation rejects impossible footprint corridors and unsafe occlusion/choreography combinations;
 9. showcase projects retain 1x native screenshots and deterministic replays as evidence.
 
 ## Showcase stress tests
