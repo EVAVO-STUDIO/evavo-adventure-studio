@@ -84,6 +84,25 @@ const orientEntryAnimation = (
   return setActorInstanceAnimation(bundle, world, actorInstanceId, animationState, facing);
 };
 
+const arrivalAnimationCanComplete = (
+  bundle: RuntimeBundle,
+  world: RuntimeWorldState,
+  actorInstanceId: Id<"actor-instance">,
+): boolean => {
+  const runtime = world.actorInstances[actorInstanceId];
+  if (!runtime) return false;
+  const actor = actorsById(bundle).get(runtime.actorId);
+  const clip = actor?.animations.find((candidate) => candidate.id === runtime.playback.clipId);
+  return clip ? !clip.loop : false;
+};
+
+const completionEvent = (active: ActiveEntryChoreography): EntryChoreographyEvent => ({
+  kind: "entry-choreography-completed",
+  actorInstanceId: active.actorInstanceId,
+  sceneId: active.sceneId,
+  entranceId: active.entranceId,
+});
+
 const finishEntry = (
   bundle: RuntimeBundle,
   world: RuntimeWorldState,
@@ -99,7 +118,10 @@ const finishEntry = (
       active.arrivalAnimationState,
       active.arrivalFacing ?? runtime.facing,
     );
-    if (active.unlockControlAt === "animation-end") {
+    if (
+      active.unlockControlAt === "animation-end" &&
+      arrivalAnimationCanComplete(bundle, state, active.actorInstanceId)
+    ) {
       return {
         state,
         active: { ...active, waitingForArrivalAnimation: true },
@@ -115,18 +137,7 @@ const finishEntry = (
       active.arrivalFacing,
     );
   }
-  return {
-    state,
-    active: null,
-    events: [
-      {
-        kind: "entry-choreography-completed",
-        actorInstanceId: active.actorInstanceId,
-        sceneId: active.sceneId,
-        entranceId: active.entranceId,
-      },
-    ],
-  };
+  return { state, active: null, events: [completionEvent(active)] };
 };
 
 export const beginEntryChoreography = (
@@ -198,18 +209,7 @@ export const advanceEntryChoreography = (
   if (active.waitingForArrivalAnimation) {
     const runtime = world.actorInstances[active.actorInstanceId];
     if (!runtime?.playback.completed) return { state: world, active, events: [] };
-    return {
-      state: world,
-      active: null,
-      events: [
-        {
-          kind: "entry-choreography-completed",
-          actorInstanceId: active.actorInstanceId,
-          sceneId: active.sceneId,
-          entranceId: active.entranceId,
-        },
-      ],
-    };
+    return { state: world, active: null, events: [completionEvent(active)] };
   }
   if (ticks === 0) return { state: world, active, events: [] };
 
