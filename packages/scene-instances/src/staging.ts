@@ -128,6 +128,16 @@ export const approachSlotSchema = z
   .strict();
 export type ApproachSlot = z.infer<typeof approachSlotSchema>;
 
+export const interactionComfortRegionSchema = z
+  .object({
+    id: idSchema("interaction-comfort-region"),
+    shape: polygonSchema,
+    priority: z.number().int().default(0),
+    enabledWhen: conditionSchema.optional(),
+  })
+  .strict();
+export type InteractionComfortRegion = z.infer<typeof interactionComfortRegionSchema>;
+
 export const interactionChoreographyBeatSchema = z.discriminatedUnion("kind", [
   z
     .object({
@@ -199,6 +209,9 @@ export const sceneStagingSchema = z
     depthScaleCurves: z.array(depthScaleCurveSchema).default([]),
     navigationScaleOverrides: z.array(navigationScaleOverrideSchema).default([]),
     approachSlotsByObject: z.record(idSchema("object"), z.array(approachSlotSchema)).default({}),
+    interactionComfortRegionsByObject: z
+      .record(idSchema("object"), z.array(interactionComfortRegionSchema))
+      .default({}),
     interactionChoreographies: z.array(interactionChoreographySchema).default([]),
     entryChoreographies: z.array(entryChoreographySchema).default([]),
     paletteLightZones: z.array(paletteLightZoneSchema).default([]),
