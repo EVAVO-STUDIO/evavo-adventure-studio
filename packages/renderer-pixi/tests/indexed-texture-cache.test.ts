@@ -23,27 +23,34 @@ const record: IndexedAssetRecord = {
 
 const fallback = {
   getTexture: () => null,
-  getIndexedTexture: () => null,
 };
 
 const fakeTexture = (key: string): Texture => ({ key }) as unknown as Texture;
 
+const preparedCache = (created: string[] = []) => {
+  const cache = new PixiIndexedTextureCache(
+    ({ cacheKey }) => {
+      created.push(cacheKey);
+      return fakeTexture(cacheKey);
+    },
+    fallback,
+  );
+  cache.registerIndexMap(record, new Uint8Array([1, 1, 1, 1]));
+  cache.registerPalette(
+    asId<"asset">("asset.palette.base"),
+    new Uint8Array([0, 0, 0, 0, 10, 20, 30, 255]),
+  );
+  cache.registerPalette(
+    asId<"asset">("asset.palette.warm"),
+    new Uint8Array([0, 0, 0, 0, 200, 180, 140, 255]),
+  );
+  return cache;
+};
+
 describe("indexed texture cache", () => {
   it("reuses deterministic textures for identical indexed palette requests", () => {
     const created: string[] = [];
-    const cache = new PixiIndexedTextureCache(
-      ({ cacheKey }) => {
-        created.push(cacheKey);
-        return fakeTexture(cacheKey);
-      },
-      fallback,
-    );
-    cache.registerIndexMap(record, new Uint8Array([0, 1, 1, 0]));
-    cache.registerPalette(
-      asId<"asset">("asset.palette.base"),
-      new Uint8Array([0, 0, 0, 0, 20, 30, 40, 255]),
-    );
-
+    const cache = preparedCache(created);
     const first = cache.getIndexedTexture(record.assetId, record.defaultPalette.paletteAssetId, 0);
     const second = cache.getIndexedTexture(record.assetId, record.defaultPalette.paletteAssetId, 0);
     expect(first).toBe(second);
@@ -89,6 +96,32 @@ describe("indexed texture cache", () => {
       colours.add(`${rgba[offset]},${rgba[offset + 1]},${rgba[offset + 2]},${rgba[offset + 3]}`);
     }
     expect(colours).toEqual(new Set(["10,20,30,255", "200,180,140,255"]));
+  });
+
+  it("reuses one cached texture for raw coverages in the same Bayer-4 visual state", () => {
+    const created: string[] = [];
+    const cache = preparedCache(created);
+    const transition = (coverage: number) => ({
+      targetPaletteAssetId: asId<"asset">("asset.palette.warm"),
+      targetPaletteOffset: 0,
+      coverage,
+      matrix: "bayer-4" as const,
+      origin: { x: 0, y: 0 },
+    });
+    const first = cache.getIndexedDitherTexture(
+      record.assetId,
+      record.defaultPalette.paletteAssetId,
+      0,
+      transition(0.49),
+    );
+    const second = cache.getIndexedDitherTexture(
+      record.assetId,
+      record.defaultPalette.paletteAssetId,
+      0,
+      transition(0.51),
+    );
+    expect(first).toBe(second);
+    expect(created).toHaveLength(1);
   });
 
   it("invalidates resolved textures when source index data is replaced", () => {
