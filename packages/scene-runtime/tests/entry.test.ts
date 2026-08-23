@@ -101,6 +101,7 @@ const bundle = {
             unlockControlAt: "path-end",
           },
         ],
+        occlusionPlanes: [],
         paletteLightZones: [],
       },
     ],
