@@ -51,6 +51,7 @@ const staging: SceneStaging = {
       curveId: asId<"depth-scale-curve">("depth.office"),
     },
   ],
+  navigationStateModifiers: [],
   approachSlotsByObject: {
     "object.desk": [
       {
