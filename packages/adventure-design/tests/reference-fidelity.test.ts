@@ -42,32 +42,40 @@ const capabilityIds = (titleId: AdventureReferenceTitlePack["titleId"]) =>
   );
 
 describe("adventure reference fidelity packs", () => {
-  it("ships five title-specific packs over three explicit engine dialects", () => {
+  it("ships eight title-specific packs over four explicit engine dialects", () => {
     expect(adventureReferenceEngineDialects.map((entry) => entry.id)).toEqual([
       "sierra-sci1-vga",
       "sierra-sci32-vga",
       "lucasarts-scumm5-vga",
+      "dynamix-dgds-vga",
     ]);
     expect(adventureReferenceTitlePacks.map((entry) => entry.titleId)).toEqual([
       "kings-quest-v",
       "quest-for-glory-iv",
       "gabriel-knight-sins-of-the-fathers",
+      "police-quest-i-vga-remake",
       "police-quest-iv",
       "indiana-jones-fate-of-atlantis",
+      "heart-of-china",
+      "rise-of-the-dragon",
     ]);
     expect(validateAdventureReferenceTitlePacks(adventureReferenceTitlePacks)).toEqual([]);
   });
 
-  it("keeps every title grammar separate even when visual profiles are shared", () => {
+  it("keeps every title grammar separate even when engine dialects are shared", () => {
     const kq5 = capabilityIds("kings-quest-v");
     const qfg4 = capabilityIds("quest-for-glory-iv");
     const gk1 = capabilityIds("gabriel-knight-sins-of-the-fathers");
+    const pq1 = capabilityIds("police-quest-i-vga-remake");
     const pq4 = capabilityIds("police-quest-iv");
     const foa = capabilityIds("indiana-jones-fate-of-atlantis");
+    const heart = capabilityIds("heart-of-china");
+    const rise = capabilityIds("rise-of-the-dragon");
 
     expect(kq5.has("temporary-icon-bar")).toBe(true);
     expect(kq5.has("score-counter")).toBe(true);
     expect(kq5.has("death-restart-flow")).toBe(true);
+
     for (const id of [
       "rpg-attributes",
       "class-specific-solutions",
@@ -78,6 +86,7 @@ describe("adventure reference fidelity packs", () => {
       expect(qfg4.has(id)).toBe(true);
     }
     expect(qfg4.has("topic-dialogue")).toBe(false);
+
     for (const id of [
       "chapter-day-progression",
       "topic-dialogue",
@@ -87,14 +96,32 @@ describe("adventure reference fidelity packs", () => {
       expect(gk1.has(id)).toBe(true);
     }
     expect(gk1.has("combat-system")).toBe(false);
+
+    for (const id of [
+      "temporary-icon-bar",
+      "narration-feedback",
+      "score-counter",
+      "death-restart-flow",
+      "procedure-checks",
+      "procedural-failure",
+      "location-progression",
+    ] as const) {
+      expect(pq1.has(id)).toBe(true);
+    }
+    expect(pq1.has("evidence-chain")).toBe(false);
+    expect(pq1.has("case-state")).toBe(false);
+    expect(pq1.has("interrogation-flow")).toBe(false);
+
     for (const id of [
       "procedure-checks",
       "evidence-chain",
       "case-state",
+      "interrogation-flow",
       "procedural-failure",
     ] as const) {
       expect(pq4.has(id)).toBe(true);
     }
+
     for (const id of [
       "persistent-verb-panel",
       "sentence-construction",
@@ -104,6 +131,26 @@ describe("adventure reference fidelity packs", () => {
     ] as const) {
       expect(foa.has(id)).toBe(true);
     }
+
+    for (const id of [
+      "protagonist-switching",
+      "route-time-costs",
+      "editorial-travel-montage",
+      "knowledge-separation",
+    ] as const) {
+      expect(heart.has(id)).toBe(true);
+    }
+    expect(heart.has("visible-game-clock")).toBe(false);
+
+    for (const id of [
+      "visible-game-clock",
+      "scheduled-contact-windows",
+      "time-costed-actions",
+      "deadline-outcomes",
+    ] as const) {
+      expect(rise.has(id)).toBe(true);
+    }
+    expect(rise.has("protagonist-switching")).toBe(false);
   });
 
   it("binds every commercial reference to an original EVAVO proof boundary", () => {
@@ -121,11 +168,22 @@ describe("adventure reference fidelity packs", () => {
         ]),
       );
     }
+    expect(adventureReferenceTitlePackByTitleId("police-quest-i-vga-remake").originalProof).toEqual(
+      expect.objectContaining({
+        title: "Night Shift",
+        profileId: "early-procedural-icon-vga",
+        status: "planned",
+      }),
+    );
     expect(adventureReferenceTitlePackByTitleId("quest-for-glory-iv").originalProof).toEqual(
       expect.objectContaining({ title: "The Hollow Vale", status: "planned" }),
     );
     expect(adventureReferenceTitlePackByTitleId("police-quest-iv").originalProof).toEqual(
-      expect.objectContaining({ title: "Open Case", status: "planned" }),
+      expect.objectContaining({
+        title: "Open Case",
+        profileId: "procedural-investigation-vga",
+        status: "planned",
+      }),
     );
   });
 
@@ -187,10 +245,17 @@ describe("adventure reference fidelity packs", () => {
   });
 
   it("resolves exact title variants and refuses unknown IDs", () => {
+    expect(adventureReferenceTitlePackByVariantId("pq1-vga.dos.floppy.en").titleId).toBe(
+      "police-quest-i-vga-remake",
+    );
     expect(adventureReferenceTitlePackByVariantId("gk1.dos.cd.en").titleId).toBe(
       "gabriel-knight-sins-of-the-fathers",
     );
     expect(adventureReferenceEngineDialectById("sierra-sci32-vga").nativeSize).toEqual({
+      width: 320,
+      height: 200,
+    });
+    expect(adventureReferenceEngineDialectById("dynamix-dgds-vga").nativeSize).toEqual({
       width: 320,
       height: 200,
     });
