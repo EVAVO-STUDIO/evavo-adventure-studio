@@ -200,6 +200,23 @@ export const entryChoreographySchema = z
   .strict();
 export type EntryChoreography = z.infer<typeof entryChoreographySchema>;
 
+export const occlusionPlaneSchema = z
+  .object({
+    id: idSchema("occlusion-plane"),
+    assetId: idSchema("asset"),
+    position: pointSchema,
+    pivot: pointSchema.default({ x: 0, y: 0 }),
+    baselineY: z.number().finite(),
+    elevation: z.number().finite().default(0),
+    zOffset: z.number().finite().default(0),
+    opacity: z.number().min(0).max(1).default(1),
+    scale: z.number().positive().default(1),
+    mirrored: z.boolean().default(false),
+    enabledWhen: conditionSchema.optional(),
+  })
+  .strict();
+export type OcclusionPlane = z.infer<typeof occlusionPlaneSchema>;
+
 export const paletteLightZoneSchema = z
   .object({
     id: idSchema("palette-light-zone"),
@@ -227,6 +244,7 @@ export const sceneStagingSchema = z
       .default({}),
     interactionChoreographies: z.array(interactionChoreographySchema).default([]),
     entryChoreographies: z.array(entryChoreographySchema).default([]),
+    occlusionPlanes: z.array(occlusionPlaneSchema).default([]),
     paletteLightZones: z.array(paletteLightZoneSchema).default([]),
   })
   .strict();
