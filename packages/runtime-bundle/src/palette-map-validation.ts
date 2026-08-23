@@ -59,12 +59,12 @@ export const validateRuntimePaletteMaps = (
         `Palette '${palette.assetId}' has no primary runtime output.`,
       );
     }
-    if (map.paletteOffset + palette.metadata.entries > 256) {
+    if (map.paletteOffset >= palette.metadata.entries) {
       addIssue(
         issues,
         "palette-offset-overflow",
         `${path}.paletteOffset`,
-        `Palette map '${map.id}' offset ${map.paletteOffset} plus ${palette.metadata.entries} entries exceeds byte index space.`,
+        `Palette map '${map.id}' offset ${map.paletteOffset} is outside palette '${palette.assetId}' entry range 0–${palette.metadata.entries - 1}.`,
       );
     }
   });
