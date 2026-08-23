@@ -16,6 +16,10 @@
       "types": "./dist/src/indexed-pixels.d.ts",
       "import": "./dist/src/indexed-pixels.js"
     },
+    "./indexed-runtime": {
+      "types": "./dist/src/indexed-runtime.d.ts",
+      "import": "./dist/src/indexed-runtime.js"
+    },
     "./texture-store": {
       "types": "./dist/src/texture-store.d.ts",
       "import": "./dist/src/texture-store.js"
