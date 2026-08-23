@@ -165,4 +165,53 @@ describe("entry choreography runtime", () => {
     expect(finished.state.actorInstances["actor-instance.detective"]?.animationState).toBe("idle");
     expect(finished.events.at(-1)?.kind).toBe("entry-choreography-completed");
   });
+
+  it("preserves an immediate arrival pose through the controller merge handoff", () => {
+    const immediateBundle = {
+      ...bundle,
+      sceneStaging: {
+        ...bundle.sceneStaging,
+        scenes: [
+          {
+            ...bundle.sceneStaging.scenes[0]!,
+            entryChoreographies: [
+              {
+                entranceId: asId<"entrance">("entrance.office"),
+                entryPath: [],
+                speedPixelsPerSecond: 60,
+                arrivalFacing: "east",
+                arrivalAnimationState: "idle",
+                unlockControlAt: "spawn" as const,
+              },
+            ],
+          },
+        ],
+      },
+    } as unknown as RuntimeBundle;
+
+    const started = beginEntryChoreography(
+      immediateBundle,
+      {
+        ...world,
+        actorInstances: {
+          ...world.actorInstances,
+          "actor-instance.detective": {
+            ...world.actorInstances["actor-instance.detective"]!,
+            animationState: "walk",
+            playback: startAnimation(actor, asId<"animation-clip">("animation.walk-east")).state,
+          },
+        },
+      },
+      asId<"actor-instance">("actor-instance.detective"),
+      asId<"scene">("scene.office"),
+      asId<"entrance">("entrance.office"),
+    );
+
+    expect(started.active).not.toBeNull();
+    expect(started.state.actorInstances["actor-instance.detective"]?.animationState).toBe("idle");
+    const completed = advanceEntryChoreography(immediateBundle, started.state, started.active!, 1);
+    expect(completed.active).toBeNull();
+    expect(completed.events.at(-1)?.kind).toBe("entry-choreography-completed");
+    expect(completed.state.actorInstances["actor-instance.detective"]?.animationState).toBe("idle");
+  });
 });
