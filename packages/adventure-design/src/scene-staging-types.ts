@@ -9,7 +9,12 @@ export type AdventureSceneStagingArea =
   | "objects"
   | "portals"
   | "layers"
-  | "interaction";
+  | "interaction"
+  | "depth"
+  | "occlusion"
+  | "surface"
+  | "light"
+  | "entry";
 
 export type AdventureSceneStagingSeverity = "error" | "warning" | "note";
 export type AdventureSceneStagingStatus = "ready" | "attention" | "blocked";
@@ -142,9 +147,3 @@ export class AdventureSceneStagingError extends Error {
     this.sceneId = sceneId;
   }
 }
-
-export const adventureSceneStagingSeverityOrder = {
-  error: 0,
-  warning: 1,
-  note: 2,
-} as const;
