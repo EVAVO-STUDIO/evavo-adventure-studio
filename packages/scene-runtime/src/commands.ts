@@ -87,6 +87,7 @@ export interface InteractiveRuntimeWorldTransition {
   readonly movementEvents: readonly ActorMovementEvent[];
   readonly commandEvents: readonly SceneCommandEvent[];
   readonly choreographyEvents: readonly InteractionChoreographyEvent[];
+  readonly runtimeEvents: readonly RuntimeEvent[];
 }
 
 export type QueueSceneObjectCommandResult =
@@ -96,6 +97,7 @@ export type QueueSceneObjectCommandResult =
       readonly movement: Extract<BeginActorMovementResult, { readonly kind: "started" }> | null;
       readonly event: Extract<SceneCommandEvent, { readonly kind: "object-command-queued" }>;
       readonly choreographyEvents?: readonly InteractionChoreographyEvent[];
+      readonly runtimeEvents?: readonly RuntimeEvent[];
     }
   | {
       readonly kind: "resolved";
@@ -238,6 +240,7 @@ const executePendingCommand = (
 interface BegunPendingChoreography {
   readonly state: InteractiveRuntimeWorldState;
   readonly choreographyEvents: readonly InteractionChoreographyEvent[];
+  readonly runtimeEvents: readonly RuntimeEvent[];
 }
 
 const beginPendingChoreography = (
@@ -289,6 +292,7 @@ const beginPendingChoreography = (
       },
     },
     choreographyEvents: started.choreographyEvents,
+    runtimeEvents: started.runtimeEvents,
   };
 };
 
@@ -315,6 +319,7 @@ const resolveAfterApproach = (
       movement: null,
       event: queuedEvent(pending),
       choreographyEvents: choreography.choreographyEvents,
+      runtimeEvents: choreography.runtimeEvents,
     };
   }
   const resolved = executePendingCommand(bundle, stagedState, pending);
@@ -454,6 +459,7 @@ export const advanceInteractiveRuntimeWorld = (
   const active = { ...state.activeInteractionChoreographies };
   const commandEvents: SceneCommandEvent[] = [];
   const choreographyEvents: InteractionChoreographyEvent[] = [];
+  const runtimeEvents: RuntimeEvent[] = [];
 
   for (const movementEvent of advanced.movementEvents) {
     const command = pending[pendingKey(movementEvent.actorInstanceId)];
@@ -483,12 +489,17 @@ export const advanceInteractiveRuntimeWorld = (
       ]!;
       commandEvents.push(resolved.event);
       choreographyEvents.push(...(resolved.choreographyEvents ?? []));
+      runtimeEvents.push(...(resolved.runtimeEvents ?? []));
       continue;
     }
     delete pending[pendingKey(command.actorInstanceId)];
     delete active[pendingKey(command.actorInstanceId)];
-    if (resolved.kind === "resolved") commandEvents.push(resolved.event);
-    else if (resolved.kind === "missing-target") {
+    if (resolved.kind === "resolved") {
+      commandEvents.push(resolved.event);
+      if (resolved.event.kind === "object-command-executed") {
+        runtimeEvents.push(...resolved.event.runtimeEvents);
+      }
+    } else if (resolved.kind === "missing-target") {
       commandEvents.push({
         kind: "object-command-aborted",
         actorInstanceId: command.actorInstanceId,
@@ -510,6 +521,7 @@ export const advanceInteractiveRuntimeWorld = (
       actorInstances: advancedChoreography.state.actorInstances,
     };
     choreographyEvents.push(...advancedChoreography.choreographyEvents);
+    runtimeEvents.push(...advancedChoreography.runtimeEvents);
     if (advancedChoreography.active) {
       active[key] = advancedChoreography.active;
       continue;
@@ -524,6 +536,9 @@ export const advanceInteractiveRuntimeWorld = (
     );
     state = resolved.state;
     commandEvents.push(resolved.event);
+    if (resolved.event.kind === "object-command-executed") {
+      runtimeEvents.push(...resolved.event.runtimeEvents);
+    }
   }
 
   return {
@@ -536,5 +551,6 @@ export const advanceInteractiveRuntimeWorld = (
     movementEvents: advanced.movementEvents,
     commandEvents,
     choreographyEvents,
+    runtimeEvents,
   };
 };
