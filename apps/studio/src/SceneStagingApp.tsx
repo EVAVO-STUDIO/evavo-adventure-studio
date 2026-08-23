@@ -221,6 +221,28 @@ export const SceneStagingApp = () => {
               <li>Entrances, surfaces and indexed palette-light regions remain deterministic through play.</li>
             </ul>
           </section>
+          {directorOverlay.lightZones.length > 0 ? (
+            <section>
+              <span className="stg-eyebrow">INDEXED LIGHT BINDINGS</span>
+              <h2>{boundLights}/{directorOverlay.lightZones.length} production-ready</h2>
+              <ul>
+                {directorOverlay.lightZones.map(({ zone, map, bindingStatus }) => (
+                  <li key={zone.id}>
+                    <strong>{shortId(zone.id)}</strong>
+                    {" · "}{zone.blendMode}
+                    {map
+                      ? ` · ${map.paletteAssetId} +${map.paletteOffset}`
+                      : ` · ${zone.paletteMapId}`}
+                    {bindingStatus === "bound" ? " · bound" : ` · ${bindingStatus}`}
+                  </li>
+                ))}
+              </ul>
+              <p>
+                Ordered-dither zones transition over the native boundary band and use Bayer palette selection;
+                missing palette assets must be resolved before the proof is considered shippable.
+              </p>
+            </section>
+          ) : null}
           <section className="stg-next-action">
             <span className="stg-eyebrow">NEXT ACTION</span>
             <h2>{report.findings[0]?.message ?? "Play the room at 1× native size"}</h2>
