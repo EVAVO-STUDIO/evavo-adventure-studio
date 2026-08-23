@@ -20,6 +20,7 @@ import {
   validateGameOpeningManifest,
 } from "@evavo/adventure-project-schema/opening";
 import { sceneInstanceManifestSchema } from "@evavo/adventure-scene-instances";
+import { sceneStagingManifestSchema } from "@evavo/adventure-scene-instances/staging";
 import { uiSkinManifestSchema } from "@evavo/adventure-ui-skin";
 import { z } from "zod";
 import {
@@ -95,6 +96,7 @@ export const runtimeBundleSchema = z
     dialogues: z.array(compiledDialogueSchema),
     sequences: z.array(compiledSequenceSchema),
     sceneInstances: sceneInstanceManifestSchema.optional(),
+    sceneStaging: sceneStagingManifestSchema.optional(),
     bitmapFonts: bitmapFontManifestSchema.optional(),
     uiSkins: uiSkinManifestSchema.optional(),
     audioMix: audioMixManifestSchema.optional(),
@@ -105,6 +107,13 @@ export const runtimeBundleSchema = z
   })
   .strict()
   .superRefine((bundle, context) => {
+    if (bundle.sceneStaging && bundle.sceneStaging.projectId !== bundle.projectId) {
+      context.addIssue({
+        code: "custom",
+        path: ["sceneStaging", "projectId"],
+        message: `Scene staging project '${bundle.sceneStaging.projectId}' does not match runtime project '${bundle.projectId}'.`,
+      });
+    }
     if (bundle.frontEnd && bundle.frontEnd.projectId !== bundle.projectId) {
       context.addIssue({
         code: "custom",
