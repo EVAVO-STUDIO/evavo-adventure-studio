@@ -6,7 +6,7 @@ import { applyPaletteLightingToFrame } from "../src/palette-light-frame.js";
 
 const asId = <T extends string>(value: string): string & { readonly __id: T } => value as never;
 
-const frame: ResolvedFrame = {
+const frameAtActorY = (y: number): ResolvedFrame => ({
   frameVersion: 1,
   tick: 10,
   canvas: { width: 320, height: 200, clearColor: [0, 0, 0, 255] },
@@ -24,12 +24,12 @@ const frame: ResolvedFrame = {
       order: {
         layer: "world",
         elevation: 0,
-        baselineY: 60,
+        baselineY: y,
         zOffset: 0,
         stableId: "actor",
       },
       transform: {
-        position: { x: 50, y: 60 },
+        position: { x: 50, y },
         pivot: { x: 8, y: 32 },
         scale: { x: 1, y: 1 },
         rotationRadians: 0,
@@ -63,68 +63,69 @@ const frame: ResolvedFrame = {
       visible: true,
     },
   ],
-};
+});
 
 const world = {
   story: { flags: { lampOn: false }, variables: {} },
 } as unknown as RuntimeWorldState;
 
-const hardBundle = {
-  paletteMaps: {
-    manifestVersion: 1,
-    projectId: asId<"project">("project.test"),
-    maps: [
-      {
-        id: "palette.shadow",
-        paletteAssetId: asId<"asset">("asset.palette.shadow"),
-        paletteOffset: 32,
-      },
-    ],
-  },
-  sceneStaging: {
-    manifestVersion: 1,
-    projectId: asId<"project">("project.test"),
-    scenes: [
-      {
-        sceneId: asId<"scene">("scene.room"),
-        actorFootprints: {},
-        preferredWalkLanes: [],
-        surfaceZones: [],
-        depthScaleCurves: [],
-        navigationScaleOverrides: [],
-        navigationStateModifiers: [],
-        approachSlotsByObject: {},
-        interactionComfortRegionsByObject: {},
-        interactionChoreographies: [],
-        entryChoreographies: [],
-        occlusionPlanes: [],
-        paletteLightZones: [
-          {
-            id: asId<"palette-light-zone">("light.shadow"),
-            shape: {
-              points: [
-                { x: 0, y: 40 },
-                { x: 100, y: 40 },
-                { x: 100, y: 100 },
-                { x: 0, y: 100 },
-              ],
+const bundleFor = (blendMode: "hard" | "ordered-dither") =>
+  ({
+    paletteMaps: {
+      manifestVersion: 1,
+      projectId: asId<"project">("project.test"),
+      maps: [
+        {
+          id: "palette.shadow",
+          paletteAssetId: asId<"asset">("asset.palette.shadow"),
+          paletteOffset: 32,
+        },
+      ],
+    },
+    sceneStaging: {
+      manifestVersion: 1,
+      projectId: asId<"project">("project.test"),
+      scenes: [
+        {
+          sceneId: asId<"scene">("scene.room"),
+          actorFootprints: {},
+          preferredWalkLanes: [],
+          surfaceZones: [],
+          depthScaleCurves: [],
+          navigationScaleOverrides: [],
+          navigationStateModifiers: [],
+          approachSlotsByObject: {},
+          interactionComfortRegionsByObject: {},
+          interactionChoreographies: [],
+          entryChoreographies: [],
+          occlusionPlanes: [],
+          paletteLightZones: [
+            {
+              id: asId<"palette-light-zone">("light.shadow"),
+              shape: {
+                points: [
+                  { x: 0, y: 40 },
+                  { x: 100, y: 40 },
+                  { x: 100, y: 100 },
+                  { x: 0, y: 100 },
+                ],
+              },
+              paletteMapId: "palette.shadow",
+              blendMode,
+              priority: 1,
             },
-            paletteMapId: "palette.shadow",
-            blendMode: "hard",
-            priority: 1,
-          },
-        ],
-      },
-    ],
-  },
-} as unknown as RuntimeBundle;
+          ],
+        },
+      ],
+    },
+  }) as unknown as RuntimeBundle;
 
 describe("indexed frame palette lighting", () => {
   it("rebinds indexed world nodes inside hard palette zones", () => {
     const resolved = applyPaletteLightingToFrame(
-      hardBundle,
+      bundleFor("hard"),
       world,
-      frame,
+      frameAtActorY(60),
       asId<"scene">("scene.room"),
     );
     const actor = resolved.nodes.find((node) => node.id === "node.actor");
@@ -137,9 +138,9 @@ describe("indexed frame palette lighting", () => {
 
   it("does not recolour indexed background nodes", () => {
     const resolved = applyPaletteLightingToFrame(
-      hardBundle,
+      bundleFor("hard"),
       world,
-      frame,
+      frameAtActorY(60),
       asId<"scene">("scene.room"),
     );
     const background = resolved.nodes.find((node) => node.id === "node.background");
@@ -150,24 +151,11 @@ describe("indexed frame palette lighting", () => {
     });
   });
 
-  it("leaves ordered-dither zones unresolved rather than degrading them to hard swaps", () => {
-    const ditherBundle = {
-      ...hardBundle,
-      sceneStaging: {
-        ...hardBundle.sceneStaging,
-        scenes: hardBundle.sceneStaging!.scenes.map((scene) => ({
-          ...scene,
-          paletteLightZones: scene.paletteLightZones.map((zone) => ({
-            ...zone,
-            blendMode: "ordered-dither" as const,
-          })),
-        })),
-      },
-    } as RuntimeBundle;
+  it("attaches a stable Bayer transition while crossing an ordered-dither boundary", () => {
     const resolved = applyPaletteLightingToFrame(
-      ditherBundle,
+      bundleFor("ordered-dither"),
       world,
-      frame,
+      frameAtActorY(44),
       asId<"scene">("scene.room"),
     );
     const actor = resolved.nodes.find((node) => node.id === "node.actor");
@@ -175,6 +163,29 @@ describe("indexed frame palette lighting", () => {
       kind: "indexed-sprite",
       paletteAssetId: "asset.palette.base",
       paletteOffset: 0,
+      paletteDither: {
+        targetPaletteAssetId: "asset.palette.shadow",
+        targetPaletteOffset: 32,
+        coverage: 0.5,
+        matrix: "bayer-4",
+        origin: { x: 42, y: 12 },
+      },
     });
+  });
+
+  it("collapses a fully covered ordered zone to the target palette without a dither payload", () => {
+    const resolved = applyPaletteLightingToFrame(
+      bundleFor("ordered-dither"),
+      world,
+      frameAtActorY(60),
+      asId<"scene">("scene.room"),
+    );
+    const actor = resolved.nodes.find((node) => node.id === "node.actor");
+    expect(actor).toMatchObject({
+      kind: "indexed-sprite",
+      paletteAssetId: "asset.palette.shadow",
+      paletteOffset: 32,
+    });
+    if (actor?.kind === "indexed-sprite") expect(actor.paletteDither).toBeUndefined();
   });
 });
