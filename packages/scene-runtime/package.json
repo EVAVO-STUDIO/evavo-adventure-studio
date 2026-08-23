@@ -36,6 +36,10 @@
       "types": "./dist/src/lighting.d.ts",
       "import": "./dist/src/lighting.js"
     },
+    "./entry": {
+      "types": "./dist/src/entry.d.ts",
+      "import": "./dist/src/entry.js"
+    },
     "./scene-transition": {
       "types": "./dist/src/scene-transition.d.ts",
       "import": "./dist/src/scene-transition.js"
