@@ -37,6 +37,7 @@ export const indexedAssetRecordSchema = z
     indexRuntimePath: relativeRuntimePathSchema,
     indexSha256: sha256Schema,
     indexByteLength: z.number().int().positive(),
+    maximumSourceIndex: z.number().int().min(0).max(255).optional(),
     transparentIndex: z.number().int().min(0).max(255).optional(),
     defaultPalette: indexedPaletteBindingSchema,
     frames: z.array(indexedFrameSchema).default([]),
@@ -173,6 +174,11 @@ const samePoint = (
   right: { readonly x: number; readonly y: number },
 ): boolean => left.x === right.x && left.y === right.y;
 
+const maximumResolvedIndex = (record: IndexedAssetRecord): number | null =>
+  record.maximumSourceIndex === undefined
+    ? null
+    : record.maximumSourceIndex + record.defaultPalette.paletteOffset;
+
 export const validateIndexedAssetManifest = (
   project: Pick<AdventureProject, "id">,
   compiled: AssetBuildManifest,
@@ -296,23 +302,30 @@ export const validateIndexedAssetManifest = (
         `Palette '${palette.assetId}' has no primary runtime output.`,
       );
     }
-    if (record.defaultPalette.paletteOffset >= palette.metadata.entries) {
+    const resolvedMaximum = maximumResolvedIndex(record);
+    if (
+      (resolvedMaximum !== null && resolvedMaximum >= palette.metadata.entries) ||
+      (resolvedMaximum === null && record.defaultPalette.paletteOffset >= palette.metadata.entries)
+    ) {
       indexedIssue(
         issues,
         "palette-offset-overflow",
         `${recordPath}.defaultPalette.paletteOffset`,
-        `Palette offset ${record.defaultPalette.paletteOffset} is outside palette '${palette.assetId}' entry range 0–${palette.metadata.entries - 1}.`,
+        resolvedMaximum === null
+          ? `Palette offset ${record.defaultPalette.paletteOffset} is outside palette '${palette.assetId}' entry range 0–${palette.metadata.entries - 1}.`
+          : `Indexed source maximum ${record.maximumSourceIndex} plus palette offset ${record.defaultPalette.paletteOffset} resolves to ${resolvedMaximum}; palette '${palette.assetId}' contains ${palette.metadata.entries} entries.`,
       );
     }
     if (
       record.transparentIndex !== undefined &&
-      record.transparentIndex + record.defaultPalette.paletteOffset >= palette.metadata.entries
+      record.maximumSourceIndex !== undefined &&
+      record.transparentIndex > record.maximumSourceIndex
     ) {
       indexedIssue(
         issues,
         "transparent-index-overflow",
         `${recordPath}.transparentIndex`,
-        `Transparent source index ${record.transparentIndex} plus offset ${record.defaultPalette.paletteOffset} exceeds palette '${palette.assetId}'.`,
+        `Transparent source index ${record.transparentIndex} exceeds declared maximum source index ${record.maximumSourceIndex}.`,
       );
     }
   });
@@ -330,6 +343,12 @@ export interface IndexedAssetRuntimeReader {
   readIndexBytes(record: IndexedAssetRecord): Promise<Uint8Array>;
   readPaletteBytes(paletteAssetId: IndexedPaletteBinding["paletteAssetId"]): Promise<Uint8Array>;
 }
+
+const observedMaximumIndex = (indexBytes: Uint8Array): number => {
+  let maximum = 0;
+  for (const value of indexBytes) maximum = Math.max(maximum, value);
+  return maximum;
+};
 
 export const readIndexedAssetRuntimeBytes = async (
   reader: IndexedAssetRuntimeReader,
@@ -349,11 +368,16 @@ export const readIndexedAssetRuntimeBytes = async (
       `Palette runtime bytes for '${record.defaultPalette.paletteAssetId}' must contain 1–256 RGBA entries.`,
     );
   }
-  const entries = paletteBytes.byteLength / 4;
-  const maximumSourceIndex = indexBytes.reduce((maximum, value) => Math.max(maximum, value), 0);
-  if (maximumSourceIndex + record.defaultPalette.paletteOffset >= entries) {
+  const observedMaximum = observedMaximumIndex(indexBytes);
+  if (record.maximumSourceIndex !== undefined && record.maximumSourceIndex !== observedMaximum) {
     throw new RangeError(
-      `Indexed runtime bytes for '${record.assetId}' use source index ${maximumSourceIndex}; offset ${record.defaultPalette.paletteOffset} exceeds ${entries} palette entries.`,
+      `Indexed runtime bytes for '${record.assetId}' have maximum source index ${observedMaximum}; sidecar declares ${record.maximumSourceIndex}.`,
+    );
+  }
+  const entries = paletteBytes.byteLength / 4;
+  if (observedMaximum + record.defaultPalette.paletteOffset >= entries) {
+    throw new RangeError(
+      `Indexed runtime bytes for '${record.assetId}' use source index ${observedMaximum}; offset ${record.defaultPalette.paletteOffset} exceeds ${entries} palette entries.`,
     );
   }
   return { record, indexBytes, paletteBytes };
