@@ -223,6 +223,16 @@ export const createAudioPackagedRuntimeController = (
   ) => (condition: Parameters<typeof evaluateCondition>[0]): boolean =>
     evaluateCondition(condition, world.story);
 
+  const processSceneAudioCues = (): void => {
+    const cueIds = controller.drainSceneAudioCueIds();
+    if (!mix || !audio || cueIds.length === 0) return;
+    const tick = controller.worldState().story.tick;
+    for (const cueId of cueIds) {
+      const cue = mix.cues.find((candidate) => candidate.id === cueId);
+      if (cue) applyTransition(triggerAudioCue(mix, audio, cue.id, tick));
+    }
+  };
+
   if (mix) {
     audio = createInitialAudioRuntimeState(
       mix,
@@ -309,6 +319,7 @@ export const createAudioPackagedRuntimeController = (
     const previous = controller.worldState();
     const result = mutation();
     synchronizeWorld(previous, controller.worldState());
+    processSceneAudioCues();
     return result;
   };
 
@@ -361,6 +372,7 @@ export const createAudioPackagedRuntimeController = (
       internalWorldReplacementSave(bundle, next, interfaceState),
     );
     synchronizeWorld(previous, controller.worldState());
+    processSceneAudioCues();
   };
 
   const startNarrativeSequence = (
@@ -419,6 +431,7 @@ export const createAudioPackagedRuntimeController = (
     const save = loadRuntimeSaveGame(bundle, input);
     const oldVoices = audio?.voices ?? [];
     const restoredTick = controller.restoreSaveGame(save);
+    controller.drainSceneAudioCueIds();
     commands = oldVoices.map((voice) => ({
       kind: "stop" as const,
       atTick: restoredTick,
@@ -470,6 +483,7 @@ export const createAudioPackagedRuntimeController = (
     worldState: controller.worldState,
     cameraState: controller.cameraState,
     parserState: controller.parserState,
+    drainSceneAudioCueIds: controller.drainSceneAudioCueIds,
     audioState: () => audio,
     drainAudioCommands: () => {
       const drained = commands;
@@ -493,11 +507,13 @@ export const createAudioPackagedRuntimeController = (
       }
       if (tick === synchronizedTick) {
         const frame = controller.createFrame(tick);
+        processSceneAudioCues();
         clearTrackedNarrativeIfInactive();
         return frame;
       }
 
       let frame = controller.createFrame(synchronizedTick);
+      processSceneAudioCues();
       for (
         let nextTick = synchronizedTick + 1;
         nextTick <= tick;
@@ -506,6 +522,7 @@ export const createAudioPackagedRuntimeController = (
         const previous = controller.worldState();
         frame = controller.createFrame(nextTick);
         synchronizeWorld(previous, controller.worldState());
+        processSceneAudioCues();
       }
       clearTrackedNarrativeIfInactive();
       return frame;
