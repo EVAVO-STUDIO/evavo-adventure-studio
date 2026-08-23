@@ -59,6 +59,9 @@ const canonicalSceneStaging = (manifest: SceneStagingManifest): SceneStagingMani
       entryChoreographies: [...scene.entryChoreographies].sort((left, right) =>
         left.entranceId.localeCompare(right.entranceId),
       ),
+      occlusionPlanes: [...scene.occlusionPlanes].sort((left, right) =>
+        left.id.localeCompare(right.id),
+      ),
       paletteLightZones: [...scene.paletteLightZones].sort((left, right) =>
         left.id.localeCompare(right.id),
       ),
