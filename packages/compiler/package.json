@@ -28,6 +28,14 @@
       "types": "./dist/src/with-staging.d.ts",
       "import": "./dist/src/with-staging.js"
     },
+    "./with-indexed-assets": {
+      "types": "./dist/src/with-indexed-assets.d.ts",
+      "import": "./dist/src/with-indexed-assets.js"
+    },
+    "./indexed-assets": {
+      "types": "./dist/src/with-indexed-assets.d.ts",
+      "import": "./dist/src/with-indexed-assets.js"
+    },
     "./with-palette-maps": {
       "types": "./dist/src/with-palette-maps.d.ts",
       "import": "./dist/src/with-palette-maps.js"
