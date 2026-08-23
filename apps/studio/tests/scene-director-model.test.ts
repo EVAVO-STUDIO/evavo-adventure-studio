@@ -6,6 +6,10 @@ import {
   nightShiftDirectorProject,
   nightShiftDirectorStaging,
 } from "../src/night-shift-director-fixture.js";
+import {
+  nightShiftDirectorPaletteMaps,
+  redLedgerDirectorPaletteMaps,
+} from "../src/scene-director-palette-maps.js";
 import { sceneDirectorSamples } from "../src/scene-director-samples.js";
 import { studioSceneStaging } from "../src/scene-staging-fixture.js";
 import {
@@ -20,6 +24,7 @@ describe("Scene Director overlay model", () => {
       studioSceneInstances,
       studioSceneStaging,
       studioProject.startSceneId,
+      redLedgerDirectorPaletteMaps,
     );
 
     expect(overlay.sceneName).toBe("Rain Office");
@@ -39,19 +44,31 @@ describe("Scene Director overlay model", () => {
     expect(overlay.staging?.navigationStateModifiers[0]?.objectId).toBe("object.office.door");
     expect(overlay.staging?.entryChoreographies[0]?.spawnPosition).toEqual({ x: 24, y: 174 });
     expect(overlay.staging?.paletteLightZones[0]?.blendMode).toBe("ordered-dither");
+    expect(overlay.lightZones[0]).toMatchObject({
+      bindingStatus: "missing-palette-asset",
+      map: {
+        id: "palette-map.office-lamp-warm",
+        paletteAssetId: "asset.palette.red-ledger.actor-lighting",
+        paletteOffset: 64,
+      },
+    });
   });
 
-  it("summarises mode-specific authored evidence", () => {
+  it("summarises mode-specific authored evidence and unresolved palette assets", () => {
     const overlay = createSceneDirectorOverlay(
       studioProject,
       studioSceneInstances,
       studioSceneStaging,
       studioProject.startSceneId,
+      redLedgerDirectorPaletteMaps,
     );
 
     expect(sceneDirectorModeSummary(overlay, "approach")).toMatchObject({ count: 2 });
     expect(sceneDirectorModeSummary(overlay, "actors")).toMatchObject({ count: 2 });
-    expect(sceneDirectorModeSummary(overlay, "light")).toMatchObject({ count: 1 });
+    expect(sceneDirectorModeSummary(overlay, "light")).toMatchObject({
+      count: 1,
+      note: expect.stringContaining("1 palette-light binding"),
+    });
     expect(sceneDirectorModeSummary(overlay, "entry")).toMatchObject({ count: 1 });
   });
 
@@ -64,6 +81,9 @@ describe("Scene Director overlay model", () => {
       "Gothic investigation VGA",
       "Early procedural icon VGA",
     ]);
+    expect(sceneDirectorSamples.every((sample) => sample.paletteMaps.projectId === sample.project.id)).toBe(
+      true,
+    );
   });
 
   it("resolves the Night Shift station as a fully staged early procedural room", () => {
@@ -72,6 +92,7 @@ describe("Scene Director overlay model", () => {
       nightShiftDirectorInstances,
       nightShiftDirectorStaging,
       nightShiftDirectorProject.startSceneId,
+      nightShiftDirectorPaletteMaps,
     );
 
     expect(overlay.sceneName).toBe("Municipal briefing room");
@@ -95,6 +116,13 @@ describe("Scene Director overlay model", () => {
     expect(overlay.staging?.paletteLightZones[0]?.paletteMapId).toBe(
       "palette-map.night-shift.station-fluorescent",
     );
+    expect(overlay.lightZones[0]).toMatchObject({
+      bindingStatus: "missing-palette-asset",
+      map: {
+        paletteAssetId: "asset.palette.night-shift.actor-lighting",
+        paletteOffset: 32,
+      },
+    });
   });
 
   it("keeps the Night Shift staging fixture semantically valid", () => {
