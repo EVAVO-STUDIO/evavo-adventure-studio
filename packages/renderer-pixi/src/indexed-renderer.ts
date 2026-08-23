@@ -12,6 +12,10 @@ import {
   type PixiRendererOptions,
   type PixiTextureResolver,
 } from "./index.js";
+import {
+  normalizeIndexedDitherOrigin,
+  quantizeIndexedDitherCoverage,
+} from "./indexed-dither.js";
 
 export interface PixiIndexedTextureResolver extends PixiTextureResolver {
   getIndexedTexture(
@@ -72,16 +76,20 @@ const fnv1a = (value: string): string => {
 
 const indexedKey = (node: IndexedSpriteRenderNode): string => {
   const dither = node.paletteDither;
+  const coverage = dither
+    ? quantizeIndexedDitherCoverage(dither.coverage, dither.matrix)
+    : "";
+  const origin = dither ? normalizeIndexedDitherOrigin(dither.origin, dither.matrix) : null;
   return [
     node.indexAssetId,
     node.paletteAssetId,
     node.paletteOffset,
     dither?.targetPaletteAssetId ?? "",
     dither?.targetPaletteOffset ?? "",
-    dither?.coverage ?? "",
+    coverage,
     dither?.matrix ?? "",
-    dither?.origin.x ?? "",
-    dither?.origin.y ?? "",
+    origin?.x ?? "",
+    origin?.y ?? "",
   ].join("|");
 };
 
