@@ -69,6 +69,7 @@ const staging: SceneStaging = {
   interactionComfortRegionsByObject: {},
   interactionChoreographies: [],
   entryChoreographies: [],
+  occlusionPlanes: [],
   paletteLightZones: [],
 };
 
