@@ -1,7 +1,6 @@
 import { evaluateCondition } from "@evavo/adventure-core";
 import type { Id, Point } from "@evavo/adventure-project-schema";
 import type { RuntimeBundle } from "@evavo/adventure-runtime-bundle";
-import { findNavigationRoute } from "@evavo/adventure-scene/navigation";
 import { advanceRuntimeWorld, createInitialRuntimeWorldState } from "./index.js";
 import { synchronizeProfiledMovementAnimations } from "./movement-animation.js";
 import {
@@ -20,6 +19,7 @@ import type {
   NavigableRuntimeWorldState,
   NavigableRuntimeWorldTransition,
 } from "./movement-types.js";
+import { findStagedNavigationRoute } from "./staging.js";
 
 export * from "./movement-types.js";
 
@@ -61,11 +61,15 @@ export const beginActorMovement = (
   const areas = scene.navigationAreas.filter(
     (area) => !area.enabledWhen || evaluateCondition(area.enabledWhen, state.story),
   );
-  const routeResult = findNavigationRoute(
+  const portals = enabledPortals(bundle, state, scene.id);
+  const routeResult = findStagedNavigationRoute(
+    bundle,
+    state,
+    scene.id,
     runtime.position,
     destination,
     areas,
-    enabledPortals(bundle, state, scene.id),
+    portals,
     { snapEnd: options.snapDestination ?? true },
   );
   if (routeResult.kind !== "route") {
