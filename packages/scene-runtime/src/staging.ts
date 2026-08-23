@@ -1,4 +1,6 @@
+import { evaluateCondition } from "@evavo/adventure-core";
 import { pointInPolygon } from "@evavo/adventure-scene";
+import { findNavigationRoute } from "@evavo/adventure-scene/navigation";
 import {
   preferredLaneCostMultiplierAtPoint,
   sampleDepthScale,
@@ -9,6 +11,9 @@ import {
   type SurfaceZone,
 } from "@evavo/adventure-scene-instances/staging";
 import type { Id, Point } from "@evavo/adventure-project-schema";
+import type { RuntimeBundle } from "@evavo/adventure-runtime-bundle";
+import type { NavigableRuntimeWorldState } from "./movement-types.js";
+import { enabledPortals } from "./movement-shared.js";
 
 export const stagingForScene = (
   manifest: SceneStagingManifest | undefined,
@@ -30,6 +35,44 @@ export const resolveInteractionApproach = (
   if (!staging) return null;
   const slots = staging.approachSlotsByObject[objectId] ?? [];
   return selectApproachSlot(slots, options);
+};
+
+export interface RuntimeInteractionApproachResult extends ApproachSelectionResult {
+  readonly sceneId: Id<"scene">;
+}
+
+export const resolveRuntimeInteractionApproach = (
+  bundle: RuntimeBundle,
+  world: NavigableRuntimeWorldState,
+  actorInstanceId: Id<"actor-instance">,
+  objectId: Id<"object">,
+  verb: string,
+  itemId: Id<"item"> | null,
+): RuntimeInteractionApproachResult | null => {
+  const actor = world.actorInstances[actorInstanceId];
+  if (!actor) return null;
+  const scene = bundle.scenes.find((candidate) => candidate.id === actor.sceneId);
+  if (!scene) return null;
+  const staging = stagingForScene(bundle.sceneStaging, scene.id);
+  if (!staging) return null;
+
+  const slots = (staging.approachSlotsByObject[objectId] ?? []).filter(
+    (slot) => !slot.enabledWhen || evaluateCondition(slot.enabledWhen, world.story),
+  );
+  if (slots.length === 0) return null;
+
+  const areas = scene.navigationAreas.filter(
+    (area) => !area.enabledWhen || evaluateCondition(area.enabledWhen, world.story),
+  );
+  const portals = enabledPortals(bundle, world, scene.id);
+  const selected = selectApproachSlot(slots, {
+    actorPosition: actor.position,
+    verb,
+    ...(itemId ? { itemId } : {}),
+    reachable: (point) =>
+      findNavigationRoute(actor.position, point, areas, portals, { snapEnd: false }).kind === "route",
+  });
+  return selected ? { ...selected, sceneId: scene.id } : null;
 };
 
 export const resolvePerspectiveScale = (
