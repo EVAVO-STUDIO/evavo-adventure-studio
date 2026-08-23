@@ -1,7 +1,8 @@
-import type {
-  IndexedAssetRecord,
-  IndexedFrame,
-  IndexedPaletteBinding,
+import {
+  type IndexedAssetRecord,
+  type IndexedFrame,
+  type IndexedPaletteBinding,
+  indexedAssetRecordSchema,
 } from "@evavo/adventure-asset-contract/indexed-assets";
 import type { Asset, Id } from "@evavo/adventure-project-schema";
 import { sha256Hex } from "./index.js";
@@ -56,7 +57,7 @@ export const createIndexedAssetSidecarRecord = (
   if (!options.runtimePath.trim()) {
     throw new RangeError(`Indexed sidecar source '${asset.id}' requires a runtime path.`);
   }
-  return {
+  return indexedAssetRecordSchema.parse({
     assetId: asset.id as Id<"asset">,
     width: compiled.width,
     height: compiled.height,
@@ -66,5 +67,5 @@ export const createIndexedAssetSidecarRecord = (
     ...(options.transparentIndex === undefined ? {} : { transparentIndex: options.transparentIndex }),
     defaultPalette: options.defaultPalette,
     frames: [...(options.frames ?? [])],
-  };
+  });
 };
