@@ -7,6 +7,8 @@ import {
   preferredRouteCostMultiplier,
   resolveInteractionApproach,
   resolvePerspectiveScale,
+  routeHasFootprintClearance,
+  runtimeSurfaceZoneAtPoint,
   surfaceZoneAtPoint,
 } from "../src/staging.js";
 
@@ -116,7 +118,7 @@ describe("runtime staging resolution", () => {
       },
     } as unknown as RuntimeBundle;
     const world = {
-      story: { flags: {}, variables: {} },
+      story: { flags: {}, variables: {}, objectStates: {} },
     } as unknown as NavigableRuntimeWorldState;
     const areas = [
       {
@@ -149,5 +151,96 @@ describe("runtime staging resolution", () => {
       expect(result.route.points.some((point) => point.y === 50)).toBe(true);
       expect(result.route.distance).toBeGreaterThan(80);
     }
+  });
+
+  it("rejects routes whose foot point fits but visible actor footprint does not", () => {
+    const area = {
+      id: asId<"navigation-area">("navigation.narrow"),
+      elevation: 0,
+      shape: {
+        points: [
+          { x: 0, y: 0 },
+          { x: 100, y: 0 },
+          { x: 100, y: 12 },
+          { x: 0, y: 12 },
+        ],
+      },
+    };
+    const route = {
+      points: [{ x: 10, y: 6 }, { x: 90, y: 6 }],
+      segments: [
+        {
+          from: { x: 10, y: 6 },
+          to: { x: 90, y: 6 },
+          kind: "walk" as const,
+          areaId: area.id,
+          portalId: null,
+          distance: 80,
+        },
+      ],
+      distance: 80,
+      startAreaId: area.id,
+      endAreaId: area.id,
+      snappedStart: false,
+      snappedEnd: false,
+    };
+
+    expect(
+      routeHasFootprintClearance(route, [area], {
+        width: 8,
+        depth: 8,
+        clearance: 0,
+        collisionClass: "human",
+      }),
+    ).toBe(true);
+    expect(
+      routeHasFootprintClearance(route, [area], {
+        width: 8,
+        depth: 14,
+        clearance: 0,
+        collisionClass: "human",
+      }),
+    ).toBe(false);
+  });
+
+  it("resolves conditioned surface zones from the runtime story state", () => {
+    const conditioned: SceneStaging = {
+      ...staging,
+      surfaceZones: [
+        {
+          id: asId<"surface-zone">("surface.water"),
+          shape: {
+            points: [
+              { x: 0, y: 0 },
+              { x: 100, y: 0 },
+              { x: 100, y: 100 },
+              { x: 0, y: 100 },
+            ],
+          },
+          surface: "water",
+          movementMultiplier: 0.7,
+          footstepCueId: "footstep.water",
+          enabledWhen: { kind: "flag", flag: "flooded", equals: true },
+        },
+      ],
+    };
+    const bundle = {
+      sceneStaging: {
+        manifestVersion: 1,
+        projectId: asId<"project">("project.test"),
+        scenes: [conditioned],
+      },
+    } as unknown as RuntimeBundle;
+    const dry = {
+      story: { flags: { flooded: false }, variables: {}, objectStates: {} },
+    } as unknown as NavigableRuntimeWorldState;
+    const wet = {
+      story: { flags: { flooded: true }, variables: {}, objectStates: {} },
+    } as unknown as NavigableRuntimeWorldState;
+
+    expect(runtimeSurfaceZoneAtPoint(bundle, dry, conditioned.sceneId, { x: 50, y: 50 })).toBeNull();
+    expect(runtimeSurfaceZoneAtPoint(bundle, wet, conditioned.sceneId, { x: 50, y: 50 })?.footstepCueId).toBe(
+      "footstep.water",
+    );
   });
 });
