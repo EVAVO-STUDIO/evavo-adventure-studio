@@ -22,7 +22,6 @@
     { "path": "packages/play-feel" },
     { "path": "packages/scene" },
     { "path": "packages/scene-instances" },
-    { "path": "packages/scene-staging" },
     { "path": "packages/editor-core" },
     { "path": "packages/animation" },
     { "path": "packages/interaction" },
