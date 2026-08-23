@@ -6,6 +6,7 @@ import {
   type ResolveRuntimeSceneFrameOptions,
   type RuntimeWorldState,
 } from "./index.js";
+import { applyIndexedAssetsToFrame } from "./indexed-frame.js";
 import { applySceneOcclusionToFrame } from "./occlusion.js";
 import { applyPaletteLightingToFrame } from "./palette-light-frame.js";
 
@@ -16,6 +17,7 @@ export const resolveClassicRuntimeSceneFrame = (
 ): ResolvedFrame => {
   const frame = resolveBaseRuntimeSceneFrame(bundle, world, options);
   const sceneId: Id<"scene"> = options.sceneId ?? world.story.currentSceneId;
-  const occluded = applySceneOcclusionToFrame(bundle, frame, sceneId, world);
+  const indexed = applyIndexedAssetsToFrame(bundle, frame);
+  const occluded = applySceneOcclusionToFrame(bundle, indexed, sceneId, world);
   return applyPaletteLightingToFrame(bundle, world, occluded, sceneId);
 };
