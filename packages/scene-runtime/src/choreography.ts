@@ -65,6 +65,15 @@ export const interactionChoreographyFor = (
   return candidates[0] ?? null;
 };
 
+const interactionChoreographyById = (
+  bundle: RuntimeBundle,
+  sceneId: Id<"scene">,
+  choreographyId: Id<"interaction-choreography">,
+): InteractionChoreography | null =>
+  stagingForScene(bundle.sceneStaging, sceneId)?.interactionChoreographies.find(
+    (candidate) => candidate.id === choreographyId,
+  ) ?? null;
+
 const animateActor = (
   bundle: RuntimeBundle,
   world: RuntimeWorldState,
@@ -284,13 +293,8 @@ export const advanceInteractionChoreography = (
     throw new RangeError("Choreography advancement must be a non-negative safe integer.");
   }
   const sceneId = world.actorInstances[active.actorInstanceId]?.sceneId ?? world.story.currentSceneId;
-  const choreography = interactionChoreographyFor(
-    bundle,
-    sceneId,
-    active.interactionId,
-    null,
-  );
-  if (!choreography || choreography.id !== active.choreographyId) {
+  const choreography = interactionChoreographyById(bundle, sceneId, active.choreographyId);
+  if (!choreography) {
     return { state: world, active: null, runtimeEvents: [], choreographyEvents: [] };
   }
 
