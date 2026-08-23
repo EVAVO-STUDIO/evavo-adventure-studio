@@ -16,6 +16,10 @@
       "types": "./dist/src/indexed-pixels.d.ts",
       "import": "./dist/src/indexed-pixels.js"
     },
+    "./indexed-dither": {
+      "types": "./dist/src/indexed-dither.d.ts",
+      "import": "./dist/src/indexed-dither.js"
+    },
     "./indexed-runtime": {
       "types": "./dist/src/indexed-runtime.d.ts",
       "import": "./dist/src/indexed-runtime.js"
