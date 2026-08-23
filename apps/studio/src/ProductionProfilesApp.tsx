@@ -13,6 +13,7 @@ import {
 import "./production-profiles-base.css";
 import "./production-profiles-preview.css";
 import "./production-profiles-stage.css";
+import "./production-profiles-procedural.css";
 import "./production-profiles-chrome.css";
 
 const shortId = (value: string): string => value.split(".").at(-1) ?? value;
