@@ -1,10 +1,15 @@
 import type { Id } from "@evavo/adventure-project-schema";
-import type { IndexedSpriteRenderNode, ResolvedFrame } from "@evavo/adventure-render-contract";
+import type {
+  IndexedPaletteDitherTransition,
+  IndexedSpriteRenderNode,
+  ResolvedFrame,
+} from "@evavo/adventure-render-contract";
 import { describe, expect, it } from "vitest";
 import { expandIndexedPixiFrame } from "../src/indexed-renderer.js";
 
 const indexedNode = (
   paletteOffset: number,
+  paletteDither?: IndexedPaletteDitherTransition,
 ): IndexedSpriteRenderNode => ({
   id: "render-node.test-indexed" as Id<"render-node">,
   kind: "indexed-sprite",
@@ -14,6 +19,7 @@ const indexedNode = (
   originalSize: { width: 24, height: 48 },
   trimOffset: { x: 0, y: 0 },
   paletteOffset,
+  ...(paletteDither ? { paletteDither } : {}),
   order: {
     layer: "world",
     elevation: 0,
@@ -31,7 +37,10 @@ const indexedNode = (
   visible: true,
 });
 
-const frameFor = (paletteOffset: number): ResolvedFrame => ({
+const frameFor = (
+  paletteOffset: number,
+  paletteDither?: IndexedPaletteDitherTransition,
+): ResolvedFrame => ({
   frameVersion: 1,
   tick: 12,
   canvas: { width: 320, height: 200, clearColor: [0, 0, 0, 255] },
@@ -40,7 +49,15 @@ const frameFor = (paletteOffset: number): ResolvedFrame => ({
     viewport: { width: 320, height: 200 },
     shakeOffset: { x: 0, y: 0 },
   },
-  nodes: [indexedNode(paletteOffset)],
+  nodes: [indexedNode(paletteOffset, paletteDither)],
+});
+
+const dither = (coverage: number): IndexedPaletteDitherTransition => ({
+  targetPaletteAssetId: "asset.palette.lamp" as Id<"asset">,
+  targetPaletteOffset: 32,
+  coverage,
+  matrix: "bayer-4",
+  origin: { x: 68, y: 113 },
 });
 
 describe("indexed Pixi renderer adapter", () => {
@@ -80,5 +97,19 @@ describe("indexed Pixi renderer adapter", () => {
     expandIndexedPixiFrame(frameFor(0), (assetId) => ids.push(assetId));
     expandIndexedPixiFrame(frameFor(16), (assetId) => ids.push(assetId));
     expect(ids[0]).not.toBe(ids[1]);
+  });
+
+  it("includes ordered-dither coverage and origin in synthetic texture identity", () => {
+    const ids: string[] = [];
+    expandIndexedPixiFrame(frameFor(0, dither(0.25)), (assetId) => ids.push(assetId));
+    expandIndexedPixiFrame(frameFor(0, dither(0.5)), (assetId) => ids.push(assetId));
+    expect(ids[0]).not.toBe(ids[1]);
+
+    const shifted = {
+      ...dither(0.25),
+      origin: { x: 69, y: 113 },
+    };
+    expandIndexedPixiFrame(frameFor(0, shifted), (assetId) => ids.push(assetId));
+    expect(ids[0]).not.toBe(ids[2]);
   });
 });
