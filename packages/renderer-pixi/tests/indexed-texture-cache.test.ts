@@ -145,6 +145,18 @@ describe("indexed texture cache", () => {
     expect(creations).toBe(2);
   });
 
+  it("verifies declared maximum source index against the fetched index bytes", () => {
+    const cache = new PixiIndexedTextureCache(() => fakeTexture("unused"), fallback);
+    const strictRecord: IndexedAssetRecord = {
+      ...record,
+      maximumSourceIndex: 1,
+    };
+    expect(() => cache.registerIndexMap(strictRecord, new Uint8Array([0, 1, 1, 1]))).not.toThrow();
+    expect(() => cache.registerIndexMap(strictRecord, new Uint8Array([0, 1, 2, 1]))).toThrow(
+      /declares maximum source index 1; runtime bytes use 2/u,
+    );
+  });
+
   it("returns null until both the index map and requested palette are registered", () => {
     const cache = new PixiIndexedTextureCache(() => fakeTexture("unused"), fallback);
     expect(
