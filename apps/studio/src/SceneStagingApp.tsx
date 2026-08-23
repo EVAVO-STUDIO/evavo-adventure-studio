@@ -45,6 +45,7 @@ export const SceneStagingApp = () => {
         sample.sceneInstances,
         sample.staging,
         report.sceneId,
+        sample.paletteMaps,
       ),
     [sample, report.sceneId],
   );
@@ -60,6 +61,9 @@ export const SceneStagingApp = () => {
 
   const count = (severity: AdventureSceneStagingSeverity): number =>
     report.findings.filter((finding) => finding.severity === severity).length;
+  const boundLights = directorOverlay.lightZones.filter(
+    (entry) => entry.bindingStatus === "bound",
+  ).length;
 
   return (
     <main className="stg-app">
@@ -154,7 +158,8 @@ export const SceneStagingApp = () => {
             />
             <Metric label="Surfaces" value={directorOverlay.staging?.surfaceZones.length ?? 0} />
             <Metric label="Occlusion" value={directorOverlay.staging?.occlusionPlanes.length ?? 0} />
-            <Metric label="Light zones" value={directorOverlay.staging?.paletteLightZones.length ?? 0} />
+            <Metric label="Light zones" value={directorOverlay.lightZones.length} />
+            <Metric label="Light bindings" value={`${boundLights}/${directorOverlay.lightZones.length}`} />
           </dl>
           <section className="stg-score">
             <span className="stg-eyebrow">STAGING READINESS</span>
@@ -213,7 +218,7 @@ export const SceneStagingApp = () => {
               <li>Visible bodies retain clearance even though classic routing remains foot-point based.</li>
               <li>Props use deliberate standing positions, facing and forgiving invisible click regions.</li>
               <li>Foreground planes can hide and reveal actors using authored baseline priority.</li>
-              <li>Entrances, surfaces and palette-light regions remain deterministic through play.</li>
+              <li>Entrances, surfaces and indexed palette-light regions remain deterministic through play.</li>
             </ul>
           </section>
           <section className="stg-next-action">
