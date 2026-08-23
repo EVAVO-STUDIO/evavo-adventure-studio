@@ -1,6 +1,9 @@
-import { describe, expect, it } from "vitest";
+import type { RuntimeBundle } from "@evavo/adventure-runtime-bundle";
+import type { NavigableRuntimeWorldState } from "../src/movement-types.js";
 import type { SceneStaging } from "@evavo/adventure-scene-instances/staging";
+import { describe, expect, it } from "vitest";
 import {
+  findStagedNavigationRoute,
   preferredRouteCostMultiplier,
   resolveInteractionApproach,
   resolvePerspectiveScale,
@@ -84,5 +87,65 @@ describe("runtime staging resolution", () => {
   it("exposes preferred lane and surface information to movement", () => {
     expect(preferredRouteCostMultiplier(staging, { x: 100, y: 150 })).toBeCloseTo(0.7);
     expect(surfaceZoneAtPoint(staging, { x: 100, y: 150 })?.surface).toBe("carpet");
+  });
+
+  it("can prefer an authored lane over the geometric shortest route", () => {
+    const directed: SceneStaging = {
+      ...staging,
+      sceneId: asId<"scene">("scene.route"),
+      preferredWalkLanes: [
+        {
+          id: asId<"preferred-walk-lane">("lane.directed"),
+          points: [
+            { x: 20, y: 50 },
+            { x: 50, y: 50 },
+            { x: 80, y: 50 },
+          ],
+          influenceRadius: 40,
+          costMultiplier: 0.1,
+        },
+      ],
+    };
+    const bundle = {
+      sceneStaging: {
+        manifestVersion: 1,
+        projectId: asId<"project">("project.test"),
+        scenes: [directed],
+      },
+    } as unknown as RuntimeBundle;
+    const world = {
+      story: { flags: {}, variables: {} },
+    } as unknown as NavigableRuntimeWorldState;
+    const areas = [
+      {
+        id: asId<"navigation-area">("navigation.route"),
+        elevation: 0,
+        shape: {
+          points: [
+            { x: 0, y: 0 },
+            { x: 100, y: 0 },
+            { x: 100, y: 100 },
+            { x: 0, y: 100 },
+          ],
+        },
+      },
+    ];
+
+    const result = findStagedNavigationRoute(
+      bundle,
+      world,
+      asId<"scene">("scene.route"),
+      { x: 10, y: 10 },
+      { x: 90, y: 10 },
+      areas,
+      [],
+      { snapEnd: false },
+    );
+
+    expect(result.kind).toBe("route");
+    if (result.kind === "route") {
+      expect(result.route.points.some((point) => point.y === 50)).toBe(true);
+      expect(result.route.distance).toBeGreaterThan(80);
+    }
   });
 });
