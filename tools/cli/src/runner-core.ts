@@ -1,5 +1,7 @@
 import { isAbsolute, relative, resolve } from "node:path";
 import { createArtVisualEvidenceFromAssetManifest } from "@evavo/adventure-asset-pipeline/art-evidence";
+import { attachIndexedAssets } from "@evavo/adventure-compiler/indexed-assets";
+import { attachPaletteMaps } from "@evavo/adventure-compiler/palette-maps";
 import { compileProjectWithInstances } from "@evavo/adventure-compiler/scene-instances";
 import { attachSceneStaging } from "@evavo/adventure-compiler/scene-staging";
 import {
@@ -37,11 +39,19 @@ import {
   loadBitmapFonts,
 } from "./font-inputs.js";
 import {
+  type LoadedIndexedAssets,
+  loadIndexedAssets,
+} from "./indexed-inputs.js";
+import {
   inputPaths,
   type LoadedInputs,
   loadInputs,
   readVerifiedRuntimeOutputs,
 } from "./inputs.js";
+import {
+  type LoadedPaletteMaps,
+  loadPaletteMaps,
+} from "./palette-map-inputs.js";
 import { buildRelease } from "./release.js";
 import {
   type LoadedSceneInstances,
@@ -86,6 +96,8 @@ interface CombinedInputState {
   readonly base: LoadedInputs;
   readonly sceneInstances: LoadedSceneInstances;
   readonly sceneStaging: LoadedSceneStaging;
+  readonly indexedAssets: LoadedIndexedAssets;
+  readonly paletteMaps: LoadedPaletteMaps;
   readonly art: LoadedArtInputs;
   readonly bitmapFonts: LoadedBitmapFonts;
   readonly uiSkins: LoadedUiSkins;
@@ -93,11 +105,49 @@ interface CombinedInputState {
   readonly diagnostics: readonly CliDiagnostic[];
 }
 
+const emptyIndexedAssets = (): LoadedIndexedAssets => ({
+  path: null,
+  manifest: null,
+  diagnostics: [],
+  evidencePaths: [],
+  artifacts: [],
+});
+
+const emptyPaletteMaps = (): LoadedPaletteMaps => ({
+  path: null,
+  manifest: null,
+  diagnostics: [],
+});
+
+const stagingPaletteDiagnostics = (
+  staging: LoadedSceneStaging,
+  paletteMaps: LoadedPaletteMaps,
+): readonly CliDiagnostic[] => {
+  if (!staging.manifest) return [];
+  const mapIds = new Set(paletteMaps.manifest?.maps.map((map) => map.id) ?? []);
+  const diagnostics: CliDiagnostic[] = [];
+  staging.manifest.scenes.forEach((scene, sceneIndex) => {
+    scene.paletteLightZones.forEach((zone, zoneIndex) => {
+      if (mapIds.has(zone.paletteMapId)) return;
+      diagnostics.push({
+        severity: "error",
+        source: "palette-maps-semantics",
+        code: "missing-palette-map",
+        path: `sceneStaging.scenes[${sceneIndex}].paletteLightZones[${zoneIndex}].paletteMapId`,
+        message: `Palette light zone '${zone.id}' references unknown map '${zone.paletteMapId}'.`,
+      });
+    });
+  });
+  return diagnostics;
+};
+
 const loadCombinedInputs = async (
   projectPath: string,
   assetManifestPath: string | null,
   sceneInstancesPath: string | null,
   sceneStagingPath: string | null,
+  indexedAssetsPath: string | null,
+  paletteMapsPath: string | null,
   artDirectionPath: string | null,
   artEvidencePath: string | null,
   bitmapFontsPath: string | null,
@@ -115,6 +165,12 @@ const loadCombinedInputs = async (
     base.project,
     sceneInstances.manifest,
   );
+  const indexedAssets: LoadedIndexedAssets = base.assetManifest
+    ? await loadIndexedAssets(indexedAssetsPath, base.project, base.assetManifest)
+    : emptyIndexedAssets();
+  const paletteMaps: LoadedPaletteMaps = base.assetManifest
+    ? await loadPaletteMaps(paletteMapsPath, base.project, base.assetManifest)
+    : emptyPaletteMaps();
   const art = await loadArtInputs(
     artDirectionPath,
     artEvidencePath,
@@ -140,6 +196,8 @@ const loadCombinedInputs = async (
     base,
     sceneInstances,
     sceneStaging,
+    indexedAssets,
+    paletteMaps,
     art,
     bitmapFonts,
     uiSkins,
@@ -148,6 +206,9 @@ const loadCombinedInputs = async (
       ...base.diagnostics,
       ...sceneInstances.diagnostics,
       ...sceneStaging.diagnostics,
+      ...indexedAssets.diagnostics,
+      ...paletteMaps.diagnostics,
+      ...stagingPaletteDiagnostics(sceneStaging, paletteMaps),
       ...art.diagnostics,
       ...bitmapFonts.diagnostics,
       ...uiSkins.diagnostics,
@@ -160,6 +221,9 @@ const allInputPaths = (loaded: CombinedInputState): readonly string[] => [
   ...inputPaths(loaded.base),
   ...(loaded.sceneInstances.path ? [loaded.sceneInstances.path] : []),
   ...(loaded.sceneStaging.path ? [loaded.sceneStaging.path] : []),
+  ...(loaded.indexedAssets.path ? [loaded.indexedAssets.path] : []),
+  ...loaded.indexedAssets.evidencePaths,
+  ...(loaded.paletteMaps.path ? [loaded.paletteMaps.path] : []),
   ...artInputPaths(loaded.art),
   ...bitmapFontInputPaths(loaded.bitmapFonts),
   ...uiSkinInputPaths(loaded.uiSkins),
@@ -175,6 +239,8 @@ const runValidate = async (
     command.assetManifestPath,
     command.sceneInstancesPath,
     command.sceneStagingPath,
+    command.indexedAssetsPath,
+    command.paletteMapsPath,
     command.artDirectionPath,
     command.artEvidencePath,
     command.bitmapFontsPath,
@@ -191,6 +257,10 @@ const runValidate = async (
     assetManifestPath: command.assetManifestPath,
     sceneInstancesPath: command.sceneInstancesPath,
     sceneStagingPath: command.sceneStagingPath,
+    indexedAssetsPath: command.indexedAssetsPath,
+    indexedAssetCount: loaded.indexedAssets.manifest?.assets.length ?? 0,
+    paletteMapsPath: command.paletteMapsPath,
+    paletteMapCount: loaded.paletteMaps.manifest?.maps.length ?? 0,
     artDirectionPath: command.artDirectionPath,
     artEvidencePath: command.artEvidencePath,
     bitmapFontsPath: command.bitmapFontsPath,
@@ -286,7 +356,7 @@ const compileCombinedProject = (
   loaded: CombinedInputState,
   assetManifest: NonNullable<LoadedInputs["assetManifest"]>,
 ) => {
-  const base = compileProjectWithInstances(
+  let compiled = compileProjectWithInstances(
     loaded.base.project,
     assetManifest,
     loaded.sceneInstances.manifest,
@@ -294,14 +364,21 @@ const compileCombinedProject = (
     loaded.uiSkins.manifest ?? undefined,
     loaded.audioMix.manifest ?? undefined,
   );
-  return loaded.sceneStaging.manifest
-    ? attachSceneStaging(
-        loaded.base.project,
-        base,
-        loaded.sceneStaging.manifest,
-        loaded.sceneInstances.manifest,
-      )
-    : base;
+  if (loaded.indexedAssets.manifest) {
+    compiled = attachIndexedAssets(loaded.base.project, compiled, loaded.indexedAssets.manifest);
+  }
+  if (loaded.paletteMaps.manifest) {
+    compiled = attachPaletteMaps(loaded.base.project, compiled, loaded.paletteMaps.manifest);
+  }
+  if (loaded.sceneStaging.manifest) {
+    compiled = attachSceneStaging(
+      loaded.base.project,
+      compiled,
+      loaded.sceneStaging.manifest,
+      loaded.sceneInstances.manifest,
+    );
+  }
+  return compiled;
 };
 
 const runCompile = async (
@@ -320,6 +397,8 @@ const runCompile = async (
     command.assetManifestPath,
     command.sceneInstancesPath,
     command.sceneStagingPath,
+    command.indexedAssetsPath,
+    command.paletteMapsPath,
     command.artDirectionPath,
     command.artEvidencePath,
     command.bitmapFontsPath,
@@ -343,6 +422,10 @@ const runCompile = async (
     assetCompilerVersion: assetManifest.compilerVersion,
     sceneInstancesPath: loaded.sceneInstances.path,
     sceneStagingPath: loaded.sceneStaging.path,
+    indexedAssetsPath: loaded.indexedAssets.path,
+    indexedAssetCount: loaded.indexedAssets.manifest?.assets.length ?? 0,
+    paletteMapsPath: loaded.paletteMaps.path,
+    paletteMapCount: loaded.paletteMaps.manifest?.maps.length ?? 0,
     artDirectionPath: loaded.art.artDirectionPath,
     artEvidencePath: loaded.art.artEvidencePath,
     artProfile: loaded.art.manifest?.profile.preset ?? null,
@@ -375,6 +458,12 @@ const runCompile = async (
     `Compiled project '${loaded.base.project.id}'.`,
     `Bundle: ${resolve(command.outputPath)}`,
     `Fingerprint: ${compiled.fingerprint}`,
+    ...(loaded.indexedAssets.manifest
+      ? [`Indexed assets: ${loaded.indexedAssets.manifest.assets.length} embedded`]
+      : []),
+    ...(loaded.paletteMaps.manifest
+      ? [`Palette maps: ${loaded.paletteMaps.manifest.maps.length} embedded`]
+      : []),
     ...(loaded.sceneStaging.manifest ? ["Classic scene staging: embedded"] : []),
     ...(loaded.art.manifest
       ? [`Art profile: ${loaded.art.manifest.profile.preset}`]
@@ -406,6 +495,8 @@ const runPackage = async (
     command.assetManifestPath,
     command.sceneInstancesPath,
     command.sceneStagingPath,
+    command.indexedAssetsPath,
+    command.paletteMapsPath,
     command.artDirectionPath,
     command.artEvidencePath,
     command.bitmapFontsPath,
@@ -423,7 +514,12 @@ const runPackage = async (
     loaded.base.manifestPath,
     assetManifest,
   );
-  const release = buildRelease(compiled, assetManifest, artifacts);
+  const release = buildRelease(
+    compiled,
+    assetManifest,
+    artifacts,
+    loaded.indexedAssets.artifacts,
+  );
   const outputDirectory = await replaceDirectoryAtomically(
     command.outputDirectory,
     release.files,
@@ -440,6 +536,10 @@ const runPackage = async (
     assetManifestFingerprint: assetManifest.fingerprint,
     sceneInstancesPath: loaded.sceneInstances.path,
     sceneStagingPath: loaded.sceneStaging.path,
+    indexedAssetsPath: loaded.indexedAssets.path,
+    indexedAssetCount: loaded.indexedAssets.manifest?.assets.length ?? 0,
+    paletteMapsPath: loaded.paletteMaps.path,
+    paletteMapCount: loaded.paletteMaps.manifest?.maps.length ?? 0,
     artDirectionPath: loaded.art.artDirectionPath,
     artEvidencePath: loaded.art.artEvidencePath,
     artProfile: loaded.art.manifest?.profile.preset ?? null,
@@ -459,6 +559,12 @@ const runPackage = async (
     `Files: ${release.files.length}`,
     `Bundle fingerprint: ${compiled.fingerprint}`,
     `Release fingerprint: ${release.fingerprint}`,
+    ...(loaded.indexedAssets.manifest
+      ? [`Indexed maps: ${loaded.indexedAssets.artifacts.length} verified/released`]
+      : []),
+    ...(loaded.paletteMaps.manifest
+      ? [`Palette maps: ${loaded.paletteMaps.manifest.maps.length} embedded`]
+      : []),
     ...(loaded.sceneStaging.manifest ? ["Classic scene staging: embedded"] : []),
     ...(loaded.art.manifest
       ? [`Art profile: ${loaded.art.manifest.profile.preset}`]
