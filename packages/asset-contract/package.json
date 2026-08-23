@@ -19,6 +19,10 @@
     "./runtime-asset": {
       "types": "./dist/src/runtime-asset.d.ts",
       "import": "./dist/src/runtime-asset.js"
+    },
+    "./indexed-assets": {
+      "types": "./dist/src/indexed-assets.d.ts",
+      "import": "./dist/src/indexed-assets.js"
     }
   },
   "files": [
