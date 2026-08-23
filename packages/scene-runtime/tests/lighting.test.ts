@@ -22,6 +22,7 @@ const bundle = {
         interactionComfortRegionsByObject: {},
         interactionChoreographies: [],
         entryChoreographies: [],
+        occlusionPlanes: [],
         paletteLightZones: [
           {
             id: asId<"palette-light-zone">("light.shadow"),
