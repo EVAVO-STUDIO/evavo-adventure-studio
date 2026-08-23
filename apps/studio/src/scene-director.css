@@ -1,0 +1,336 @@
+.dir-panel {
+  display: grid;
+  gap: 14px;
+  padding: 18px;
+}
+
+.dir-header {
+  display: flex;
+  align-items: end;
+  justify-content: space-between;
+  gap: 20px;
+}
+
+.dir-header h1 {
+  margin-top: 7px;
+  font-size: 23px;
+  letter-spacing: -0.025em;
+}
+
+.dir-header p {
+  max-width: 650px;
+  margin: 7px 0 0;
+  color: var(--stg-muted);
+  font-size: 10px;
+  line-height: 1.45;
+}
+
+.dir-mode-stat {
+  display: grid;
+  min-width: 112px;
+  justify-items: end;
+  padding: 8px 10px;
+  border: 1px solid var(--stg-line);
+  border-radius: 5px;
+  background: #0c0e13;
+}
+
+.dir-mode-stat strong {
+  color: #fff;
+  font-family: "Courier New", monospace;
+  font-size: 22px;
+}
+
+.dir-mode-stat span {
+  color: var(--stg-muted);
+  font-size: 8px;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+}
+
+.dir-mode-bar {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 3px;
+  padding: 7px;
+  border: 1px solid var(--stg-line);
+  border-radius: 5px;
+  background: #0e1016;
+}
+
+.dir-mode-bar .stg-button {
+  height: 26px;
+  padding-inline: 9px;
+}
+
+.dir-native-shell {
+  overflow: hidden;
+  border: 1px solid #343844;
+  border-radius: 5px;
+  background: #06070a;
+  box-shadow: 0 18px 42px rgb(0 0 0 / 32%);
+}
+
+.dir-svg {
+  display: block;
+  width: 100%;
+  max-height: min(64vh, 620px);
+  image-rendering: pixelated;
+  background: #080a0f;
+}
+
+.dir-native-shell > footer {
+  display: flex;
+  min-height: 31px;
+  align-items: center;
+  justify-content: space-between;
+  padding: 0 10px;
+  border-top: 1px solid #282c36;
+  color: #777e8d;
+  background: #0c0e13;
+  font-family: "Courier New", monospace;
+  font-size: 8px;
+  letter-spacing: 0.05em;
+  text-transform: uppercase;
+}
+
+.dir-native-shell > footer strong {
+  color: #b9bfca;
+  font-size: 8px;
+}
+
+.dir-room-bg {
+  fill: #10131a;
+}
+
+.dir-room-rear {
+  fill: #151923;
+}
+
+.dir-room-floor {
+  fill: #11151d;
+}
+
+.dir-grid-small {
+  stroke: rgb(128 137 155 / 8%);
+  stroke-width: 0.3;
+}
+
+.dir-grid-large {
+  stroke: rgb(128 137 155 / 14%);
+  stroke-width: 0.45;
+}
+
+.dir-navigation {
+  fill: rgb(117 191 211 / 10%);
+  stroke: rgb(117 191 211 / 72%);
+  stroke-width: 0.8;
+  vector-effect: non-scaling-stroke;
+}
+
+.dir-portal line {
+  stroke: var(--stg-gold);
+  stroke-width: 1;
+  stroke-dasharray: 3 2;
+  vector-effect: non-scaling-stroke;
+}
+
+.dir-portal circle {
+  fill: #11131a;
+  stroke: var(--stg-gold);
+  stroke-width: 0.8;
+  vector-effect: non-scaling-stroke;
+}
+
+.dir-arrow {
+  fill: var(--stg-gold);
+}
+
+.dir-walk-lane polyline {
+  fill: none;
+  stroke: var(--stg-green);
+  stroke-width: 1.5;
+  stroke-linejoin: round;
+  stroke-linecap: round;
+  vector-effect: non-scaling-stroke;
+}
+
+.dir-walk-lane circle {
+  fill: #0b0e12;
+  stroke: var(--stg-green);
+  stroke-width: 0.7;
+  vector-effect: non-scaling-stroke;
+}
+
+.dir-control-label,
+.dir-debug-labels text,
+.dir-depth-key text,
+.dir-surface-zone text,
+.dir-light-zone text,
+.dir-occlusion-plane text,
+.dir-approach-slot text,
+.dir-entry-path text,
+.dir-actor text,
+.dir-object-anchor text {
+  fill: #d1d5df;
+  font-family: "Courier New", monospace;
+  font-size: 5.7px;
+  paint-order: stroke;
+  stroke: rgb(7 8 11 / 88%);
+  stroke-width: 1.8px;
+  stroke-linejoin: round;
+}
+
+.dir-surface-zone polygon {
+  fill: rgb(216 173 104 / 16%);
+  stroke: rgb(216 173 104 / 82%);
+  stroke-width: 0.7;
+  stroke-dasharray: 3 1;
+  vector-effect: non-scaling-stroke;
+}
+
+.dir-light-zone polygon {
+  fill: rgb(228 168 92 / 13%);
+  stroke: rgb(228 168 92 / 84%);
+  stroke-width: 0.8;
+  stroke-dasharray: 1 1;
+  vector-effect: non-scaling-stroke;
+}
+
+.dir-depth-key line {
+  stroke: rgb(168 138 217 / 65%);
+  stroke-width: 0.6;
+  stroke-dasharray: 4 2;
+  vector-effect: non-scaling-stroke;
+}
+
+.dir-depth-key text {
+  fill: #c6b1e8;
+}
+
+.dir-occlusion-plane line {
+  stroke: var(--stg-red);
+  stroke-width: 0.8;
+  stroke-dasharray: 5 2;
+  vector-effect: non-scaling-stroke;
+}
+
+.dir-occlusion-plane circle {
+  fill: #11131a;
+  stroke: var(--stg-red);
+  stroke-width: 0.8;
+  vector-effect: non-scaling-stroke;
+}
+
+.dir-hotspot-exact {
+  fill: rgb(255 36 78 / 10%);
+  stroke: rgb(255 112 140 / 92%);
+  stroke-width: 0.85;
+  vector-effect: non-scaling-stroke;
+}
+
+.dir-hotspot-comfort {
+  fill: rgb(168 138 217 / 7%);
+  stroke: rgb(168 138 217 / 76%);
+  stroke-width: 0.7;
+  stroke-dasharray: 2 2;
+  vector-effect: non-scaling-stroke;
+}
+
+.dir-approach-slot circle,
+.dir-approach-slot > line {
+  fill: #0b0e12;
+  stroke: var(--stg-gold);
+  stroke-width: 0.8;
+  vector-effect: non-scaling-stroke;
+}
+
+.dir-facing {
+  stroke: #eef0f4;
+  stroke-width: 0.7;
+  vector-effect: non-scaling-stroke;
+}
+
+.dir-entry-path polyline {
+  fill: none;
+  stroke: var(--stg-blue);
+  stroke-width: 1.2;
+  stroke-dasharray: 4 2;
+  vector-effect: non-scaling-stroke;
+}
+
+.dir-entry-path circle {
+  fill: #0b0e12;
+  stroke: var(--stg-blue);
+  stroke-width: 1;
+  vector-effect: non-scaling-stroke;
+}
+
+.dir-entry-path circle.is-arrival {
+  stroke: var(--stg-green);
+}
+
+.dir-actor > circle {
+  fill: #0b0e12;
+  stroke: #f2f3f6;
+  stroke-width: 0.9;
+  vector-effect: non-scaling-stroke;
+}
+
+.dir-actor.is-fixed > circle {
+  stroke: #777e8d;
+}
+
+.dir-footprint {
+  fill: rgb(117 191 211 / 11%);
+  stroke: rgb(117 191 211 / 86%);
+  stroke-width: 0.7;
+  stroke-dasharray: 2 1;
+  vector-effect: non-scaling-stroke;
+}
+
+.dir-object-anchor rect {
+  fill: #151820;
+  stroke: var(--stg-red);
+  stroke-width: 0.75;
+  vector-effect: non-scaling-stroke;
+}
+
+.dir-contract-strip {
+  display: grid;
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+  gap: 8px;
+}
+
+.dir-contract-strip article {
+  padding: 11px;
+  border: 1px solid #252933;
+  border-radius: 5px;
+  background: #0e1016;
+}
+
+.dir-contract-strip article > span {
+  color: #777e8d;
+  font-size: 8px;
+  letter-spacing: 0.11em;
+  text-transform: uppercase;
+}
+
+.dir-contract-strip strong {
+  display: block;
+  margin-top: 5px;
+  font-size: 11px;
+}
+
+.dir-contract-strip p {
+  margin: 5px 0 0;
+  color: #818795;
+  font-size: 9px;
+  line-height: 1.4;
+}
+
+@media (max-width: 1180px) {
+  .dir-contract-strip {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+}
