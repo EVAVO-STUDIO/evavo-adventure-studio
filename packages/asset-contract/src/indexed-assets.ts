@@ -51,9 +51,18 @@ export const indexedAssetRecordSchema = z
         message: `Indexed asset requires exactly ${expectedLength} bytes for ${record.width}×${record.height}; received ${record.indexByteLength}.`,
       });
     }
+    const frameIds = new Set<string>();
     for (let index = 0; index < record.frames.length; index += 1) {
       const frame = record.frames[index];
       if (!frame) continue;
+      if (frameIds.has(frame.frameId)) {
+        ctx.addIssue({
+          code: "custom",
+          path: ["frames", index, "frameId"],
+          message: `Indexed frame '${frame.frameId}' is duplicated.`,
+        });
+      }
+      frameIds.add(frame.frameId);
       const right = frame.sourceRect.x + frame.sourceRect.width;
       const bottom = frame.sourceRect.y + frame.sourceRect.height;
       if (frame.sourceRect.x < 0 || frame.sourceRect.y < 0 || right > record.width || bottom > record.height) {
@@ -61,6 +70,16 @@ export const indexedAssetRecordSchema = z
           code: "custom",
           path: ["frames", index, "sourceRect"],
           message: `Indexed frame '${frame.frameId}' exceeds the ${record.width}×${record.height} index map.`,
+        });
+      }
+      if (
+        frame.trimOffset.x + frame.sourceRect.width > frame.originalSize.width ||
+        frame.trimOffset.y + frame.sourceRect.height > frame.originalSize.height
+      ) {
+        ctx.addIssue({
+          code: "custom",
+          path: ["frames", index],
+          message: `Indexed frame '${frame.frameId}' does not fit its original dimensions.`,
         });
       }
     }
@@ -112,6 +131,10 @@ export type IndexedAssetManifestIssueCode =
   | "project-mismatch"
   | "asset-missing"
   | "asset-kind-unsupported"
+  | "asset-dimension-mismatch"
+  | "spritesheet-page-count-unsupported"
+  | "indexed-frame-missing"
+  | "indexed-frame-geometry-mismatch"
   | "palette-missing"
   | "palette-kind-mismatch"
   | "palette-primary-output-missing"
@@ -133,6 +156,22 @@ const indexedIssue = (
 ): void => {
   issues.push({ severity: "error", code, path, message });
 };
+
+const sameRectangle = (
+  left: { readonly x: number; readonly y: number; readonly width: number; readonly height: number },
+  right: { readonly x: number; readonly y: number; readonly width: number; readonly height: number },
+): boolean =>
+  left.x === right.x && left.y === right.y && left.width === right.width && left.height === right.height;
+
+const sameSize = (
+  left: { readonly width: number; readonly height: number },
+  right: { readonly width: number; readonly height: number },
+): boolean => left.width === right.width && left.height === right.height;
+
+const samePoint = (
+  left: { readonly x: number; readonly y: number },
+  right: { readonly x: number; readonly y: number },
+): boolean => left.x === right.x && left.y === right.y;
 
 export const validateIndexedAssetManifest = (
   project: Pick<AdventureProject, "id">,
@@ -167,6 +206,67 @@ export const validateIndexedAssetManifest = (
         `${recordPath}.assetId`,
         `Indexed source '${record.assetId}' decorates compiled kind '${base.kind}', expected image or spritesheet.`,
       );
+    } else if (base.kind === "image") {
+      if (record.width !== base.metadata.width || record.height !== base.metadata.height) {
+        indexedIssue(
+          issues,
+          "asset-dimension-mismatch",
+          recordPath,
+          `Indexed map '${record.assetId}' is ${record.width}×${record.height}; compiled image is ${base.metadata.width}×${base.metadata.height}.`,
+        );
+      }
+      if (record.frames.length > 0) {
+        indexedIssue(
+          issues,
+          "indexed-frame-geometry-mismatch",
+          `${recordPath}.frames`,
+          `Indexed image '${record.assetId}' must not declare spritesheet frame metadata.`,
+        );
+      }
+    } else {
+      if (base.metadata.pages.length !== 1) {
+        indexedIssue(
+          issues,
+          "spritesheet-page-count-unsupported",
+          recordPath,
+          `Indexed spritesheet '${record.assetId}' has ${base.metadata.pages.length} compiled atlas pages; the current indexed runtime supports exactly one page per asset.`,
+        );
+      }
+      const page = base.metadata.pages[0];
+      if (page && (record.width !== page.width || record.height !== page.height)) {
+        indexedIssue(
+          issues,
+          "asset-dimension-mismatch",
+          recordPath,
+          `Indexed map '${record.assetId}' is ${record.width}×${record.height}; compiled atlas page is ${page.width}×${page.height}.`,
+        );
+      }
+      for (let frameIndex = 0; frameIndex < record.frames.length; frameIndex += 1) {
+        const indexedFrame = record.frames[frameIndex];
+        if (!indexedFrame) continue;
+        const compiledFrame = base.metadata.frames.find((frame) => frame.frameId === indexedFrame.frameId);
+        if (!compiledFrame) {
+          indexedIssue(
+            issues,
+            "indexed-frame-missing",
+            `${recordPath}.frames[${frameIndex}].frameId`,
+            `Indexed frame '${indexedFrame.frameId}' does not exist in compiled spritesheet '${record.assetId}'.`,
+          );
+          continue;
+        }
+        if (
+          !sameRectangle(indexedFrame.sourceRect, compiledFrame.sourceRect) ||
+          !sameSize(indexedFrame.originalSize, compiledFrame.originalSize) ||
+          !samePoint(indexedFrame.trimOffset, compiledFrame.trimOffset)
+        ) {
+          indexedIssue(
+            issues,
+            "indexed-frame-geometry-mismatch",
+            `${recordPath}.frames[${frameIndex}]`,
+            `Indexed frame '${indexedFrame.frameId}' does not match compiled atlas geometry.`,
+          );
+        }
+      }
     }
 
     const palette = compiledById.get(record.defaultPalette.paletteAssetId);
@@ -196,21 +296,23 @@ export const validateIndexedAssetManifest = (
         `Palette '${palette.assetId}' has no primary runtime output.`,
       );
     }
-    const maximumIndex = record.defaultPalette.paletteOffset + palette.metadata.entries - 1;
-    if (maximumIndex > 255) {
+    if (record.defaultPalette.paletteOffset >= palette.metadata.entries) {
       indexedIssue(
         issues,
         "palette-offset-overflow",
         `${recordPath}.defaultPalette.paletteOffset`,
-        `Palette offset ${record.defaultPalette.paletteOffset} plus ${palette.metadata.entries} entries exceeds byte index 255.`,
+        `Palette offset ${record.defaultPalette.paletteOffset} is outside palette '${palette.assetId}' entry range 0–${palette.metadata.entries - 1}.`,
       );
     }
-    if (record.transparentIndex !== undefined && record.transparentIndex >= palette.metadata.entries) {
+    if (
+      record.transparentIndex !== undefined &&
+      record.transparentIndex + record.defaultPalette.paletteOffset >= palette.metadata.entries
+    ) {
       indexedIssue(
         issues,
         "transparent-index-overflow",
         `${recordPath}.transparentIndex`,
-        `Transparent index ${record.transparentIndex} exceeds palette '${palette.assetId}' entry range 0–${palette.metadata.entries - 1}.`,
+        `Transparent source index ${record.transparentIndex} plus offset ${record.defaultPalette.paletteOffset} exceeds palette '${palette.assetId}'.`,
       );
     }
   });
@@ -245,6 +347,13 @@ export const readIndexedAssetRuntimeBytes = async (
   if (paletteBytes.byteLength % 4 !== 0 || paletteBytes.byteLength === 0 || paletteBytes.byteLength > 256 * 4) {
     throw new RangeError(
       `Palette runtime bytes for '${record.defaultPalette.paletteAssetId}' must contain 1–256 RGBA entries.`,
+    );
+  }
+  const entries = paletteBytes.byteLength / 4;
+  const maximumSourceIndex = indexBytes.reduce((maximum, value) => Math.max(maximum, value), 0);
+  if (maximumSourceIndex + record.defaultPalette.paletteOffset >= entries) {
+    throw new RangeError(
+      `Indexed runtime bytes for '${record.assetId}' use source index ${maximumSourceIndex}; offset ${record.defaultPalette.paletteOffset} exceeds ${entries} palette entries.`,
     );
   }
   return { record, indexBytes, paletteBytes };
