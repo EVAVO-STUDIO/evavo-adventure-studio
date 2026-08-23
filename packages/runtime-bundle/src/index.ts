@@ -20,6 +20,7 @@ import {
   validateGameOpeningManifest,
 } from "@evavo/adventure-project-schema/opening";
 import { sceneInstanceManifestSchema } from "@evavo/adventure-scene-instances";
+import { paletteMapManifestSchema } from "@evavo/adventure-scene-instances/palette-maps";
 import { sceneStagingManifestSchema } from "@evavo/adventure-scene-instances/staging";
 import { uiSkinManifestSchema } from "@evavo/adventure-ui-skin";
 import { z } from "zod";
@@ -97,6 +98,7 @@ export const runtimeBundleSchema = z
     sequences: z.array(compiledSequenceSchema),
     sceneInstances: sceneInstanceManifestSchema.optional(),
     sceneStaging: sceneStagingManifestSchema.optional(),
+    paletteMaps: paletteMapManifestSchema.optional(),
     bitmapFonts: bitmapFontManifestSchema.optional(),
     uiSkins: uiSkinManifestSchema.optional(),
     audioMix: audioMixManifestSchema.optional(),
@@ -112,6 +114,13 @@ export const runtimeBundleSchema = z
         code: "custom",
         path: ["sceneStaging", "projectId"],
         message: `Scene staging project '${bundle.sceneStaging.projectId}' does not match runtime project '${bundle.projectId}'.`,
+      });
+    }
+    if (bundle.paletteMaps && bundle.paletteMaps.projectId !== bundle.projectId) {
+      context.addIssue({
+        code: "custom",
+        path: ["paletteMaps", "projectId"],
+        message: `Palette-map project '${bundle.paletteMaps.projectId}' does not match runtime project '${bundle.projectId}'.`,
       });
     }
     if (bundle.frontEnd && bundle.frontEnd.projectId !== bundle.projectId) {
