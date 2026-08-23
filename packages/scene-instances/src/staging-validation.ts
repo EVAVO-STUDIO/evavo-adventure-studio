@@ -1,4 +1,4 @@
-import type { Actor, Id, Scene, Sequence } from "@evavo/adventure-project-schema";
+import type { Actor, Asset, Id, Scene, Sequence } from "@evavo/adventure-project-schema";
 import { pointInPolygon } from "@evavo/adventure-scene";
 import type { SceneInstanceManifest } from "./index.js";
 import type { SceneStagingManifest } from "./staging.js";
@@ -8,6 +8,8 @@ export type SceneStagingIssueCode =
   | "duplicate-scene-staging"
   | "missing-staging-scene"
   | "missing-staging-actor"
+  | "missing-staging-asset"
+  | "invalid-staging-asset-kind"
   | "missing-staging-navigation-area"
   | "missing-staging-navigation-portal"
   | "missing-staging-object"
@@ -29,6 +31,7 @@ export interface SceneStagingValidationContext {
   readonly projectId: Id<"project">;
   readonly scenes: readonly Pick<Scene, "id" | "navigationAreas" | "entrances">[];
   readonly actors: readonly Pick<Actor, "id">[];
+  readonly assets?: readonly Pick<Asset, "id" | "kind">[];
   readonly sequences?: readonly Pick<Sequence, "id">[];
   readonly sceneInstances?: SceneInstanceManifest;
 }
@@ -58,6 +61,7 @@ export const validateSceneStagingManifest = (
 
   const scenesById = new Map(context.scenes.map((scene) => [scene.id as string, scene] as const));
   const actors = new Set(context.actors.map((actor) => actor.id as string));
+  const assetsById = new Map((context.assets ?? []).map((asset) => [asset.id as string, asset] as const));
   const sequences = new Set((context.sequences ?? []).map((sequence) => sequence.id as string));
   const compositionsBySceneId = new Map(
     (context.sceneInstances?.scenes ?? []).map(
@@ -260,6 +264,27 @@ export const validateSceneStagingManifest = (
         );
       }
     });
+
+    if (context.assets) {
+      staging.occlusionPlanes.forEach((plane, index) => {
+        const asset = assetsById.get(plane.assetId);
+        if (!asset) {
+          addIssue(
+            issues,
+            "missing-staging-asset",
+            `${path}.occlusionPlanes[${index}].assetId`,
+            `Occlusion plane '${plane.id}' references missing asset '${plane.assetId}'.`,
+          );
+        } else if (asset.kind !== "image") {
+          addIssue(
+            issues,
+            "invalid-staging-asset-kind",
+            `${path}.occlusionPlanes[${index}].assetId`,
+            `Occlusion plane '${plane.id}' requires an image asset; '${plane.assetId}' is '${asset.kind}'.`,
+          );
+        }
+      });
+    }
   });
 
   return issues;
