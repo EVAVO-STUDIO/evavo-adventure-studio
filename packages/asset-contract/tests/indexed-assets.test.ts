@@ -46,23 +46,37 @@ const compiledFixture = () =>
     assets: [
       {
         assetId: "asset.actor.index-map",
-        kind: "image",
-        sourceFiles: [{ path: "art/actor.png", sha256: hash, byteLength: 8 }],
+        kind: "spritesheet",
+        sourceFiles: [{ path: "art/actor.aseprite", sha256: hash, byteLength: 8 }],
         outputFiles: [
           {
-            role: "primary",
-            runtimePath: "assets/actor.png",
+            role: "atlas-manifest",
+            runtimePath: "assets/actor/atlas.json",
+            mediaType: "application/json",
+            sha256: hash,
+            byteLength: 16,
+          },
+          {
+            role: "page-000",
+            runtimePath: "assets/actor/page-000.png",
             mediaType: "image/png",
             sha256: hash,
             byteLength: 32,
           },
         ],
         metadata: {
-          kind: "image",
-          width: 4,
-          height: 2,
-          palette: true,
-          colourCount: 32,
+          kind: "spritesheet",
+          pages: [{ outputRole: "page-000", width: 4, height: 2 }],
+          frames: [
+            {
+              frameId: "frame.actor.idle",
+              pageOutputRole: "page-000",
+              sourceRect: { x: 0, y: 0, width: 2, height: 2 },
+              originalSize: { width: 3, height: 3 },
+              trimOffset: { x: 1, y: 1 },
+              padding: 0,
+            },
+          ],
         },
       },
       {
@@ -131,7 +145,7 @@ describe("indexed asset sidecar", () => {
     expect(() => parseIndexedAssetManifest(malformedTransparency)).toThrow();
   });
 
-  it("cross-validates source and palette identities against the compiled asset manifest", () => {
+  it("cross-validates source geometry and palette identity against compiled assets", () => {
     const indexed = parseIndexedAssetManifest(fixture());
     expect(
       validateIndexedAssetManifest(
@@ -142,7 +156,72 @@ describe("indexed asset sidecar", () => {
     ).toEqual([]);
   });
 
-  it("rejects missing palettes, wrong palette kinds and overflowing palette windows", () => {
+  it("rejects index-map dimensions that drift from the compiled atlas page", () => {
+    const indexed = parseIndexedAssetManifest({
+      ...fixture(),
+      assets: [{ ...fixture().assets[0]!, width: 8, indexByteLength: 16 }],
+    });
+    expect(validateIndexedAssetManifest({ id: "project.indexed-test" }, compiledFixture(), indexed)).toEqual(
+      expect.arrayContaining([expect.objectContaining({ code: "asset-dimension-mismatch" })]),
+    );
+  });
+
+  it("rejects multi-page indexed spritesheets until the sidecar models page identity", () => {
+    const compiled = compiledFixture();
+    const actor = compiled.assets[0]!;
+    if (actor.kind !== "spritesheet") throw new Error("fixture must be a spritesheet");
+    const multiPage = {
+      ...compiled,
+      assets: [
+        {
+          ...actor,
+          metadata: {
+            ...actor.metadata,
+            pages: [
+              ...actor.metadata.pages,
+              { outputRole: "page-001", width: 4, height: 2 },
+            ],
+          },
+        },
+        compiled.assets[1]!,
+      ],
+    } as typeof compiled;
+    expect(
+      validateIndexedAssetManifest(
+        { id: "project.indexed-test" },
+        multiPage,
+        parseIndexedAssetManifest(fixture()),
+      ),
+    ).toEqual(
+      expect.arrayContaining([
+        expect.objectContaining({ code: "spritesheet-page-count-unsupported" }),
+      ]),
+    );
+  });
+
+  it("rejects indexed frame metadata that drifts from compiled atlas geometry", () => {
+    const indexed = parseIndexedAssetManifest({
+      ...fixture(),
+      assets: [
+        {
+          ...fixture().assets[0]!,
+          frames: [
+            {
+              ...fixture().assets[0]!.frames[0]!,
+              trimOffset: { x: 0, y: 0 },
+            },
+          ],
+        },
+      ],
+    });
+    expect(validateIndexedAssetManifest({ id: "project.indexed-test" }, compiledFixture(), indexed)).toEqual(
+      expect.arrayContaining([
+        expect.objectContaining({ code: "indexed-frame-geometry-mismatch" }),
+      ]),
+    );
+  });
+
+  it("rejects missing palettes, wrong palette kinds and overflowing palette offsets", () => {
     const indexed = parseIndexedAssetManifest(fixture());
     const compiled = compiledFixture();
 
@@ -176,7 +255,7 @@ describe("indexed asset sidecar", () => {
           ...fixture().assets[0]!,
           defaultPalette: {
             paletteAssetId: "asset.palette.actor",
-            paletteOffset: 240,
+            paletteOffset: 32,
           },
         },
       ],
@@ -186,7 +265,7 @@ describe("indexed asset sidecar", () => {
     );
   });
 
-  it("reads exact runtime index and RGBA palette bytes and rejects malformed payloads", async () => {
+  it("reads exact runtime index/palette bytes and rejects source indices outside the palette window", async () => {
     const record = parseIndexedAssetManifest(fixture()).assets[0]!;
     const loaded = await readIndexedAssetRuntimeBytes(
       {
@@ -217,5 +296,15 @@ describe("indexed asset sidecar", () => {
         record,
       ),
     ).rejects.toThrow(/RGBA entries/u);
+
+    await expect(
+      readIndexedAssetRuntimeBytes(
+        {
+          readIndexBytes: async () => new Uint8Array(8).fill(31),
+          readPaletteBytes: async () => new Uint8Array(32 * 4),
+        },
+        record,
+      ),
+    ).rejects.toThrow(/source index 31/u);
   });
 });
