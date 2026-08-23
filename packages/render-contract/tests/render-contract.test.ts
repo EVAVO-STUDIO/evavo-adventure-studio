@@ -53,6 +53,39 @@ const createFrame = (nodes: readonly RenderNode[]): ResolvedFrame => ({
   nodes,
 });
 
+const indexedNode = (coverage: number): RenderNode => ({
+  kind: "indexed-sprite",
+  id: id<"render-node">("indexed.actor"),
+  indexAssetId: id<"asset">("asset.actor.indices"),
+  paletteAssetId: id<"asset">("asset.palette.base"),
+  paletteOffset: 0,
+  paletteDither: {
+    targetPaletteAssetId: id<"asset">("asset.palette.light"),
+    targetPaletteOffset: 32,
+    coverage,
+    matrix: "bayer-4",
+    origin: { x: 10, y: 20 },
+  },
+  sourceRect: { x: 0, y: 0, width: 16, height: 32 },
+  originalSize: { width: 16, height: 32 },
+  trimOffset: { x: 0, y: 0 },
+  order: {
+    layer: "world",
+    elevation: 0,
+    baselineY: 160,
+    zOffset: 0,
+    stableId: "indexed.actor",
+  },
+  transform: {
+    position: { x: 80, y: 160 },
+    pivot: { x: 8, y: 31 },
+    scale: { x: 1, y: 1 },
+    rotationRadians: 0,
+  },
+  opacity: 1,
+  visible: true,
+});
+
 describe("resolved frame contract", () => {
   it("orders scene layers before depth within a layer", () => {
     const ordered = orderRenderNodes([
@@ -83,5 +116,17 @@ describe("resolved frame contract", () => {
     );
 
     expect(issues.filter((issue) => issue.code === "mask-cycle")).toHaveLength(2);
+  });
+
+  it("accepts valid indexed palette dither metadata", () => {
+    expect(validateResolvedFrame(createFrame([indexedNode(0.5)]))).toEqual([]);
+  });
+
+  it("rejects invalid indexed palette dither coverage", () => {
+    expect(validateResolvedFrame(createFrame([indexedNode(1.25)]))).toEqual(
+      expect.arrayContaining([
+        expect.objectContaining({ code: "invalid-indexed-palette-dither" }),
+      ]),
+    );
   });
 });
