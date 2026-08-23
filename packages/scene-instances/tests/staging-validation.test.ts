@@ -136,7 +136,22 @@ const validStaging = (): SceneStagingManifest => ({
         {
           entranceId: asId<"entrance">("entrance.office"),
           entryPath: [],
+          speedPixelsPerSecond: 48,
           unlockControlAt: "path-end",
+        },
+      ],
+      occlusionPlanes: [
+        {
+          id: asId<"occlusion-plane">("plane.desk-front"),
+          assetId: asId<"asset">("asset.desk-front"),
+          position: { x: 40, y: 40 },
+          pivot: { x: 0, y: 0 },
+          baselineY: 65,
+          elevation: 0,
+          zOffset: 0,
+          opacity: 1,
+          scale: 1,
+          mirrored: false,
         },
       ],
       paletteLightZones: [],
@@ -173,6 +188,10 @@ const context = {
     },
   ],
   actors: [{ id: asId<"actor">("actor.detective") }],
+  assets: [
+    { id: asId<"asset">("asset.desk-front"), kind: "image" as const },
+    { id: asId<"asset">("asset.voice"), kind: "audio" as const },
+  ],
   sequences: [],
   sceneInstances: instances,
 };
@@ -234,6 +253,7 @@ describe("scene staging validation", () => {
         {
           entranceId: asId<"entrance">("entrance.missing"),
           entryPath: [],
+          speedPixelsPerSecond: 48,
           unlockControlAt: "path-end",
         },
       ],
@@ -247,5 +267,42 @@ describe("scene staging validation", () => {
     expect(codes.filter((code) => code === "missing-staging-object").length).toBeGreaterThanOrEqual(2);
     expect(codes).toContain("invalid-staging-approach-position");
     expect(codes).toContain("missing-staging-entrance");
+  });
+
+  it("rejects missing and non-image occlusion plane assets", () => {
+    const invalid = validStaging();
+    invalid.scenes[0] = {
+      ...invalid.scenes[0]!,
+      occlusionPlanes: [
+        {
+          id: asId<"occlusion-plane">("plane.missing"),
+          assetId: asId<"asset">("asset.missing"),
+          position: { x: 0, y: 0 },
+          pivot: { x: 0, y: 0 },
+          baselineY: 50,
+          elevation: 0,
+          zOffset: 0,
+          opacity: 1,
+          scale: 1,
+          mirrored: false,
+        },
+        {
+          id: asId<"occlusion-plane">("plane.audio"),
+          assetId: asId<"asset">("asset.voice"),
+          position: { x: 0, y: 0 },
+          pivot: { x: 0, y: 0 },
+          baselineY: 60,
+          elevation: 0,
+          zOffset: 0,
+          opacity: 1,
+          scale: 1,
+          mirrored: false,
+        },
+      ],
+    };
+
+    const codes = validateSceneStagingManifest(context, invalid).map((issue) => issue.code);
+    expect(codes).toContain("missing-staging-asset");
+    expect(codes).toContain("invalid-staging-asset-kind");
   });
 });
