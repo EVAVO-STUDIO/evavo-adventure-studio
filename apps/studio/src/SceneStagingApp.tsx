@@ -5,8 +5,7 @@ import {
 import { type ChangeEvent, useEffect, useMemo, useState } from "react";
 import { SceneDirectorPanel } from "./scene-director-components.js";
 import { createSceneDirectorOverlay } from "./scene-director-model.js";
-import { studioProject, studioSceneInstances } from "./fixture.js";
-import { studioSceneStaging } from "./scene-staging-fixture.js";
+import { sceneDirectorSamples } from "./scene-director-samples.js";
 import {
   FindingsPanel,
   HandoffPanel,
@@ -18,22 +17,42 @@ import {
   StatusPip,
 } from "./scene-staging-components.js";
 import "./scene-staging.css";
+import "./scene-director-samples.css";
 
 const shortId = (value: string): string => value.split(".").at(-1) ?? value;
 
 export const SceneStagingApp = () => {
-  const reports = useMemo(
-    () => createAdventureSceneStagingReports(studioProject, studioSceneInstances, undefined, studioSceneStaging),
-    [],
-  );
+  const [sampleIndex, setSampleIndex] = useState(0);
   const [sceneIndex, setSceneIndex] = useState(0);
   const [view, setView] = useState<StagingView>("stage");
   const [filter, setFilter] = useState<StagingFindingFilter>("all");
+  const sample = sceneDirectorSamples[sampleIndex] ?? sceneDirectorSamples[0]!;
+  const reports = useMemo(
+    () =>
+      createAdventureSceneStagingReports(
+        sample.project,
+        sample.sceneInstances,
+        undefined,
+        sample.staging,
+      ),
+    [sample],
+  );
   const report = reports[sceneIndex] ?? reports[0]!;
   const directorOverlay = useMemo(
-    () => createSceneDirectorOverlay(studioProject, studioSceneInstances, studioSceneStaging, report.sceneId),
-    [report.sceneId],
+    () =>
+      createSceneDirectorOverlay(
+        sample.project,
+        sample.sceneInstances,
+        sample.staging,
+        report.sceneId,
+      ),
+    [sample, report.sceneId],
   );
+
+  useEffect(() => {
+    setSceneIndex(0);
+    setFilter("all");
+  }, [sampleIndex]);
 
   useEffect(() => {
     setFilter("all");
@@ -52,21 +71,39 @@ export const SceneStagingApp = () => {
             <strong>Scene Director</strong>
           </div>
         </div>
-        <label className="stg-scene-picker">
-          <span>Directed scene</span>
-          <select
-            value={sceneIndex}
-            onChange={(event: ChangeEvent<HTMLSelectElement>) =>
-              setSceneIndex(Number(event.currentTarget.value))
-            }
-          >
-            {reports.map((candidate, index) => (
-              <option key={candidate.sceneId} value={index}>
-                {candidate.sceneName}
-              </option>
-            ))}
-          </select>
-        </label>
+        <div className="stg-selector-group">
+          <label className="stg-scene-picker">
+            <span>Production proof</span>
+            <select
+              value={sampleIndex}
+              onChange={(event: ChangeEvent<HTMLSelectElement>) =>
+                setSampleIndex(Number(event.currentTarget.value))
+              }
+            >
+              {sceneDirectorSamples.map((candidate, index) => (
+                <option key={candidate.id} value={index}>
+                  {candidate.label}
+                </option>
+              ))}
+            </select>
+          </label>
+          <label className="stg-scene-picker">
+            <span>Directed scene</span>
+            <select
+              value={sceneIndex}
+              onChange={(event: ChangeEvent<HTMLSelectElement>) =>
+                setSceneIndex(Number(event.currentTarget.value))
+              }
+            >
+              {reports.map((candidate, index) => (
+                <option key={candidate.sceneId} value={index}>
+                  {candidate.sceneName}
+                </option>
+              ))}
+            </select>
+          </label>
+          <span className="stg-sample-language">{sample.productionLanguage}</span>
+        </div>
         <div className={`stg-ready-state is-${report.status}`}>
           <StatusPip status={report.status} />
           <span>{report.status}</span>
@@ -94,7 +131,7 @@ export const SceneStagingApp = () => {
       <div className="stg-workspace">
         <aside className="stg-rail">
           <section>
-            <span className="stg-eyebrow">DIRECTED PLAYABLE STAGE</span>
+            <span className="stg-eyebrow">{sample.productionLanguage}</span>
             <h1>{report.sceneName}</h1>
             <code>{report.sceneId}</code>
           </section>
@@ -108,8 +145,15 @@ export const SceneStagingApp = () => {
             <Metric label="Props" value={report.metrics.objectCount} />
             <Metric label="Interactive" value={report.metrics.interactiveObjectCount} />
             <Metric label="Portals" value={report.metrics.portalCount} />
-            <Metric label="Approaches" value={directorOverlay.objects.reduce((sum, object) => sum + object.approachSlots.length, 0)} />
+            <Metric
+              label="Approaches"
+              value={directorOverlay.objects.reduce(
+                (sum, object) => sum + object.approachSlots.length,
+                0,
+              )}
+            />
             <Metric label="Surfaces" value={directorOverlay.staging?.surfaceZones.length ?? 0} />
+            <Metric label="Occlusion" value={directorOverlay.staging?.occlusionPlanes.length ?? 0} />
             <Metric label="Light zones" value={directorOverlay.staging?.paletteLightZones.length ?? 0} />
           </dl>
           <section className="stg-score">
@@ -151,6 +195,14 @@ export const SceneStagingApp = () => {
             <p>
               Art, feet, walk geometry, depth, occlusion, click targets, approach positions, surfaces and entry
               paths all resolve against the same native scene rather than separate editor approximations.
+            </p>
+          </section>
+          <section>
+            <span className="stg-eyebrow">PRODUCTION LANGUAGE</span>
+            <h2>{sample.label}</h2>
+            <p>
+              Switch production proofs without changing the Director model. The overlays should expose
+              materially different room grammar while preserving the same deterministic engine contract.
             </p>
           </section>
           <section>
