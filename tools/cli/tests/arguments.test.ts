@@ -2,7 +2,7 @@ import { describe, expect, it } from "vitest";
 import { CliUsageError, parseCliArguments } from "../src/arguments.js";
 
 describe("cli arguments", () => {
-  it("parses complete compile commands with visual, font, UI and audio evidence", () => {
+  it("parses complete compile commands with scene staging and production evidence", () => {
     expect(
       parseCliArguments([
         "compile",
@@ -12,6 +12,8 @@ describe("cli arguments", () => {
         "build/assets.json",
         "--scene-instances",
         "game/scene-instances.json",
+        "--scene-staging",
+        "game/scene-staging.json",
         "--art-direction",
         "game/art-direction.json",
         "--art-evidence",
@@ -33,6 +35,7 @@ describe("cli arguments", () => {
       projectPath: "game/project.json",
       assetManifestPath: "build/assets.json",
       sceneInstancesPath: "game/scene-instances.json",
+      sceneStagingPath: "game/scene-staging.json",
       artDirectionPath: "game/art-direction.json",
       artEvidencePath: "build/art-evidence.json",
       bitmapFontsPath: "game/bitmap-fonts.json",
@@ -61,6 +64,7 @@ describe("cli arguments", () => {
       projectPath: "game/project.json",
       assetManifestPath: "build/assets.json",
       sceneInstancesPath: null,
+      sceneStagingPath: null,
       artDirectionPath: null,
       artEvidencePath: null,
       bitmapFontsPath: null,
@@ -79,6 +83,7 @@ describe("cli arguments", () => {
       projectPath: "project.json",
       assetManifestPath: null,
       sceneInstancesPath: null,
+      sceneStagingPath: null,
       artDirectionPath: null,
       artEvidencePath: null,
       bitmapFontsPath: null,
@@ -88,12 +93,14 @@ describe("cli arguments", () => {
     });
   });
 
-  it("allows focused font, interface and audio validation without compiled assets", () => {
+  it("allows focused staging, font, interface and audio validation without compiled assets", () => {
     expect(
       parseCliArguments([
         "validate",
         "--project",
         "project.json",
+        "--scene-staging",
+        "scene-staging.json",
         "--bitmap-fonts",
         "bitmap-fonts.json",
         "--ui-skins",
@@ -103,6 +110,7 @@ describe("cli arguments", () => {
       ]),
     ).toMatchObject({
       kind: "validate",
+      sceneStagingPath: "scene-staging.json",
       bitmapFontsPath: "bitmap-fonts.json",
       uiSkinsPath: "ui-skins.json",
       audioMixPath: "audio-mix.json",
@@ -183,8 +191,8 @@ describe("cli arguments", () => {
         "project.json",
         "--asset-manifest",
         "assets.json",
-        "--audio-mix",
-        "audio-mix.json",
+        "--scene-staging",
+        "scene-staging.json",
         "--out",
         "evidence.json",
       ]),
