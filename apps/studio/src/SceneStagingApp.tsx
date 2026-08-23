@@ -3,13 +3,15 @@ import {
   createAdventureSceneStagingReports,
 } from "@evavo/adventure-design/scene-staging";
 import { type ChangeEvent, useEffect, useMemo, useState } from "react";
+import { SceneDirectorPanel } from "./scene-director-components.js";
+import { createSceneDirectorOverlay } from "./scene-director-model.js";
 import { studioProject, studioSceneInstances } from "./fixture.js";
+import { studioSceneStaging } from "./scene-staging-fixture.js";
 import {
   FindingsPanel,
   HandoffPanel,
   LayerOrderPanel,
   Metric,
-  StageOverlay,
   StagingButton,
   type StagingFindingFilter,
   type StagingView,
@@ -25,6 +27,10 @@ export const SceneStagingApp = () => {
   const [view, setView] = useState<StagingView>("stage");
   const [filter, setFilter] = useState<StagingFindingFilter>("all");
   const report = reports[sceneIndex] ?? reports[0]!;
+  const directorOverlay = useMemo(
+    () => createSceneDirectorOverlay(studioProject, studioSceneInstances, studioSceneStaging, report.sceneId),
+    [report.sceneId],
+  );
 
   useEffect(() => {
     setFilter("all");
@@ -40,11 +46,11 @@ export const SceneStagingApp = () => {
           <span className="stg-brand-mark">S</span>
           <div>
             <span>EVAVO ADVENTURE STUDIO</span>
-            <strong>Native Staging Lab</strong>
+            <strong>Scene Director</strong>
           </div>
         </div>
         <label className="stg-scene-picker">
-          <span>Scene composition</span>
+          <span>Directed scene</span>
           <select
             value={sceneIndex}
             onChange={(event: ChangeEvent<HTMLSelectElement>) =>
@@ -64,10 +70,10 @@ export const SceneStagingApp = () => {
         </div>
       </header>
 
-      <nav className="stg-toolbar" aria-label="Native Staging Lab views">
+      <nav className="stg-toolbar" aria-label="Scene Director workspaces">
         <div>
           <StagingButton active={view === "stage"} onClick={() => setView("stage")}>
-            Initial stage
+            Scene Director
           </StagingButton>
           <StagingButton active={view === "findings"} onClick={() => setView("findings")}>
             Findings
@@ -79,13 +85,13 @@ export const SceneStagingApp = () => {
             Handoff
           </StagingButton>
         </div>
-        <p>Scene instances · actor control · stateful props · portal handoffs</p>
+        <p>One 320 × 200 stage · art + control + perspective + interaction</p>
       </nav>
 
       <div className="stg-workspace">
         <aside className="stg-rail">
           <section>
-            <span className="stg-eyebrow">INITIAL PLAYABLE STAGE</span>
+            <span className="stg-eyebrow">DIRECTED PLAYABLE STAGE</span>
             <h1>{report.sceneName}</h1>
             <code>{report.sceneId}</code>
           </section>
@@ -99,7 +105,9 @@ export const SceneStagingApp = () => {
             <Metric label="Props" value={report.metrics.objectCount} />
             <Metric label="Interactive" value={report.metrics.interactiveObjectCount} />
             <Metric label="Portals" value={report.metrics.portalCount} />
-            <Metric label="Layers" value={report.metrics.occupiedLayerCount} />
+            <Metric label="Approaches" value={directorOverlay.objects.reduce((sum, object) => sum + object.approachSlots.length, 0)} />
+            <Metric label="Surfaces" value={directorOverlay.staging?.surfaceZones.length ?? 0} />
+            <Metric label="Light zones" value={directorOverlay.staging?.paletteLightZones.length ?? 0} />
           </dl>
           <section className="stg-score">
             <span className="stg-eyebrow">STAGING READINESS</span>
@@ -125,7 +133,7 @@ export const SceneStagingApp = () => {
         </aside>
 
         <section className="stg-canvas">
-          {view === "stage" ? <StageOverlay report={report} /> : null}
+          {view === "stage" ? <SceneDirectorPanel overlay={directorOverlay} report={report} /> : null}
           {view === "findings" ? (
             <FindingsPanel report={report} filter={filter} onFilter={setFilter} />
           ) : null}
@@ -135,36 +143,31 @@ export const SceneStagingApp = () => {
 
         <aside className="stg-inspector">
           <section>
-            <span className="stg-eyebrow">CONTROL CONTRACT</span>
-            <h2>
-              {report.metrics.walkableActorCount === 1
-                ? "One unambiguous player candidate"
-                : `${report.metrics.walkableActorCount} walkable candidates`}
-            </h2>
+            <span className="stg-eyebrow">SCENE CONTRACT</span>
+            <h2>One coordinate truth</h2>
             <p>
-              Packaged gameplay selects one implicit actor only when the start scene has exactly one walkable
-              instance. Ambiguity produces a view-only runtime unless launch configuration requests an actor
-              explicitly.
+              Art, feet, walk geometry, depth, occlusion, click targets, approach positions, surfaces and entry
+              paths all resolve against the same native scene rather than separate editor approximations.
             </p>
           </section>
           <section>
-            <span className="stg-eyebrow">STAGE DISCIPLINE</span>
-            <h2>What this review protects</h2>
+            <span className="stg-eyebrow">DIRECTOR DISCIPLINE</span>
+            <h2>What the overlays protect</h2>
             <ul>
-              <li>Actors begin on readable, reachable native foot positions.</li>
-              <li>Stateful props expose visible targets and reachable approach points.</li>
-              <li>Portals explain large geometric handoffs through authored traversal.</li>
-              <li>Foreground and ambient layers frame rather than steal interaction.</li>
-              <li>Stable ordering is intentional where silhouettes overlap.</li>
+              <li>Characters cross painted perspective without looking pasted onto the room.</li>
+              <li>Visible bodies retain clearance even though classic routing remains foot-point based.</li>
+              <li>Props use deliberate standing positions, facing and forgiving invisible click regions.</li>
+              <li>Foreground planes can hide and reveal actors using authored baseline priority.</li>
+              <li>Entrances, surfaces and palette-light regions remain deterministic through play.</li>
             </ul>
           </section>
           <section className="stg-next-action">
             <span className="stg-eyebrow">NEXT ACTION</span>
-            <h2>{report.findings[0]?.message ?? "Review final actors and props at 1×"}</h2>
+            <h2>{report.findings[0]?.message ?? "Play the room at 1× native size"}</h2>
             <p>
               {report.findings[0]?.recommendation ??
-                "Load the compiled actor atlases and object-state pixels over this " +
-                  "exact staging contract, then play every arrival and interaction."}
+                "Switch through every Scene Director overlay, then run the room from every entrance and " +
+                  "verify the final pixels, movement, occlusion and interactions agree."}
             </p>
           </section>
           <footer>
