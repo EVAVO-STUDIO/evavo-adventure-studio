@@ -6,7 +6,11 @@ import type {
   AdventureShowcaseVisualMotif,
 } from "./production-showcase-types.js";
 
-export type ClassicAdventureCreatorFamily = "storybook-icon" | "gothic-investigation" | "verb-panel-comedy";
+export type ClassicAdventureCreatorFamily =
+  | "storybook-icon"
+  | "procedural-icon"
+  | "gothic-investigation"
+  | "verb-panel-comedy";
 
 export type ClassicAdventureCreatorInterfaceFamily =
   | "temporary-icon-bar"
@@ -177,7 +181,10 @@ export type ClassicAdventureCreatorIssueSeverity = "error" | "warning" | "note";
 export type ClassicAdventureCreatorIssueCode =
   | "profile-family-mismatch"
   | "showcase-family-mismatch"
+  | "duplicate-id"
   | "invalid-native-size"
+  | "invalid-palette"
+  | "invalid-interface"
   | "invalid-interface-geometry"
   | "invalid-interface-family"
   | "invalid-timing"
@@ -185,13 +192,19 @@ export type ClassicAdventureCreatorIssueCode =
   | "invalid-scene-geometry"
   | "invalid-layer-stack"
   | "missing-player"
+  | "missing-interaction"
   | "invalid-actor-geometry"
   | "invalid-prop-geometry"
+  | "missing-puzzle-scene"
+  | "missing-puzzle-prop"
   | "unknown-puzzle-scene"
   | "unknown-puzzle-prop"
   | "unsupported-puzzle-grammar"
   | "irreversible-puzzle-failure"
+  | "unsafe-puzzle-recovery"
+  | "missing-dialogue-scene"
   | "unknown-dialogue-scene"
+  | "insufficient-investigation-topics"
   | "insufficient-production-proof"
   | "missing-originality-boundary";
 
@@ -200,4 +213,23 @@ export interface ClassicAdventureCreatorIssue {
   readonly code: ClassicAdventureCreatorIssueCode;
   readonly path: string;
   readonly message: string;
+  readonly recommendation: string;
+  readonly impact: number;
+}
+
+export interface ClassicAdventureCreatorMetrics {
+  readonly sceneCount: number;
+  readonly interactivePropCount: number;
+  readonly puzzleCount: number;
+  readonly dialogueTopicCount: number;
+  readonly nativeReviewProofCount: number;
+}
+
+export interface ClassicAdventureCreatorReport {
+  readonly reportVersion: 1;
+  readonly projectId: string;
+  readonly status: "ready" | "attention" | "blocked";
+  readonly score: number;
+  readonly issues: readonly ClassicAdventureCreatorIssue[];
+  readonly metrics: ClassicAdventureCreatorMetrics;
 }
