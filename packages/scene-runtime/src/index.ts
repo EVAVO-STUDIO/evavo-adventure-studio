@@ -16,13 +16,14 @@ import type {
   SpriteRenderNode,
 } from "@evavo/adventure-render-contract";
 import type { RuntimeBundle } from "@evavo/adventure-runtime-bundle";
-import { quantizeNativePoint, resolveScaleAtY } from "@evavo/adventure-scene";
+import { pointInPolygon, quantizeNativePoint, resolveScaleAtY } from "@evavo/adventure-scene";
 import type {
   ObjectDefinition,
   ObjectStateDefinition,
   SceneActorInstance,
   SceneObjectInstance,
 } from "@evavo/adventure-scene-instances";
+import { sampleDepthScale } from "@evavo/adventure-scene-instances/staging";
 
 export interface ActorInstanceRuntimeState {
   readonly instanceId: Id<"actor-instance">;
@@ -343,6 +344,30 @@ const backgroundNode = (bundle: RuntimeBundle, scene: RuntimeBundle["scenes"][nu
   };
 };
 
+const stagedScaleAtPoint = (
+  bundle: RuntimeBundle,
+  world: RuntimeWorldState,
+  scene: RuntimeBundle["scenes"][number],
+  point: Point,
+  fallbackScale: number,
+): number => {
+  const staging = bundle.sceneStaging?.scenes.find((candidate) => candidate.sceneId === scene.id);
+  if (!staging) return fallbackScale;
+  const area = scene.navigationAreas
+    .filter((candidate) => !candidate.enabledWhen || evaluateCondition(candidate.enabledWhen, world.story))
+    .filter((candidate) => pointInPolygon(point, candidate.shape))
+    .sort((left, right) => {
+      if (left.elevation !== right.elevation) return right.elevation - left.elevation;
+      return left.id.localeCompare(right.id);
+    })[0];
+  if (!area) return fallbackScale;
+  const override = staging.navigationScaleOverrides.find((candidate) => candidate.areaId === area.id);
+  if (!override) return fallbackScale;
+  if (override.mode === "fixed") return override.fixedScale ?? fallbackScale;
+  const curve = staging.depthScaleCurves.find((candidate) => candidate.id === override.curveId);
+  return curve ? sampleDepthScale(curve, point.y) : fallbackScale;
+};
+
 const objectStateFor = (definition: ObjectDefinition, stateId: string): ObjectStateDefinition => {
   const state = definition.states.find((candidate) => candidate.id === stateId);
   if (!state) {
@@ -353,6 +378,7 @@ const objectStateFor = (definition: ObjectDefinition, stateId: string): ObjectSt
 
 const objectNode = (
   bundle: RuntimeBundle,
+  world: RuntimeWorldState,
   scene: RuntimeBundle["scenes"][number],
   instance: SceneObjectInstance,
   state: ObjectStateDefinition,
@@ -367,7 +393,7 @@ const objectNode = (
 
   const position = quantizeNativePoint(instance.position, bundle.presentation.pixelMotionPolicy, "entity");
   const perspective = resolveScaleAtY(scene.depthBands, position.y);
-  const scale = (perspective?.scale ?? 1) * instance.scaleMultiplier;
+  const scale = stagedScaleAtPoint(bundle, world, scene, position, perspective?.scale ?? 1) * instance.scaleMultiplier;
   const common = {
     kind: "sprite" as const,
     id: `render.object.${instance.id}` as Id<"render-node">,
@@ -465,6 +491,9 @@ export const resolveRuntimeSceneFrame = (
       throw new Error(`Actor '${runtime.actorId}' does not exist.`);
     }
     const frame: SpriteFrame = currentAnimationFrame(actor, runtime.playback);
+    const legacyScale = resolveScaleAtY(scene.depthBands, runtime.position.y)?.scale ?? 1;
+    const stagedScale = stagedScaleAtPoint(bundle, world, scene, runtime.position, legacyScale);
+    const stagedRatio = legacyScale > 0 ? stagedScale / legacyScale : 1;
     nodes.push(
       resolveActorSprite({
         nodeId: `render.actor-instance.${runtime.instanceId}` as Id<"render-node">,
@@ -475,7 +504,7 @@ export const resolveRuntimeSceneFrame = (
         presentation: bundle.presentation,
         elevation: authored.elevation,
         zOffset: authored.zOffset,
-        scaleMultiplier: authored.scaleMultiplier,
+        scaleMultiplier: authored.scaleMultiplier * stagedRatio,
         visible: true,
       }),
     );
@@ -492,7 +521,7 @@ export const resolveRuntimeSceneFrame = (
     const stateId =
       world.story.objectStates[instance.id] ?? instance.initialStateId ?? definition.initialStateId;
     const state = objectStateFor(definition, stateId);
-    const resolved = objectNode(bundle, scene, instance, state);
+    const resolved = objectNode(bundle, world, scene, instance, state);
     if (resolved) {
       nodes.push(resolved);
     }
