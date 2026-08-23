@@ -136,13 +136,17 @@ describe("adventure production profiles", () => {
     expect(earlyProcedure.interface.family).toBe("top-icon-bar");
     expect(earlyProcedure.interface.primaryInteractionMode).toBe("icon-bar");
     expect(earlyProcedure.interface.showScore).toBe(true);
-    expect(earlyProcedure.actors.relativeHeightPercent[1]).toBeLessThanOrEqual(36);
+    expect(earlyProcedure.actors.relativeHeightPercent).toEqual([22, 38]);
     expect(earlyProcedure.puzzleGrammars).toEqual(
       expect.arrayContaining(["environmental-state", "inventory-chain"]),
     );
     expect(earlyProcedure.puzzleGrammars).not.toContain("topic-investigation");
 
     expect(laterProcedure.family).toBe("procedural-investigation");
+    expect(laterProcedure.actors.relativeHeightPercent).toEqual([25, 43]);
+    expect(earlyProcedure.actors.relativeHeightPercent[1]).toBeLessThan(
+      laterProcedure.actors.relativeHeightPercent[1],
+    );
     expect(laterProcedure.puzzleGrammars).toEqual(
       expect.arrayContaining(["research-deduction", "topic-investigation"]),
     );
