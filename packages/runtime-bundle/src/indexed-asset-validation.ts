@@ -70,20 +70,33 @@ export const validateRuntimeIndexedAssets = (
         `Indexed asset '${record.assetId}' references '${palette.kind}', expected a palette asset.`,
       );
     } else {
-      if (record.defaultPalette.paletteOffset + palette.metadata.entries > 256) {
+      const resolvedMaximum =
+        record.maximumSourceIndex === undefined
+          ? null
+          : record.maximumSourceIndex + record.defaultPalette.paletteOffset;
+      if (
+        (resolvedMaximum !== null && resolvedMaximum >= palette.metadata.entries) ||
+        (resolvedMaximum === null && record.defaultPalette.paletteOffset >= palette.metadata.entries)
+      ) {
         addIssue(
           issues,
           "palette-offset-overflow",
           `${path}.defaultPalette.paletteOffset`,
-          `Indexed asset '${record.assetId}' palette window exceeds byte index space.`,
+          resolvedMaximum === null
+            ? `Indexed asset '${record.assetId}' palette offset ${record.defaultPalette.paletteOffset} is outside palette '${palette.assetId}'.`
+            : `Indexed asset '${record.assetId}' maximum source index ${record.maximumSourceIndex} plus offset ${record.defaultPalette.paletteOffset} resolves to ${resolvedMaximum}; palette '${palette.assetId}' has ${palette.metadata.entries} entries.`,
         );
       }
-      if (record.transparentIndex !== undefined && record.transparentIndex >= palette.metadata.entries) {
+      if (
+        record.transparentIndex !== undefined &&
+        record.maximumSourceIndex !== undefined &&
+        record.transparentIndex > record.maximumSourceIndex
+      ) {
         addIssue(
           issues,
           "transparent-index-overflow",
           `${path}.transparentIndex`,
-          `Indexed asset '${record.assetId}' transparent index ${record.transparentIndex} exceeds palette entry range.`,
+          `Indexed asset '${record.assetId}' transparent index ${record.transparentIndex} exceeds declared maximum source index ${record.maximumSourceIndex}.`,
         );
       }
     }
