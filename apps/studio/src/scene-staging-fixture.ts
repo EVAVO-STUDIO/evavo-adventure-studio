@@ -146,11 +146,6 @@ export const studioSceneStaging = sceneStagingManifestSchema.parse({
           paletteMapId: "palette-map.office-lamp-warm",
           blendMode: "ordered-dither",
           priority: 5,
-          enabledWhen: {
-            kind: "object-state",
-            objectId: "object.office.lamp",
-            state: "object-state.lamp.on",
-          },
         },
       ],
     },
