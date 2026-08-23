@@ -11,7 +11,7 @@ const hex = (bytes: ArrayBuffer): string =>
   [...new Uint8Array(bytes)].map((value) => value.toString(16).padStart(2, "0")).join("");
 
 const sha256 = async (bytes: Uint8Array): Promise<string> =>
-  hex(await crypto.subtle.digest("SHA-256", bytes));
+  hex(await crypto.subtle.digest("SHA-256", bytes.buffer.slice(bytes.byteOffset, bytes.byteOffset + bytes.byteLength)));
 
 const fetchVerifiedBytes = async (
   url: string,
@@ -63,24 +63,12 @@ const paletteOutput = (bundle: RuntimeBundle, paletteAssetId: Id<"asset">) => {
   return { asset, output };
 };
 
-export interface LoadedIndexedRuntimeTextures {
-  readonly resolver: PixiIndexedTextureCache;
-  dispose(): void;
-}
-
-export const loadIndexedRuntimeTextures = async (
+export const populateIndexedRuntimeTextures = async (
   bundle: RuntimeBundle,
   bundleUrl: string,
-  fallbackTextures: PixiAssetTextureStore,
-): Promise<LoadedIndexedRuntimeTextures | null> => {
-  if (!bundle.indexedAssets || bundle.indexedAssets.assets.length === 0) return null;
-
-  const resolver = new PixiIndexedTextureCache(
-    createPixiIndexedBufferTextureFactory(),
-    fallbackTextures,
-  );
-
-  for (const record of bundle.indexedAssets.assets) {
+  resolver: PixiIndexedTextureCache,
+): Promise<void> => {
+  for (const record of bundle.indexedAssets?.assets ?? []) {
     const data = await fetchVerifiedBytes(
       runtimeUrl(bundleUrl, record.indexRuntimePath),
       record.indexByteLength,
@@ -100,6 +88,25 @@ export const loadIndexedRuntimeTextures = async (
     );
     resolver.registerPalette(paletteAssetId, data);
   }
+};
+
+export interface LoadedIndexedRuntimeTextures {
+  readonly resolver: PixiIndexedTextureCache;
+  dispose(): void;
+}
+
+export const loadIndexedRuntimeTextures = async (
+  bundle: RuntimeBundle,
+  bundleUrl: string,
+  fallbackTextures: PixiAssetTextureStore,
+): Promise<LoadedIndexedRuntimeTextures | null> => {
+  if (!bundle.indexedAssets || bundle.indexedAssets.assets.length === 0) return null;
+
+  const resolver = new PixiIndexedTextureCache(
+    createPixiIndexedBufferTextureFactory(),
+    fallbackTextures,
+  );
+  await populateIndexedRuntimeTextures(bundle, bundleUrl, resolver);
 
   return {
     resolver,
