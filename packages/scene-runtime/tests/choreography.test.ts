@@ -86,6 +86,7 @@ const bundle = {
         interactionComfortRegionsByObject: {},
         interactionChoreographies: [choreography],
         entryChoreographies: [],
+        occlusionPlanes: [],
         paletteLightZones: [],
       },
     ],
