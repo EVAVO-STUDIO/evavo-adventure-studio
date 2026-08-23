@@ -189,10 +189,9 @@ export const interactiveWorldSaveSchema = z
       z.string().min(1),
       pendingCommandSchema,
     ),
-    activeInteractionChoreographies: z.record(
-      z.string().min(1),
-      activeInteractionChoreographySchema,
-    ),
+    activeInteractionChoreographies: z
+      .record(z.string().min(1), activeInteractionChoreographySchema)
+      .default({}),
   })
   .strict() as z.ZodType<InteractiveRuntimeWorldState>;
 
