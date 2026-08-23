@@ -177,6 +177,22 @@ const activeInteractionChoreographySchema = z
   })
   .strict();
 
+const activeEntryChoreographySchema = z
+  .object({
+    actorInstanceId: idSchema("actor-instance"),
+    sceneId: idSchema("scene"),
+    entranceId: idSchema("entrance"),
+    points: z.array(pointSchema),
+    nextPointIndex: z.number().int().nonnegative(),
+    speedPixelsPerSecond: z.number().finite().positive(),
+    entryAnimationState: z.string().min(1).nullable(),
+    arrivalFacing: z.string().min(1).nullable(),
+    arrivalAnimationState: z.string().min(1).nullable(),
+    unlockControlAt: z.enum(["spawn", "path-end", "animation-end"]),
+    waitingForArrivalAnimation: z.boolean(),
+  })
+  .strict();
+
 export const interactiveWorldSaveSchema = z
   .object({
     story: runtimeStorySchema,
@@ -191,6 +207,9 @@ export const interactiveWorldSaveSchema = z
     ),
     activeInteractionChoreographies: z
       .record(z.string().min(1), activeInteractionChoreographySchema)
+      .default({}),
+    activeEntryChoreographies: z
+      .record(z.string().min(1), activeEntryChoreographySchema)
       .default({}),
   })
   .strict() as z.ZodType<InteractiveRuntimeWorldState>;
