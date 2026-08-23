@@ -57,8 +57,8 @@ describe("adventure production showcases", () => {
       motif: "municipal-night-shift",
     });
     expect(nightShift.puzzleBeats.map((beat) => beat.grammar)).toEqual([
-      "environmental-state",
       "inventory-chain",
+      "environmental-state",
     ]);
     const earlyText = JSON.stringify(nightShift).toLowerCase();
     expect(earlyText).toContain("briefing");
