@@ -22,7 +22,10 @@ import "./scene-staging.css";
 const shortId = (value: string): string => value.split(".").at(-1) ?? value;
 
 export const SceneStagingApp = () => {
-  const reports = useMemo(() => createAdventureSceneStagingReports(studioProject, studioSceneInstances), []);
+  const reports = useMemo(
+    () => createAdventureSceneStagingReports(studioProject, studioSceneInstances, undefined, studioSceneStaging),
+    [],
+  );
   const [sceneIndex, setSceneIndex] = useState(0);
   const [view, setView] = useState<StagingView>("stage");
   const [filter, setFilter] = useState<StagingFindingFilter>("all");
