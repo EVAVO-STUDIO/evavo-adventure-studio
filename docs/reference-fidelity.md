@@ -6,9 +6,10 @@ Production profiles describe reusable visual and interaction families without co
 
 ## Included title packs
 
-The first catalogue contains:
+The catalogue contains:
 
 - King's Quest V over the Sierra SCI1 VGA dialect;
+- Police Quest: In Pursuit of the Death Angel — VGA remake over the Sierra SCI1 VGA dialect;
 - Quest for Glory IV over the Sierra SCI32 VGA dialect;
 - Gabriel Knight: Sins of the Fathers over the Sierra SCI32 VGA dialect;
 - Police Quest IV over the Sierra SCI32 VGA dialect;
@@ -16,7 +17,7 @@ The first catalogue contains:
 - Heart of China over the Dynamix DGDS VGA dialect;
 - Rise of the Dragon over the Dynamix DGDS VGA dialect.
 
-Every title pack keeps floppy and CD variants explicit. Variant-specific speech, audio, timing, interpreter and interface differences must be proved independently rather than hidden inside one generic title preset.
+Release variants remain explicit. Variant-specific speech, audio, timing, interpreter and interface differences must be proved independently rather than hidden inside one generic title preset.
 
 ## Contract structure
 
@@ -32,7 +33,33 @@ A reference pack binds:
 
 Capabilities are not considered complete merely because a type or UI control exists. Each capability declares accepted evidence kinds and a minimum retained-evidence count. Critical implementation or evidence gaps block fidelity admission.
 
-## Separate title grammars
+## Police Quest generations stay separate
+
+Police Quest I VGA and Police Quest IV deliberately do **not** share one production grammar.
+
+### Police Quest: In Pursuit of the Death Angel — VGA remake
+
+The 1992 VGA remake is treated as an early Sierra SCI1 lane. Its fidelity contract emphasises:
+
+- 320×200 painted real-world observation rather than modern chunky pixel art;
+- compact SCI1-style icon interaction;
+- small, proportionate in-scene actors;
+- grounded municipal, street, vehicle and public-interior staging;
+- practical targets that remain clickable without modern hotspot highlighting;
+- readable procedural action order;
+- visible score and concise narration/feedback;
+- bounded failure, death, restore and restart;
+- simple location progression rather than a later case-management UI.
+
+Its original proof is **Night Shift** and uses the `early-procedural-icon-vga` production profile.
+
+### Police Quest IV
+
+Police Quest IV remains a later SCI32 procedural-investigation lane. Its contract adds evidence custody, case state, interrogation, richer procedural failure/recovery and location progression. Its original proof remains **Open Case** under `procedural-investigation-vga`.
+
+The two packs may share general adventure-engine capabilities, but their visual hierarchy, actor scale, interface density, dialogue staging and procedural presentation must remain visibly different.
+
+## Other separate title grammars
 
 The SCI32 title packs deliberately remain separate:
 
@@ -40,7 +67,7 @@ The SCI32 title packs deliberately remain separate:
 - Gabriel Knight requires chapter state, topic dialogue, evidence research, portraits, close-ups and investigation gating.
 - Police Quest IV requires procedure checks, evidence handling, case state, interrogation, procedural failure and location progression.
 
-They may currently share a visual baseline, but they do not share one runtime capability graph.
+They do not share one runtime capability graph merely because they use later Sierra technology.
 
 Fate of Atlantis separately requires persistent verbs, sentence construction, alternate routes, companion state, travel, alternative puzzle solutions, action sequences and route-dependent world state.
 
@@ -57,14 +84,15 @@ Reference titles are measurement targets. Distributed examples remain original:
 | Reference grammar | Original EVAVO proof | State |
 | --- | --- | --- |
 | King's Quest V | The Glass Finch | available construction proof |
+| Police Quest I VGA remake | Night Shift | available production/showcase contract; playable proof still to be completed |
 | Quest for Glory IV | The Hollow Vale | planned dedicated RPG proof |
 | Gabriel Knight | The Red Ledger | available playable investigation proof |
-| Police Quest IV | Open Case | planned dedicated procedure proof |
+| Police Quest IV | Open Case | planned dedicated later-procedure proof |
 | Fate of Atlantis | The Sunken Dial | available construction proof |
 | Heart of China | Jade Horizon | planned packaged cinematic proof |
 | Rise of the Dragon | Dead Channel | planned packaged clock-driven proof |
 
-A planned proof must not be reported as a finished playable game. An available construction proof must not be reported as full title fidelity until its exact implementation and retained evidence pass the audit contract.
+A planned proof must not be reported as a finished playable game. A construction or production contract must not be reported as full title fidelity until its exact implementation and retained evidence pass the audit contract.
 
 ## Redistribution boundary
 
@@ -85,6 +113,5 @@ Open the Studio workspace at:
 The lab shows title packs, release variants, engine dialects, critical capabilities, evidence burdens, executable scenarios and original proof boundaries.
 
 It intentionally shows **contract ready, evidence not attached** until a real implementation run supplies retained evidence. It does not invent a fidelity percentage from documentation or screenshots alone.
-
 
 See [Dynamix DGDS cinematic adventures](dynamix-cinematic-adventures.md) for the shared runtime, timing, action and art contract.
