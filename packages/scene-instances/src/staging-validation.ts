@@ -9,7 +9,9 @@ export type SceneStagingIssueCode =
   | "missing-staging-scene"
   | "missing-staging-actor"
   | "missing-staging-navigation-area"
+  | "missing-staging-navigation-portal"
   | "missing-staging-object"
+  | "missing-staging-object-state"
   | "invalid-staging-approach-position"
   | "missing-staging-approach-slot"
   | "missing-staging-interaction"
@@ -93,6 +95,7 @@ export const validateSceneStagingManifest = (
     }
     const areaIds = new Set(scene.navigationAreas.map((area) => area.id as string));
     const composition = compositionsBySceneId.get(staging.sceneId);
+    const portalIds = new Set((composition?.navigationPortals ?? []).map((portal) => portal.id as string));
     const objectsById = new Map(
       (composition?.objectInstances ?? []).map((instance) => [instance.id as string, instance] as const),
     );
@@ -118,6 +121,52 @@ export const validateSceneStagingManifest = (
           `Scale override references missing navigation area '${override.areaId}'.`,
         );
       }
+    });
+
+    staging.navigationStateModifiers.forEach((modifier, index) => {
+      const modifierPath = `${path}.navigationStateModifiers[${index}]`;
+      const instance = objectsById.get(modifier.objectId);
+      if (!instance) {
+        addIssue(
+          issues,
+          "missing-staging-object",
+          `${modifierPath}.objectId`,
+          `Navigation modifier '${modifier.id}' references object '${modifier.objectId}' outside scene '${scene.id}'.`,
+        );
+      } else {
+        const definition = definitionsById.get(instance.definitionId);
+        const states = new Set((definition?.states ?? []).map((state) => state.id as string));
+        modifier.activeStateIds.forEach((stateId, stateIndex) => {
+          if (!states.has(stateId)) {
+            addIssue(
+              issues,
+              "missing-staging-object-state",
+              `${modifierPath}.activeStateIds[${stateIndex}]`,
+              `Navigation modifier '${modifier.id}' references missing state '${stateId}' for object '${modifier.objectId}'.`,
+            );
+          }
+        });
+      }
+      modifier.disabledAreaIds.forEach((areaId, areaIndex) => {
+        if (!areaIds.has(areaId)) {
+          addIssue(
+            issues,
+            "missing-staging-navigation-area",
+            `${modifierPath}.disabledAreaIds[${areaIndex}]`,
+            `Navigation modifier '${modifier.id}' references missing area '${areaId}'.`,
+          );
+        }
+      });
+      modifier.disabledPortalIds.forEach((portalId, portalIndex) => {
+        if (!portalIds.has(portalId)) {
+          addIssue(
+            issues,
+            "missing-staging-navigation-portal",
+            `${modifierPath}.disabledPortalIds[${portalIndex}]`,
+            `Navigation modifier '${modifier.id}' references missing portal '${portalId}'.`,
+          );
+        }
+      });
     });
 
     for (const [objectId, slots] of Object.entries(staging.approachSlotsByObject)) {
