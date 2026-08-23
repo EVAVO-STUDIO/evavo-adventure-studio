@@ -66,6 +66,48 @@ describe("classic adventure scene staging", () => {
     expect(preferredLaneCostMultiplierAtPoint(lane, { x: 100, y: 170 })).toBe(1);
   });
 
+  it("normalizes equal x/y occlusion scale vectors and rejects non-uniform ones", () => {
+    const parsed = sceneStagingManifestSchema.parse({
+      manifestVersion: 1,
+      projectId: "project.test",
+      scenes: [
+        {
+          sceneId: "scene.test",
+          occlusionPlanes: [
+            {
+              id: "occlusion-plane.test",
+              assetId: "asset.foreground.test",
+              position: { x: 0, y: 0 },
+              baselineY: 140,
+              scale: { x: 1.25, y: 1.25 },
+            },
+          ],
+        },
+      ],
+    });
+    expect(parsed.scenes[0]?.occlusionPlanes[0]?.scale).toBe(1.25);
+
+    const malformed = sceneStagingManifestSchema.safeParse({
+      manifestVersion: 1,
+      projectId: "project.test",
+      scenes: [
+        {
+          sceneId: "scene.test",
+          occlusionPlanes: [
+            {
+              id: "occlusion-plane.test",
+              assetId: "asset.foreground.test",
+              position: { x: 0, y: 0 },
+              baselineY: 140,
+              scale: { x: 1, y: 1.2 },
+            },
+          ],
+        },
+      ],
+    });
+    expect(malformed.success).toBe(false);
+  });
+
   it("rejects malformed custom surfaces and unsorted depth curves", () => {
     const result = sceneStagingManifestSchema.safeParse({
       manifestVersion: 1,
