@@ -34,6 +34,9 @@ const canonicalSceneStaging = (manifest: SceneStagingManifest): SceneStagingMani
       navigationScaleOverrides: [...scene.navigationScaleOverrides].sort((left, right) =>
         left.areaId.localeCompare(right.areaId),
       ),
+      navigationStateModifiers: [...scene.navigationStateModifiers].sort((left, right) =>
+        left.id.localeCompare(right.id),
+      ),
       approachSlotsByObject: Object.fromEntries(
         Object.entries(scene.approachSlotsByObject)
           .sort(([left], [right]) => left.localeCompare(right))
