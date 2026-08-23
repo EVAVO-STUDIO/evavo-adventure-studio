@@ -9,6 +9,52 @@ const nativeDitherOrigin = (node: IndexedSpriteRenderNode): Point => ({
   y: Math.round(node.order.baselineY - node.transform.pivot.y),
 });
 
+export class PaletteLightCompatibilityError extends Error {
+  readonly indexAssetId: Id<"asset">;
+  readonly paletteAssetId: Id<"asset">;
+  readonly paletteOffset: number;
+  readonly maximumSourceIndex: number;
+
+  constructor(
+    indexAssetId: Id<"asset">,
+    paletteAssetId: Id<"asset">,
+    paletteOffset: number,
+    maximumSourceIndex: number,
+    paletteEntries: number,
+  ) {
+    super(
+      `Indexed asset '${indexAssetId}' uses source index ${maximumSourceIndex}; palette ` +
+        `'${paletteAssetId}' offset ${paletteOffset} resolves beyond ${paletteEntries} entries.`,
+    );
+    this.name = "PaletteLightCompatibilityError";
+    this.indexAssetId = indexAssetId;
+    this.paletteAssetId = paletteAssetId;
+    this.paletteOffset = paletteOffset;
+    this.maximumSourceIndex = maximumSourceIndex;
+  }
+}
+
+const assertTreatmentCompatible = (
+  bundle: RuntimeBundle,
+  node: IndexedSpriteRenderNode,
+  paletteAssetId: Id<"asset">,
+  paletteOffset: number,
+): void => {
+  const indexed = bundle.indexedAssets?.assets.find((record) => record.assetId === node.indexAssetId);
+  if (!indexed || indexed.maximumSourceIndex === undefined) return;
+  const palette = bundle.assets.find((asset) => asset.assetId === paletteAssetId);
+  if (palette?.kind !== "palette") return;
+  if (indexed.maximumSourceIndex + paletteOffset >= palette.metadata.entries) {
+    throw new PaletteLightCompatibilityError(
+      node.indexAssetId,
+      paletteAssetId,
+      paletteOffset,
+      indexed.maximumSourceIndex,
+      palette.metadata.entries,
+    );
+  }
+};
+
 export const applyPaletteLightingToFrame = (
   bundle: RuntimeBundle,
   world: RuntimeWorldState,
@@ -23,6 +69,7 @@ export const applyPaletteLightingToFrame = (
       y: node.order.baselineY,
     });
     if (!treatment) return node;
+    assertTreatmentCompatible(bundle, node, treatment.paletteAssetId, treatment.paletteOffset);
     if (treatment.blendMode === "hard") {
       return {
         ...node,
