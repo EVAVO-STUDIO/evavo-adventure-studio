@@ -1,4 +1,3 @@
-import { evaluateCondition } from "@evavo/adventure-core";
 import type { Id, Point } from "@evavo/adventure-project-schema";
 import type { RuntimeBundle } from "@evavo/adventure-runtime-bundle";
 import { advanceRuntimeWorld, createInitialRuntimeWorldState } from "./index.js";
@@ -8,6 +7,7 @@ import {
   applySegmentAnimation,
   authoredActorInstance,
   completeMovementAnimation,
+  enabledNavigationAreas,
   enabledPortals,
   navigationPortalsForActor,
 } from "./movement-shared.js";
@@ -58,9 +58,7 @@ export const beginActorMovement = (
   if (!scene) {
     throw new Error(`Runtime scene '${runtimeSceneId}' is missing.`);
   }
-  const areas = scene.navigationAreas.filter(
-    (area) => !area.enabledWhen || evaluateCondition(area.enabledWhen, state.story),
-  );
+  const areas = enabledNavigationAreas(bundle, state, scene.id);
   const portals = enabledPortals(bundle, state, scene.id);
   const routeResult = findStagedNavigationRoute(
     bundle,
