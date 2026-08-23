@@ -24,6 +24,10 @@
       "types": "./dist/src/staging.d.ts",
       "import": "./dist/src/staging.js"
     },
+    "./staged-frame": {
+      "types": "./dist/src/staged-frame.d.ts",
+      "import": "./dist/src/staged-frame.js"
+    },
     "./scene-transition": {
       "types": "./dist/src/scene-transition.d.ts",
       "import": "./dist/src/scene-transition.js"
