@@ -142,6 +142,17 @@ export const validateSceneStagingManifest = (
       });
     }
 
+    for (const objectId of Object.keys(staging.interactionComfortRegionsByObject)) {
+      if (!objectsById.has(objectId)) {
+        addIssue(
+          issues,
+          "missing-staging-object",
+          `${path}.interactionComfortRegionsByObject.${objectId}`,
+          `Interaction comfort regions reference object '${objectId}' that is not placed in scene '${scene.id}'.`,
+        );
+      }
+    }
+
     staging.interactionChoreographies.forEach((choreography, index) => {
       const choreographyPath = `${path}.interactionChoreographies[${index}]`;
       for (const slotId of choreography.approachSlotIds) {
