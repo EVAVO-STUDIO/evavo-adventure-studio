@@ -20,6 +20,7 @@ import {
   chooseActiveRuntimeDialogueOption,
   resolveActiveRuntimeDialogue,
 } from "@evavo/adventure-scene-runtime/dialogue";
+import { beginEntryChoreography } from "@evavo/adventure-scene-runtime/entry";
 import { hitTestSceneObject } from "@evavo/adventure-scene-runtime/interactions";
 import { beginActorMovement } from "@evavo/adventure-scene-runtime/movement";
 import {
@@ -243,6 +244,10 @@ export const createPackagedRuntimeController = (
     options.onStatusChange?.(text);
   };
 
+  const entryInputLocked = (): boolean =>
+    !!controlledActorInstanceId &&
+    world.activeEntryChoreographies[controlledActorInstanceId] !== undefined;
+
   const clearActorTransientState = (
     state: InteractiveRuntimeWorldState,
     actorInstanceId: Id<"actor-instance">,
@@ -250,10 +255,37 @@ export const createPackagedRuntimeController = (
     const movements = { ...state.movements };
     const pendingObjectCommands = { ...state.pendingObjectCommands };
     const activeInteractionChoreographies = { ...state.activeInteractionChoreographies };
+    const activeEntryChoreographies = { ...state.activeEntryChoreographies };
     delete movements[actorInstanceId];
     delete pendingObjectCommands[actorInstanceId];
     delete activeInteractionChoreographies[actorInstanceId];
-    return { ...state, movements, pendingObjectCommands, activeInteractionChoreographies };
+    delete activeEntryChoreographies[actorInstanceId];
+    return {
+      ...state,
+      movements,
+      pendingObjectCommands,
+      activeInteractionChoreographies,
+      activeEntryChoreographies,
+    };
+  };
+
+  const startEntryIfAuthored = (
+    state: InteractiveRuntimeWorldState,
+    actorInstanceId: Id<"actor-instance">,
+    sceneId: Id<"scene">,
+    entranceId: Id<"entrance">,
+  ): InteractiveRuntimeWorldState => {
+    const started = beginEntryChoreography(bundle, state, actorInstanceId, sceneId, entranceId);
+    if (!started.active) return state;
+    setStatus("ENTERING");
+    return {
+      ...state,
+      actorInstances: started.state.actorInstances,
+      activeEntryChoreographies: {
+        ...state.activeEntryChoreographies,
+        [actorInstanceId]: started.active,
+      },
+    };
   };
 
   const reconcileControlledActorTransition = (
@@ -280,7 +312,15 @@ export const createPackagedRuntimeController = (
           nextWorld.story.currentEntranceId,
         )
       : reconcileRuntimeActorWithStoryLocation(bundle, nextWorld, controlledActorInstanceId);
-    return clearActorTransientState(relocated, controlledActorInstanceId);
+    const cleared = clearActorTransientState(relocated, controlledActorInstanceId);
+    return storyLocationChanged
+      ? startEntryIfAuthored(
+          cleared,
+          controlledActorInstanceId,
+          nextWorld.story.currentSceneId,
+          nextWorld.story.currentEntranceId,
+        )
+      : cleared;
   };
 
   const applyWorldState = (
@@ -303,6 +343,18 @@ export const createPackagedRuntimeController = (
       camera: camera.camera,
     });
   };
+
+  if (controlledActorInstanceId) {
+    world = startEntryIfAuthored(
+      world,
+      controlledActorInstanceId,
+      world.story.currentSceneId,
+      world.story.currentEntranceId,
+    );
+    baseFrame = resolveRuntimeSceneFrame(bundle, world, {
+      camera: resolvedProfiledRuntimeCamera(bundle, cameraState),
+    });
+  }
 
   const setActiveDialogueStatus = (events: readonly RuntimeEvent[] = []): boolean => {
     const view = resolveActiveRuntimeDialogue(bundle, world);
@@ -445,6 +497,10 @@ export const createPackagedRuntimeController = (
     if (runtimeSkin?.interactionMode !== "parser-assisted") {
       return;
     }
+    if (entryInputLocked()) {
+      setStatus("ENTERING");
+      return;
+    }
     if (world.story.activeDialogue) {
       setStatus("FINISH THE DIALOGUE FIRST");
       return;
@@ -500,6 +556,10 @@ export const createPackagedRuntimeController = (
   const activate = (position: Point): void => {
     cursor = { ...cursor, position };
     refreshCursor();
+    if (entryInputLocked()) {
+      setStatus("ENTERING");
+      return;
+    }
     if (handleUiActivation(position)) return;
     if (parser.focused) {
       parser = editParserBuffer(parser, { kind: "blur" }).state;
@@ -531,6 +591,7 @@ export const createPackagedRuntimeController = (
                 ...movement.state,
                 pendingObjectCommands: world.pendingObjectCommands,
                 activeInteractionChoreographies: world.activeInteractionChoreographies,
+                activeEntryChoreographies: world.activeEntryChoreographies,
               },
               controlledActorInstanceId,
             ),
@@ -553,6 +614,10 @@ export const createPackagedRuntimeController = (
   };
 
   const handleKey = (input: ParserKeyInput): boolean => {
+    if (entryInputLocked()) {
+      setStatus("ENTERING");
+      return true;
+    }
     if (runtimeSkin?.interactionMode !== "parser-assisted") {
       return false;
     }
@@ -666,6 +731,15 @@ export const createPackagedRuntimeController = (
         renderedTick = world.story.tick;
         for (const event of advanced.commandEvents) {
           applyCommandStatus(event);
+        }
+        if (
+          advanced.entryEvents.some(
+            (event) =>
+              event.kind === "entry-choreography-completed" &&
+              event.actorInstanceId === controlledActorInstanceId,
+          )
+        ) {
+          setStatus("READY");
         }
       }
       refreshCursor();
