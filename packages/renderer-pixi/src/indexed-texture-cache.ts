@@ -5,6 +5,7 @@ import type { Texture } from "pixi.js";
 import type { PixiTextureResolver } from "./index.js";
 import {
   expandDitheredIndexedPixels,
+  normalizeIndexedDitherOrigin,
   quantizeIndexedDitherCoverage,
 } from "./indexed-dither.js";
 import { expandIndexedPixels } from "./indexed-pixels.js";
@@ -51,13 +52,14 @@ const assertPaletteBytes = (assetId: Id<"asset">, entries: Uint8Array): Uint8Arr
 
 const ditherKey = (transition: IndexedPaletteDitherTransition): string => {
   const coverage = quantizeIndexedDitherCoverage(transition.coverage, transition.matrix);
+  const origin = normalizeIndexedDitherOrigin(transition.origin, transition.matrix);
   return [
     transition.targetPaletteAssetId,
     transition.targetPaletteOffset,
     coverage,
     transition.matrix,
-    Math.floor(transition.origin.x),
-    Math.floor(transition.origin.y),
+    origin.x,
+    origin.y,
   ].join(":");
 };
 
