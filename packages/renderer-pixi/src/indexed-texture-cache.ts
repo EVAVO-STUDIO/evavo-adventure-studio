@@ -31,10 +31,22 @@ interface RegisteredPalette {
 
 const assetKey = (assetId: Id<"asset">): string => assetId as string;
 
+const maximumIndex = (indices: Uint8Array): number => {
+  let maximum = 0;
+  for (const value of indices) maximum = Math.max(maximum, value);
+  return maximum;
+};
+
 const assertIndexBytes = (record: IndexedAssetRecord, indices: Uint8Array): Uint8Array => {
   if (indices.byteLength !== record.indexByteLength) {
     throw new RangeError(
       `Indexed asset '${record.assetId}' has ${indices.byteLength} runtime bytes; expected ${record.indexByteLength}.`,
+    );
+  }
+  const observedMaximum = maximumIndex(indices);
+  if (record.maximumSourceIndex !== undefined && record.maximumSourceIndex !== observedMaximum) {
+    throw new RangeError(
+      `Indexed asset '${record.assetId}' declares maximum source index ${record.maximumSourceIndex}; runtime bytes use ${observedMaximum}.`,
     );
   }
   return new Uint8Array(indices);
