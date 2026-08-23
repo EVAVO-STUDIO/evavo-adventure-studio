@@ -176,6 +176,22 @@ export const surfaceZoneAtPoint = (
   return matches.at(-1) ?? null;
 };
 
+export const runtimeSurfaceZoneAtPoint = (
+  bundle: RuntimeBundle,
+  world: NavigableRuntimeWorldState,
+  sceneId: Id<"scene">,
+  point: Point,
+): SurfaceZone | null => {
+  const staging = stagingForScene(bundle.sceneStaging, sceneId);
+  if (!staging) return null;
+  const matches = staging.surfaceZones.filter(
+    (zone) =>
+      (!zone.enabledWhen || evaluateCondition(zone.enabledWhen, world.story)) &&
+      pointInPolygon(point, zone.shape),
+  );
+  return matches.at(-1) ?? null;
+};
+
 const routeScore = (staging: SceneStaging | null, route: NavigationRoute): number =>
   route.segments.reduce((total, segment) => {
     if (segment.kind !== "walk") return total + segment.distance;
