@@ -2,6 +2,7 @@ import type { IndexedAssetRecord } from "@evavo/adventure-asset-contract/indexed
 import type { Id } from "@evavo/adventure-project-schema";
 import type { IndexedPaletteDitherTransition } from "@evavo/adventure-render-contract";
 import type { Texture } from "pixi.js";
+import type { PixiTextureResolver } from "./index.js";
 import { expandDitheredIndexedPixels } from "./indexed-dither.js";
 import { expandIndexedPixels } from "./indexed-pixels.js";
 import type { PixiIndexedTextureResolver } from "./indexed-renderer.js";
@@ -57,14 +58,14 @@ const ditherKey = (transition: IndexedPaletteDitherTransition): string =>
 
 export class PixiIndexedTextureCache implements PixiIndexedTextureResolver {
   private readonly textureFactory: IndexedTextureFactory;
-  private readonly fallbackTextureResolver: PixiIndexedTextureResolver;
+  private readonly fallbackTextureResolver: PixiTextureResolver;
   private readonly indexMaps = new Map<string, RegisteredIndexMap>();
   private readonly palettes = new Map<string, RegisteredPalette>();
   private readonly textures = new Map<string, Texture>();
 
   constructor(
     textureFactory: IndexedTextureFactory,
-    fallbackTextureResolver: PixiIndexedTextureResolver,
+    fallbackTextureResolver: PixiTextureResolver,
   ) {
     this.textureFactory = textureFactory;
     this.fallbackTextureResolver = fallbackTextureResolver;
