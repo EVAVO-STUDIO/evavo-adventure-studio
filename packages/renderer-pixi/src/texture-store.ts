@@ -154,6 +154,7 @@ export class PixiAssetTextureStore {
   private readonly aliasesByAsset = new Map<string, Set<string>>();
   private readonly frameKeysByAsset = new Map<string, Set<string>>();
   private runtimeBitmapFonts: BitmapFontResolver | null = null;
+  private runtimeBundleUrlValue: string | null = null;
 
   constructor(options: PixiTextureStoreOptions = {}) {
     this.aliasNamespace = normalizeNamespace(options.aliasNamespace ?? "evavo-adventure");
@@ -161,6 +162,10 @@ export class PixiAssetTextureStore {
 
   getBitmapFontResolver(): BitmapFontResolver | null {
     return this.runtimeBitmapFonts;
+  }
+
+  runtimeBundleUrl(): string | null {
+    return this.runtimeBundleUrlValue;
   }
 
   getTexture(assetId: Id<"asset">, frameId: Id<"sprite-frame"> | null = null): Texture | null {
@@ -279,6 +284,7 @@ export class PixiAssetTextureStore {
   }
 
   async loadRuntimeAssets(assets: readonly RuntimeAssetRecord[], bundleUrl: string): Promise<void> {
+    this.runtimeBundleUrlValue = bundleUrl;
     const renderable = assets
       .filter((asset) => asset.kind === "image" || asset.kind === "spritesheet")
       .sort((left, right) => left.assetId.localeCompare(right.assetId));
@@ -317,6 +323,7 @@ export class PixiAssetTextureStore {
     this.frameKeysByAsset.clear();
     this.ownedAliases.clear();
     this.runtimeBitmapFonts = null;
+    this.runtimeBundleUrlValue = null;
   }
 
   private aliasFor(assetId: Id<"asset">, role: string): string {
