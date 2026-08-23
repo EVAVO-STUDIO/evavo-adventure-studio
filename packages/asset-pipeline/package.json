@@ -20,6 +20,10 @@
       "types": "./dist/src/atlas-compiler.d.ts",
       "import": "./dist/src/atlas-compiler.js"
     },
+    "./palette-compiler": {
+      "types": "./dist/src/palette-compiler.d.ts",
+      "import": "./dist/src/palette-compiler.js"
+    },
     "./manifest-builders": {
       "types": "./dist/src/manifest-builders.d.ts",
       "import": "./dist/src/manifest-builders.js"
