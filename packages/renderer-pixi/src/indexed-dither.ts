@@ -36,6 +36,23 @@ const matrixFor = (
   }
 };
 
+const assertCoverage = (coverage: number): number => {
+  if (!Number.isFinite(coverage) || coverage < 0 || coverage > 1) {
+    throw new RangeError("Indexed dither coverage must be from 0 to 1.");
+  }
+  return coverage;
+};
+
+export const quantizeIndexedDitherCoverage = (
+  coverage: number,
+  matrix: IndexedPaletteDitherTransition["matrix"],
+): number => {
+  const normalized = assertCoverage(coverage);
+  const { size } = matrixFor(matrix);
+  const states = size * size;
+  return Math.round(normalized * states) / states;
+};
+
 const positiveModulo = (value: number, divisor: number): number =>
   ((value % divisor) + divisor) % divisor;
 
@@ -54,13 +71,11 @@ export const expandDitheredIndexedPixels = (
   targetPalette: IndexedPixelPalette,
   options: IndexedDitherExpansionOptions,
 ): Uint8Array => {
-  if (!Number.isFinite(options.coverage) || options.coverage < 0 || options.coverage > 1) {
-    throw new RangeError("Indexed dither coverage must be from 0 to 1.");
-  }
-  if (options.coverage === 0) {
+  const coverage = quantizeIndexedDitherCoverage(options.coverage, options.matrix);
+  if (coverage === 0) {
     return expandIndexedPixels(surface, basePalette, options.basePaletteOffset);
   }
-  if (options.coverage === 1) {
+  if (coverage === 1) {
     return expandIndexedPixels(surface, targetPalette, options.targetPaletteOffset);
   }
 
@@ -78,7 +93,7 @@ export const expandDitheredIndexedPixels = (
       const matrixY = positiveModulo(y + originY, size);
       const thresholdIndex = matrixY * size + matrixX;
       const threshold = ((values[thresholdIndex] ?? 0) + 0.5) / thresholdCount;
-      const source = options.coverage >= threshold ? target : base;
+      const source = coverage >= threshold ? target : base;
       const byte = (y * surface.width + x) * 4;
       output[byte] = source[byte] ?? 0;
       output[byte + 1] = source[byte + 1] ?? 0;
