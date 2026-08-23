@@ -54,6 +54,9 @@ export type ActorMovementEvent =
       readonly position: Point;
       readonly movementTick: number;
       readonly storyTick: number;
+      readonly surface?: "wood" | "carpet" | "stone" | "dirt" | "grass" | "water" | "metal" | "stairs" | "custom";
+      readonly customSurfaceId?: string;
+      readonly footstepCueId?: string;
     }
   | {
       readonly kind: "movement-segment-completed";
