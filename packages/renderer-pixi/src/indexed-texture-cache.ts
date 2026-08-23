@@ -83,12 +83,12 @@ export class PixiIndexedTextureCache implements PixiIndexedTextureResolver {
       record,
       indices: assertIndexBytes(record, indices),
     });
-    this.evictForIndexAsset(record.assetId);
+    this.clearResolvedTextures();
   }
 
   registerPalette(assetId: Id<"asset">, entries: Uint8Array): void {
     this.palettes.set(assetKey(assetId), { entries: assertPaletteBytes(assetId, entries) });
-    this.evictForPalette(assetId);
+    this.clearResolvedTextures();
   }
 
   hasIndexMap(assetId: Id<"asset">): boolean {
@@ -183,19 +183,5 @@ export class PixiIndexedTextureCache implements PixiIndexedTextureResolver {
       for (const texture of this.textures.values()) destroy(texture);
     }
     this.textures.clear();
-  }
-
-  private evictForIndexAsset(assetId: Id<"asset">): void {
-    const marker = `|${assetId}|`;
-    for (const key of [...this.textures.keys()]) {
-      if (key.includes(marker)) this.textures.delete(key);
-    }
-  }
-
-  private evictForPalette(assetId: Id<"asset">): void {
-    const marker = `|${assetId}|`;
-    for (const key of [...this.textures.keys()]) {
-      if (key.includes(marker) || key.includes(`:${assetId}:`)) this.textures.delete(key);
-    }
   }
 }
