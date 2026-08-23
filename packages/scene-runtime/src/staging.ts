@@ -19,7 +19,7 @@ import {
   type SurfaceZone,
 } from "@evavo/adventure-scene-instances/staging";
 import type { NavigableRuntimeWorldState } from "./movement-types.js";
-import { enabledPortals } from "./movement-shared.js";
+import { enabledNavigationAreas, enabledPortals } from "./movement-shared.js";
 
 export const stagingForScene = (
   manifest: SceneStagingManifest | undefined,
@@ -67,9 +67,7 @@ export const resolveRuntimeInteractionApproach = (
   );
   if (slots.length === 0) return null;
 
-  const areas = scene.navigationAreas.filter(
-    (area) => !area.enabledWhen || evaluateCondition(area.enabledWhen, world.story),
-  );
+  const areas = enabledNavigationAreas(bundle, world, scene.id);
   const portals = enabledPortals(bundle, world, scene.id);
   const selected = selectApproachSlot(slots, {
     actorPosition: actor.position,
