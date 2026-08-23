@@ -1,9 +1,15 @@
 import type { AdventureProject, Id, Point } from "@evavo/adventure-project-schema";
 import type { SceneInstanceManifest } from "@evavo/adventure-scene-instances";
+import {
+  paletteMapById,
+  type PaletteMapManifest,
+  type PaletteMapRecord,
+} from "@evavo/adventure-scene-instances/palette-maps";
 import type {
   ActorFootprint,
   ApproachSlot,
   InteractionComfortRegion,
+  PaletteLightZone,
   SceneStaging,
   SceneStagingManifest,
 } from "@evavo/adventure-scene-instances/staging";
@@ -56,6 +62,18 @@ export interface SceneDirectorObject {
   readonly comfortRegions: readonly InteractionComfortRegion[];
 }
 
+export type SceneDirectorPaletteBindingStatus =
+  | "bound"
+  | "missing-map"
+  | "missing-palette-asset"
+  | "invalid-palette-asset-kind";
+
+export interface SceneDirectorLightZone {
+  readonly zone: PaletteLightZone;
+  readonly map: PaletteMapRecord | null;
+  readonly bindingStatus: SceneDirectorPaletteBindingStatus;
+}
+
 export interface SceneDirectorOverlay {
   readonly sceneId: Id<"scene">;
   readonly sceneName: string;
@@ -66,6 +84,7 @@ export interface SceneDirectorOverlay {
   readonly portals: SceneInstanceManifest["scenes"][number]["navigationPortals"];
   readonly actors: readonly SceneDirectorActor[];
   readonly objects: readonly SceneDirectorObject[];
+  readonly lightZones: readonly SceneDirectorLightZone[];
   readonly staging: SceneStaging | null;
 }
 
@@ -74,11 +93,22 @@ const sceneStagingFor = (
   sceneId: Id<"scene">,
 ): SceneStaging | null => staging?.scenes.find((candidate) => candidate.sceneId === sceneId) ?? null;
 
+const lightBindingStatus = (
+  project: AdventureProject,
+  map: PaletteMapRecord | null,
+): SceneDirectorPaletteBindingStatus => {
+  if (!map) return "missing-map";
+  const asset = project.assets.find((candidate) => candidate.id === map.paletteAssetId);
+  if (!asset) return "missing-palette-asset";
+  return asset.kind === "palette" ? "bound" : "invalid-palette-asset-kind";
+};
+
 export const createSceneDirectorOverlay = (
   project: AdventureProject,
   instances: SceneInstanceManifest,
   staging: SceneStagingManifest | null | undefined,
   sceneId: Id<"scene">,
+  paletteMaps?: PaletteMapManifest | null,
 ): SceneDirectorOverlay => {
   const scene = project.scenes.find((candidate) => candidate.id === sceneId);
   if (!scene) throw new Error(`Scene Director cannot find scene '${sceneId}'.`);
@@ -108,6 +138,15 @@ export const createSceneDirectorOverlay = (
     comfortRegions: staged?.interactionComfortRegionsByObject[instance.id] ?? [],
   }));
 
+  const lightZones: SceneDirectorLightZone[] = (staged?.paletteLightZones ?? []).map((zone) => {
+    const map = paletteMapById(paletteMaps, zone.paletteMapId);
+    return {
+      zone,
+      map,
+      bindingStatus: lightBindingStatus(project, map),
+    };
+  });
+
   return {
     sceneId: scene.id,
     sceneName: scene.name,
@@ -118,6 +157,7 @@ export const createSceneDirectorOverlay = (
     portals: composition?.navigationPortals ?? [],
     actors,
     objects,
+    lightZones,
     staging: staged,
   };
 };
@@ -184,12 +224,17 @@ export const sceneDirectorModeSummary = (
         count: staging?.surfaceZones.length ?? 0,
         note: "Material zones, footstep cues and movement treatment.",
       };
-    case "light":
+    case "light": {
+      const unresolved = overlay.lightZones.filter((entry) => entry.bindingStatus !== "bound").length;
       return {
         label: "Light",
-        count: staging?.paletteLightZones.length ?? 0,
-        note: "Palette-remap regions and ordered-dither transitions.",
+        count: overlay.lightZones.length,
+        note:
+          unresolved === 0
+            ? "Palette-remap regions, concrete palette bindings and Bayer transitions."
+            : `${unresolved} palette-light binding(s) still require production asset resolution.`,
       };
+    }
     case "entry":
       return {
         label: "Entry",
