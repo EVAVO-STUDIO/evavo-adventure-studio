@@ -11,8 +11,15 @@ export interface CompiledIndexMap {
   readonly data: Uint8Array;
   readonly width: number;
   readonly height: number;
+  readonly maximumSourceIndex: number;
   readonly sha256: string;
 }
+
+const maximumIndex = (input: Uint8Array): number => {
+  let maximum = 0;
+  for (const value of input) maximum = Math.max(maximum, value);
+  return maximum;
+};
 
 export const compileIndexMap = async (
   input: Uint8Array,
@@ -33,6 +40,7 @@ export const compileIndexMap = async (
     data,
     width,
     height,
+    maximumSourceIndex: maximumIndex(data),
     sha256: await sha256Hex(data),
   };
 };
@@ -64,6 +72,7 @@ export const createIndexedAssetSidecarRecord = (
     indexRuntimePath: options.runtimePath,
     indexSha256: compiled.sha256,
     indexByteLength: compiled.data.byteLength,
+    maximumSourceIndex: compiled.maximumSourceIndex,
     ...(options.transparentIndex === undefined ? {} : { transparentIndex: options.transparentIndex }),
     defaultPalette: options.defaultPalette,
     frames: [...(options.frames ?? [])],
