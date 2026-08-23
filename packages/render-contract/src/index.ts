@@ -62,6 +62,14 @@ export interface SpriteRenderNode extends BaseRenderNode {
   readonly tintRgba?: readonly [number, number, number, number];
 }
 
+export interface IndexedPaletteDitherTransition {
+  readonly targetPaletteAssetId: Id<"asset">;
+  readonly targetPaletteOffset: number;
+  readonly coverage: number;
+  readonly matrix: "bayer-2" | "bayer-4" | "bayer-8";
+  readonly origin: Point;
+}
+
 export interface IndexedSpriteRenderNode extends BaseRenderNode {
   readonly kind: "indexed-sprite";
   readonly indexAssetId: Id<"asset">;
@@ -70,6 +78,7 @@ export interface IndexedSpriteRenderNode extends BaseRenderNode {
   readonly originalSize: Size;
   readonly trimOffset: Point;
   readonly paletteOffset: number;
+  readonly paletteDither?: IndexedPaletteDitherTransition;
 }
 
 export interface BitmapTextRenderNode extends BaseRenderNode {
@@ -136,6 +145,7 @@ export interface RenderFrameIssue {
     | "unknown-mask"
     | "mask-cycle"
     | "invalid-dither-progress"
+    | "invalid-indexed-palette-dither"
     | "invalid-bitmap-text";
   readonly nodeId: Id<"render-node"> | null;
   readonly message: string;
@@ -221,6 +231,26 @@ export const validateResolvedFrame = (frame: ResolvedFrame): readonly RenderFram
         nodeId: node.id,
         message: `Dither fade '${node.id}' has progress outside the 0 to 1 range.`,
       });
+    }
+
+    if (node.kind === "indexed-sprite" && node.paletteDither) {
+      const dither = node.paletteDither;
+      if (
+        !Number.isFinite(dither.coverage) ||
+        dither.coverage < 0 ||
+        dither.coverage > 1 ||
+        !Number.isSafeInteger(dither.targetPaletteOffset) ||
+        dither.targetPaletteOffset < 0 ||
+        dither.targetPaletteOffset > 255 ||
+        !isFinitePoint(dither.origin)
+      ) {
+        issues.push({
+          severity: "error",
+          code: "invalid-indexed-palette-dither",
+          nodeId: node.id,
+          message: `Indexed palette dither '${node.id}' requires 0–1 coverage, a byte-range target offset and finite native origin.`,
+        });
+      }
     }
 
     if (
