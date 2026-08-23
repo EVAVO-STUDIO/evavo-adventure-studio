@@ -20,6 +20,10 @@
       "types": "./dist/src/atlas-compiler.d.ts",
       "import": "./dist/src/atlas-compiler.js"
     },
+    "./index-map-compiler": {
+      "types": "./dist/src/index-map-compiler.d.ts",
+      "import": "./dist/src/index-map-compiler.js"
+    },
     "./palette-compiler": {
       "types": "./dist/src/palette-compiler.d.ts",
       "import": "./dist/src/palette-compiler.js"
