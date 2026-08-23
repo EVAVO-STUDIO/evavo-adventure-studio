@@ -28,6 +28,10 @@
       "types": "./dist/src/staged-frame.d.ts",
       "import": "./dist/src/staged-frame.js"
     },
+    "./occlusion": {
+      "types": "./dist/src/occlusion.d.ts",
+      "import": "./dist/src/occlusion.js"
+    },
     "./scene-transition": {
       "types": "./dist/src/scene-transition.d.ts",
       "import": "./dist/src/scene-transition.js"
