@@ -1,5 +1,6 @@
 import type { Id } from "@evavo/adventure-project-schema";
 import type {
+  IndexedPaletteDitherTransition,
   IndexedSpriteRenderNode,
   NativeCanvas,
   RendererAdapter,
@@ -20,6 +21,12 @@ export interface PixiIndexedTextureResolver extends PixiTextureResolver {
     indexAssetId: Id<"asset">,
     paletteAssetId: Id<"asset">,
     paletteOffset: number,
+  ): Texture | null;
+  getIndexedDitherTexture?(
+    indexAssetId: Id<"asset">,
+    paletteAssetId: Id<"asset">,
+    paletteOffset: number,
+    transition: IndexedPaletteDitherTransition,
   ): Texture | null;
 }
 
@@ -44,6 +51,19 @@ export class PixiIndexedTextureResolutionError extends Error {
   }
 }
 
+export class PixiIndexedDitherCapabilityError extends Error {
+  readonly nodeId: Id<"render-node">;
+
+  constructor(node: IndexedSpriteRenderNode) {
+    super(
+      `Indexed sprite '${node.id}' requests ordered palette dithering but the texture resolver ` +
+        "does not implement getIndexedDitherTexture().",
+    );
+    this.name = "PixiIndexedDitherCapabilityError";
+    this.nodeId = node.id;
+  }
+}
+
 const fnv1a = (value: string): string => {
   let hash = 0x811c9dc5;
   for (let index = 0; index < value.length; index += 1) {
@@ -53,8 +73,20 @@ const fnv1a = (value: string): string => {
   return hash.toString(16).padStart(8, "0");
 };
 
-const indexedKey = (node: IndexedSpriteRenderNode): string =>
-  `${node.indexAssetId}|${node.paletteAssetId}|${node.paletteOffset}`;
+const indexedKey = (node: IndexedSpriteRenderNode): string => {
+  const dither = node.paletteDither;
+  return [
+    node.indexAssetId,
+    node.paletteAssetId,
+    node.paletteOffset,
+    dither?.targetPaletteAssetId ?? "",
+    dither?.targetPaletteOffset ?? "",
+    dither?.coverage ?? "",
+    dither?.matrix ?? "",
+    dither?.origin.x ?? "",
+    dither?.origin.y ?? "",
+  ].join("|");
+};
 
 const syntheticAssetId = (node: IndexedSpriteRenderNode): Id<"asset"> =>
   `asset.runtime-indexed.${fnv1a(indexedKey(node))}` as Id<"asset">;
@@ -101,6 +133,20 @@ export class PixiIndexedWebGLRenderer implements RendererAdapter {
       getTexture: (assetId, frameId) => {
         const indexed = this.indexedNodes.get(assetId);
         if (indexed) {
+          const dither = indexed.paletteDither;
+          if (dither) {
+            if (!this.textures.getIndexedDitherTexture) {
+              throw new PixiIndexedDitherCapabilityError(indexed);
+            }
+            const texture = this.textures.getIndexedDitherTexture(
+              indexed.indexAssetId,
+              indexed.paletteAssetId,
+              indexed.paletteOffset,
+              dither,
+            );
+            if (!texture) throw new PixiIndexedTextureResolutionError(indexed);
+            return texture;
+          }
           const texture = this.textures.getIndexedTexture(
             indexed.indexAssetId,
             indexed.paletteAssetId,
