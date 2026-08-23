@@ -2,9 +2,6 @@ import type { Id } from "@evavo/adventure-project-schema";
 import type {
   IndexedPaletteDitherTransition,
   IndexedSpriteRenderNode,
-  NativeCanvas,
-  RendererAdapter,
-  RendererHost,
   RenderNode,
   ResolvedFrame,
   SpriteRenderNode,
@@ -122,23 +119,22 @@ export const expandIndexedPixiFrame = (
   }),
 });
 
-export class PixiIndexedWebGLRenderer implements RendererAdapter {
-  private readonly textures: PixiIndexedTextureResolver;
-  private readonly indexedNodes = new Map<string, IndexedSpriteRenderNode>();
-  private readonly renderer: PixiWebGLRenderer;
+export class PixiIndexedWebGLRenderer extends PixiWebGLRenderer {
+  private readonly indexedNodes: Map<string, IndexedSpriteRenderNode>;
 
   constructor(options: PixiIndexedRendererOptions) {
-    this.textures = options.textures;
+    const indexedNodes = new Map<string, IndexedSpriteRenderNode>();
+    const textures = options.textures;
     const resolver: PixiTextureResolver = {
       getTexture: (assetId, frameId) => {
-        const indexed = this.indexedNodes.get(assetId);
+        const indexed = indexedNodes.get(assetId);
         if (indexed) {
           const dither = indexed.paletteDither;
           if (dither) {
-            if (!this.textures.getIndexedDitherTexture) {
+            if (!textures.getIndexedDitherTexture) {
               throw new PixiIndexedDitherCapabilityError(indexed);
             }
-            const texture = this.textures.getIndexedDitherTexture(
+            const texture = textures.getIndexedDitherTexture(
               indexed.indexAssetId,
               indexed.paletteAssetId,
               indexed.paletteOffset,
@@ -147,7 +143,7 @@ export class PixiIndexedWebGLRenderer implements RendererAdapter {
             if (!texture) throw new PixiIndexedTextureResolutionError(indexed);
             return texture;
           }
-          const texture = this.textures.getIndexedTexture(
+          const texture = textures.getIndexedTexture(
             indexed.indexAssetId,
             indexed.paletteAssetId,
             indexed.paletteOffset,
@@ -155,20 +151,17 @@ export class PixiIndexedWebGLRenderer implements RendererAdapter {
           if (!texture) throw new PixiIndexedTextureResolutionError(indexed);
           return texture;
         }
-        return this.textures.getTexture(assetId, frameId);
+        return textures.getTexture(assetId, frameId);
       },
-      ...(this.textures.getBitmapFontResolver
-        ? { getBitmapFontResolver: () => this.textures.getBitmapFontResolver?.() ?? null }
+      ...(textures.getBitmapFontResolver
+        ? { getBitmapFontResolver: () => textures.getBitmapFontResolver?.() ?? null }
         : {}),
     };
-    this.renderer = new PixiWebGLRenderer({ ...options, textures: resolver });
+    super({ ...options, textures: resolver });
+    this.indexedNodes = indexedNodes;
   }
 
-  initialize(host: RendererHost, canvas: NativeCanvas): Promise<void> {
-    return this.renderer.initialize(host, canvas);
-  }
-
-  render(frame: ResolvedFrame): void {
+  override render(frame: ResolvedFrame): void {
     this.indexedNodes.clear();
     const expanded = expandIndexedPixiFrame(frame, (assetId, node) => {
       const existing = this.indexedNodes.get(assetId);
@@ -177,15 +170,11 @@ export class PixiIndexedWebGLRenderer implements RendererAdapter {
       }
       this.indexedNodes.set(assetId, node);
     });
-    this.renderer.render(expanded);
+    super.render(expanded);
   }
 
-  resize(hostWidth: number, hostHeight: number): void {
-    this.renderer.resize(hostWidth, hostHeight);
-  }
-
-  async destroy(): Promise<void> {
+  override async destroy(): Promise<void> {
     this.indexedNodes.clear();
-    await this.renderer.destroy();
+    await super.destroy();
   }
 }
