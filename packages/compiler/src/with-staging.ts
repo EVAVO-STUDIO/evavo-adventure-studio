@@ -42,6 +42,14 @@ const canonicalSceneStaging = (manifest: SceneStagingManifest): SceneStagingMani
             [...slots].sort((left, right) => left.id.localeCompare(right.id)),
           ]),
       ),
+      interactionComfortRegionsByObject: Object.fromEntries(
+        Object.entries(scene.interactionComfortRegionsByObject)
+          .sort(([left], [right]) => left.localeCompare(right))
+          .map(([objectId, regions]) => [
+            objectId,
+            [...regions].sort((left, right) => left.id.localeCompare(right.id)),
+          ]),
+      ),
       interactionChoreographies: [...scene.interactionChoreographies].sort((left, right) =>
         left.id.localeCompare(right.id),
       ),
