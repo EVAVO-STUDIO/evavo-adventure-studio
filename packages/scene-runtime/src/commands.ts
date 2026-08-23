@@ -2,6 +2,7 @@ import type { RuntimeEvent } from "@evavo/adventure-core";
 import type { Id } from "@evavo/adventure-project-schema";
 import type { RuntimeBundle } from "@evavo/adventure-runtime-bundle";
 import { applyDialogueRequestEvents } from "./dialogue.js";
+import { setActorInstanceAnimation } from "./index.js";
 import {
   executeSceneObjectCommand,
   resolveSceneObjectHotspots,
@@ -15,6 +16,8 @@ import {
   createInitialNavigableRuntimeWorldState,
   type NavigableRuntimeWorldState,
 } from "./movement.js";
+import { actorsById, resolveAnimationFacing } from "./movement-shared.js";
+import { resolveRuntimeInteractionApproach } from "./staging.js";
 
 export interface PendingSceneObjectCommand {
   readonly actorInstanceId: Id<"actor-instance">;
@@ -22,6 +25,8 @@ export interface PendingSceneObjectCommand {
   readonly objectInstanceId: Id<"object">;
   readonly verb: string;
   readonly itemId: Id<"item"> | null;
+  readonly approachFacing?: string;
+  readonly approachAnimationState?: string;
 }
 
 export interface InteractiveRuntimeWorldState extends NavigableRuntimeWorldState {
@@ -111,6 +116,29 @@ const mergeRuntimeWorld = (
   actorInstances: executionState.actorInstances,
 });
 
+const orientActorForPendingCommand = (
+  bundle: RuntimeBundle,
+  state: InteractiveRuntimeWorldState,
+  pending: PendingSceneObjectCommand,
+): InteractiveRuntimeWorldState => {
+  if (!pending.approachFacing && !pending.approachAnimationState) return state;
+  const runtime = state.actorInstances[pending.actorInstanceId];
+  if (!runtime) return state;
+  const actor = actorsById(bundle).get(runtime.actorId);
+  if (!actor) return state;
+  const animationState = pending.approachAnimationState ?? runtime.animationState;
+  const desiredFacing = pending.approachFacing ?? runtime.facing;
+  const facing = resolveAnimationFacing(actor, animationState, desiredFacing, runtime.facing);
+  const oriented = setActorInstanceAnimation(
+    bundle,
+    state,
+    pending.actorInstanceId,
+    animationState,
+    facing,
+  );
+  return { ...state, actorInstances: oriented.actorInstances };
+};
+
 const commandEventFromExecution = (
   pending: PendingSceneObjectCommand,
   execution: Exclude<
@@ -150,7 +178,8 @@ const executePendingCommand = (
   readonly event: SceneCommandEvent;
   readonly execution: SceneObjectCommandExecution;
 } => {
-  const execution = executeSceneObjectCommand(bundle, state, {
+  const stagedState = orientActorForPendingCommand(bundle, state, pending);
+  const execution = executeSceneObjectCommand(bundle, stagedState, {
     actorId: pending.actorId,
     objectInstanceId: pending.objectInstanceId,
     verb: pending.verb,
@@ -158,7 +187,7 @@ const executePendingCommand = (
   });
   if (execution.kind === "missing-target") {
     return {
-      state,
+      state: stagedState,
       execution,
       event: {
         kind: "object-command-aborted",
@@ -169,7 +198,7 @@ const executePendingCommand = (
     };
   }
 
-  const merged = mergeRuntimeWorld(state, execution.state);
+  const merged = mergeRuntimeWorld(stagedState, execution.state);
   if (execution.kind === "executed") {
     const dialogue = applyDialogueRequestEvents(bundle, merged, execution.execution.result.transition.events);
     return {
@@ -227,14 +256,26 @@ export const queueSceneObjectCommand = (
     return { kind: "missing-target", state, objectInstanceId };
   }
 
+  const approach = resolveRuntimeInteractionApproach(
+    bundle,
+    state,
+    actorInstanceId,
+    objectInstanceId,
+    verb,
+    itemId,
+  );
   const pending: PendingSceneObjectCommand = {
     actorInstanceId,
     actorId: actorRuntime.actorId,
     objectInstanceId,
     verb,
     itemId,
+    ...(approach?.slot.facing ? { approachFacing: approach.slot.facing } : {}),
+    ...(approach?.slot.animationState
+      ? { approachAnimationState: approach.slot.animationState }
+      : {}),
   };
-  const destination = target.hotspot.walkTo;
+  const destination = approach?.slot.position ?? target.hotspot.walkTo;
   if (!destination) {
     const resolved = executePendingCommand(bundle, state, pending);
     if (resolved.execution.kind === "missing-target") {
