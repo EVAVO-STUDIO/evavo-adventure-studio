@@ -6,7 +6,11 @@ import type {
   AdventureShowcaseVisualMotif,
 } from "./production-showcase-types.js";
 
-export type ClassicAdventureCreatorFamily = "storybook-icon" | "gothic-investigation" | "verb-panel-comedy";
+export type ClassicAdventureCreatorFamily =
+  | "storybook-icon"
+  | "procedural-icon"
+  | "gothic-investigation"
+  | "verb-panel-comedy";
 
 export type ClassicAdventureCreatorInterfaceFamily =
   | "temporary-icon-bar"
@@ -178,18 +182,21 @@ export type ClassicAdventureCreatorIssueCode =
   | "profile-family-mismatch"
   | "showcase-family-mismatch"
   | "invalid-native-size"
-  | "invalid-palette"
-  | "duplicate-id"
-  | "missing-scene-kind"
-  | "invalid-interface"
+  | "invalid-interface-geometry"
+  | "invalid-interface-family"
   | "invalid-timing"
+  | "missing-scene-kind"
   | "invalid-scene-geometry"
-  | "missing-interaction"
-  | "missing-puzzle-scene"
-  | "missing-puzzle-prop"
-  | "unsafe-puzzle-recovery"
-  | "missing-dialogue-scene"
-  | "insufficient-investigation-topics"
+  | "invalid-layer-stack"
+  | "missing-player"
+  | "invalid-actor-geometry"
+  | "invalid-prop-geometry"
+  | "unknown-puzzle-scene"
+  | "unknown-puzzle-prop"
+  | "unsupported-puzzle-grammar"
+  | "irreversible-puzzle-failure"
+  | "unknown-dialogue-scene"
+  | "insufficient-production-proof"
   | "missing-originality-boundary";
 
 export interface ClassicAdventureCreatorIssue {
@@ -197,77 +204,4 @@ export interface ClassicAdventureCreatorIssue {
   readonly code: ClassicAdventureCreatorIssueCode;
   readonly path: string;
   readonly message: string;
-  readonly recommendation: string;
-  readonly impact: number;
-}
-
-export interface ClassicAdventureCreatorReport {
-  readonly reportVersion: 1;
-  readonly projectId: string;
-  readonly status: "ready" | "attention" | "blocked";
-  readonly score: number;
-  readonly issues: readonly ClassicAdventureCreatorIssue[];
-  readonly metrics: {
-    readonly sceneCount: number;
-    readonly interactivePropCount: number;
-    readonly puzzleCount: number;
-    readonly dialogueTopicCount: number;
-    readonly nativeReviewProofCount: number;
-  };
-}
-
-export type ClassicAdventureCreatorCommand =
-  | {
-      readonly kind: "move-actor";
-      readonly sceneId: string;
-      readonly actorId: string;
-      readonly position: Point;
-    }
-  | {
-      readonly kind: "move-prop";
-      readonly sceneId: string;
-      readonly propId: string;
-      readonly position: Point;
-    }
-  | {
-      readonly kind: "set-scene-horizon";
-      readonly sceneId: string;
-      readonly horizonY: number;
-    }
-  | {
-      readonly kind: "set-walk-lane";
-      readonly sceneId: string;
-      readonly top: number;
-      readonly bottom: number;
-    }
-  | {
-      readonly kind: "rename-scene";
-      readonly sceneId: string;
-      readonly name: string;
-    }
-  | {
-      readonly kind: "set-interface-chrome";
-      readonly chromeHeight: number;
-    }
-  | {
-      readonly kind: "set-timing";
-      readonly field: ClassicAdventureCreatorTimingField;
-      readonly value: number;
-    }
-  | {
-      readonly kind: "duplicate-scene";
-      readonly sceneId: string;
-      readonly newSceneId: string;
-      readonly name: string;
-    }
-  | {
-      readonly kind: "remove-scene";
-      readonly sceneId: string;
-    };
-
-export interface ClassicAdventureCreatorHistory {
-  readonly present: ClassicAdventureCreatorProject;
-  readonly past: readonly ClassicAdventureCreatorProject[];
-  readonly future: readonly ClassicAdventureCreatorProject[];
-  readonly savedFingerprint: string;
 }
