@@ -6,11 +6,7 @@ import type {
   AdventureShowcaseVisualMotif,
 } from "./production-showcase-types.js";
 
-export type ClassicAdventureCreatorFamily =
-  | "storybook-icon"
-  | "procedural-icon"
-  | "gothic-investigation"
-  | "verb-panel-comedy";
+export type ClassicAdventureCreatorFamily = "storybook-icon" | "gothic-investigation" | "verb-panel-comedy";
 
 export type ClassicAdventureCreatorInterfaceFamily =
   | "temporary-icon-bar"
