@@ -8,6 +8,10 @@
       "types": "./dist/src/index.d.ts",
       "import": "./dist/src/index.js"
     },
+    "./indexed-renderer": {
+      "types": "./dist/src/indexed-renderer.d.ts",
+      "import": "./dist/src/indexed-renderer.js"
+    },
     "./texture-store": {
       "types": "./dist/src/texture-store.d.ts",
       "import": "./dist/src/texture-store.js"
