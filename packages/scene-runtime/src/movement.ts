@@ -19,7 +19,7 @@ import type {
   NavigableRuntimeWorldState,
   NavigableRuntimeWorldTransition,
 } from "./movement-types.js";
-import { findStagedNavigationRoute } from "./staging.js";
+import { findStagedNavigationRoute, runtimeSurfaceZoneAtPoint } from "./staging.js";
 
 export * from "./movement-types.js";
 
@@ -140,6 +140,24 @@ export const cancelActorMovement = (
   };
 };
 
+const annotateMovementEvent = (
+  bundle: RuntimeBundle,
+  state: NavigableRuntimeWorldState,
+  event: ActorMovementEvent,
+): ActorMovementEvent => {
+  if (event.kind !== "movement-footfall") return event;
+  const actor = state.actorInstances[event.actorInstanceId];
+  if (!actor) return event;
+  const zone = runtimeSurfaceZoneAtPoint(bundle, state, actor.sceneId, event.position);
+  if (!zone) return event;
+  return {
+    ...event,
+    surface: zone.surface,
+    ...(zone.customSurfaceId ? { customSurfaceId: zone.customSurfaceId } : {}),
+    ...(zone.footstepCueId ? { footstepCueId: zone.footstepCueId } : {}),
+  };
+};
+
 export const advanceNavigableRuntimeWorld = (
   bundle: RuntimeBundle,
   world: NavigableRuntimeWorldState,
@@ -157,11 +175,27 @@ export const advanceNavigableRuntimeWorld = (
     for (const actorInstanceId of Object.keys(movements).sort((left, right) => left.localeCompare(right))) {
       const movement = movements[actorInstanceId];
       if (!movement) continue;
-      const advanced = advanceMovementOneTick(bundle, state, movement);
+      const actor = state.actorInstances[actorInstanceId];
+      const zone = actor
+        ? runtimeSurfaceZoneAtPoint(bundle, state, actor.sceneId, actor.position)
+        : null;
+      const effectiveMovement = zone
+        ? {
+            ...movement,
+            speedPixelsPerSecond: movement.speedPixelsPerSecond * zone.movementMultiplier,
+          }
+        : movement;
+      const advanced = advanceMovementOneTick(bundle, state, effectiveMovement);
       state = advanced.state;
-      movementEvents.push(...advanced.events);
-      if (advanced.movement) movements[actorInstanceId] = advanced.movement;
-      else delete movements[actorInstanceId];
+      movementEvents.push(...advanced.events.map((event) => annotateMovementEvent(bundle, state, event)));
+      if (advanced.movement) {
+        movements[actorInstanceId] = {
+          ...advanced.movement,
+          speedPixelsPerSecond: movement.speedPixelsPerSecond,
+        };
+      } else {
+        delete movements[actorInstanceId];
+      }
     }
     state = { ...state, movements };
 
