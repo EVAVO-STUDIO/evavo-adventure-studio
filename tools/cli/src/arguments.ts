@@ -13,6 +13,8 @@ interface ProjectCommandInputs {
   readonly assetManifestPath: string | null;
   readonly sceneInstancesPath: string | null;
   readonly sceneStagingPath: string | null;
+  readonly indexedAssetsPath: string | null;
+  readonly paletteMapsPath: string | null;
   readonly artDirectionPath: string | null;
   readonly artEvidencePath: string | null;
   readonly bitmapFontsPath: string | null;
@@ -71,6 +73,8 @@ const VALUE_OPTIONS = new Set([
   "--asset-manifest",
   "--scene-instances",
   "--scene-staging",
+  "--indexed-assets",
+  "--palette-maps",
   "--art-direction",
   "--art-evidence",
   "--bitmap-fonts",
@@ -160,6 +164,8 @@ const PROJECT_INPUT_OPTIONS = [
   "--asset-manifest",
   "--scene-instances",
   "--scene-staging",
+  "--indexed-assets",
+  "--palette-maps",
   "--art-direction",
   "--art-evidence",
   "--bitmap-fonts",
@@ -188,6 +194,8 @@ const sharedInputs = (
   return {
     sceneInstancesPath: optionalValue(options, "--scene-instances"),
     sceneStagingPath: optionalValue(options, "--scene-staging"),
+    indexedAssetsPath: optionalValue(options, "--indexed-assets"),
+    paletteMapsPath: optionalValue(options, "--palette-maps"),
     artDirectionPath,
     artEvidencePath,
     bitmapFontsPath: optionalValue(options, "--bitmap-fonts"),
@@ -279,19 +287,3 @@ export const parseCliArguments = (argv: readonly string[]): CliCommand => {
       throw new CliUsageError(`Unknown command '${command}'.`);
   }
 };
-
-export const CLI_HELP = `EVAVO Adventure Studio CLI
-
-Usage:
-  evavo-adventure validate --project <project.json> [--asset-manifest <assets.json>] [--scene-instances <scene-instances.json>] [--scene-staging <scene-staging.json>] [--art-direction <art-direction.json>] [--art-evidence <art-evidence.json>] [--bitmap-fonts <bitmap-fonts.json>] [--ui-skins <ui-skins.json>] [--audio-mix <audio-mix.json>] [--json]
-  evavo-adventure compile --project <project.json> --asset-manifest <assets.json> [--scene-instances <scene-instances.json>] [--scene-staging <scene-staging.json>] [--art-direction <art-direction.json>] [--art-evidence <art-evidence.json>] [--bitmap-fonts <bitmap-fonts.json>] [--ui-skins <ui-skins.json>] [--audio-mix <audio-mix.json>] --out <game.bundle.json> [--report <report.json>] [--json]
-  evavo-adventure package --project <project.json> --asset-manifest <assets.json> [--scene-instances <scene-instances.json>] [--scene-staging <scene-staging.json>] [--art-direction <art-direction.json>] [--art-evidence <art-evidence.json>] [--bitmap-fonts <bitmap-fonts.json>] [--ui-skins <ui-skins.json>] [--audio-mix <audio-mix.json>] --out <release-directory> [--json]
-  evavo-adventure art-evidence --project <project.json> --asset-manifest <assets.json> --out <art-evidence.json> [--json]
-  evavo-adventure version
-
-Exit codes:
-  0  success
-  1  project, asset, scene composition, scene staging, art, bitmap-font, interface-skin or audio-mix validation failed
-  2  invalid command-line usage
-  3  unexpected internal failure
-`;
