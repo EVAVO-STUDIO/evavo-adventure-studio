@@ -67,6 +67,11 @@ import {
   validateRuntimePaletteMaps,
 } from "./palette-map-validation.js";
 import {
+  runtimeRoomScriptManifestSchema,
+  RuntimeRoomScriptValidationError,
+  validateRuntimeRoomScripts,
+} from "./room-scripts.js";
+import {
   RuntimeUiSkinValidationError,
   validateRuntimeUiSkins,
 } from "./ui-validation.js";
@@ -140,6 +145,7 @@ export const runtimeBundleSchema = z
     investigationBindings: runtimeInvestigationBindingManifestSchema.optional(),
     itemCombinations: runtimeItemCombinationManifestSchema.optional(),
     multiProtagonist: runtimeMultiProtagonistManifestSchema.optional(),
+    roomScripts: runtimeRoomScriptManifestSchema.optional(),
   })
   .strict()
   .superRefine((bundle, context) => {
@@ -153,6 +159,7 @@ export const runtimeBundleSchema = z
       ["investigationBindings", bundle.investigationBindings],
       ["itemCombinations", bundle.itemCombinations],
       ["multiProtagonist", bundle.multiProtagonist],
+      ["roomScripts", bundle.roomScripts],
     ] as const;
     for (const [key, value] of projectScoped) {
       if (value && value.projectId !== bundle.projectId) {
@@ -207,6 +214,14 @@ const allRuntimeInteractions = (bundle: RuntimeBundle) => [
 
 const allRuntimeDialogueChoices = (bundle: RuntimeBundle) =>
   bundle.dialogues.flatMap((dialogue) => dialogue.nodes.flatMap((node) => node.choices));
+
+const runtimeEntrancesByScene = (bundle: RuntimeBundle): ReadonlyMap<string, ReadonlySet<string>> =>
+  new Map(
+    bundle.scenes.map((scene) => [
+      scene.id as string,
+      new Set(scene.entrances.map((entrance) => entrance.id as string)),
+    ]),
+  );
 
 export const parseRuntimeBundle = (input: unknown): RuntimeBundle => {
   const bundle = runtimeBundleSchema.parse(input);
@@ -269,16 +284,21 @@ export const parseRuntimeBundle = (input: unknown): RuntimeBundle => {
     const multiProtagonistIssues = validateRuntimeMultiProtagonist(bundle.multiProtagonist, {
       actorIds: new Set(bundle.actors.map((actor) => actor.id as string)),
       itemIds: new Set(bundle.inventoryItems.map((item) => item.id as string)),
-      entrancesByScene: new Map(
-        bundle.scenes.map((scene) => [
-          scene.id as string,
-          new Set(scene.entrances.map((entrance) => entrance.id as string)),
-        ]),
-      ),
+      entrancesByScene: runtimeEntrancesByScene(bundle),
     });
     if (multiProtagonistIssues.length > 0) {
       throw new RuntimeMultiProtagonistValidationError(multiProtagonistIssues);
     }
+  }
+  if (bundle.roomScripts) {
+    const roomScriptIssues = validateRuntimeRoomScripts(bundle.roomScripts, {
+      sceneIds: new Set(bundle.scenes.map((scene) => scene.id as string)),
+      entranceIdsByScene: runtimeEntrancesByScene(bundle),
+      sequenceIds: new Set(bundle.sequences.map((sequence) => sequence.id as string)),
+      interactionIds: new Set(allRuntimeInteractions(bundle).map((interaction) => interaction.id as string)),
+      dialogueChoiceIds: new Set(allRuntimeDialogueChoices(bundle).map((choice) => choice.id as string)),
+    });
+    if (roomScriptIssues.length > 0) throw new RuntimeRoomScriptValidationError(roomScriptIssues);
   }
   if (bundle.bitmapFonts) registerBitmapFontsForAssetCollection(bundle.assets, bundle.bitmapFonts);
   return bundle;
@@ -295,5 +315,6 @@ export * from "./item-combinations.js";
 export * from "./localisation.js";
 export * from "./multi-protagonist.js";
 export * from "./palette-map-validation.js";
+export * from "./room-scripts.js";
 export * from "./ui-validation.js";
 export * from "./validation.js";
