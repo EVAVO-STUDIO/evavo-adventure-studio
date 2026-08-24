@@ -4,10 +4,7 @@
   "private": true,
   "type": "module",
   "exports": {
-    ".": {
-      "types": "./dist/src/index.d.ts",
-      "import": "./dist/src/index.js"
-    },
+    ".": { "types": "./dist/src/index.d.ts", "import": "./dist/src/index.js" },
     "./input": { "types": "./dist/src/input.d.ts", "import": "./dist/src/input.js" },
     "./parser": { "types": "./dist/src/parser.d.ts", "import": "./dist/src/parser.js" },
     "./runtime-ui": { "types": "./dist/src/runtime-ui.d.ts", "import": "./dist/src/runtime-ui.js" },
@@ -19,6 +16,7 @@
     "./multi-protagonist-actor": { "types": "./dist/src/multi-protagonist-actor.d.ts", "import": "./dist/src/multi-protagonist-actor.js" },
     "./sentence-controller": { "types": "./dist/src/sentence-controller.d.ts", "import": "./dist/src/sentence-controller.js" },
     "./room-script-controller": { "types": "./dist/src/room-script-controller.d.ts", "import": "./dist/src/room-script-controller.js" },
+    "./route-topology-controller": { "types": "./dist/src/route-topology-controller.d.ts", "import": "./dist/src/route-topology-controller.js" },
     "./rpg-controller": { "types": "./dist/src/rpg-controller.d.ts", "import": "./dist/src/rpg-controller.js" },
     "./session-controller": { "types": "./dist/src/session-controller.d.ts", "import": "./dist/src/session-controller.js" },
     "./feature-session": { "types": "./dist/src/feature-session.d.ts", "import": "./dist/src/feature-session.js" }
