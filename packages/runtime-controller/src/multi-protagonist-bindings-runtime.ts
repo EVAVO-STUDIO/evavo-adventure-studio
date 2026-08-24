@@ -1,7 +1,6 @@
 import type { RuntimeBundle, RuntimeMultiProtagonistBinding } from "@evavo/adventure-runtime-bundle";
 import type { InteractiveRuntimeWorldState } from "@evavo/adventure-scene-runtime/commands";
 import {
-  applyCrossProtagonistMutation,
   giveProtagonistItem,
   moveProtagonist,
   removeProtagonistItem,
