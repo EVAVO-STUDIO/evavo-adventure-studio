@@ -70,7 +70,8 @@ export interface RuntimeAdventureRpgPuzzleIssue {
 }
 
 export interface RuntimeAdventureRpgPuzzleValidationContext {
-  readonly classes: readonly { readonly id: string; readonly tags?: readonly string[] }[];
+  readonly classes?: readonly { readonly id: string; readonly tags?: readonly string[] }[];
+  readonly classTags?: ReadonlySet<string>;
   readonly skillIds: ReadonlySet<string>;
   readonly itemIds: ReadonlySet<string>;
 }
@@ -89,7 +90,7 @@ export const validateRuntimeAdventureRpgPuzzles = (
   context: RuntimeAdventureRpgPuzzleValidationContext,
 ): readonly RuntimeAdventureRpgPuzzleIssue[] => {
   const issues: RuntimeAdventureRpgPuzzleIssue[] = [];
-  const knownClassTags = new Set(context.classes.flatMap((entry) => entry.tags ?? []));
+  const knownClassTags = context.classTags ?? new Set(context.classes?.flatMap((entry) => entry.tags ?? []) ?? []);
   const puzzleIds = new Set<string>();
   manifest.puzzles.forEach((puzzle, puzzleIndex) => {
     const puzzlePath = `puzzles[${puzzleIndex}]`;
@@ -120,7 +121,7 @@ export const validateRuntimeAdventureRpgPuzzles = (
         }
       }
     });
-    for (const playableClass of context.classes) {
+    for (const playableClass of context.classes ?? []) {
       if (!puzzle.solutions.some((solution) => solutionClassEligible(playableClass.tags ?? [], solution))) {
         issues.push({
           severity: "error",
