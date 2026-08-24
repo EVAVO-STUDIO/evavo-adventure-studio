@@ -48,6 +48,10 @@
       "types": "./dist/src/reference-fidelity.d.ts",
       "import": "./dist/src/reference-fidelity.js"
     },
+    "./full-game-capabilities": {
+      "types": "./dist/src/full-game-capabilities.d.ts",
+      "import": "./dist/src/full-game-capabilities.js"
+    },
     "./dynamix-cinematic": {
       "types": "./dist/src/dynamix-cinematic.d.ts",
       "import": "./dist/src/dynamix-cinematic.js"
