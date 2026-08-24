@@ -48,6 +48,14 @@
       "types": "./dist/src/with-lifecycle.d.ts",
       "import": "./dist/src/with-lifecycle.js"
     },
+    "./with-investigation": {
+      "types": "./dist/src/with-investigation.d.ts",
+      "import": "./dist/src/with-investigation.js"
+    },
+    "./investigation": {
+      "types": "./dist/src/with-investigation.d.ts",
+      "import": "./dist/src/with-investigation.js"
+    },
     "./with-localisation": {
       "types": "./dist/src/with-localisation.d.ts",
       "import": "./dist/src/with-localisation.js"
