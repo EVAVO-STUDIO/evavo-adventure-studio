@@ -27,6 +27,10 @@
     "./profiled-camera": {
       "types": "./dist/src/profiled-camera.d.ts",
       "import": "./dist/src/profiled-camera.js"
+    },
+    "./investigation-controller": {
+      "types": "./dist/src/investigation-controller.d.ts",
+      "import": "./dist/src/investigation-controller.js"
     }
   },
   "files": [
