@@ -18,7 +18,9 @@ const fnv1a64 = (value: string): string => {
   return hash.toString(16).padStart(16, "0");
 };
 
-const canonicalManifest = (manifest: RuntimeRoomScriptManifest): RuntimeRoomScriptManifest => ({
+export const canonicaliseRuntimeRoomScriptManifest = (
+  manifest: RuntimeRoomScriptManifest,
+): RuntimeRoomScriptManifest => ({
   ...manifest,
   scripts: [...manifest.scripts]
     .map((script) => ({ ...script, actions: [...script.actions] }))
@@ -29,7 +31,7 @@ export const attachRuntimeRoomScripts = (
   compiled: CompiledProject,
   input: RuntimeRoomScriptManifest,
 ): CompiledProject => {
-  const manifest = canonicalManifest(runtimeRoomScriptManifestSchema.parse(input));
+  const manifest = canonicaliseRuntimeRoomScriptManifest(runtimeRoomScriptManifestSchema.parse(input));
   if (compiled.bundle.projectId !== manifest.projectId) {
     throw new Error(
       `Compiled project '${compiled.bundle.projectId}' does not match room-script project '${manifest.projectId}'.`,
