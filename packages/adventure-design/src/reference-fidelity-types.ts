@@ -4,8 +4,10 @@ export type AdventureReferenceTitleId =
   | "kings-quest-v"
   | "quest-for-glory-iv"
   | "gabriel-knight-sins-of-the-fathers"
+  | "leisure-suit-larry-vga"
   | "police-quest-i-vga-remake"
   | "police-quest-iv"
+  | "day-of-the-tentacle"
   | "indiana-jones-fate-of-atlantis"
   | "heart-of-china"
   | "rise-of-the-dragon";
@@ -196,63 +198,23 @@ export interface AdventureReferenceTitlePack {
   readonly redistributionBoundary: AdventureReferenceRedistributionBoundary;
 }
 
-export type AdventureReferencePackIssueSeverity = "error" | "warning";
+export type AdventureReferenceAuditStatus = "pass" | "blocked" | "needs-review";
 
-export type AdventureReferencePackIssueCode =
-  | "unknown-engine-dialect"
-  | "invalid-profile-binding"
-  | "duplicate-id"
-  | "invalid-variant"
-  | "missing-baseline-capability"
-  | "invalid-capability"
-  | "invalid-evidence-requirement"
-  | "invalid-scenario"
-  | "unknown-scenario-capability"
-  | "insufficient-scenarios"
-  | "invalid-original-proof"
-  | "incomplete-redistribution-boundary";
-
-export interface AdventureReferencePackIssue {
-  readonly severity: AdventureReferencePackIssueSeverity;
-  readonly code: AdventureReferencePackIssueCode;
-  readonly path: string;
-  readonly message: string;
-}
-
-export interface AdventureReferenceCapabilityEvidence {
+export interface AdventureReferenceEvidenceItem {
+  readonly id: string;
   readonly capabilityId: AdventureReferenceCapabilityId;
   readonly kind: AdventureReferenceEvidenceKind;
-  readonly reference: string;
+  readonly variantId?: string;
+  readonly note: string;
 }
 
-export interface AdventureReferenceAuditInput {
-  readonly variantId: string;
-  readonly implementedCapabilityIds: readonly AdventureReferenceCapabilityId[];
-  readonly evidence: readonly AdventureReferenceCapabilityEvidence[];
-  readonly observedProfileId: AdventureProductionProfileId;
-  readonly observedProofShowcaseId: string;
-}
-
-export type AdventureReferenceAuditIssueCode =
-  | "invalid-pack"
-  | "unknown-variant"
-  | "duplicate-implemented-capability"
-  | "unknown-implemented-capability"
-  | "unknown-evidence-capability"
-  | "unsupported-evidence-kind"
-  | "duplicate-evidence"
-  | "profile-mismatch"
-  | "proof-showcase-mismatch"
-  | "missing-critical-capability"
-  | "missing-capability"
-  | "missing-critical-evidence"
-  | "missing-evidence";
-
-export interface AdventureReferenceAuditIssue {
-  readonly severity: "error" | "warning";
-  readonly code: AdventureReferenceAuditIssueCode;
-  readonly path: string;
-  readonly message: string;
+export interface AdventureReferenceCapabilityAudit {
+  readonly capabilityId: AdventureReferenceCapabilityId;
+  readonly status: AdventureReferenceAuditStatus;
+  readonly evidenceCount: number;
+  readonly minimumEvidenceCount: number;
+  readonly missingEvidenceKinds: readonly AdventureReferenceEvidenceKind[];
+  readonly note: string;
 }
 
 export interface AdventureReferenceAuditReport {
@@ -260,14 +222,33 @@ export interface AdventureReferenceAuditReport {
   readonly packId: string;
   readonly titleId: AdventureReferenceTitleId;
   readonly variantId: string;
-  readonly status: "ready" | "attention" | "blocked";
-  readonly score: number;
-  readonly metrics: {
-    readonly requiredCapabilities: number;
-    readonly implementedCapabilities: number;
-    readonly criticalCapabilities: number;
-    readonly evidencedCapabilities: number;
-    readonly evidenceItems: number;
-  };
-  readonly issues: readonly AdventureReferenceAuditIssue[];
+  readonly status: AdventureReferenceAuditStatus;
+  readonly capabilities: readonly AdventureReferenceCapabilityAudit[];
+  readonly missingCriticalCapabilityIds: readonly AdventureReferenceCapabilityId[];
+}
+
+export type AdventureReferencePackIssueSeverity = "error" | "warning";
+export type AdventureReferencePackIssueCode =
+  | "invalid-pack"
+  | "profile-mismatch"
+  | "unknown-engine-dialect"
+  | "missing-variant"
+  | "duplicate-id"
+  | "variant-title-mismatch"
+  | "variant-dialect-mismatch"
+  | "invalid-capability"
+  | "duplicate-capability"
+  | "missing-baseline-capability"
+  | "invalid-evidence-requirement"
+  | "invalid-scenario"
+  | "unknown-scenario-capability"
+  | "missing-original-proof"
+  | "proof-profile-mismatch"
+  | "redistribution-boundary-incomplete";
+
+export interface AdventureReferencePackIssue {
+  readonly severity: AdventureReferencePackIssueSeverity;
+  readonly code: AdventureReferencePackIssueCode;
+  readonly path: string;
+  readonly message: string;
 }
