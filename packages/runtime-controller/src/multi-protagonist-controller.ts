@@ -158,6 +158,9 @@ export const createMultiProtagonistPackagedRuntimeControllerWithFactory = (
     cameraState: () => controller.cameraState(),
     parserState: () => controller.parserState(),
     drainSceneAudioCueIds: () => controller.drainSceneAudioCueIds(),
+    ...(controller.itemCombinationUsedRecipeIds
+      ? { itemCombinationUsedRecipeIds: () => controller.itemCombinationUsedRecipeIds?.() ?? [] }
+      : {}),
   };
 };
 
