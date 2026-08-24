@@ -5,12 +5,14 @@ import type { SaveGame } from "@evavo/adventure-save-game";
 import type { InteractiveRuntimeWorldState } from "@evavo/adventure-scene-runtime/commands";
 import {
   createPackagedRuntimeController,
+  type PackagedRuntimeController,
   type PackagedRuntimeControllerOptions,
 } from "./packaged-controller.js";
 import type { ParserBufferState, ParserKeyInput } from "./parser.js";
 import type { ProfiledRuntimeCameraState } from "./profiled-camera.js";
 
 export interface PackagedSessionController {
+  readonly selection: PackagedRuntimeController["selection"];
   controlledActorInstanceId(): Id<"actor-instance"> | null;
   worldState(): InteractiveRuntimeWorldState;
   createFrame(tick: number): ResolvedFrame;
@@ -38,6 +40,7 @@ export const createBasePackagedSessionController: PackagedSessionControllerFacto
 ) => {
   const base = createPackagedRuntimeController(bundle, options);
   return {
+    selection: base.selection,
     controlledActorInstanceId: () => base.controlledActorInstanceId,
     worldState: () => base.worldState(),
     createFrame: (tick) => base.createFrame(tick),
