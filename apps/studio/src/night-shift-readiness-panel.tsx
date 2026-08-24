@@ -1,7 +1,6 @@
 import { evaluateNightShiftDemoReadiness } from "./night-shift-demo-readiness.js";
 import { downloadNightShiftFoundationTechnicalArchive } from "./night-shift-foundation-export.js";
 import {
-  nightShiftIndexedProductionAssetIds,
   nightShiftPeriodVgaProductionAssetIds,
   nightShiftProductionAssets,
 } from "./night-shift-production-assets.js";
@@ -10,6 +9,7 @@ import {
   nightShiftProductionManifestJson,
 } from "./night-shift-production-manifest.js";
 import { evaluateNightShiftProductionProgress } from "./night-shift-production-progress.js";
+import { nightShiftRuntimeIndexedAssetIds } from "./night-shift-runtime-index-requirements.js";
 import { downloadNightShiftRuntimeSource } from "./night-shift-runtime-source-export.js";
 import "./night-shift-readiness-panel.css";
 
@@ -94,8 +94,8 @@ export const NightShiftReadinessPanel = () => {
           <span>{nightShiftProductionAssets.length} runtime assets</span>
         </header>
         <div className="stg-production-plan-metrics">
-          <span><strong>{nightShiftIndexedProductionAssetIds.length}</strong> indexed masters</span>
-          <span><strong>{nightShiftPeriodVgaProductionAssetIds.length}</strong> Period VGA reviews</span>
+          <span><strong>{nightShiftRuntimeIndexedAssetIds.length}</strong> runtime .idx maps</span>
+          <span><strong>{nightShiftPeriodVgaProductionAssetIds.length}</strong> Period VGA visual reviews</span>
           <span><strong>3</strong> native room backgrounds</span>
           <span><strong>8</strong> officer walk frames</span>
         </div>
@@ -114,7 +114,7 @@ export const NightShiftReadinessPanel = () => {
             </strong>
             <div className="stg-foundation-generated-status">
               <strong>{generatedFoundationAssetIds.length}/7 reproducible technical sources ready</strong>
-              <small>Palette, 5×7 bitmap font and four icon PNG/.idx pairs are generated deterministically; only the officer strip remains deliberately art-authored.</small>
+              <small>Palette, true indexed 5×7 bitmap font and four indexed icon PNGs are generated deterministically; only the officer strip remains deliberately art-authored.</small>
             </div>
             <ul>
               {nextWaveProgress.missingAssetIds.slice(0, 8).map((assetId) => (
