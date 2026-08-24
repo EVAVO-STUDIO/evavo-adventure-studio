@@ -4,8 +4,10 @@ import {
   parseRuntimeBundle,
   runtimeInvestigationBindingManifestSchema,
   type RuntimeInvestigationBindingManifest,
+  type RuntimeInvestigationManifest,
 } from "@evavo/adventure-runtime-bundle";
 import { canonicalStringify, compileProject, type CompiledProject } from "./index.js";
+import { attachRuntimeInvestigation } from "./with-investigation.js";
 
 const fnv1a64 = (value: string): string => {
   const bytes = new TextEncoder().encode(value);
@@ -56,5 +58,10 @@ export const attachRuntimeInvestigationBindings = (
 export const compileProjectWithInvestigationBindings = (
   project: AdventureProject,
   assetManifest: AssetBuildManifest,
+  investigation: RuntimeInvestigationManifest,
   bindings: RuntimeInvestigationBindingManifest,
-): CompiledProject => attachRuntimeInvestigationBindings(compileProject(project, assetManifest), bindings);
+): CompiledProject =>
+  attachRuntimeInvestigationBindings(
+    attachRuntimeInvestigation(compileProject(project, assetManifest), investigation),
+    bindings,
+  );
