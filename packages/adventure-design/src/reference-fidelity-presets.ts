@@ -5,10 +5,12 @@ import type {
   AdventureReferenceTitlePack,
 } from "./reference-fidelity-types.js";
 import { adventureReferenceEngineDialects } from "./reference-fidelity-foundation.js";
+import { dottReferenceTitlePack } from "./reference-fidelity-dott.js";
 import { foaReferenceTitlePack } from "./reference-fidelity-foa.js";
 import { heartOfChinaReferenceTitlePack } from "./reference-fidelity-heart-of-china.js";
 import { gk1ReferenceTitlePack } from "./reference-fidelity-gk1.js";
 import { kq5ReferenceTitlePack } from "./reference-fidelity-kq5.js";
+import { lslVgaReferenceTitlePack } from "./reference-fidelity-lsl-vga.js";
 import { pq1VgaReferenceTitlePack } from "./reference-fidelity-pq1-vga.js";
 import { pq4ReferenceTitlePack } from "./reference-fidelity-pq4.js";
 import { qfg4ReferenceTitlePack } from "./reference-fidelity-qfg4.js";
@@ -20,8 +22,10 @@ export const adventureReferenceTitlePacks: readonly AdventureReferenceTitlePack[
   kq5ReferenceTitlePack,
   qfg4ReferenceTitlePack,
   gk1ReferenceTitlePack,
+  lslVgaReferenceTitlePack,
   pq1VgaReferenceTitlePack,
   pq4ReferenceTitlePack,
+  dottReferenceTitlePack,
   foaReferenceTitlePack,
   heartOfChinaReferenceTitlePack,
   riseOfTheDragonReferenceTitlePack,
