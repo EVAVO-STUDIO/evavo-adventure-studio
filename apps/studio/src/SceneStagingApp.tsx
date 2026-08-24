@@ -2,19 +2,19 @@ import {
   type AdventureSceneStagingSeverity,
   createAdventureSceneStagingReports,
 } from "@evavo/adventure-design/scene-staging";
-import type { SceneStagingManifest } from "@evavo/adventure-scene-instances/staging";
 import { type ChangeEvent, useEffect, useMemo, useState } from "react";
 import { SceneDirectorPanel } from "./scene-director-components.js";
 import {
-  applySceneDirectorEdit,
-  commitSceneDirectorEdit,
-  createSceneDirectorEditHistory,
-  redoSceneDirectorEdit,
-  type SceneDirectorEditCommand,
-  SceneDirectorEditError,
-  undoSceneDirectorEdit,
-} from "./scene-director-edit.js";
-import { downloadSceneDirectorStaging } from "./scene-director-export.js";
+  applySceneDirectorDocumentEdit,
+  commitSceneDirectorDocumentEdit,
+  createSceneDirectorDocumentHistory,
+  redoSceneDirectorDocumentEdit,
+  type SceneDirectorDocumentCommand,
+  type SceneDirectorDocuments,
+  SceneDirectorDocumentEditError,
+  undoSceneDirectorDocumentEdit,
+} from "./scene-director-documents.js";
+import { downloadSceneDirectorDocuments } from "./scene-director-export.js";
 import { createSceneDirectorOverlay } from "./scene-director-model.js";
 import {
   sceneDirectorPaletteBankAtOffset,
@@ -36,6 +36,14 @@ import "./scene-director-samples.css";
 
 const shortId = (value: string): string => value.split(".").at(-1) ?? value;
 
+const documentsForSample = (
+  sample: (typeof sceneDirectorSamples)[number],
+): SceneDirectorDocuments => ({
+  project: sample.project,
+  sceneInstances: sample.sceneInstances,
+  staging: sample.staging,
+});
+
 export const SceneStagingApp = () => {
   const [sampleIndex, setSampleIndex] = useState(0);
   const [sceneIndex, setSceneIndex] = useState(0);
@@ -43,67 +51,67 @@ export const SceneStagingApp = () => {
   const [filter, setFilter] = useState<StagingFindingFilter>("all");
   const sample = sceneDirectorSamples[sampleIndex] ?? sceneDirectorSamples[0]!;
   const [editHistory, setEditHistory] = useState(() =>
-    createSceneDirectorEditHistory(sceneDirectorSamples[0]!.staging),
+    createSceneDirectorDocumentHistory(documentsForSample(sceneDirectorSamples[0]!)),
   );
-  const [previewStaging, setPreviewStaging] = useState<SceneStagingManifest | null>(null);
+  const [previewDocuments, setPreviewDocuments] = useState<SceneDirectorDocuments | null>(null);
   const [editError, setEditError] = useState<string | null>(null);
-  const activeStaging = previewStaging ?? editHistory.present;
+  const activeDocuments = previewDocuments ?? editHistory.present;
 
   const reports = useMemo(
     () =>
       createAdventureSceneStagingReports(
-        sample.project,
-        sample.sceneInstances,
+        activeDocuments.project,
+        activeDocuments.sceneInstances,
         undefined,
-        activeStaging,
+        activeDocuments.staging,
       ),
-    [sample, activeStaging],
+    [activeDocuments],
   );
   const report = reports[sceneIndex] ?? reports[0]!;
   const directorOverlay = useMemo(
     () =>
       createSceneDirectorOverlay(
-        sample.project,
-        sample.sceneInstances,
-        activeStaging,
+        activeDocuments.project,
+        activeDocuments.sceneInstances,
+        activeDocuments.staging,
         report.sceneId,
         sample.paletteMaps,
       ),
-    [sample, activeStaging, report.sceneId],
+    [activeDocuments, report.sceneId, sample.paletteMaps],
   );
 
   useEffect(() => {
     setSceneIndex(0);
     setFilter("all");
-    setEditHistory(createSceneDirectorEditHistory(sample.staging));
-    setPreviewStaging(null);
+    setEditHistory(createSceneDirectorDocumentHistory(documentsForSample(sample)));
+    setPreviewDocuments(null);
     setEditError(null);
   }, [sample]);
 
   useEffect(() => {
     setFilter("all");
-    setPreviewStaging(null);
+    setPreviewDocuments(null);
     setEditError(null);
   }, [sceneIndex]);
 
-  const previewEdit = (command: SceneDirectorEditCommand): void => {
+  const previewEdit = (command: SceneDirectorDocumentCommand): void => {
     try {
-      setPreviewStaging(applySceneDirectorEdit(sample.project, editHistory.present, command));
+      setPreviewDocuments(applySceneDirectorDocumentEdit(editHistory.present, command));
       setEditError(null);
     } catch (error) {
       setEditError(error instanceof Error ? error.message : String(error));
     }
   };
 
-  const commitEdit = (command: SceneDirectorEditCommand): void => {
+  const commitEdit = (command: SceneDirectorDocumentCommand): void => {
     try {
-      setEditHistory((history) => commitSceneDirectorEdit(sample.project, history, command));
-      setPreviewStaging(null);
+      setEditHistory((history) => commitSceneDirectorDocumentEdit(history, command));
+      setPreviewDocuments(null);
       setEditError(null);
     } catch (error) {
-      setPreviewStaging(null);
+      setPreviewDocuments(null);
       setEditError(
-        error instanceof SceneDirectorEditError || error instanceof Error
+        error instanceof SceneDirectorDocumentEditError || error instanceof Error
           ? error.message
           : String(error),
       );
@@ -111,30 +119,30 @@ export const SceneStagingApp = () => {
   };
 
   const cancelPreview = (): void => {
-    setPreviewStaging(null);
+    setPreviewDocuments(null);
     setEditError(null);
   };
 
   const undoEdit = (): void => {
-    setEditHistory((history) => undoSceneDirectorEdit(history));
-    setPreviewStaging(null);
+    setEditHistory((history) => undoSceneDirectorDocumentEdit(history));
+    setPreviewDocuments(null);
     setEditError(null);
   };
 
   const redoEdit = (): void => {
-    setEditHistory((history) => redoSceneDirectorEdit(history));
-    setPreviewStaging(null);
+    setEditHistory((history) => redoSceneDirectorDocumentEdit(history));
+    setPreviewDocuments(null);
     setEditError(null);
   };
 
   const resetEdits = (): void => {
-    setEditHistory(createSceneDirectorEditHistory(sample.staging));
-    setPreviewStaging(null);
+    setEditHistory(createSceneDirectorDocumentHistory(documentsForSample(sample)));
+    setPreviewDocuments(null);
     setEditError(null);
   };
 
-  const exportStaging = (): void => {
-    downloadSceneDirectorStaging(editHistory.present, sample.id);
+  const exportDocuments = (): void => {
+    downloadSceneDirectorDocuments(editHistory.present, sample.id);
   };
 
   const count = (severity: AdventureSceneStagingSeverity): number =>
@@ -209,9 +217,9 @@ export const SceneStagingApp = () => {
           <StagingButton disabled={editHistory.past.length === 0} onClick={resetEdits}>
             Reset edits
           </StagingButton>
-          <StagingButton onClick={exportStaging}>Export staging</StagingButton>
+          <StagingButton onClick={exportDocuments}>Export documents</StagingButton>
         </div>
-        <p>One 320 × 200 stage · art + control + perspective + interaction</p>
+        <p>One 320 × 200 stage · project + composition + staging in one edit history</p>
       </nav>
 
       <div className="stg-workspace">
@@ -242,6 +250,7 @@ export const SceneStagingApp = () => {
             <Metric label="Occlusion" value={directorOverlay.staging?.occlusionPlanes.length ?? 0} />
             <Metric label="Light zones" value={directorOverlay.lightZones.length} />
             <Metric label="Light bindings" value={`${boundLights}/${directorOverlay.lightZones.length}`} />
+            <Metric label="Edited documents" value={editHistory.past.length > 0 ? "3 linked" : "canonical"} />
           </dl>
           <section className="stg-score">
             <span className="stg-eyebrow">STAGING READINESS</span>
@@ -295,16 +304,16 @@ export const SceneStagingApp = () => {
             <span className="stg-eyebrow">SCENE CONTRACT</span>
             <h2>One coordinate truth</h2>
             <p>
-              Art, feet, walk geometry, depth, occlusion, click targets, approach positions, surfaces and entry
-              paths all resolve against the same native scene rather than separate editor approximations.
+              Project navigation, placed composition, staging geometry and the final native stage now share one
+              Director edit history instead of drifting through separate editor approximations.
             </p>
           </section>
           <section>
             <span className="stg-eyebrow">PRODUCTION LANGUAGE</span>
             <h2>{sample.label}</h2>
             <p>
-              Switch production proofs without changing the Director model. The overlays should expose
-              materially different room grammar while preserving the same deterministic engine contract.
+              Switch production proofs without changing the Director model. The overlays expose materially
+              different room grammar while preserving the same deterministic engine contract.
             </p>
           </section>
           <section>
@@ -367,6 +376,14 @@ export const SceneStagingApp = () => {
               </p>
             </section>
           ) : null}
+          <section>
+            <span className="stg-eyebrow">ROUND-TRIP OUTPUT</span>
+            <h2>Three canonical documents</h2>
+            <p>
+              Export emits project.json, scene-instances.json and scene-staging.json from the same committed
+              history. Drag preview state is never exported.
+            </p>
+          </section>
           <section className="stg-next-action">
             <span className="stg-eyebrow">NEXT ACTION</span>
             <h2>{report.findings[0]?.message ?? "Play the room at 1× native size"}</h2>
