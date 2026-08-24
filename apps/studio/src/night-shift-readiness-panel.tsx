@@ -25,6 +25,7 @@ const roleCounts = (): readonly { readonly role: string; readonly count: number 
 
 const generatedFoundationAssetIds = [
   "asset.palette.night-shift.actor-lighting",
+  "asset.night-shift.font.system",
   "asset.night-shift.ui.walk",
   "asset.night-shift.ui.look",
   "asset.night-shift.ui.use",
@@ -113,7 +114,7 @@ export const NightShiftReadinessPanel = () => {
             </strong>
             <div className="stg-foundation-generated-status">
               <strong>{generatedFoundationAssetIds.length}/7 reproducible technical sources ready</strong>
-              <small>Palette + four icon PNG/.idx pairs are generated deterministically; font and officer remain authored masters.</small>
+              <small>Palette, 5×7 bitmap font and four icon PNG/.idx pairs are generated deterministically; only the officer strip remains deliberately art-authored.</small>
             </div>
             <ul>
               {nextWaveProgress.missingAssetIds.slice(0, 8).map((assetId) => (
