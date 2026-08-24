@@ -1,4 +1,5 @@
 import { evaluateNightShiftDemoReadiness } from "./night-shift-demo-readiness.js";
+import { downloadNightShiftFoundationTechnicalArchive } from "./night-shift-foundation-export.js";
 import {
   nightShiftIndexedProductionAssetIds,
   nightShiftPeriodVgaProductionAssetIds,
@@ -21,6 +22,14 @@ const roleCounts = (): readonly { readonly role: string; readonly count: number 
     .map(([role, count]) => ({ role, count }))
     .sort((left, right) => left.role.localeCompare(right.role));
 };
+
+const generatedFoundationAssetIds = [
+  "asset.palette.night-shift.actor-lighting",
+  "asset.night-shift.ui.walk",
+  "asset.night-shift.ui.look",
+  "asset.night-shift.ui.use",
+  "asset.night-shift.ui.talk",
+] as const;
 
 const downloadProductionManifest = (): void => {
   const blob = new Blob([nightShiftProductionManifestJson()], {
@@ -102,6 +111,10 @@ export const NightShiftReadinessPanel = () => {
             <strong>
               {nextWaveProgress.completedAssets}/{nextWaveProgress.totalAssets} masters accepted
             </strong>
+            <div className="stg-foundation-generated-status">
+              <strong>{generatedFoundationAssetIds.length}/7 reproducible technical sources ready</strong>
+              <small>Palette + four icon PNG/.idx pairs are generated deterministically; font and officer remain authored masters.</small>
+            </div>
             <ul>
               {nextWaveProgress.missingAssetIds.slice(0, 8).map((assetId) => (
                 <li key={assetId}>{assetId}</li>
@@ -118,6 +131,9 @@ export const NightShiftReadinessPanel = () => {
           </button>
           <button type="button" className="stg-production-plan-export" onClick={downloadNightShiftRuntimeSource}>
             Export runtime source ZIP
+          </button>
+          <button type="button" className="stg-production-plan-export" onClick={downloadNightShiftFoundationTechnicalArchive}>
+            Export Foundation technical ZIP
           </button>
         </div>
       </div>
