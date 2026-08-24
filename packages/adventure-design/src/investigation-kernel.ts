@@ -22,6 +22,7 @@ export interface InvestigationFactDefinition {
 export interface InvestigationTopicDefinition {
   readonly id: InvestigationTopicId;
   readonly label: string;
+  readonly initiallyAvailable?: boolean;
   readonly requiresFactIds?: readonly InvestigationFactId[];
   readonly revealFactIds?: readonly InvestigationFactId[];
   readonly oneShot?: boolean;
@@ -166,21 +167,36 @@ export const validateInvestigationManifest = (manifest: InvestigationManifest): 
   return issues.sort((left, right) => left.localeCompare(right));
 };
 
+const unlockedByFact = (
+  manifest: InvestigationManifest,
+  state: InvestigationRuntimeState,
+  topicId: InvestigationTopicId,
+): boolean => manifest.facts.some(
+  (fact) => state.discoveredFactIds.includes(fact.id) && (fact.unlockTopicIds ?? []).includes(topicId),
+);
+
 const topicAvailable = (
   manifest: InvestigationManifest,
   state: InvestigationRuntimeState,
   topic: InvestigationTopicDefinition,
-): boolean => hasAll(state.discoveredFactIds, topic.requiresFactIds);
+): boolean => {
+  if (topic.initiallyAvailable) return true;
+  if (state.availableTopicIds.includes(topic.id)) return true;
+  if (unlockedByFact(manifest, state, topic.id)) return true;
+  const required = topic.requiresFactIds ?? [];
+  return required.length > 0 && hasAll(state.discoveredFactIds, required);
+};
 
 const recomputeAvailableTopics = (
   manifest: InvestigationManifest,
   state: InvestigationRuntimeState,
 ): readonly InvestigationTopicId[] =>
-  unique(
-    manifest.topics
+  unique([
+    ...state.availableTopicIds,
+    ...manifest.topics
       .filter((topic) => topicAvailable(manifest, state, topic))
       .map((topic) => topic.id),
-  );
+  ]);
 
 export const createInvestigationState = (
   manifest: InvestigationManifest,
