@@ -10,4 +10,6 @@ export * from "./multi-protagonist.js";
 export * from "./operations.js";
 export * from "./policy.js";
 export * from "./profiled-camera.js";
+export * from "./sentence-compatibility.js";
+export * from "./sentence.js";
 export * from "./schema.js";
