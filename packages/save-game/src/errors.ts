@@ -53,7 +53,10 @@ export type SaveGameCompatibilityIssueCode =
   | "multi-protagonist-active-missing"
   | "multi-protagonist-identity-mismatch"
   | "multi-protagonist-location-invalid"
-  | "multi-protagonist-item-missing";
+  | "multi-protagonist-item-missing"
+  | "sentence-verb-missing"
+  | "sentence-item-missing"
+  | "sentence-object-missing";
 
 export interface SaveGameCompatibilityIssue {
   readonly severity: "error";
