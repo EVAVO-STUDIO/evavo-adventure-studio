@@ -205,22 +205,15 @@ export class RuntimeInvestigationBindingValidationError extends Error {
   }
 }
 
-const runtimeInteractionIds = (bundle: RuntimeBundle): ReadonlySet<string> =>
-  new Set([
-    ...bundle.scenes.flatMap((scene) =>
-      scene.hotspots.flatMap((hotspot) => hotspot.interactions.map((interaction) => interaction.id as string)),
-    ),
-    ...(bundle.sceneInstances?.objectDefinitions.flatMap((definition) =>
-      definition.states.flatMap((state) => state.interactions.map((interaction) => interaction.id as string)),
-    ) ?? []),
-  ]);
+const allRuntimeInteractions = (bundle: RuntimeBundle) => [
+  ...bundle.scenes.flatMap((scene) => scene.hotspots.flatMap((hotspot) => hotspot.interactions)),
+  ...(bundle.sceneInstances?.objectDefinitions.flatMap((definition) =>
+    definition.states.flatMap((state) => state.interactions),
+  ) ?? []),
+];
 
-const runtimeDialogueChoiceIds = (bundle: RuntimeBundle): ReadonlySet<string> =>
-  new Set(
-    bundle.dialogues.flatMap((dialogue) =>
-      dialogue.nodes.flatMap((node) => node.choices.map((choice) => choice.id as string)),
-    ),
-  );
+const allRuntimeDialogueChoices = (bundle: RuntimeBundle) =>
+  bundle.dialogues.flatMap((dialogue) => dialogue.nodes.flatMap((node) => node.choices));
 
 export const parseRuntimeBundle = (input: unknown): RuntimeBundle => {
   const bundle = runtimeBundleSchema.parse(input);
@@ -253,10 +246,18 @@ export const parseRuntimeBundle = (input: unknown): RuntimeBundle => {
     }
   }
   if (bundle.investigationBindings) {
+    const interactions = allRuntimeInteractions(bundle);
+    const dialogueChoices = allRuntimeDialogueChoices(bundle);
     const bindingIssues = validateRuntimeInvestigationBindings(bundle.investigationBindings, {
       investigation: bundle.investigation,
-      interactionIds: runtimeInteractionIds(bundle),
-      dialogueChoiceIds: runtimeDialogueChoiceIds(bundle),
+      interactionIds: new Set(interactions.map((interaction) => interaction.id as string)),
+      dialogueChoiceIds: new Set(dialogueChoices.map((choice) => choice.id as string)),
+      oneShotInteractionIds: new Set(
+        interactions.filter((interaction) => interaction.once === true).map((interaction) => interaction.id as string),
+      ),
+      oneShotDialogueChoiceIds: new Set(
+        dialogueChoices.filter((choice) => choice.once === true).map((choice) => choice.id as string),
+      ),
     });
     if (bindingIssues.length > 0) {
       throw new RuntimeInvestigationBindingValidationError(bindingIssues);
