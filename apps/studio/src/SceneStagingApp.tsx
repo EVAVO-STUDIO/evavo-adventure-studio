@@ -14,6 +14,7 @@ import {
   SceneDirectorEditError,
   undoSceneDirectorEdit,
 } from "./scene-director-edit.js";
+import { downloadSceneDirectorStaging } from "./scene-director-export.js";
 import { createSceneDirectorOverlay } from "./scene-director-model.js";
 import {
   sceneDirectorPaletteBankAtOffset,
@@ -126,6 +127,16 @@ export const SceneStagingApp = () => {
     setEditError(null);
   };
 
+  const resetEdits = (): void => {
+    setEditHistory(createSceneDirectorEditHistory(sample.staging));
+    setPreviewStaging(null);
+    setEditError(null);
+  };
+
+  const exportStaging = (): void => {
+    downloadSceneDirectorStaging(editHistory.present, sample.id);
+  };
+
   const count = (severity: AdventureSceneStagingSeverity): number =>
     report.findings.filter((finding) => finding.severity === severity).length;
   const boundLights = directorOverlay.lightZones.filter(
@@ -195,6 +206,10 @@ export const SceneStagingApp = () => {
           <StagingButton active={view === "handoff"} onClick={() => setView("handoff")}>
             Handoff
           </StagingButton>
+          <StagingButton disabled={editHistory.past.length === 0} onClick={resetEdits}>
+            Reset edits
+          </StagingButton>
+          <StagingButton onClick={exportStaging}>Export staging</StagingButton>
         </div>
         <p>One 320 × 200 stage · art + control + perspective + interaction</p>
       </nav>
