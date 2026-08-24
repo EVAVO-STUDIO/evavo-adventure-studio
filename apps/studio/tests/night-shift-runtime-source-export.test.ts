@@ -22,7 +22,7 @@ const zipFileNames = (bytes: Uint8Array): readonly string[] => {
 };
 
 describe("Night Shift runtime source export", () => {
-  it("exports every authored compiler input plus the production manifest", () => {
+  it("exports every authored compiler input plus runtime index contracts and production manifest", () => {
     expect(nightShiftRuntimeSourceFiles().map((file) => file.fileName)).toEqual([
       "project.json",
       "scene-instances.json",
@@ -33,11 +33,13 @@ describe("Night Shift runtime source export", () => {
       "audio-mix.json",
       "front-end.json",
       "lifecycle.json",
+      "runtime-index-bindings.json",
+      "runtime-index-build-plan.json",
       "production-manifest.json",
     ]);
   });
 
-  it("creates a deterministic store-only ZIP with all ten files", () => {
+  it("creates a deterministic store-only ZIP with all twelve files", () => {
     const first = createNightShiftRuntimeSourceZip();
     const second = createNightShiftRuntimeSourceZip();
     expect(first).toEqual(second);
@@ -49,6 +51,8 @@ describe("Night Shift runtime source export", () => {
       "palette-maps.json",
       "production-manifest.json",
       "project.json",
+      "runtime-index-bindings.json",
+      "runtime-index-build-plan.json",
       "scene-instances.json",
       "scene-staging.json",
       "ui-skins.json",
