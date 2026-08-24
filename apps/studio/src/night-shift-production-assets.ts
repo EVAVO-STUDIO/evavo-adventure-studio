@@ -120,6 +120,21 @@ const foreground = (assetId: string, rules: readonly string[]) =>
     ],
   });
 
+const scenePalette = (assetId: string, sceneLabel: string) =>
+  requirement(assetId, "palette", {
+    nativeSize: null,
+    sizePolicy: "art-directed",
+    indexed: false,
+    alpha: "not-applicable",
+    paletteRole: `${sceneLabel} room/prop default palette`,
+    evidence: ["indexed-runtime"],
+    rules: [
+      `Lock the ${sceneLabel} scene palette from the approved native indexed room master; do not invent a separate unrelated runtime palette after art approval.`,
+      "Provide 1–256 complete RGBA palette entries with enough range for the maximum source index used by the room background and its indexed practical props.",
+      "Preserve reserved material ramps deliberately so background and object index maps resolve consistently through the same room palette.",
+    ],
+  });
+
 const audio = (assetId: string, role: "audio-effect" | "audio-ambience", rules: readonly string[]) =>
   requirement(assetId, role, {
     nativeSize: null,
@@ -205,6 +220,9 @@ export const nightShiftProductionAssets: readonly NightShiftProductionAssetRequi
       "Palette swaps must preserve material identity and facial readability; they are substitutions, not exposure filters.",
     ],
   }),
+  scenePalette("asset.palette.night-shift.station", "Station"),
+  scenePalette("asset.palette.night-shift.roadside", "Roadside"),
+  scenePalette("asset.palette.night-shift.diner", "Diner"),
 
   requirement("asset.night-shift.font.system", "font", {
     nativeSize: { width: 96, height: 48 },
