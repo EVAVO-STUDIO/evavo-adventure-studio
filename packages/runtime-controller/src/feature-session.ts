@@ -46,6 +46,8 @@ type OptionalRouteController = Partial<Pick<
   | "routeState"
   | "availableRouteEdges"
   | "traverseRouteEdge"
+  | "travelDestinations"
+  | "travelToNode"
   | "routeAtTerminal"
   | "routeAtRequiredReconvergence"
 >>;
@@ -158,6 +160,8 @@ const routeFeatureApi = (session: PackagedFeatureSessionController): OptionalRou
   ...(session.routeState ? { routeState: () => session.routeState?.() as ReturnType<AdventureRoutePackagedRuntimeController["routeState"]> } : {}),
   ...(session.availableRouteEdges ? { availableRouteEdges: () => session.availableRouteEdges?.() ?? [] } : {}),
   ...(session.traverseRouteEdge ? { traverseRouteEdge: (edgeId: string) => session.traverseRouteEdge?.(edgeId) as ReturnType<AdventureRoutePackagedRuntimeController["traverseRouteEdge"]> } : {}),
+  ...(session.travelDestinations ? { travelDestinations: () => session.travelDestinations?.() ?? [] } : {}),
+  ...(session.travelToNode ? { travelToNode: (nodeId: string) => session.travelToNode?.(nodeId) as ReturnType<AdventureRoutePackagedRuntimeController["travelToNode"]> } : {}),
   ...(session.routeAtTerminal ? { routeAtTerminal: () => session.routeAtTerminal?.() ?? false } : {}),
   ...(session.routeAtRequiredReconvergence ? { routeAtRequiredReconvergence: () => session.routeAtRequiredReconvergence?.() ?? false } : {}),
 });
