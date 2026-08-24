@@ -1,10 +1,10 @@
 import { validateAudioMixManifest } from "@evavo/adventure-audio";
 import { describe, expect, it } from "vitest";
-import { nightShiftCompleteStaging } from "../src/night-shift-complete-proof.js";
 import {
   nightShiftRuntimeContracts,
   nightShiftRuntimeProject,
 } from "../src/night-shift-runtime-contracts.js";
+import { nightShiftRuntimeStaging } from "../src/night-shift-runtime-staging.js";
 import {
   sceneDirectorStagingAudioCueUsages,
   validateSceneDirectorStagingAudioCues,
@@ -66,14 +66,14 @@ describe("Night Shift runtime contracts", () => {
     );
   });
 
-  it("covers every staging-emitted footstep and choreography cue", () => {
+  it("covers every production-staging footstep and choreography cue", () => {
     expect(
       validateSceneDirectorStagingAudioCues(
-        nightShiftCompleteStaging,
+        nightShiftRuntimeStaging,
         nightShiftRuntimeContracts.audioMix,
       ),
     ).toEqual([]);
-    expect(sceneDirectorStagingAudioCueUsages(nightShiftCompleteStaging).map((usage) => usage.cueId)).toEqual(
+    expect(sceneDirectorStagingAudioCueUsages(nightShiftRuntimeStaging).map((usage) => usage.cueId)).toEqual(
       expect.arrayContaining([
         "audio-cue.night-shift.footstep.vinyl",
         "audio-cue.night-shift.footstep.wet-asphalt",
@@ -87,14 +87,14 @@ describe("Night Shift runtime contracts", () => {
     );
   });
 
-  it("fails closed when a staging cue is missing from the mix", () => {
+  it("fails closed when a production-staging cue is missing from the mix", () => {
     const mix = {
       ...nightShiftRuntimeContracts.audioMix,
       cues: nightShiftRuntimeContracts.audioMix.cues.filter(
         (cue) => cue.id !== "audio-cue.night-shift.paper-touch",
       ),
     };
-    expect(validateSceneDirectorStagingAudioCues(nightShiftCompleteStaging, mix)).toEqual(
+    expect(validateSceneDirectorStagingAudioCues(nightShiftRuntimeStaging, mix)).toEqual(
       expect.arrayContaining([
         expect.objectContaining({
           cueId: "audio-cue.night-shift.paper-touch",
