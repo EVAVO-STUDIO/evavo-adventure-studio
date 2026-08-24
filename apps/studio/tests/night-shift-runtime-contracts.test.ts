@@ -1,0 +1,68 @@
+import { validateAudioMixManifest } from "@evavo/adventure-audio";
+import { describe, expect, it } from "vitest";
+import {
+  nightShiftCompleteStaging,
+} from "../src/night-shift-complete-proof.js";
+import {
+  nightShiftRuntimeContracts,
+  nightShiftRuntimeProject,
+} from "../src/night-shift-runtime-contracts.js";
+import {
+  sceneDirectorStagingAudioCueUsages,
+  validateSceneDirectorStagingAudioCues,
+} from "../src/scene-director-audio-readiness.js";
+
+
+describe("Night Shift runtime contracts", () => {
+  it("keeps front-end, lifecycle, audio and palette maps on one project identity", () => {
+    const projectId = nightShiftRuntimeProject.id;
+    expect(nightShiftRuntimeContracts.frontEnd.projectId).toBe(projectId);
+    expect(nightShiftRuntimeContracts.lifecycle.projectId).toBe(projectId);
+    expect(nightShiftRuntimeContracts.audioMix.projectId).toBe(projectId);
+    expect(nightShiftRuntimeContracts.paletteMaps.projectId).toBe(projectId);
+  });
+
+  it("validates the authored audio mix against declared audio assets", () => {
+    expect(
+      validateAudioMixManifest(nightShiftRuntimeProject, nightShiftRuntimeContracts.audioMix),
+    ).toEqual([]);
+  });
+
+  it("covers every staging-emitted footstep and choreography cue", () => {
+    expect(
+      validateSceneDirectorStagingAudioCues(
+        nightShiftCompleteStaging,
+        nightShiftRuntimeContracts.audioMix,
+      ),
+    ).toEqual([]);
+    expect(sceneDirectorStagingAudioCueUsages(nightShiftCompleteStaging).map((usage) => usage.cueId)).toEqual(
+      expect.arrayContaining([
+        "audio-cue.night-shift.footstep.vinyl",
+        "audio-cue.night-shift.footstep.wet-asphalt",
+        "audio-cue.night-shift.footstep.diner-tile",
+        "audio-cue.night-shift.radio-lift",
+        "audio-cue.night-shift.keys-jingle",
+        "audio-cue.night-shift.door-latch",
+        "audio-cue.night-shift.notebook",
+        "audio-cue.night-shift.paper-touch",
+      ]),
+    );
+  });
+
+  it("fails closed when a staging cue is missing from the mix", () => {
+    const mix = {
+      ...nightShiftRuntimeContracts.audioMix,
+      cues: nightShiftRuntimeContracts.audioMix.cues.filter(
+        (cue) => cue.id !== "audio-cue.night-shift.paper-touch",
+      ),
+    };
+    expect(validateSceneDirectorStagingAudioCues(nightShiftCompleteStaging, mix)).toEqual(
+      expect.arrayContaining([
+        expect.objectContaining({
+          cueId: "audio-cue.night-shift.paper-touch",
+          source: "choreography",
+        }),
+      ]),
+    );
+  });
+});
