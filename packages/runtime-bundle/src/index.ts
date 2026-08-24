@@ -58,6 +58,11 @@ import {
 } from "./item-combinations.js";
 import { runtimeLocalisationPackSchema } from "./localisation.js";
 import {
+  runtimeMultiProtagonistManifestSchema,
+  type RuntimeMultiProtagonistIssue,
+  validateRuntimeMultiProtagonist,
+} from "./multi-protagonist.js";
+import {
   RuntimePaletteMapValidationError,
   validateRuntimePaletteMaps,
 } from "./palette-map-validation.js";
@@ -134,64 +139,29 @@ export const runtimeBundleSchema = z
     investigation: runtimeInvestigationManifestSchema.optional(),
     investigationBindings: runtimeInvestigationBindingManifestSchema.optional(),
     itemCombinations: runtimeItemCombinationManifestSchema.optional(),
+    multiProtagonist: runtimeMultiProtagonistManifestSchema.optional(),
   })
   .strict()
   .superRefine((bundle, context) => {
-    if (bundle.indexedAssets && bundle.indexedAssets.projectId !== bundle.projectId) {
-      context.addIssue({
-        code: "custom",
-        path: ["indexedAssets", "projectId"],
-        message: `Indexed-asset project '${bundle.indexedAssets.projectId}' does not match runtime project '${bundle.projectId}'.`,
-      });
-    }
-    if (bundle.sceneStaging && bundle.sceneStaging.projectId !== bundle.projectId) {
-      context.addIssue({
-        code: "custom",
-        path: ["sceneStaging", "projectId"],
-        message: `Scene staging project '${bundle.sceneStaging.projectId}' does not match runtime project '${bundle.projectId}'.`,
-      });
-    }
-    if (bundle.paletteMaps && bundle.paletteMaps.projectId !== bundle.projectId) {
-      context.addIssue({
-        code: "custom",
-        path: ["paletteMaps", "projectId"],
-        message: `Palette-map project '${bundle.paletteMaps.projectId}' does not match runtime project '${bundle.projectId}'.`,
-      });
-    }
-    if (bundle.frontEnd && bundle.frontEnd.projectId !== bundle.projectId) {
-      context.addIssue({
-        code: "custom",
-        path: ["frontEnd", "projectId"],
-        message: `Front-end project '${bundle.frontEnd.projectId}' does not match runtime project '${bundle.projectId}'.`,
-      });
-    }
-    if (bundle.lifecycle && bundle.lifecycle.projectId !== bundle.projectId) {
-      context.addIssue({
-        code: "custom",
-        path: ["lifecycle", "projectId"],
-        message: `Lifecycle project '${bundle.lifecycle.projectId}' does not match runtime project '${bundle.projectId}'.`,
-      });
-    }
-    if (bundle.investigation && bundle.investigation.projectId !== bundle.projectId) {
-      context.addIssue({
-        code: "custom",
-        path: ["investigation", "projectId"],
-        message: `Investigation project '${bundle.investigation.projectId}' does not match runtime project '${bundle.projectId}'.`,
-      });
-    }
-    if (bundle.investigationBindings && bundle.investigationBindings.projectId !== bundle.projectId) {
-      context.addIssue({
-        code: "custom",
-        path: ["investigationBindings", "projectId"],
-        message: `Investigation-binding project '${bundle.investigationBindings.projectId}' does not match runtime project '${bundle.projectId}'.`,
-      });
-    }
-    if (bundle.itemCombinations && bundle.itemCombinations.projectId !== bundle.projectId) {
-      context.addIssue({
-        code: "custom",
-        path: ["itemCombinations", "projectId"],
-        message: `Item-combination project '${bundle.itemCombinations.projectId}' does not match runtime project '${bundle.projectId}'.`,
-      });
+    const projectScoped = [
+      ["indexedAssets", bundle.indexedAssets],
+      ["sceneStaging", bundle.sceneStaging],
+      ["paletteMaps", bundle.paletteMaps],
+      ["frontEnd", bundle.frontEnd],
+      ["lifecycle", bundle.lifecycle],
+      ["investigation", bundle.investigation],
+      ["investigationBindings", bundle.investigationBindings],
+      ["itemCombinations", bundle.itemCombinations],
+      ["multiProtagonist", bundle.multiProtagonist],
+    ] as const;
+    for (const [key, value] of projectScoped) {
+      if (value && value.projectId !== bundle.projectId) {
+        context.addIssue({
+          code: "custom",
+          path: [key, "projectId"],
+          message: `${key} project '${value.projectId}' does not match runtime project '${bundle.projectId}'.`,
+        });
+      }
     }
     if (bundle.opening) {
       for (const issue of validateGameOpeningManifest(
@@ -214,6 +184,16 @@ export class RuntimeInvestigationBindingValidationError extends Error {
   constructor(issues: readonly RuntimeInvestigationBindingIssue[]) {
     super(`Runtime investigation bindings are invalid (${issues.length} issue(s)).`);
     this.name = "RuntimeInvestigationBindingValidationError";
+    this.issues = issues;
+  }
+}
+
+export class RuntimeMultiProtagonistValidationError extends Error {
+  readonly issues: readonly RuntimeMultiProtagonistIssue[];
+
+  constructor(issues: readonly RuntimeMultiProtagonistIssue[]) {
+    super(`Runtime multi-protagonist manifest is invalid (${issues.length} issue(s)).`);
+    this.name = "RuntimeMultiProtagonistValidationError";
     this.issues = issues;
   }
 }
@@ -285,6 +265,21 @@ export const parseRuntimeBundle = (input: unknown): RuntimeBundle => {
       throw new RuntimeItemCombinationValidationError(combinationIssues);
     }
   }
+  if (bundle.multiProtagonist) {
+    const multiProtagonistIssues = validateRuntimeMultiProtagonist(bundle.multiProtagonist, {
+      actorIds: new Set(bundle.actors.map((actor) => actor.id as string)),
+      itemIds: new Set(bundle.inventoryItems.map((item) => item.id as string)),
+      entrancesByScene: new Map(
+        bundle.scenes.map((scene) => [
+          scene.id as string,
+          new Set(scene.entrances.map((entrance) => entrance.id as string)),
+        ]),
+      ),
+    });
+    if (multiProtagonistIssues.length > 0) {
+      throw new RuntimeMultiProtagonistValidationError(multiProtagonistIssues);
+    }
+  }
   if (bundle.bitmapFonts) registerBitmapFontsForAssetCollection(bundle.assets, bundle.bitmapFonts);
   return bundle;
 };
@@ -298,6 +293,7 @@ export * from "./investigation-bindings.js";
 export * from "./investigation.js";
 export * from "./item-combinations.js";
 export * from "./localisation.js";
+export * from "./multi-protagonist.js";
 export * from "./palette-map-validation.js";
 export * from "./ui-validation.js";
 export * from "./validation.js";
