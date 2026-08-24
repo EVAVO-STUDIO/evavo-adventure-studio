@@ -56,6 +56,10 @@
       "types": "./dist/src/scene-archetypes.d.ts",
       "import": "./dist/src/scene-archetypes.js"
     },
+    "./full-game-upgrade-plan": {
+      "types": "./dist/src/full-game-upgrade-plan.d.ts",
+      "import": "./dist/src/full-game-upgrade-plan.js"
+    },
     "./dynamix-cinematic": {
       "types": "./dist/src/dynamix-cinematic.d.ts",
       "import": "./dist/src/dynamix-cinematic.js"
