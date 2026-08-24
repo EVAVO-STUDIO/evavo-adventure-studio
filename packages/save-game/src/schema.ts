@@ -15,6 +15,10 @@ import {
 import { z } from "zod";
 import { saveGameInvestigationStateSchema } from "./investigation.js";
 import {
+  type SaveGameItemCombinationState,
+  saveGameItemCombinationStateSchema,
+} from "./item-combinations.js";
+import {
   type SaveGameProfiledRuntimeCameraState,
   saveGameProfiledRuntimeCameraStateSchema,
 } from "./profiled-camera.js";
@@ -253,6 +257,7 @@ export interface SaveGamePayload {
   readonly interface: SaveGameInterfaceState;
   readonly audio?: AudioRuntimeState;
   readonly investigation?: RuntimeInvestigationState;
+  readonly itemCombinations?: SaveGameItemCombinationState;
 }
 
 const saveGamePayloadObjectSchema = z
@@ -265,6 +270,7 @@ const saveGamePayloadObjectSchema = z
     interface: saveGameInterfaceStateSchema,
     audio: audioRuntimeStateSchema.optional(),
     investigation: saveGameInvestigationStateSchema.optional(),
+    itemCombinations: saveGameItemCombinationStateSchema.optional(),
   })
   .strict();
 
