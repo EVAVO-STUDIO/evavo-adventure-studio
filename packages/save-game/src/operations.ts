@@ -13,6 +13,8 @@ import {
 import { validateSaveGameCompatibility } from "./compatibility.js";
 import { SaveGameCompatibilityError } from "./errors.js";
 import { validateSavedInvestigation } from "./investigation-compatibility.js";
+import { validateSavedItemCombinations } from "./item-combination-compatibility.js";
+import type { SaveGameItemCombinationState } from "./item-combinations.js";
 import { assertSaveGameAllowed } from "./policy.js";
 import type { SaveGameProfiledRuntimeCameraState } from "./profiled-camera.js";
 import {
@@ -33,6 +35,7 @@ export interface CreateSaveGameOptions {
   readonly profiledCamera?: SaveGameProfiledRuntimeCameraState;
   readonly audio?: AudioRuntimeState;
   readonly investigation?: RuntimeInvestigationState;
+  readonly itemCombinations?: SaveGameItemCombinationState;
 }
 
 const completeCompatibilityIssues = (
@@ -42,6 +45,7 @@ const completeCompatibilityIssues = (
   ...validateSaveGameCompatibility(bundle, save),
   ...validateSavedAudio(bundle, save),
   ...validateSavedInvestigation(bundle, save),
+  ...validateSavedItemCombinations(bundle, save),
 ];
 
 export const createSaveGame = (
@@ -50,7 +54,7 @@ export const createSaveGame = (
   options: CreateSaveGameOptions,
 ): SaveGame => {
   assertSaveGameAllowed(bundle, world);
-  const { audio, investigation, ...interfaceState } = options;
+  const { audio, investigation, itemCombinations, ...interfaceState } = options;
   const payload = saveGamePayloadSchema.parse({
     saveVersion: 1,
     projectId: bundle.projectId,
@@ -60,6 +64,7 @@ export const createSaveGame = (
     interface: interfaceState,
     ...(audio ? { audio } : {}),
     ...(investigation ? { investigation } : {}),
+    ...(itemCombinations ? { itemCombinations } : {}),
   });
   const save = saveGameSchema.parse({
     ...payload,
