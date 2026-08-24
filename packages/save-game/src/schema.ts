@@ -24,6 +24,10 @@ import {
   type SaveGameProfiledRuntimeCameraState,
   saveGameProfiledRuntimeCameraStateSchema,
 } from "./profiled-camera.js";
+import {
+  type SaveGameSentenceState,
+  saveGameSentenceStateSchema,
+} from "./sentence.js";
 
 const fnvFingerprintSchema = z
   .string()
@@ -232,6 +236,7 @@ export interface SaveGameInterfaceState {
     readonly history: readonly string[];
   };
   readonly profiledCamera?: SaveGameProfiledRuntimeCameraState;
+  readonly sentence?: SaveGameSentenceState;
 }
 
 export const saveGameInterfaceStateSchema = z
@@ -247,6 +252,7 @@ export const saveGameInterfaceStateSchema = z
       })
       .strict(),
     profiledCamera: saveGameProfiledRuntimeCameraStateSchema.optional(),
+    sentence: saveGameSentenceStateSchema.optional(),
   })
   .strict() as z.ZodType<SaveGameInterfaceState>;
 
