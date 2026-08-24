@@ -2,7 +2,7 @@ import {
   createItemCombinationRuntimeState,
   type ItemCombinationManifest,
   type ItemCombinationRuntimeState,
-} from "@evavo/adventure-interaction/item-combinations";
+} from "@evavo/adventure-scene-runtime/item-combinations";
 import {
   classicScumm5SentenceGrammar,
   createSentenceState,
@@ -13,8 +13,8 @@ import {
   type SentenceGrammar,
   type SentenceState,
   type SentenceTarget,
-} from "@evavo/adventure-interaction/sentence";
-import { executeSentenceIntent } from "@evavo/adventure-interaction/sentence-execution";
+} from "@evavo/adventure-scene-runtime/sentence";
+import { executeSentenceIntent } from "@evavo/adventure-scene-runtime/sentence-execution";
 import type { Id, Point } from "@evavo/adventure-project-schema";
 import type { ResolvedFrame } from "@evavo/adventure-render-contract";
 import type { RuntimeBundle } from "@evavo/adventure-runtime-bundle";
