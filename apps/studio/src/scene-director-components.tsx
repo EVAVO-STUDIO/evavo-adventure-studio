@@ -140,7 +140,7 @@ const replacePoint = (
   source: readonly Point[],
   pointIndex: number,
   point: Point,
-): readonly Point[] => source.map((candidate, index) => (index === pointIndex ? point : candidate));
+): Point[] => source.map((candidate, index) => (index === pointIndex ? point : candidate));
 
 const commandForDrag = (
   overlay: SceneDirectorOverlay,
