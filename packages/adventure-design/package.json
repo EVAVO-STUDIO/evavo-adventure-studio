@@ -52,6 +52,10 @@
       "types": "./dist/src/full-game-capabilities.d.ts",
       "import": "./dist/src/full-game-capabilities.js"
     },
+    "./full-game-reference-policy": {
+      "types": "./dist/src/full-game-reference-policy.d.ts",
+      "import": "./dist/src/full-game-reference-policy.js"
+    },
     "./scene-archetypes": {
       "types": "./dist/src/scene-archetypes.d.ts",
       "import": "./dist/src/scene-archetypes.js"
