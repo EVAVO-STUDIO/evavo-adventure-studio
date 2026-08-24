@@ -11,6 +11,10 @@
     "./sentence": {
       "types": "./dist/src/sentence.d.ts",
       "import": "./dist/src/sentence.js"
+    },
+    "./item-combinations": {
+      "types": "./dist/src/item-combinations.d.ts",
+      "import": "./dist/src/item-combinations.js"
     }
   },
   "files": [
