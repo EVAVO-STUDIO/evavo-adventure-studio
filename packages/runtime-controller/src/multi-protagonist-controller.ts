@@ -46,6 +46,7 @@ const companionOptions = (save: SaveGame) => ({
   ...(save.investigation ? { investigation: save.investigation } : {}),
   ...(save.itemCombinations ? { itemCombinations: save.itemCombinations } : {}),
   ...(save.roomScripts ? { roomScripts: save.roomScripts } : {}),
+  ...(save.rpg ? { rpg: save.rpg } : {}),
 });
 
 export const createMultiProtagonistPackagedRuntimeControllerWithFactory = (
