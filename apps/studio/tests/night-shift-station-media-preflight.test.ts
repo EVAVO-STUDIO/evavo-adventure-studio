@@ -2,9 +2,10 @@ import { describe, expect, it } from "vitest";
 import { evaluateNightShiftStationMediaPreflight } from "../src/night-shift-station-media-preflight.js";
 
 describe("Night Shift Station media preflight", () => {
-  it("separates station visual, foreground, audio and runtime-index work", () => {
+  it("separates station visual, palette, foreground, audio and runtime-index work", () => {
     const report = evaluateNightShiftStationMediaPreflight();
-    expect(report.stationAssetIds).toHaveLength(13);
+    expect(report.stationAssetIds).toHaveLength(14);
+    expect(report.stationAssetIds).toContain("asset.palette.night-shift.station");
     expect(report.visualMasterIds).toEqual(
       expect.arrayContaining([
         "asset.night-shift.background.station",
