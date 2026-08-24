@@ -4,6 +4,7 @@ import {
 } from "@evavo/adventure-design/scene-staging";
 import { type ChangeEvent, useEffect, useMemo, useState } from "react";
 import { SceneDirectorCanonicalGeometryPanel } from "./scene-director-canonical-editor.js";
+import { auditSceneDirectorClearance } from "./scene-director-clearance.js";
 import { SceneDirectorPanel } from "./scene-director-components.js";
 import {
   applySceneDirectorDocumentEdit,
@@ -79,6 +80,10 @@ export const SceneStagingApp = () => {
         sample.paletteMaps,
       ),
     [activeDocuments, report.sceneId, sample.paletteMaps],
+  );
+  const clearanceIssues = useMemo(
+    () => auditSceneDirectorClearance(activeDocuments, report.sceneId),
+    [activeDocuments, report.sceneId],
   );
 
   useEffect(() => {
@@ -251,6 +256,7 @@ export const SceneStagingApp = () => {
               label="Approaches"
               value={directorOverlay.objects.reduce((sum, object) => sum + object.approachSlots.length, 0)}
             />
+            <Metric label="Clearance risks" value={clearanceIssues.length} />
             <Metric label="Surfaces" value={directorOverlay.staging?.surfaceZones.length ?? 0} />
             <Metric label="Occlusion" value={directorOverlay.staging?.occlusionPlanes.length ?? 0} />
             <Metric label="Light zones" value={directorOverlay.lightZones.length} />
@@ -315,6 +321,24 @@ export const SceneStagingApp = () => {
               <li>Entrances, surfaces and indexed palette-light regions remain deterministic through play.</li>
             </ul>
           </section>
+          {clearanceIssues.length > 0 ? (
+            <section>
+              <span className="stg-eyebrow">BODY CLEARANCE REVIEW</span>
+              <h2>{clearanceIssues.length} tight authored point(s)</h2>
+              <ul>
+                {clearanceIssues.slice(0, 6).map((issue) => (
+                  <li key={`${issue.kind}:${issue.targetId}`}>
+                    <strong>{issue.kind}</strong>{" · "}{shortId(issue.targetId)}{" · "}
+                    {issue.availableClearance.toFixed(1)}px / {issue.requiredClearance.toFixed(1)}px
+                  </li>
+                ))}
+              </ul>
+              <p>
+                These are not physics failures. They are period-staging warnings where the foot point remains
+                legal but the visible actor body may scrape the authored walk boundary.
+              </p>
+            </section>
+          ) : null}
           {directorOverlay.lightZones.length > 0 ? (
             <section>
               <span className="stg-eyebrow">INDEXED LIGHT BINDINGS</span>
@@ -359,8 +383,8 @@ export const SceneStagingApp = () => {
             <span className="stg-eyebrow">ROUND-TRIP OUTPUT</span>
             <h2>Three canonical documents</h2>
             <p>
-              Export emits project.json, scene-instances.json and scene-staging.json from the same committed
-              history. Drag preview state is never exported.
+              Export emits one deterministic ZIP containing project.json, scene-instances.json and
+              scene-staging.json from the same committed history. Drag preview state is never exported.
             </p>
           </section>
           <section className="stg-next-action">
