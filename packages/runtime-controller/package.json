@@ -51,6 +51,14 @@
     "./room-script-controller": {
       "types": "./dist/src/room-script-controller.d.ts",
       "import": "./dist/src/room-script-controller.js"
+    },
+    "./session-controller": {
+      "types": "./dist/src/session-controller.d.ts",
+      "import": "./dist/src/session-controller.js"
+    },
+    "./feature-session": {
+      "types": "./dist/src/feature-session.d.ts",
+      "import": "./dist/src/feature-session.js"
     }
   },
   "files": [
