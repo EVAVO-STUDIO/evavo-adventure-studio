@@ -13,6 +13,7 @@ import {
   nightShiftProductionAssets,
   validateNightShiftProductionAssetPlan,
 } from "./night-shift-production-assets.js";
+import { validateNightShiftProductionWaves } from "./night-shift-production-waves.js";
 import {
   nightShiftRuntimeContracts,
   nightShiftRuntimeProject,
@@ -135,7 +136,9 @@ export const evaluateNightShiftDemoReadiness = (
     nightShiftRuntimeContracts.lifecycle.outcomes.some((outcome) => outcome.kind === "success");
   const audioContractReady = audioReady();
   const uiContractReady = validateNightShiftUiContracts().length === 0;
-  const productionAssetPlanReady = validateNightShiftProductionAssetPlan().length === 0;
+  const productionAssetPlanReady =
+    validateNightShiftProductionAssetPlan().length === 0 &&
+    validateNightShiftProductionWaves().length === 0;
   const artMasterReady = evidence.artMasterIntake?.status === "ready";
   const audioMasterReady = evidence.audioMasterIntake?.status === "ready";
   const compiledAssetsReady = allExpectedAssetsCompiled(evidence.assetManifest);
@@ -189,8 +192,8 @@ export const evaluateNightShiftDemoReadiness = (
       "production-asset-plan",
       "authored",
       productionAssetPlanReady,
-      "Every runtime asset has an explicit native production and evidence requirement.",
-      "Runtime assets and the Night Shift production master plan are out of sync.",
+      "Every runtime asset has a native production requirement and exactly one ordered build wave.",
+      "Runtime assets, production requirements or Foundation/Station/Roadside/Diner wave assignments are out of sync.",
     ),
     gate(
       "art-master-intake",
