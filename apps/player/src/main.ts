@@ -1,5 +1,6 @@
 import { advanceFixedStepClock, createFixedStepClock } from "@evavo/adventure-core/fixed-step";
 import type { Id, Point } from "@evavo/adventure-project-schema";
+import type { GameLifecycleOutcome } from "@evavo/adventure-project-schema/lifecycle";
 import {
   canonicalPlayerSystemText,
   type PlayerSystemTextResolver,
@@ -14,6 +15,8 @@ import { requestedRuntimeBundleFromSearch } from "./built-in-demos.js";
 import { classicFrontEndSkipped, runClassicFrontEnd } from "./classic-front-end.js";
 import { mapClientPointToNative, requestedActorFromSearch } from "./input.js";
 import { createLaboratoryFrame } from "./laboratory-frame.js";
+import { resolveActiveGameLifecycleOutcome } from "./lifecycle-outcome.js";
+import { runGameLifecycleScreen } from "./lifecycle-screen.js";
 import {
   configuredOpeningSequenceId,
   requestedNewGameOpeningSequenceId,
@@ -77,6 +80,7 @@ interface MountedPlayer {
   readonly persistence?: PlayerPersistence;
   readonly replay?: PlayerReplayControls;
   readonly statusText?: () => string;
+  readonly activeLifecycleOutcome?: () => GameLifecycleOutcome | null;
   readonly text?: PlayerSystemTextResolver;
   readonly bundle?: RuntimeBundle;
   readonly disposeAdditional?: () => Promise<void>;
@@ -129,6 +133,12 @@ const nativePointer = (
   );
 };
 
+const restartCurrentRuntime = (): void => {
+  const url = new URL(window.location.href);
+  url.searchParams.set("shell", "skip");
+  window.location.assign(url.href);
+};
+
 const mountPlayer = async (
   host: HTMLElement,
   player: MountedPlayer,
@@ -151,9 +161,12 @@ const mountPlayer = async (
   let animationFrame = 0;
   let disposed = false;
   let systemMenuActive = false;
+  let lifecycleActive = false;
+  let presentedLifecycleOutcomeId: string | null = null;
 
   const blockingSequenceId = (): Id<"sequence"> | null =>
     player.input?.activeBlockingSequenceId?.() ?? null;
+  const modalActive = (): boolean => systemMenuActive || lifecycleActive;
 
   const resize = (): void => {
     const bounds = host.getBoundingClientRect();
@@ -166,16 +179,16 @@ const mountPlayer = async (
   resize();
 
   const onPointerMove = (event: PointerEvent): void => {
-    if (systemMenuActive || blockingSequenceId()) return;
+    if (modalActive() || blockingSequenceId()) return;
     player.input?.setPointer(nativePointer(host, initialFrame.canvas, event));
   };
   const onPointerLeave = (): void => {
-    if (systemMenuActive || blockingSequenceId()) return;
+    if (modalActive() || blockingSequenceId()) return;
     player.input?.setPointer(null);
     player.input?.setPressed(false);
   };
   const onPointerDown = (event: PointerEvent): void => {
-    if (systemMenuActive || !player.input || event.button !== 0) return;
+    if (modalActive() || !player.input || event.button !== 0) return;
     if (blockingSequenceId()) {
       event.preventDefault();
       return;
@@ -191,12 +204,12 @@ const mountPlayer = async (
     event.preventDefault();
   };
   const onPointerUp = (event: PointerEvent): void => {
-    if (!systemMenuActive && !blockingSequenceId() && event.button === 0) {
+    if (!modalActive() && !blockingSequenceId() && event.button === 0) {
       player.input?.setPressed(false);
     }
   };
   const onPointerCancel = (): void => {
-    if (!systemMenuActive && !blockingSequenceId()) player.input?.setPressed(false);
+    if (!modalActive() && !blockingSequenceId()) player.input?.setPressed(false);
   };
   const onContextMenu = (event: MouseEvent): void => {
     if (player.input) event.preventDefault();
@@ -210,6 +223,7 @@ const mountPlayer = async (
       clock = createFixedStepClock();
       previousTime = performance.now();
       player.renderer.render(player.createFrame(logicalTick));
+      presentedLifecycleOutcomeId = null;
       statusRail.announce(text("status.gameRestored"));
     } catch (error) {
       statusRail.announce(
@@ -265,9 +279,57 @@ const mountPlayer = async (
     statusRail.announce(text("status.replayExported"));
   };
 
+  const openLifecycleOutcome = (outcome: GameLifecycleOutcome): void => {
+    if (lifecycleActive || systemMenuActive || !player.persistence || !player.bundle) return;
+    lifecycleActive = true;
+    presentedLifecycleOutcomeId = outcome.id;
+    player.input?.setPressed(false);
+    player.input?.setPointer(null);
+    player.replay?.cancel();
+    statusRail.replace(outcome.title);
+
+    void runGameLifecycleScreen(host, {
+      bundle: player.bundle,
+      outcome,
+      snapshots: player.persistence.listSlots,
+      loadSlot: (slot) => player.persistence?.loadSlot(slot) ?? logicalTick,
+    })
+      .then((result) => {
+        if (result.kind === "title") {
+          window.location.reload();
+          return;
+        }
+        if (result.kind === "restart") {
+          restartCurrentRuntime();
+          return;
+        }
+        lifecycleActive = false;
+        logicalTick = result.tick;
+        clock = createFixedStepClock();
+        previousTime = performance.now();
+        player.renderer.render(player.createFrame(logicalTick));
+        presentedLifecycleOutcomeId = null;
+        statusRail.announce(
+          result.slot === 0
+            ? text("status.quickSaveRestored")
+            : text("status.saveSlotRestored", { slot: result.slot }),
+        );
+        host.focus();
+      })
+      .catch((error: unknown) => {
+        console.error(error);
+        lifecycleActive = false;
+        presentedLifecycleOutcomeId = null;
+        clock = createFixedStepClock();
+        previousTime = performance.now();
+        statusRail.announce(errorMessage(error), errorStatusHoldMilliseconds);
+        host.focus();
+      });
+  };
+
   const openSystemMenu = (): void => {
     if (
-      systemMenuActive ||
+      modalActive() ||
       blockingSequenceId() ||
       !player.persistence ||
       !player.bundle
@@ -298,6 +360,7 @@ const mountPlayer = async (
         if (result.kind === "loaded") {
           logicalTick = result.tick;
           player.renderer.render(player.createFrame(logicalTick));
+          presentedLifecycleOutcomeId = null;
           statusRail.announce(
             result.slot === 0
               ? text("status.quickSaveRestored")
@@ -324,7 +387,7 @@ const mountPlayer = async (
   };
 
   const onKeyDown = (event: KeyboardEvent): void => {
-    if (systemMenuActive) return;
+    if (modalActive()) return;
 
     const sequenceId = blockingSequenceId();
     if (sequenceId) {
@@ -391,7 +454,7 @@ const mountPlayer = async (
 
   const renderLoop = (now: number): void => {
     if (disposed) return;
-    if (systemMenuActive) {
+    if (modalActive()) {
       previousTime = now;
       animationFrame = requestAnimationFrame(renderLoop);
       return;
@@ -406,10 +469,18 @@ const mountPlayer = async (
     previousTime = now;
     player.renderer.render(player.createFrame(logicalTick));
     if (player.statusText) statusRail.refresh(player.statusText());
+    const outcome = player.activeLifecycleOutcome?.() ?? null;
+    if (outcome && outcome.id !== presentedLifecycleOutcomeId) {
+      openLifecycleOutcome(outcome);
+    } else if (!outcome) {
+      presentedLifecycleOutcomeId = null;
+    }
     animationFrame = requestAnimationFrame(renderLoop);
   };
 
   player.renderer.render(initialFrame);
+  const initialOutcome = player.activeLifecycleOutcome?.() ?? null;
+  if (initialOutcome) openLifecycleOutcome(initialOutcome);
   animationFrame = requestAnimationFrame(renderLoop);
 
   window.addEventListener(
@@ -492,6 +563,8 @@ const packagedPlayer = async (
       persistence,
       replay,
       statusText: controller.statusText,
+      activeLifecycleOutcome: () =>
+        resolveActiveGameLifecycleOutcome(bundle, controller.worldState().story),
       text,
       bundle,
       disposeAdditional: () => textures.dispose(),
