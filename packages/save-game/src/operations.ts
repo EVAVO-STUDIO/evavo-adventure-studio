@@ -19,6 +19,8 @@ import type { SaveGameItemCombinationState } from "./item-combinations.js";
 import { validateSavedMultiProtagonist } from "./multi-protagonist-compatibility.js";
 import { assertSaveGameAllowed } from "./policy.js";
 import type { SaveGameProfiledRuntimeCameraState } from "./profiled-camera.js";
+import type { SaveGameSentenceState } from "./sentence.js";
+import { validateSavedSentence } from "./sentence-compatibility.js";
 import {
   type SaveGame,
   saveGamePayloadSchema,
@@ -35,6 +37,7 @@ export interface CreateSaveGameOptions {
     readonly history: readonly string[];
   };
   readonly profiledCamera?: SaveGameProfiledRuntimeCameraState;
+  readonly sentence?: SaveGameSentenceState;
   readonly audio?: AudioRuntimeState;
   readonly investigation?: RuntimeInvestigationState;
   readonly itemCombinations?: SaveGameItemCombinationState;
@@ -50,6 +53,7 @@ const completeCompatibilityIssues = (
   ...validateSavedInvestigation(bundle, save),
   ...validateSavedItemCombinations(bundle, save),
   ...validateSavedMultiProtagonist(bundle, save),
+  ...validateSavedSentence(bundle, save),
 ];
 
 export const createSaveGame = (
@@ -58,14 +62,24 @@ export const createSaveGame = (
   options: CreateSaveGameOptions,
 ): SaveGame => {
   assertSaveGameAllowed(bundle, world);
-  const { audio, investigation, itemCombinations, multiProtagonist, ...interfaceState } = options;
+  const {
+    audio,
+    investigation,
+    itemCombinations,
+    multiProtagonist,
+    sentence,
+    ...interfaceState
+  } = options;
   const payload = saveGamePayloadSchema.parse({
     saveVersion: 1,
     projectId: bundle.projectId,
     bundleFingerprint: runtimeBundleFingerprint(bundle),
     assetManifestFingerprint: bundle.assetManifestFingerprint,
     world,
-    interface: interfaceState,
+    interface: {
+      ...interfaceState,
+      ...(sentence ? { sentence } : {}),
+    },
     ...(audio ? { audio } : {}),
     ...(investigation ? { investigation } : {}),
     ...(itemCombinations ? { itemCombinations } : {}),
