@@ -18,6 +18,7 @@ import {
   projectMultiProtagonistIntoWorld,
 } from "./multi-protagonist-projection.js";
 import type { PackagedRuntimeControllerOptions } from "./packaged-controller.js";
+import type { AdventureRpgPackagedRuntimeController } from "./rpg-controller.js";
 import { controlledActorRequestFromSave } from "./input.js";
 import {
   createBasePackagedSessionController,
@@ -25,7 +26,24 @@ import {
   type PackagedSessionControllerFactory,
 } from "./session-controller.js";
 
-export interface MultiProtagonistPackagedRuntimeController extends PackagedSessionController {
+type OptionalRpgController = Partial<Pick<
+  AdventureRpgPackagedRuntimeController,
+  | "rpgState"
+  | "practiceSkill"
+  | "resolveSkillCheck"
+  | "advanceRpgTime"
+  | "restRpg"
+  | "adjustResource"
+  | "scheduleActive"
+  | "createRpgImportSnapshot"
+  | "activeCombatState"
+  | "startCombat"
+  | "issueCombatAction"
+  | "advanceCombat"
+  | "finishCombat"
+>>;
+
+export interface MultiProtagonistPackagedRuntimeController extends PackagedSessionController, OptionalRpgController {
   activeProtagonistId(): ProtagonistId;
   multiProtagonistState(): MultiProtagonistState;
   switchProtagonist(protagonistId: ProtagonistId): void;
@@ -48,6 +66,25 @@ const companionOptions = (save: SaveGame) => ({
   ...(save.roomScripts ? { roomScripts: save.roomScripts } : {}),
   ...(save.rpg ? { rpg: save.rpg } : {}),
 });
+
+const rpgApi = (controller: PackagedSessionController): OptionalRpgController => {
+  const candidate = controller as PackagedSessionController & OptionalRpgController;
+  return {
+    ...(candidate.rpgState ? { rpgState: () => candidate.rpgState?.() as ReturnType<AdventureRpgPackagedRuntimeController["rpgState"]> } : {}),
+    ...(candidate.practiceSkill ? { practiceSkill: (skillId: string, amount?: number) => candidate.practiceSkill?.(skillId, amount) as ReturnType<AdventureRpgPackagedRuntimeController["practiceSkill"]> } : {}),
+    ...(candidate.resolveSkillCheck ? { resolveSkillCheck: (check) => candidate.resolveSkillCheck?.(check) as ReturnType<AdventureRpgPackagedRuntimeController["resolveSkillCheck"]> } : {}),
+    ...(candidate.advanceRpgTime ? { advanceRpgTime: (minutes: number) => candidate.advanceRpgTime?.(minutes) } : {}),
+    ...(candidate.restRpg ? { restRpg: (rule) => candidate.restRpg?.(rule) } : {}),
+    ...(candidate.adjustResource ? { adjustResource: (resourceId: string, delta: number) => candidate.adjustResource?.(resourceId, delta) } : {}),
+    ...(candidate.scheduleActive ? { scheduleActive: (window) => candidate.scheduleActive?.(window) ?? false } : {}),
+    ...(candidate.createRpgImportSnapshot ? { createRpgImportSnapshot: (sourceGameId: string, tags?: readonly string[]) => candidate.createRpgImportSnapshot?.(sourceGameId, tags) as ReturnType<AdventureRpgPackagedRuntimeController["createRpgImportSnapshot"]> } : {}),
+    ...(candidate.activeCombatState ? { activeCombatState: () => candidate.activeCombatState?.() ?? null } : {}),
+    ...(candidate.startCombat ? { startCombat: (encounterId: string) => candidate.startCombat?.(encounterId) as ReturnType<AdventureRpgPackagedRuntimeController["startCombat"]> } : {}),
+    ...(candidate.issueCombatAction ? { issueCombatAction: (action) => candidate.issueCombatAction?.(action) ?? [] } : {}),
+    ...(candidate.advanceCombat ? { advanceCombat: (ticks: number) => candidate.advanceCombat?.(ticks) ?? [] } : {}),
+    ...(candidate.finishCombat ? { finishCombat: () => candidate.finishCombat?.() as ReturnType<AdventureRpgPackagedRuntimeController["finishCombat"]> } : {}),
+  };
+};
 
 export const createMultiProtagonistPackagedRuntimeControllerWithFactory = (
   bundle: RuntimeBundle,
@@ -86,42 +123,39 @@ export const createMultiProtagonistPackagedRuntimeControllerWithFactory = (
 
   controller = createControllerFor(companion.activeProtagonistId);
 
-  const commitCurrent = (): void => {
-    companion = commitWorldToActiveProtagonist(companion, controller.worldState());
-  };
-
-  const rebuildActive = (state: MultiProtagonistState): void => {
-    const globalWorld = controller.worldState();
-    const sourceSave = controller.createSaveGame();
-    companion = state;
-    controller = createControllerFor(companion.activeProtagonistId, globalWorld, sourceSave);
-  };
-
   const recipeIds = (): readonly string[] => controller.itemCombinationUsedRecipeIds?.() ?? [];
 
   const applyBindingsAfter = (
     beforeWorld: InteractiveRuntimeWorldState,
     beforeRecipeIds: readonly string[],
   ): boolean => {
-    const transition = applyNewMultiProtagonistBindings(
-      bundle,
-      { world: beforeWorld, usedRecipeIds: beforeRecipeIds },
-      { world: controller.worldState(), usedRecipeIds: recipeIds() },
-      companion,
-    );
-    if (transition.firedBindingIds.length === 0) return false;
+    const before = { world: beforeWorld, usedRecipeIds: beforeRecipeIds };
+    const after = { world: controller.worldState(), usedRecipeIds: recipeIds() };
+    const transition = applyNewMultiProtagonistBindings(bundle, before, after, companion);
+    if (transition.state === companion) return false;
+    companion = transition.state;
     pendingBindingIds.push(...transition.firedBindingIds);
-    rebuildActive(transition.state);
     return true;
+  };
+
+  const commitCurrent = (): void => {
+    companion = commitWorldToActiveProtagonist(companion, controller.worldState());
+  };
+
+  const rebuildActive = (state: MultiProtagonistState): void => {
+    const globalWorld = controller.worldState();
+    const baseSave = controller.createSaveGame();
+    companion = state;
+    controller = createControllerFor(companion.activeProtagonistId, globalWorld, baseSave);
   };
 
   const switchProtagonist = (protagonistId: ProtagonistId): void => {
     if (protagonistId === companion.activeProtagonistId) return;
     const globalWorld = controller.worldState();
-    const sourceSave = controller.createSaveGame();
+    const baseSave = controller.createSaveGame();
     commitCurrent();
     companion = switchActiveProtagonist(companion, protagonistId);
-    controller = createControllerFor(protagonistId, globalWorld, sourceSave);
+    controller = createControllerFor(protagonistId, globalWorld, baseSave);
   };
 
   const createSaveGame = (): SaveGame => {
@@ -142,14 +176,10 @@ export const createMultiProtagonistPackagedRuntimeControllerWithFactory = (
     const save = loadRuntimeSaveGame(bundle, input);
     companion = save.multiProtagonist ?? initialCompanion(bundle);
     const actorInstanceId = actorInstanceIdForProtagonist(bundle, companion);
-    controller = innerFactory(bundle, {
-      ...options,
-      requestedActorInstanceId: controlledActorRequestFromSave(actorInstanceId),
-    });
-    const restored = createRuntimeSaveGame(
-      bundle,
-      projectMultiProtagonistIntoWorld(save.world, companion),
-      {
+    controller = createControllerFor(companion.activeProtagonistId, save.world, save);
+    pendingBindingIds = [];
+    return controller.restoreSaveGame(
+      createRuntimeSaveGame(bundle, projectMultiProtagonistIntoWorld(save.world, companion), {
         controlledActorInstanceId: actorInstanceId,
         selectedVerbId: save.interface.selectedVerbId,
         selectedItemId: save.interface.selectedItemId,
@@ -157,10 +187,8 @@ export const createMultiProtagonistPackagedRuntimeControllerWithFactory = (
         parser: save.interface.parser,
         ...companionOptions(save),
         multiProtagonist: companion,
-      },
+      }),
     );
-    pendingBindingIds = [];
-    return controller.restoreSaveGame(restored);
   };
 
   return {
@@ -176,6 +204,7 @@ export const createMultiProtagonistPackagedRuntimeControllerWithFactory = (
       pendingBindingIds = [];
       return drained;
     },
+    ...rpgApi(controller),
     controlledActorInstanceId: () => controller.controlledActorInstanceId(),
     worldState: () => controller.worldState(),
     createFrame: (tick) => {
@@ -216,8 +245,4 @@ export const createMultiProtagonistPackagedRuntimeController = (
   bundle: RuntimeBundle,
   options: Omit<PackagedRuntimeControllerOptions, "requestedActorInstanceId"> = {},
 ): MultiProtagonistPackagedRuntimeController =>
-  createMultiProtagonistPackagedRuntimeControllerWithFactory(
-    bundle,
-    options,
-    createBasePackagedSessionController,
-  );
+  createMultiProtagonistPackagedRuntimeControllerWithFactory(bundle, options, createBasePackagedSessionController);
