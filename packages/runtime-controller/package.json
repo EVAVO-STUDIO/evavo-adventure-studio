@@ -47,6 +47,10 @@
     "./sentence-controller": {
       "types": "./dist/src/sentence-controller.d.ts",
       "import": "./dist/src/sentence-controller.js"
+    },
+    "./room-script-controller": {
+      "types": "./dist/src/room-script-controller.d.ts",
+      "import": "./dist/src/room-script-controller.js"
     }
   },
   "files": [
