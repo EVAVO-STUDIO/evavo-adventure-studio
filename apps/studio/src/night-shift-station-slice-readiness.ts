@@ -8,6 +8,7 @@ import type { NightShiftOfficerMasterIntakeReport } from "./night-shift-officer-
 import { nightShiftProductionAssets } from "./night-shift-production-assets.js";
 import { nightShiftProductionWaves } from "./night-shift-production-waves.js";
 import { nightShiftRuntimeProject } from "./night-shift-runtime-contracts.js";
+import { nightShiftAssetRequiresRuntimeIndexMap } from "./night-shift-runtime-index-requirements.js";
 
 const stationWaveIds = new Set(["foundation", "station"]);
 const stationAssetIds = nightShiftProductionWaves
@@ -17,7 +18,7 @@ const stationRequirements = nightShiftProductionAssets.filter((asset) =>
   stationAssetIds.includes(asset.assetId),
 );
 const stationIndexedAssetIds = stationRequirements
-  .filter((asset) => asset.indexed)
+  .filter((asset) => nightShiftAssetRequiresRuntimeIndexMap(asset.assetId))
   .map((asset) => asset.assetId);
 const stationVisualAssetIds = stationRequirements
   .filter((asset) => asset.evidence.includes("period-vga"))
@@ -131,8 +132,8 @@ export const evaluateNightShiftStationSliceReadiness = (
       ready: missingIndexedAssetIds.length === 0,
       message:
         missingIndexedAssetIds.length === 0
-          ? "Every Foundation/Station indexed master has a runtime map."
-          : `${missingIndexedAssetIds.length} Foundation/Station indexed maps are missing.`,
+          ? "Every Foundation/Station scene-rendered indexed asset has a runtime map."
+          : `${missingIndexedAssetIds.length} Foundation/Station scene runtime index maps are missing.`,
     },
     {
       id: "station-period-vga",
