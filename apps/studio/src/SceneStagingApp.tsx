@@ -17,6 +17,7 @@ import {
   undoSceneDirectorDocumentEdit,
 } from "./scene-director-documents.js";
 import { downloadSceneDirectorDocuments } from "./scene-director-export.js";
+import { SceneDirectorHotspotStateControls } from "./scene-director-hotspot-controls.js";
 import { createSceneDirectorOverlay } from "./scene-director-model.js";
 import {
   sceneDirectorPaletteBankAtOffset,
@@ -282,6 +283,11 @@ export const SceneStagingApp = () => {
             <>
               <SceneDirectorPanel overlay={directorOverlay} report={report} editing={editing} />
               <SceneDirectorCanonicalGeometryPanel
+                documents={activeDocuments}
+                sceneId={report.sceneId}
+                editing={editing}
+              />
+              <SceneDirectorHotspotStateControls
                 documents={activeDocuments}
                 sceneId={report.sceneId}
                 editing={editing}
