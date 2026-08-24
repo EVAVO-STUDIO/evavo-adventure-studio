@@ -1,8 +1,13 @@
 import { describe, expect, it } from "vitest";
 import {
+  nightShiftDirectorPaletteMaps,
+  redLedgerDirectorPaletteMaps,
+} from "../src/scene-director-palette-maps.js";
+import {
   nightShiftActorLightingPalette,
   redLedgerActorLightingPalette,
   sceneDirectorPaletteBankAtOffset,
+  sceneDirectorPaletteSpecByAssetId,
   validateSceneDirectorPaletteSpec,
 } from "../src/scene-director-palette-specs.js";
 
@@ -28,5 +33,16 @@ describe("Scene Director VGA palette specifications", () => {
     expect(redLedgerActorLightingPalette.banks[0]?.colours).not.toEqual(
       nightShiftActorLightingPalette.banks[0]?.colours,
     );
+  });
+
+  it("binds every Red Ledger and Night Shift palette map to a defined authored bank", () => {
+    for (const map of [...redLedgerDirectorPaletteMaps.maps, ...nightShiftDirectorPaletteMaps.maps]) {
+      const spec = sceneDirectorPaletteSpecByAssetId(map.paletteAssetId);
+      expect(spec, `missing palette spec for ${map.paletteAssetId}`).not.toBeNull();
+      expect(
+        spec ? sceneDirectorPaletteBankAtOffset(spec, map.paletteOffset) : null,
+        `missing bank ${map.paletteOffset} for ${map.id}`,
+      ).not.toBeNull();
+    }
   });
 });
