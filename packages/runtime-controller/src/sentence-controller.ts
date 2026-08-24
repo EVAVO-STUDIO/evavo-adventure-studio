@@ -28,8 +28,6 @@ import { uiSkinById } from "@evavo/adventure-ui-skin";
 import { hitTestUiSkin } from "@evavo/adventure-ui-skin/hit-testing";
 import type { PackagedRuntimeControllerOptions } from "./packaged-controller.js";
 import { nativeScreenPointToWorld, type SoftwareCursorState } from "./input.js";
-import type { ParserBufferState, ParserKeyInput } from "./parser.js";
-import type { ProfiledRuntimeCameraState } from "./profiled-camera.js";
 import {
   createBasePackagedSessionController,
   type PackagedSessionController,
@@ -41,6 +39,7 @@ export interface SentencePackagedRuntimeController extends PackagedSessionContro
   sentenceState(): SentenceState;
   sentenceText(): string;
   combinationState(): ItemCombinationRuntimeState;
+  itemCombinationUsedRecipeIds(): readonly string[];
 }
 
 const combinationManifestFor = (bundle: RuntimeBundle): ItemCombinationManifest => ({
@@ -242,6 +241,7 @@ export const createSentencePackagedRuntimeControllerWithFactory = (
     sentenceState: () => sentence,
     sentenceText: () => formatSentence(grammar, sentence),
     combinationState: () => combinations,
+    itemCombinationUsedRecipeIds: () => combinations.usedRecipeIds,
     controlledActorInstanceId: () => base.controlledActorInstanceId(),
     worldState: () => base.worldState(),
     createFrame: (tick) => replaceSentenceStatus(base.createFrame(tick), displayText()),
