@@ -99,9 +99,64 @@
   font-size: inherit;
 }
 
+.stg-production-next-wave {
+  margin-top: 8px;
+  padding: 7px;
+  border: 1px solid #3a434d;
+  border-left: 2px solid #7f8b98;
+  background: #0d1116;
+}
+
+.stg-production-next-wave h3 {
+  margin: 3px 0 5px;
+  color: #d6d1c7;
+  font-size: 10px;
+  font-weight: 600;
+}
+
+.stg-production-next-wave p {
+  color: #8f98a4;
+  font-size: 8px;
+  line-height: 1.45;
+}
+
+.stg-production-next-wave > strong {
+  display: block;
+  margin-bottom: 4px;
+  color: #aeb7c2;
+  font-family: "Courier New", monospace;
+  font-size: 7px;
+}
+
+.stg-production-next-wave ul {
+  display: grid;
+  gap: 2px;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.stg-production-next-wave li,
+.stg-production-next-wave small {
+  color: #747f8c;
+  font-family: "Courier New", monospace;
+  font-size: 7px;
+  overflow-wrap: anywhere;
+}
+
+.stg-production-next-wave li::before {
+  content: "□ ";
+  color: #9ca7b4;
+}
+
+.stg-production-plan-actions {
+  display: grid;
+  gap: 4px;
+  margin-top: 7px;
+}
+
 .stg-production-plan-export {
   width: 100%;
-  margin-top: 7px;
   padding: 5px 7px;
   border: 1px solid #424a55;
   border-radius: 3px;
