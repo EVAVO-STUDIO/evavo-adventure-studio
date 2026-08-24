@@ -4,54 +4,20 @@
   "private": true,
   "type": "module",
   "exports": {
-    ".": {
-      "types": "./dist/src/index.d.ts",
-      "import": "./dist/src/index.js"
-    },
-    "./audio-validation": {
-      "types": "./dist/src/audio-validation.d.ts",
-      "import": "./dist/src/audio-validation.js"
-    },
-    "./font-validation": {
-      "types": "./dist/src/font-validation.d.ts",
-      "import": "./dist/src/font-validation.js"
-    },
-    "./localisation": {
-      "types": "./dist/src/localisation.d.ts",
-      "import": "./dist/src/localisation.js"
-    },
-    "./multi-protagonist-bindings": {
-      "types": "./dist/src/multi-protagonist-bindings.d.ts",
-      "import": "./dist/src/multi-protagonist-bindings.js"
-    },
-    "./route-topology": {
-      "types": "./dist/src/route-topology.d.ts",
-      "import": "./dist/src/route-topology.js"
-    },
-    "./route-topology-analysis": {
-      "types": "./dist/src/route-topology-analysis.d.ts",
-      "import": "./dist/src/route-topology-analysis.js"
-    },
-    "./rpg": {
-      "types": "./dist/src/rpg.d.ts",
-      "import": "./dist/src/rpg.js"
-    },
-    "./rpg-puzzles": {
-      "types": "./dist/src/rpg-puzzles.d.ts",
-      "import": "./dist/src/rpg-puzzles.js"
-    },
-    "./room-scripts": {
-      "types": "./dist/src/room-scripts.d.ts",
-      "import": "./dist/src/room-scripts.js"
-    },
-    "./ui-validation": {
-      "types": "./dist/src/ui-validation.d.ts",
-      "import": "./dist/src/ui-validation.js"
-    }
+    ".": { "types": "./dist/src/index.d.ts", "import": "./dist/src/index.js" },
+    "./audio-validation": { "types": "./dist/src/audio-validation.d.ts", "import": "./dist/src/audio-validation.js" },
+    "./font-validation": { "types": "./dist/src/font-validation.d.ts", "import": "./dist/src/font-validation.js" },
+    "./localisation": { "types": "./dist/src/localisation.d.ts", "import": "./dist/src/localisation.js" },
+    "./multi-protagonist-bindings": { "types": "./dist/src/multi-protagonist-bindings.d.ts", "import": "./dist/src/multi-protagonist-bindings.js" },
+    "./quick-response": { "types": "./dist/src/quick-response.d.ts", "import": "./dist/src/quick-response.js" },
+    "./route-topology": { "types": "./dist/src/route-topology.d.ts", "import": "./dist/src/route-topology.js" },
+    "./route-topology-analysis": { "types": "./dist/src/route-topology-analysis.d.ts", "import": "./dist/src/route-topology-analysis.js" },
+    "./rpg": { "types": "./dist/src/rpg.d.ts", "import": "./dist/src/rpg.js" },
+    "./rpg-puzzles": { "types": "./dist/src/rpg-puzzles.d.ts", "import": "./dist/src/rpg-puzzles.js" },
+    "./room-scripts": { "types": "./dist/src/room-scripts.d.ts", "import": "./dist/src/room-scripts.js" },
+    "./ui-validation": { "types": "./dist/src/ui-validation.d.ts", "import": "./dist/src/ui-validation.js" }
   },
-  "files": [
-    "dist"
-  ],
+  "files": ["dist"],
   "scripts": {
     "build": "tsc -b",
     "typecheck": "tsc -b --pretty false"
