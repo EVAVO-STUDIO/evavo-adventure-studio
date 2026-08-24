@@ -38,7 +38,15 @@ export type SaveGameCompatibilityIssueCode =
   | "audio-voice-cue-missing"
   | "audio-voice-cue-mismatch"
   | "audio-scene-layer-missing"
-  | "audio-resume-cue-missing";
+  | "audio-resume-cue-missing"
+  | "investigation-state-without-runtime-manifest"
+  | "investigation-runtime-state-missing"
+  | "investigation-chapter-missing"
+  | "investigation-fact-missing"
+  | "investigation-topic-missing"
+  | "investigation-source-missing"
+  | "investigation-objective-missing"
+  | "investigation-provenance-chapter-missing";
 
 export interface SaveGameCompatibilityIssue {
   readonly severity: "error";
