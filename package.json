@@ -25,7 +25,8 @@
     "format": "biome format --write .",
     "check:toolchain": "node scripts/verify-toolchain-version.mjs",
     "release:check": "node scripts/check-ci-release-readiness.mjs --full",
-    "source:check": "node scripts/check-ci-release-readiness.mjs --source && pnpm run check:toolchain && node scripts/validate-red-ledger-runtime.mjs && node scripts/validate-red-ledger-lifecycle.mjs && node scripts/validate-red-ledger-front-end.mjs",
+    "check:night-shift-proof": "vitest run apps/studio/tests/night-shift-gameplay-proof.test.ts apps/studio/tests/night-shift-complete-proof.test.ts apps/studio/tests/night-shift-full-path.test.ts apps/studio/tests/night-shift-lifecycle.test.ts apps/studio/tests/night-shift-runtime-contracts.test.ts apps/studio/tests/night-shift-demo-readiness.test.ts",
+    "source:check": "node scripts/check-ci-release-readiness.mjs --source && pnpm run check:toolchain && node scripts/validate-red-ledger-runtime.mjs && node scripts/validate-red-ledger-lifecycle.mjs && node scripts/validate-red-ledger-front-end.mjs && pnpm run check:night-shift-proof",
     "check:editor-expansion": "pnpm run release:check && node scripts/run-editor-expansion-check.mjs",
     "check": "pnpm run release:check && pnpm run check:toolchain && biome check . && tsc -b --pretty false && vitest run && pnpm run build:player && pnpm run build:studio",
     "check:ci": "pnpm run release:check && pnpm run check:toolchain && biome ci . && tsc -b --pretty false && vitest run && pnpm run build:player && pnpm run build:studio"
