@@ -32,6 +32,37 @@
   gap: 3px;
 }
 
+.dir-canonical-state-picker {
+  display: grid;
+  grid-template-columns: auto minmax(180px, 340px);
+  align-items: center;
+  justify-content: start;
+  gap: 9px;
+  padding: 7px 9px;
+  border: 1px solid #272c35;
+  border-radius: 4px;
+  background: #0d1015;
+}
+
+.dir-canonical-state-picker > span {
+  color: #7d8492;
+  font-size: 8px;
+  font-weight: 750;
+  letter-spacing: 0.09em;
+  text-transform: uppercase;
+}
+
+.dir-canonical-state-picker select {
+  min-height: 25px;
+  border: 1px solid #343a45;
+  border-radius: 3px;
+  padding: 0 7px;
+  color: #d7dbe3;
+  background: #11151c;
+  font-family: "Courier New", monospace;
+  font-size: 8px;
+}
+
 .dir-canonical-shell {
   overflow: hidden;
   border: 1px solid #303540;
@@ -131,5 +162,9 @@
   .dir-canonical-editor > header {
     align-items: stretch;
     flex-direction: column;
+  }
+
+  .dir-canonical-state-picker {
+    grid-template-columns: 1fr;
   }
 }
