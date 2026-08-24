@@ -93,6 +93,7 @@ export const createRoomScriptPackagedRuntimeControllerWithFactory = (
   };
 
   return {
+    selection: base.selection,
     roomScriptState: () => roomScripts,
     drainRoomScriptEvents: () => {
       const events = pendingEvents;
