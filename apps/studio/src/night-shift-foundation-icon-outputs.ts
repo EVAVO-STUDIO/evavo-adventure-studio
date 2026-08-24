@@ -1,4 +1,4 @@
-import { encodeNativeRgbaPng } from "./native-png.js";
+import { encodeNativeIndexedPng } from "./native-png.js";
 import { nightShiftActorLightingPaletteBytes } from "./night-shift-foundation-generated.js";
 import {
   nightShiftFoundationIcons,
@@ -17,18 +17,17 @@ export interface NightShiftGeneratedIconOutput {
   readonly indexBytes: Uint8Array;
 }
 
-const indexedIconRgba = (master: NightShiftFoundationIconMaster): Uint8Array => {
+const iconPalette = (master: NightShiftFoundationIconMaster) => {
   const palette = nightShiftActorLightingPaletteBytes();
-  const rgba = new Uint8Array(master.indices.length * 4);
-  master.indices.forEach((index, pixel) => {
+  return Array.from({ length: 4 }, (_, index) => {
     const source = (master.paletteOffset + index) * 4;
-    const target = pixel * 4;
-    rgba[target] = palette[source] ?? 0;
-    rgba[target + 1] = palette[source + 1] ?? 0;
-    rgba[target + 2] = palette[source + 2] ?? 0;
-    rgba[target + 3] = index === master.transparentIndex ? 0 : (palette[source + 3] ?? 255);
+    return {
+      r: palette[source] ?? 0,
+      g: palette[source + 1] ?? 0,
+      b: palette[source + 2] ?? 0,
+      a: index === master.transparentIndex ? 0 : (palette[source + 3] ?? 255),
+    };
   });
-  return rgba;
 };
 
 export const generateNightShiftFoundationIconOutput = (
@@ -45,7 +44,7 @@ export const generateNightShiftFoundationIconOutput = (
     height: 16,
     transparentIndex: 0,
     maximumSourceIndex,
-    pngBytes: encodeNativeRgbaPng(16, 16, indexedIconRgba(master)),
+    pngBytes: encodeNativeIndexedPng(16, 16, indexBytes, iconPalette(master)),
     indexBytes,
   };
 };
