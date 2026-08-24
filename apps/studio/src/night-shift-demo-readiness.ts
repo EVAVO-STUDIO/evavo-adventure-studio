@@ -6,6 +6,12 @@ import { validateSceneInstanceManifest } from "@evavo/adventure-scene-instances"
 import { validateSceneStagingManifest } from "@evavo/adventure-scene-instances/staging-validation";
 import { nightShiftCompleteInstances } from "./night-shift-complete-proof.js";
 import {
+  nightShiftIndexedProductionAssetIds,
+  nightShiftPeriodVgaProductionAssetIds,
+  nightShiftProductionAssets,
+  validateNightShiftProductionAssetPlan,
+} from "./night-shift-production-assets.js";
+import {
   nightShiftRuntimeContracts,
   nightShiftRuntimeProject,
 } from "./night-shift-runtime-contracts.js";
@@ -19,6 +25,7 @@ export type NightShiftDemoReadinessGateId =
   | "lifecycle"
   | "audio-contract"
   | "ui-contract"
+  | "production-asset-plan"
   | "compiled-assets"
   | "indexed-assets"
   | "period-vga"
@@ -97,15 +104,19 @@ const audioReady = (): boolean =>
     nightShiftRuntimeContracts.audioMix,
   ).length === 0;
 
-const expectedIndexedVisualAssets = new Set([
-  "asset.night-shift.background.station",
-  "asset.night-shift.background.roadside",
-  "asset.night-shift.background.diner",
-  "asset.night-shift.actor.officer",
-  "asset.night-shift.actor.sergeant",
-  "asset.night-shift.actor.driver",
-  "asset.night-shift.actor.server",
-]);
+const allExpectedAssetsCompiled = (manifest: AssetBuildManifest | null | undefined): boolean => {
+  if (manifest?.projectId !== nightShiftRuntimeProject.id) return false;
+  const compiled = new Set(manifest.assets.map((asset) => asset.assetId as string));
+  return nightShiftProductionAssets.every((asset) => compiled.has(asset.assetId));
+};
+
+const allExpectedIndexedAssetsPresent = (
+  manifest: IndexedAssetManifest | null | undefined,
+): boolean => {
+  if (manifest?.projectId !== nightShiftRuntimeProject.id) return false;
+  const indexed = new Set(manifest.assets.map((record) => record.assetId as string));
+  return nightShiftIndexedProductionAssetIds.every((assetId) => indexed.has(assetId));
+};
 
 export const evaluateNightShiftDemoReadiness = (
   evidence: NightShiftDemoEvidence = {},
@@ -118,16 +129,14 @@ export const evaluateNightShiftDemoReadiness = (
     nightShiftRuntimeContracts.lifecycle.outcomes.some((outcome) => outcome.kind === "success");
   const audioContractReady = audioReady();
   const uiContractReady = validateNightShiftUiContracts().length === 0;
-  const compiledAssetsReady =
-    evidence.assetManifest?.projectId === nightShiftRuntimeProject.id &&
-    evidence.assetManifest.assets.length > 0;
-  const indexedIds = new Set(evidence.indexedAssets?.assets.map((record) => record.assetId as string) ?? []);
-  const indexedReady =
-    evidence.indexedAssets?.projectId === nightShiftRuntimeProject.id &&
-    [...expectedIndexedVisualAssets].every((assetId) => indexedIds.has(assetId));
+  const productionAssetPlanReady = validateNightShiftProductionAssetPlan().length === 0;
+  const compiledAssetsReady = allExpectedAssetsCompiled(evidence.assetManifest);
+  const indexedReady = allExpectedIndexedAssetsPresent(evidence.indexedAssets);
   const periodVgaReady =
     evidence.periodVgaReport?.projectId === nightShiftRuntimeProject.id &&
-    evidence.periodVgaReport.status === "ready";
+    evidence.periodVgaReport.status === "ready" &&
+    evidence.periodVgaReport.evidenceAssets >= nightShiftPeriodVgaProductionAssetIds.length &&
+    evidence.periodVgaReport.reviewedAssets >= nightShiftPeriodVgaProductionAssetIds.length;
   const packagedReady = evidence.packagedBundleReady === true;
   const replayReady = (evidence.deterministicReplayCount ?? 0) >= 2;
   const screenshotReady = (evidence.nativeScreenshotCount ?? 0) >= 6;
@@ -169,25 +178,32 @@ export const evaluateNightShiftDemoReadiness = (
       "Native icon-bar UI or bitmap-font contracts contain blocking issues.",
     ),
     gate(
+      "production-asset-plan",
+      "authored",
+      productionAssetPlanReady,
+      "Every runtime asset has an explicit native production and evidence requirement.",
+      "Runtime assets and the Night Shift production master plan are out of sync.",
+    ),
+    gate(
       "compiled-assets",
       "evidence",
       compiledAssetsReady,
-      "Compiled asset manifest is present for the proof project.",
-      "Compile the final visual/audio/UI assets and retain their manifest evidence.",
+      `All ${nightShiftProductionAssets.length} required runtime assets are represented in the compiled manifest.`,
+      `Compile all ${nightShiftProductionAssets.length} required visual/audio/UI/palette assets; a partial manifest does not satisfy the proof.`,
     ),
     gate(
       "indexed-assets",
       "evidence",
       indexedReady,
-      "Station, roadside, diner and principal actor art have indexed runtime maps.",
-      "Produce indexed maps for all three backgrounds and principal actor sprites.",
+      `All ${nightShiftIndexedProductionAssetIds.length} indexed masters have verified runtime index maps.`,
+      `Produce verified .idx maps for all ${nightShiftIndexedProductionAssetIds.length} indexed backgrounds, actors, props, font and UI icons.`,
     ),
     gate(
       "period-vga",
       "evidence",
       periodVgaReady,
-      "Period VGA art audit is approved at native and integer scale.",
-      "Retain compiled pixel evidence and pass the Period VGA native-art audit.",
+      `Period VGA audit covers all ${nightShiftPeriodVgaProductionAssetIds.length} required visual masters at native and integer scale.`,
+      `Retain compiled pixel evidence and native-art approval for all ${nightShiftPeriodVgaProductionAssetIds.length} Period VGA visual masters.`,
     ),
     gate(
       "packaged-bundle",
@@ -200,7 +216,7 @@ export const evaluateNightShiftDemoReadiness = (
       "replay-evidence",
       "evidence",
       replayReady,
-      "Deterministic success and failure replay evidence is retained.",
+      "Deterministic success and failure/retry replay evidence is retained.",
       "Retain at least success-path and failure/retry deterministic replays.",
     ),
     gate(
