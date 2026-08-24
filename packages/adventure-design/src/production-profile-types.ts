@@ -10,6 +10,7 @@ import type {
 export type AdventureProductionProfileId =
   | "storybook-icon-vga"
   | "comic-scifi-icon-vga"
+  | "social-comedy-icon-vga"
   | "gothic-investigation-vga"
   | "gothic-rpg-vga"
   | "early-procedural-icon-vga"
@@ -22,6 +23,7 @@ export type AdventureProductionProfileId =
 export type AdventureProductionFamily =
   | "icon-storybook"
   | "icon-comic"
+  | "icon-social-comedy"
   | "portrait-investigation"
   | "gothic-rpg"
   | "procedural-icon"
@@ -174,54 +176,30 @@ export interface AdventureProductionProfile {
   readonly audio: AdventureProfileAudioGrammar;
   readonly splash: AdventureSplashProfile;
   readonly showcase: AdventureOriginalShowcaseBrief;
-  readonly authenticityRules: readonly string[];
-  readonly prohibitedShortcuts: readonly string[];
+  readonly rules: readonly string[];
+  readonly prohibitions: readonly string[];
   readonly reviewQuestions: readonly string[];
 }
 
-export interface AdventureProductionProfileSeed {
+export interface AdventureProductionProfileLibrary {
+  readonly libraryVersion: 1;
+  readonly profiles: readonly AdventureProductionProfile[];
+}
+
+export interface AdventureProductionProfileSelection {
   readonly profileId: AdventureProductionProfileId;
-  readonly presentation: PresentationProfile;
-  readonly creativeDirection: AdventureCreativeDirection;
-  readonly reviewChecklist: readonly AdventureReviewItem[];
-  readonly splash: AdventureSplashProfile;
-  readonly showcase: AdventureOriginalShowcaseBrief;
+  readonly profile: AdventureProductionProfile;
+  readonly project?: AdventureProject;
+  readonly designDocument?: AdventureDesignDocument;
+  readonly creativeDirection?: AdventureCreativeDirection;
+  readonly reviewItems?: readonly AdventureReviewItem[];
 }
 
-export type AdventureProductionProfileSeverity = "error" | "warning" | "note";
+export const adventureProductionProfileId = (
+  value: string,
+): AdventureProductionProfileId => value as AdventureProductionProfileId;
 
-export type AdventureProductionProfileIssueCode =
-  | "invalid-profile"
-  | "native-size-mismatch"
-  | "production-mode-mismatch"
-  | "composition-mode-mismatch"
-  | "palette-budget-exceeded"
-  | "interaction-mode-mismatch"
-  | "integer-scaling-disabled"
-  | "linear-sampling"
-  | "pixel-motion-mismatch"
-  | "score-policy-mismatch"
-  | "project-identity-mismatch";
-
-export interface AdventureProductionProfileIssue {
-  readonly severity: AdventureProductionProfileSeverity;
-  readonly code: AdventureProductionProfileIssueCode;
-  readonly path: string;
-  readonly message: string;
-  readonly recommendation: string;
-}
-
-export interface AdventureProductionProfileReport {
-  readonly reportVersion: 1;
-  readonly profileId: AdventureProductionProfileId;
-  readonly projectId: Id<"project"> | null;
-  readonly status: "ready" | "attention" | "blocked";
-  readonly score: number;
-  readonly issues: readonly AdventureProductionProfileIssue[];
-  readonly seed: AdventureProductionProfileSeed;
-}
-
-export interface AdventureProductionProfileAuditInput {
-  readonly design?: AdventureDesignDocument;
-  readonly project?: Pick<AdventureProject, "id" | "presentation">;
-}
+export const profileOwnedAssetId = (
+  profileId: AdventureProductionProfileId,
+  suffix: string,
+): Id<"asset"> => `asset.profile.${profileId}.${suffix}` as Id<"asset">;
