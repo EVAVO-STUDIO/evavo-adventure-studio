@@ -1,5 +1,6 @@
 import { audioMixManifestSchema } from "@evavo/adventure-audio";
 import { parseAdventureProject } from "@evavo/adventure-project-schema";
+import { nightShiftOfficerActor } from "./night-shift-animation-contract.js";
 import { nightShiftCompleteProject } from "./night-shift-complete-proof.js";
 import { nightShiftFrontEnd } from "./night-shift-front-end.js";
 import { nightShiftLifecycle } from "./night-shift-lifecycle.js";
@@ -21,6 +22,9 @@ const audioAssets = [
 
 export const nightShiftRuntimeProject = parseAdventureProject({
   ...nightShiftCompleteProject,
+  actors: nightShiftCompleteProject.actors.map((actor) =>
+    actor.id === nightShiftOfficerActor.id ? nightShiftOfficerActor : actor,
+  ),
   assets: [
     ...nightShiftCompleteProject.assets,
     {
