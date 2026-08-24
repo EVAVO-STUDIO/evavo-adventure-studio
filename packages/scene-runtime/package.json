@@ -72,6 +72,10 @@
       "types": "./dist/src/rpg.d.ts",
       "import": "./dist/src/rpg.js"
     },
+    "./rpg-puzzles": {
+      "types": "./dist/src/rpg-puzzles.d.ts",
+      "import": "./dist/src/rpg-puzzles.js"
+    },
     "./sentence": {
       "types": "./dist/src/sentence.d.ts",
       "import": "./dist/src/sentence.js"
