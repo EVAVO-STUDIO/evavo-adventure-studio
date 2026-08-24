@@ -5,11 +5,11 @@ import {
   nightShiftProductionManifestJson,
 } from "../src/night-shift-production-manifest.js";
 import {
-  nightShiftIndexedProductionAssetIds,
   nightShiftPeriodVgaProductionAssetIds,
   nightShiftProductionAssets,
 } from "../src/night-shift-production-assets.js";
 import { nightShiftProductionWaves } from "../src/night-shift-production-waves.js";
+import { nightShiftRuntimeIndexedAssetIds } from "../src/night-shift-runtime-index-requirements.js";
 
 describe("Night Shift production manifest", () => {
   it("encodes the early procedural VGA lane and complete proof contract", () => {
@@ -30,13 +30,19 @@ describe("Night Shift production manifest", () => {
     });
   });
 
-  it("contains every production asset and evidence requirement", () => {
+  it("contains every production asset and separates Period VGA masters from runtime index maps", () => {
     expect(nightShiftProductionManifest.assets).toHaveLength(nightShiftProductionAssets.length);
-    expect(nightShiftProductionManifest.evidencePolicy.indexedAssetIds).toEqual(
-      nightShiftIndexedProductionAssetIds,
+    expect(nightShiftProductionManifest.evidencePolicy.runtimeIndexedAssetIds).toEqual(
+      nightShiftRuntimeIndexedAssetIds,
     );
     expect(nightShiftProductionManifest.evidencePolicy.periodVgaAssetIds).toEqual(
       nightShiftPeriodVgaProductionAssetIds,
+    );
+    expect(nightShiftProductionManifest.evidencePolicy.runtimeIndexedAssetIds).not.toContain(
+      "asset.night-shift.font.system",
+    );
+    expect(nightShiftProductionManifest.evidencePolicy.runtimeIndexedAssetIds).not.toContain(
+      "asset.night-shift.ui.walk",
     );
   });
 
