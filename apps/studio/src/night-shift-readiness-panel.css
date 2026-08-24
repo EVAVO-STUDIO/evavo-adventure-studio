@@ -1,0 +1,51 @@
+.stg-night-shift-readiness {
+  border-left: 2px solid #697380;
+  padding-left: 10px;
+}
+
+.stg-night-shift-readiness h2 {
+  margin: 5px 0 6px;
+  font-size: 12px;
+  letter-spacing: 0.04em;
+}
+
+.stg-night-shift-readiness p {
+  margin: 0 0 9px;
+}
+
+.stg-readiness-gates {
+  display: grid;
+  gap: 8px;
+}
+
+.stg-readiness-gates > div {
+  display: grid;
+  gap: 3px;
+}
+
+.stg-readiness-gates strong {
+  color: #aab1bd;
+  font-size: 8px;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+}
+
+.stg-readiness-gates span {
+  display: block;
+  padding: 3px 5px;
+  border: 1px solid #2d333d;
+  border-radius: 3px;
+  background: #0d1015;
+  font-family: "Courier New", monospace;
+  font-size: 7px;
+}
+
+.stg-readiness-gates span.is-ready {
+  border-color: #3b5b4b;
+  color: #a8c8b4;
+}
+
+.stg-readiness-gates span.is-blocked {
+  border-color: #634550;
+  color: #d0a2af;
+}
