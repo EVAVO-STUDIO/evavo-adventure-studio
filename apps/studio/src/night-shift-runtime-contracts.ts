@@ -14,6 +14,9 @@ const audioAssets = [
   ["asset.audio.night-shift.door-latch", "audio/night-shift/door-latch.wav"],
   ["asset.audio.night-shift.notebook", "audio/night-shift/notebook.wav"],
   ["asset.audio.night-shift.paper-touch", "audio/night-shift/paper-touch.wav"],
+  ["asset.audio.night-shift.station-room", "audio/night-shift/station-room.wav"],
+  ["asset.audio.night-shift.roadside-rain", "audio/night-shift/roadside-rain.wav"],
+  ["asset.audio.night-shift.diner-room", "audio/night-shift/diner-room.wav"],
 ] as const;
 
 export const nightShiftRuntimeProject = parseAdventureProject({
@@ -51,6 +54,32 @@ const effectCue = (
   interruptGroup: null,
 });
 
+const ambienceCue = (
+  id: string,
+  name: string,
+  assetId: string,
+  endMilliseconds: number,
+  volume: number,
+) => ({
+  id,
+  name,
+  assetId,
+  bus: "ambience" as const,
+  volume,
+  startOffsetMilliseconds: 0,
+  fadeInTicks: 8,
+  fadeOutTicks: 12,
+  loop: {
+    startMilliseconds: 0,
+    endMilliseconds,
+    crossfadeMilliseconds: 120,
+  },
+  polyphony: "restart" as const,
+  maxInstances: 1,
+  priority: 4,
+  interruptGroup: null,
+});
+
 export const nightShiftAudioMix = audioMixManifestSchema.parse({
   manifestVersion: 1,
   projectId: nightShiftRuntimeProject.id,
@@ -65,10 +94,18 @@ export const nightShiftAudioMix = audioMixManifestSchema.parse({
   ],
   ducking: [
     {
+      id: "audio-ducking-rule.night-shift.speech-over-ambience",
+      sourceBus: "speech",
+      targetBus: "ambience",
+      targetVolume: 0.58,
+      attackTicks: 2,
+      releaseTicks: 10,
+    },
+    {
       id: "audio-ducking-rule.night-shift.speech-over-effects",
       sourceBus: "speech",
       targetBus: "effects",
-      targetVolume: 0.7,
+      targetVolume: 0.78,
       attackTicks: 2,
       releaseTicks: 8,
     },
@@ -130,8 +167,72 @@ export const nightShiftAudioMix = audioMixManifestSchema.parse({
       0.5,
       18,
     ),
+    ambienceCue(
+      "audio-cue.night-shift.station-room",
+      "Station fluorescent room tone",
+      "asset.audio.night-shift.station-room",
+      12000,
+      0.45,
+    ),
+    ambienceCue(
+      "audio-cue.night-shift.roadside-rain",
+      "Wet roadside rain and distant traffic",
+      "asset.audio.night-shift.roadside-rain",
+      16000,
+      0.62,
+    ),
+    ambienceCue(
+      "audio-cue.night-shift.diner-room",
+      "Late diner room tone",
+      "asset.audio.night-shift.diner-room",
+      14000,
+      0.48,
+    ),
   ],
-  soundscapes: [],
+  soundscapes: [
+    {
+      sceneId: "scene.night-shift.station",
+      layers: [
+        {
+          id: "audio-scene-layer.night-shift.station.room",
+          cueId: "audio-cue.night-shift.station-room",
+          role: "room-tone",
+          startDelayTicks: 0,
+          fadeInTicks: 8,
+          fadeOutTicks: 12,
+          restartPolicy: "continue",
+        },
+      ],
+    },
+    {
+      sceneId: "scene.night-shift.roadside",
+      layers: [
+        {
+          id: "audio-scene-layer.night-shift.roadside.rain",
+          cueId: "audio-cue.night-shift.roadside-rain",
+          role: "ambience",
+          startDelayTicks: 0,
+          fadeInTicks: 8,
+          fadeOutTicks: 14,
+          restartPolicy: "continue",
+        },
+      ],
+    },
+    {
+      sceneId: "scene.night-shift.diner",
+      layers: [
+        {
+          id: "audio-scene-layer.night-shift.diner.room",
+          cueId: "audio-cue.night-shift.diner-room",
+          role: "room-tone",
+          startDelayTicks: 0,
+          fadeInTicks: 8,
+          fadeOutTicks: 12,
+          restartPolicy: "continue",
+        },
+      ],
+    },
+  ],
   speechBindings: [],
 });
 
