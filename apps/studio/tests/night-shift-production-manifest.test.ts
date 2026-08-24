@@ -9,6 +9,7 @@ import {
   nightShiftPeriodVgaProductionAssetIds,
   nightShiftProductionAssets,
 } from "../src/night-shift-production-assets.js";
+import { nightShiftProductionWaves } from "../src/night-shift-production-waves.js";
 
 describe("Night Shift production manifest", () => {
   it("encodes the early procedural VGA lane and complete proof contract", () => {
@@ -37,6 +38,18 @@ describe("Night Shift production manifest", () => {
     expect(nightShiftProductionManifest.evidencePolicy.periodVgaAssetIds).toEqual(
       nightShiftPeriodVgaProductionAssetIds,
     );
+  });
+
+  it("embeds the ordered Foundation, Station, Roadside and Diner build waves", () => {
+    expect(nightShiftProductionManifest.waves.map((wave) => wave.id)).toEqual(
+      nightShiftProductionWaves.map((wave) => wave.id),
+    );
+    expect(nightShiftProductionManifest.waves.flatMap((wave) => wave.assetIds)).toHaveLength(
+      nightShiftProductionAssets.length,
+    );
+    expect(nightShiftProductionManifest.waves.find((wave) => wave.id === "station")?.dependsOn).toEqual([
+      "foundation",
+    ]);
   });
 
   it("serialises deterministically with a stable filename", () => {
