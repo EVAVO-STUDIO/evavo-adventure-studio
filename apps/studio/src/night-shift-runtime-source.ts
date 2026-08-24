@@ -5,6 +5,8 @@ import { validateSceneStagingManifest } from "@evavo/adventure-scene-instances/s
 import { validateUiSkinManifest } from "@evavo/adventure-ui-skin";
 import { nightShiftCompleteInstances } from "./night-shift-complete-proof.js";
 import { nightShiftProductionAssets, validateNightShiftProductionAssetPlan } from "./night-shift-production-assets.js";
+import { nightShiftRuntimeIndexBindings, validateNightShiftRuntimeIndexBindings } from "./night-shift-runtime-index-bindings.js";
+import { nightShiftRuntimeIndexBuildPlan, validateNightShiftRuntimeIndexBuildPlan } from "./night-shift-runtime-index-build-plan.js";
 import { nightShiftRuntimeContracts, nightShiftRuntimeProject } from "./night-shift-runtime-contracts.js";
 import { nightShiftRuntimeStaging } from "./night-shift-runtime-staging.js";
 import { validateSceneDirectorStagingAudioCues } from "./scene-director-audio-readiness.js";
@@ -21,6 +23,8 @@ export const nightShiftRuntimeSource = {
   frontEnd: nightShiftRuntimeContracts.frontEnd,
   lifecycle: nightShiftRuntimeContracts.lifecycle,
   productionAssets: nightShiftProductionAssets,
+  runtimeIndexBindings: nightShiftRuntimeIndexBindings,
+  runtimeIndexBuildPlan: nightShiftRuntimeIndexBuildPlan,
 } as const;
 
 const paletteMapSourceIssues = (): readonly string[] => {
@@ -93,6 +97,8 @@ export const validateNightShiftRuntimeSource = (): readonly string[] => {
   );
   issues.push(...paletteMapSourceIssues());
   issues.push(...validateNightShiftProductionAssetPlan().map((issue) => `production-assets:${issue}`));
+  issues.push(...validateNightShiftRuntimeIndexBindings().map((issue) => `runtime-index-binding:${issue}`));
+  issues.push(...validateNightShiftRuntimeIndexBuildPlan().map((issue) => `runtime-index-plan:${issue}`));
 
   for (const [name, projectId] of [
     ["front-end", nightShiftRuntimeSource.frontEnd.projectId],
@@ -121,4 +127,6 @@ export const nightShiftRuntimeSourceSummary = {
   uiSkins: nightShiftRuntimeSource.uiSkins.skins.length,
   audioCues: nightShiftRuntimeSource.audioMix.cues.length,
   lifecycleOutcomes: nightShiftRuntimeSource.lifecycle.outcomes.length,
+  runtimeIndexBindings: nightShiftRuntimeSource.runtimeIndexBindings.length,
+  runtimeIndexBuildEntries: nightShiftRuntimeSource.runtimeIndexBuildPlan.length,
 } as const;
