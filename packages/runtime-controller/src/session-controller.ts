@@ -24,6 +24,7 @@ export interface PackagedSessionController {
   cameraState(): ProfiledRuntimeCameraState | null;
   parserState(): ParserBufferState;
   drainSceneAudioCueIds(): readonly string[];
+  itemCombinationUsedRecipeIds?(): readonly string[];
 }
 
 export type PackagedSessionControllerFactory = (
