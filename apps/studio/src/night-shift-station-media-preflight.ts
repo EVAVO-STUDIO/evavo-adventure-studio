@@ -14,6 +14,7 @@ export interface NightShiftStationMediaPreflight {
   readonly reportVersion: 1;
   readonly foundation: ReturnType<typeof evaluateNightShiftFoundationPreflight>;
   readonly stationAssetIds: readonly string[];
+  readonly scenePaletteAssetIds: readonly string[];
   readonly visualMasterIds: readonly string[];
   readonly foregroundPlateIds: readonly string[];
   readonly audioMasterIds: readonly string[];
@@ -26,6 +27,9 @@ export const evaluateNightShiftStationMediaPreflight = (): NightShiftStationMedi
   reportVersion: 1,
   foundation: evaluateNightShiftFoundationPreflight(),
   stationAssetIds: stationWave.assetIds.map((assetId) => assetId as string),
+  scenePaletteAssetIds: stationRequirements
+    .filter((asset) => asset.role === "palette")
+    .map((asset) => asset.assetId as string),
   visualMasterIds: stationRequirements
     .filter((asset) => asset.evidence.includes("period-vga"))
     .map((asset) => asset.assetId as string),
