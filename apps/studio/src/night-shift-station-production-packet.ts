@@ -1,5 +1,6 @@
 import { nightShiftCompleteInstances } from "./night-shift-complete-proof.js";
 import { nightShiftAudioMix, nightShiftRuntimeProject } from "./night-shift-runtime-contracts.js";
+import { nightShiftStationRuntimeIndexBuildPlan } from "./night-shift-runtime-index-build-plan.js";
 import { nightShiftRuntimeIndexedAssetIds } from "./night-shift-runtime-index-requirements.js";
 import { nightShiftRuntimeStaging } from "./night-shift-runtime-staging.js";
 import { nightShiftProductionAssets } from "./night-shift-production-assets.js";
@@ -56,6 +57,7 @@ export const nightShiftStationProductionPacket = {
   runtimeIndexedAssetIds: nightShiftRuntimeIndexedAssetIds.filter((assetId) =>
     packetAssetIds.has(assetId),
   ),
+  runtimeIndexBuildPlan: nightShiftStationRuntimeIndexBuildPlan,
   audio: {
     cues: nightShiftAudioMix.cues.filter((cue) => stationCueIds.has(cue.id)),
     soundscape: nightShiftAudioMix.soundscapes.find(
