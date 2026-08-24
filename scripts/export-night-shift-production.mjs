@@ -14,6 +14,10 @@ import {
   nightShiftRuntimeSourceArchiveFileName,
 } from "../apps/studio/dist-types/src/night-shift-runtime-source-export.js";
 import {
+  createNightShiftStationHandoffArchive,
+  nightShiftStationHandoffArchiveFileName,
+} from "../apps/studio/dist-types/src/night-shift-station-export.js";
+import {
   nightShiftStationProductionPacketFileName,
   nightShiftStationProductionPacketJson,
 } from "../apps/studio/dist-types/src/night-shift-station-production-packet.js";
@@ -34,6 +38,10 @@ const files = [
   {
     name: nightShiftRuntimeSourceArchiveFileName,
     data: createNightShiftRuntimeSourceZip(),
+  },
+  {
+    name: nightShiftStationHandoffArchiveFileName,
+    data: createNightShiftStationHandoffArchive(),
   },
   {
     name: nightShiftStationProductionPacketFileName,
@@ -58,7 +66,6 @@ await writeFile(
   `${JSON.stringify(
     {
       manifestVersion: 1,
-      outputDirectory,
       files: summary,
     },
     null,
