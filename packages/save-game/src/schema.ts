@@ -7,11 +7,13 @@ import {
   scalarSchema,
 } from "@evavo/adventure-project-schema";
 import type { InteractiveRuntimeWorldState } from "@evavo/adventure-scene-runtime/commands";
+import type { RuntimeInvestigationState } from "@evavo/adventure-scene-runtime/investigation-runtime";
 import {
   type ProfiledNavigationMovementState,
   parseProfiledNavigationMovementState,
 } from "@evavo/adventure-scene-runtime/profiled-movement";
 import { z } from "zod";
+import { saveGameInvestigationStateSchema } from "./investigation.js";
 import {
   type SaveGameProfiledRuntimeCameraState,
   saveGameProfiledRuntimeCameraStateSchema,
@@ -250,6 +252,7 @@ export interface SaveGamePayload {
   readonly world: InteractiveRuntimeWorldState;
   readonly interface: SaveGameInterfaceState;
   readonly audio?: AudioRuntimeState;
+  readonly investigation?: RuntimeInvestigationState;
 }
 
 const saveGamePayloadObjectSchema = z
@@ -261,6 +264,7 @@ const saveGamePayloadObjectSchema = z
     world: interactiveWorldSaveSchema,
     interface: saveGameInterfaceStateSchema,
     audio: audioRuntimeStateSchema.optional(),
+    investigation: saveGameInvestigationStateSchema.optional(),
   })
   .strict();
 
