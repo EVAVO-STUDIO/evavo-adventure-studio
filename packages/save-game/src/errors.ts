@@ -62,6 +62,10 @@ export type SaveGameCompatibilityIssueCode =
   | "room-script-id-missing"
   | "room-script-sequence-missing"
   | "room-script-return-location-invalid"
+  | "route-topology-state-without-runtime-manifest"
+  | "route-topology-node-missing"
+  | "route-topology-edge-missing"
+  | "route-topology-route-missing"
   | "rpg-state-without-runtime-manifest"
   | "rpg-class-missing"
   | "rpg-stat-missing"
@@ -97,7 +101,9 @@ export class SaveGameCompatibilityError extends Error {
   readonly issues: readonly SaveGameCompatibilityIssue[];
 
   constructor(issues: readonly SaveGameCompatibilityIssue[]) {
-    super(`Save game is incompatible with this runtime bundle (${issues.length} issue(s)).`);
+    super(
+      `Save game is incompatible with this runtime bundle (${issues.length} issue(s)).`,
+    );
     this.name = "SaveGameCompatibilityError";
     this.issues = issues;
   }
