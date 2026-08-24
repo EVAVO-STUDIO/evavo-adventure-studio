@@ -1,4 +1,3 @@
-import { compileRgbaPalette, type CompiledPalette } from "@evavo/adventure-asset-pipeline/palette-compiler";
 import { nightShiftActorLightingPalette } from "./scene-director-palette-specs.js";
 
 const rgbaFromHex = (hex: string): readonly [number, number, number, number] => {
@@ -35,9 +34,6 @@ export const nightShiftActorLightingPaletteBytes = (): Uint8Array => {
   }
   return bytes;
 };
-
-export const compileNightShiftActorLightingPalette = async (): Promise<CompiledPalette> =>
-  compileRgbaPalette(nightShiftActorLightingPaletteBytes());
 
 export const nightShiftFoundationGeneratedOutputs = {
   palette: {
