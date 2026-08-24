@@ -1,10 +1,26 @@
 import { evaluateNightShiftDemoReadiness } from "./night-shift-demo-readiness.js";
+import {
+  nightShiftIndexedProductionAssetIds,
+  nightShiftPeriodVgaProductionAssetIds,
+  nightShiftProductionAssets,
+} from "./night-shift-production-assets.js";
 import "./night-shift-readiness-panel.css";
+
+const roleCounts = (): readonly { readonly role: string; readonly count: number }[] => {
+  const counts = new Map<string, number>();
+  for (const asset of nightShiftProductionAssets) {
+    counts.set(asset.role, (counts.get(asset.role) ?? 0) + 1);
+  }
+  return [...counts.entries()]
+    .map(([role, count]) => ({ role, count }))
+    .sort((left, right) => left.role.localeCompare(right.role));
+};
 
 export const NightShiftReadinessPanel = () => {
   const report = evaluateNightShiftDemoReadiness();
   const authored = report.gates.filter((gate) => gate.phase === "authored");
   const evidence = report.gates.filter((gate) => gate.phase === "evidence");
+  const roles = roleCounts();
 
   return (
     <section className="stg-night-shift-readiness">
@@ -33,6 +49,23 @@ export const NightShiftReadinessPanel = () => {
             <span key={gate.id} className={`is-${gate.status}`} title={gate.message}>
               {gate.status === "ready" ? "✓" : "×"} {gate.id}
             </span>
+          ))}
+        </div>
+      </div>
+      <div className="stg-production-plan-summary">
+        <header>
+          <strong>Production master set</strong>
+          <span>{nightShiftProductionAssets.length} runtime assets</span>
+        </header>
+        <div className="stg-production-plan-metrics">
+          <span><strong>{nightShiftIndexedProductionAssetIds.length}</strong> indexed masters</span>
+          <span><strong>{nightShiftPeriodVgaProductionAssetIds.length}</strong> Period VGA reviews</span>
+          <span><strong>3</strong> native room backgrounds</span>
+          <span><strong>8</strong> officer walk frames</span>
+        </div>
+        <div className="stg-production-plan-roles">
+          {roles.map(({ role, count }) => (
+            <span key={role}><strong>{count}</strong> {role}</span>
           ))}
         </div>
       </div>
