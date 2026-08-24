@@ -60,6 +60,18 @@
       "types": "./dist/src/multi-protagonist.d.ts",
       "import": "./dist/src/multi-protagonist.js"
     },
+    "./sentence": {
+      "types": "./dist/src/sentence.d.ts",
+      "import": "./dist/src/sentence.js"
+    },
+    "./sentence-execution": {
+      "types": "./dist/src/sentence-execution.d.ts",
+      "import": "./dist/src/sentence-execution.js"
+    },
+    "./item-combinations": {
+      "types": "./dist/src/item-combinations.d.ts",
+      "import": "./dist/src/item-combinations.js"
+    },
     "./dialogue": {
       "types": "./dist/src/dialogue.d.ts",
       "import": "./dist/src/dialogue.js"
