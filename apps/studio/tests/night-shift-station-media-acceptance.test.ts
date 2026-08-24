@@ -36,6 +36,15 @@ const foundation = () =>
     },
   });
 
+const scenePalette = () => ({
+  assetId: "asset.palette.night-shift.station" as never,
+  sourceFormat: "palette" as const,
+  derivedFromAssetId: "asset.night-shift.background.station" as never,
+  entryCount: 192,
+  rgbaByteLength: 768,
+  opaqueEntries: true,
+});
+
 const visualMasters = () => {
   const preflight = evaluateNightShiftStationMediaPreflight();
   return preflight.visualMasterIds.map((assetId) => {
@@ -73,18 +82,21 @@ const audioMasters = () => {
 };
 
 describe("Night Shift Station media acceptance", () => {
-  it("accepts an approved Foundation plus the complete valid Station visual/audio set", () => {
+  it("accepts an approved Foundation plus the complete valid Station palette/visual/audio set", () => {
     const report = evaluateNightShiftStationMediaAcceptance({
       foundation: foundation(),
+      scenePalette: scenePalette(),
       visualMasters: visualMasters(),
       audioMasters: audioMasters(),
     });
     expect(report).toMatchObject({
       status: "ready",
       foundationReady: true,
+      scenePaletteReady: true,
       visualMastersReady: true,
       audioMastersReady: true,
     });
+    expect(report.missingScenePaletteAssetIds).toEqual([]);
     expect(report.missingVisualAssetIds).toEqual([]);
     expect(report.missingAudioAssetIds).toEqual([]);
     expect(report.issues).toEqual([]);
@@ -97,6 +109,7 @@ describe("Night Shift Station media acceptance", () => {
     );
     const report = evaluateNightShiftStationMediaAcceptance({
       foundation: foundation(),
+      scenePalette: scenePalette(),
       visualMasters: visuals,
       audioMasters: audio,
     });
@@ -108,5 +121,19 @@ describe("Night Shift Station media acceptance", () => {
         expect.stringContaining("effect-not-mono"),
       ]),
     );
+  });
+
+  it("blocks a Station palette derived from the wrong room master", () => {
+    const report = evaluateNightShiftStationMediaAcceptance({
+      foundation: foundation(),
+      scenePalette: {
+        ...scenePalette(),
+        derivedFromAssetId: "asset.night-shift.background.roadside" as never,
+      },
+      visualMasters: visualMasters(),
+      audioMasters: audioMasters(),
+    });
+    expect(report.scenePaletteReady).toBe(false);
+    expect(report.issues.some((message) => message.includes("background-mismatch"))).toBe(true);
   });
 });
