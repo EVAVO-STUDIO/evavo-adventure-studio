@@ -7,6 +7,7 @@ import {
   type SceneStagingManifest,
   sceneStagingManifestSchema,
 } from "@evavo/adventure-scene-instances/staging";
+import { evaluateSceneDirectorPolygonQuality } from "./scene-director-polygon-quality.js";
 
 export type SceneDirectorEditCommand =
   | {
@@ -114,6 +115,13 @@ const assertNativePolygon = (
   label: string,
 ): void => {
   for (const point of shape.points) assertNativePoint(command, point, width, height, label);
+  const quality = evaluateSceneDirectorPolygonQuality(shape);
+  if (quality.length > 0) {
+    throw new SceneDirectorEditError(
+      command,
+      `${label} is invalid: ${quality.map((issue) => issue.message).join(" ")}`,
+    );
+  }
 };
 
 const replaceScene = (
@@ -300,7 +308,7 @@ export const applySceneDirectorEdit = (
     }
 
     case "set-light-zone-shape": {
-      assertNativePolygon(command, command.shape, scene.width, scene.height, "Light-zone point");
+      assertNativePolygon(command, command.shape, scene.width, scene.height, "Light-zone polygon");
       const zoneIndex = staging.paletteLightZones.findIndex((zone) => zone.id === command.zoneId);
       const zone = requireItem(
         command,
@@ -321,7 +329,7 @@ export const applySceneDirectorEdit = (
     }
 
     case "set-surface-zone-shape": {
-      assertNativePolygon(command, command.shape, scene.width, scene.height, "Surface-zone point");
+      assertNativePolygon(command, command.shape, scene.width, scene.height, "Surface-zone polygon");
       const zoneIndex = staging.surfaceZones.findIndex((zone) => zone.id === command.zoneId);
       const zone = requireItem(
         command,
