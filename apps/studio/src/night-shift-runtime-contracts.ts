@@ -20,6 +20,14 @@ const audioAssets = [
   ["asset.audio.night-shift.diner-room", "audio/night-shift/diner-room.wav"],
 ] as const;
 
+const uiAssets = [
+  ["asset.night-shift.font.system", "ui/night-shift/system-font.png", "image"],
+  ["asset.night-shift.ui.walk", "ui/night-shift/icon-walk.png", "image"],
+  ["asset.night-shift.ui.look", "ui/night-shift/icon-look.png", "image"],
+  ["asset.night-shift.ui.use", "ui/night-shift/icon-use.png", "image"],
+  ["asset.night-shift.ui.talk", "ui/night-shift/icon-talk.png", "image"],
+] as const;
+
 export const nightShiftRuntimeProject = parseAdventureProject({
   ...nightShiftCompleteProject,
   actors: nightShiftCompleteProject.actors.map((actor) =>
@@ -33,6 +41,7 @@ export const nightShiftRuntimeProject = parseAdventureProject({
       kind: "palette",
     },
     ...audioAssets.map(([id, path]) => ({ id, path, kind: "audio" as const })),
+    ...uiAssets.map(([id, path, kind]) => ({ id, path, kind })),
   ],
 });
 
@@ -115,126 +124,30 @@ export const nightShiftAudioMix = audioMixManifestSchema.parse({
     },
   ],
   cues: [
-    effectCue(
-      "audio-cue.night-shift.footstep.vinyl",
-      "Vinyl tile footstep",
-      "asset.audio.night-shift.footstep.vinyl",
-      0.54,
-      8,
-    ),
-    effectCue(
-      "audio-cue.night-shift.footstep.wet-asphalt",
-      "Wet asphalt footstep",
-      "asset.audio.night-shift.footstep.wet-asphalt",
-      0.58,
-      8,
-    ),
-    effectCue(
-      "audio-cue.night-shift.footstep.diner-tile",
-      "Diner tile footstep",
-      "asset.audio.night-shift.footstep.diner-tile",
-      0.5,
-      8,
-    ),
-    effectCue(
-      "audio-cue.night-shift.radio-lift",
-      "Radio lifted from charger",
-      "asset.audio.night-shift.radio-lift",
-      0.72,
-      30,
-    ),
-    effectCue(
-      "audio-cue.night-shift.keys-jingle",
-      "Vehicle keys",
-      "asset.audio.night-shift.keys-jingle",
-      0.68,
-      28,
-    ),
-    effectCue(
-      "audio-cue.night-shift.door-latch",
-      "Station door latch",
-      "asset.audio.night-shift.door-latch",
-      0.76,
-      32,
-    ),
-    effectCue(
-      "audio-cue.night-shift.notebook",
-      "Notebook mark",
-      "asset.audio.night-shift.notebook",
-      0.56,
-      22,
-    ),
-    effectCue(
-      "audio-cue.night-shift.paper-touch",
-      "Receipt paper touch",
-      "asset.audio.night-shift.paper-touch",
-      0.5,
-      18,
-    ),
-    ambienceCue(
-      "audio-cue.night-shift.station-room",
-      "Station fluorescent room tone",
-      "asset.audio.night-shift.station-room",
-      12000,
-      0.45,
-    ),
-    ambienceCue(
-      "audio-cue.night-shift.roadside-rain",
-      "Wet roadside rain and distant traffic",
-      "asset.audio.night-shift.roadside-rain",
-      16000,
-      0.62,
-    ),
-    ambienceCue(
-      "audio-cue.night-shift.diner-room",
-      "Late diner room tone",
-      "asset.audio.night-shift.diner-room",
-      14000,
-      0.48,
-    ),
+    effectCue("audio-cue.night-shift.footstep.vinyl", "Vinyl tile footstep", "asset.audio.night-shift.footstep.vinyl", 0.54, 8),
+    effectCue("audio-cue.night-shift.footstep.wet-asphalt", "Wet asphalt footstep", "asset.audio.night-shift.footstep.wet-asphalt", 0.58, 8),
+    effectCue("audio-cue.night-shift.footstep.diner-tile", "Diner tile footstep", "asset.audio.night-shift.footstep.diner-tile", 0.5, 8),
+    effectCue("audio-cue.night-shift.radio-lift", "Radio lifted from charger", "asset.audio.night-shift.radio-lift", 0.72, 30),
+    effectCue("audio-cue.night-shift.keys-jingle", "Vehicle keys", "asset.audio.night-shift.keys-jingle", 0.68, 28),
+    effectCue("audio-cue.night-shift.door-latch", "Station door latch", "asset.audio.night-shift.door-latch", 0.76, 32),
+    effectCue("audio-cue.night-shift.notebook", "Notebook mark", "asset.audio.night-shift.notebook", 0.56, 22),
+    effectCue("audio-cue.night-shift.paper-touch", "Receipt paper touch", "asset.audio.night-shift.paper-touch", 0.5, 18),
+    ambienceCue("audio-cue.night-shift.station-room", "Station fluorescent room tone", "asset.audio.night-shift.station-room", 12000, 0.45),
+    ambienceCue("audio-cue.night-shift.roadside-rain", "Wet roadside rain and distant traffic", "asset.audio.night-shift.roadside-rain", 16000, 0.62),
+    ambienceCue("audio-cue.night-shift.diner-room", "Late diner room tone", "asset.audio.night-shift.diner-room", 14000, 0.48),
   ],
   soundscapes: [
     {
       sceneId: "scene.night-shift.station",
-      layers: [
-        {
-          id: "audio-scene-layer.night-shift.station.room",
-          cueId: "audio-cue.night-shift.station-room",
-          role: "room-tone",
-          startDelayTicks: 0,
-          fadeInTicks: 8,
-          fadeOutTicks: 12,
-          restartPolicy: "continue",
-        },
-      ],
+      layers: [{ id: "audio-scene-layer.night-shift.station.room", cueId: "audio-cue.night-shift.station-room", role: "room-tone", startDelayTicks: 0, fadeInTicks: 8, fadeOutTicks: 12, restartPolicy: "continue" }],
     },
     {
       sceneId: "scene.night-shift.roadside",
-      layers: [
-        {
-          id: "audio-scene-layer.night-shift.roadside.rain",
-          cueId: "audio-cue.night-shift.roadside-rain",
-          role: "ambience",
-          startDelayTicks: 0,
-          fadeInTicks: 8,
-          fadeOutTicks: 14,
-          restartPolicy: "continue",
-        },
-      ],
+      layers: [{ id: "audio-scene-layer.night-shift.roadside.rain", cueId: "audio-cue.night-shift.roadside-rain", role: "ambience", startDelayTicks: 0, fadeInTicks: 8, fadeOutTicks: 14, restartPolicy: "continue" }],
     },
     {
       sceneId: "scene.night-shift.diner",
-      layers: [
-        {
-          id: "audio-scene-layer.night-shift.diner.room",
-          cueId: "audio-cue.night-shift.diner-room",
-          role: "room-tone",
-          startDelayTicks: 0,
-          fadeInTicks: 8,
-          fadeOutTicks: 12,
-          restartPolicy: "continue",
-        },
-      ],
+      layers: [{ id: "audio-scene-layer.night-shift.diner.room", cueId: "audio-cue.night-shift.diner-room", role: "room-tone", startDelayTicks: 0, fadeInTicks: 8, fadeOutTicks: 12, restartPolicy: "continue" }],
     },
   ],
   speechBindings: [],
