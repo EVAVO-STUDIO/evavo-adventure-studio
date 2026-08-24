@@ -60,6 +60,10 @@
       "types": "./dist/src/multi-protagonist.d.ts",
       "import": "./dist/src/multi-protagonist.js"
     },
+    "./room-scripts": {
+      "types": "./dist/src/room-scripts.d.ts",
+      "import": "./dist/src/room-scripts.js"
+    },
     "./sentence": {
       "types": "./dist/src/sentence.d.ts",
       "import": "./dist/src/sentence.js"
