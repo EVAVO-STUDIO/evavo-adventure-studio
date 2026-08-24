@@ -2,6 +2,11 @@ import { createDeterministicStoredZip } from "./deterministic-binary-zip.js";
 import { nightShiftFontGeneratedSource, nightShiftFontIndexBytes, nightShiftFontPngBytes } from "./night-shift-font-generated.js";
 import { nightShiftActorLightingPaletteBytes } from "./night-shift-foundation-generated.js";
 import { nightShiftGeneratedFoundationIcons } from "./night-shift-foundation-icon-outputs.js";
+import {
+  nightShiftOfficerMasterContract,
+  nightShiftOfficerReviewGuide,
+  nightShiftOfficerReviewGuidePngBytes,
+} from "./night-shift-officer-master-contract.js";
 
 export const nightShiftFoundationTechnicalArchiveFileName =
   "night-shift.foundation-technical-sources.zip";
@@ -13,7 +18,7 @@ export const createNightShiftFoundationTechnicalArchive = (): Uint8Array => {
     projectId: "project.night-shift-director",
     label: "Night Shift generated Foundation technical sources",
     scope: {
-      generated: [
+      generatedRuntimeSources: [
         "asset.palette.night-shift.actor-lighting",
         "asset.night-shift.font.system",
         ...icons.map((icon) => icon.assetId),
@@ -44,8 +49,19 @@ export const createNightShiftFoundationTechnicalArchive = (): Uint8Array => {
       transparentIndex: icon.transparentIndex,
       maximumSourceIndex: icon.maximumSourceIndex,
     })),
+    officer: {
+      assetId: nightShiftOfficerMasterContract.assetId,
+      authoredSourcePath: nightShiftOfficerMasterContract.sourcePath,
+      masterSize: nightShiftOfficerMasterContract.masterSize,
+      frameCount: nightShiftOfficerMasterContract.frameCount,
+      horizontalStride: nightShiftOfficerMasterContract.horizontalStride,
+      reviewGuidePath: `guides/${nightShiftOfficerReviewGuide.fileName}`,
+      reviewGuidePurpose: nightShiftOfficerReviewGuide.purpose,
+      slots: nightShiftOfficerMasterContract.slots,
+      reviewRules: nightShiftOfficerMasterContract.reviewRules,
+    },
     warning:
-      "This archive supplies reproducible technical sources only. Foundation is not complete until the generated palette/font/icons and the officer master pass production intake and Period VGA review.",
+      "This archive supplies reproducible technical sources and a non-runtime officer drawing guide. Foundation is not complete until the generated sources and final officer art pass production intake and Period VGA review.",
   } as const;
 
   return createDeterministicStoredZip([
@@ -64,6 +80,10 @@ export const createNightShiftFoundationTechnicalArchive = (): Uint8Array => {
     {
       path: nightShiftFontGeneratedSource.indexPath,
       data: nightShiftFontIndexBytes(),
+    },
+    {
+      path: `guides/${nightShiftOfficerReviewGuide.fileName}`,
+      data: nightShiftOfficerReviewGuidePngBytes(),
     },
     ...icons.flatMap((icon) => [
       { path: icon.pngPath, data: icon.pngBytes },
