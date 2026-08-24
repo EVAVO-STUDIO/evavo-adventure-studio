@@ -7,7 +7,7 @@ import {
 const text = (bytes: Uint8Array): string => new TextDecoder().decode(bytes);
 
 describe("Night Shift Foundation technical archive", () => {
-  it("is deterministic and contains palette/font/icons plus the non-runtime officer guide", () => {
+  it("is deterministic and contains generated sources plus the complete officer handoff", () => {
     const first = createNightShiftFoundationTechnicalArchive();
     const second = createNightShiftFoundationTechnicalArchive();
     expect(first).toEqual(second);
@@ -21,7 +21,9 @@ describe("Night Shift Foundation technical archive", () => {
     expect(decoded).toContain("art/night-shift/ui-look.png");
     expect(decoded).toContain("art/night-shift/ui-use.png");
     expect(decoded).toContain("art/night-shift/ui-talk.png");
+    expect(decoded).toContain("guides/night-shift.officer-art-brief.json");
     expect(decoded).toContain("guides/night-shift.officer-master-guide.png");
+    expect(decoded).toContain("guides/night-shift.officer-review-template.json");
     expect(decoded).toContain("asset.night-shift.actor.officer");
     expect(decoded).toContain("stillRequiresAuthoredMaster");
   });
