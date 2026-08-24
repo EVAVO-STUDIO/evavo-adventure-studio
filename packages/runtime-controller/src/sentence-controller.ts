@@ -138,6 +138,7 @@ export const createSentencePackagedRuntimeControllerWithFactory = (
       ...(baseSave.investigation ? { investigation: baseSave.investigation } : {}),
       ...(baseSave.multiProtagonist ? { multiProtagonist: baseSave.multiProtagonist } : {}),
       ...(baseSave.roomScripts ? { roomScripts: baseSave.roomScripts } : {}),
+      ...(baseSave.rpg ? { rpg: baseSave.rpg } : {}),
       sentence,
       itemCombinations: { usedRecipeIds: combinations.usedRecipeIds },
     });
@@ -224,6 +225,7 @@ export const createSentencePackagedRuntimeControllerWithFactory = (
       ...(baseSave.investigation ? { investigation: baseSave.investigation } : {}),
       ...(baseSave.multiProtagonist ? { multiProtagonist: baseSave.multiProtagonist } : {}),
       ...(baseSave.roomScripts ? { roomScripts: baseSave.roomScripts } : {}),
+      ...(baseSave.rpg ? { rpg: baseSave.rpg } : {}),
     });
   };
 
@@ -238,6 +240,7 @@ export const createSentencePackagedRuntimeControllerWithFactory = (
   };
 
   return {
+    selection: base.selection,
     sentenceState: () => sentence,
     sentenceText: () => formatSentence(grammar, sentence),
     combinationState: () => combinations,
