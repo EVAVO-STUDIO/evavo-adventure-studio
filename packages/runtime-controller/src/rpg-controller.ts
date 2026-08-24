@@ -87,6 +87,7 @@ export const createAdventureRpgPackagedRuntimeControllerWithFactory = (
   };
 
   return {
+    selection: controller.selection,
     rpgState: () => rpg,
     practiceSkill: (skillId, amount) => {
       const result = practiceAdventureRpgSkill(manifest, rpg, skillId, amount);
