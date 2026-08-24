@@ -80,6 +80,14 @@
       "types": "./dist/src/with-multi-protagonist.d.ts",
       "import": "./dist/src/with-multi-protagonist.js"
     },
+    "./with-room-scripts": {
+      "types": "./dist/src/with-room-scripts.d.ts",
+      "import": "./dist/src/with-room-scripts.js"
+    },
+    "./room-scripts": {
+      "types": "./dist/src/with-room-scripts.d.ts",
+      "import": "./dist/src/with-room-scripts.js"
+    },
     "./with-localisation": {
       "types": "./dist/src/with-localisation.d.ts",
       "import": "./dist/src/with-localisation.js"
