@@ -13,6 +13,7 @@ import {
   type ProfiledNavigationMovementState,
   parseProfiledNavigationMovementState,
 } from "@evavo/adventure-scene-runtime/profiled-movement";
+import type { RuntimeRoomScriptState } from "@evavo/adventure-scene-runtime/room-scripts";
 import { z } from "zod";
 import { saveGameInvestigationStateSchema } from "./investigation.js";
 import {
@@ -24,6 +25,7 @@ import {
   type SaveGameProfiledRuntimeCameraState,
   saveGameProfiledRuntimeCameraStateSchema,
 } from "./profiled-camera.js";
+import { saveGameRoomScriptStateSchema } from "./room-scripts.js";
 import {
   type SaveGameSentenceState,
   saveGameSentenceStateSchema,
@@ -267,6 +269,7 @@ export interface SaveGamePayload {
   readonly investigation?: RuntimeInvestigationState;
   readonly itemCombinations?: SaveGameItemCombinationState;
   readonly multiProtagonist?: MultiProtagonistState;
+  readonly roomScripts?: RuntimeRoomScriptState;
 }
 
 const saveGamePayloadObjectSchema = z
@@ -281,6 +284,7 @@ const saveGamePayloadObjectSchema = z
     investigation: saveGameInvestigationStateSchema.optional(),
     itemCombinations: saveGameItemCombinationStateSchema.optional(),
     multiProtagonist: saveGameMultiProtagonistStateSchema.optional(),
+    roomScripts: saveGameRoomScriptStateSchema.optional(),
   })
   .strict();
 
