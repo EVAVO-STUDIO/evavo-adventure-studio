@@ -4,6 +4,7 @@ import type { PeriodVgaAuditReport } from "@evavo/adventure-art-direction/period
 import type { NightShiftArtIntakeReport } from "./night-shift-art-master-intake.js";
 import type { NightShiftAudioIntakeReport } from "./night-shift-audio-master-intake.js";
 import { evaluateNightShiftDemoReadiness } from "./night-shift-demo-readiness.js";
+import type { NightShiftOfficerMasterIntakeReport } from "./night-shift-officer-master-intake.js";
 import { nightShiftProductionAssets } from "./night-shift-production-assets.js";
 import { nightShiftProductionWaves } from "./night-shift-production-waves.js";
 import { nightShiftRuntimeProject } from "./night-shift-runtime-contracts.js";
@@ -27,6 +28,7 @@ const stationAudioAssetIds = stationRequirements
 
 export interface NightShiftStationSliceEvidence {
   readonly artMasterIntake?: NightShiftArtIntakeReport | null;
+  readonly officerMasterIntake?: NightShiftOfficerMasterIntakeReport | null;
   readonly audioMasterIntake?: NightShiftAudioIntakeReport | null;
   readonly assetManifest?: AssetBuildManifest | null;
   readonly indexedAssets?: IndexedAssetManifest | null;
@@ -76,6 +78,7 @@ export const evaluateNightShiftStationSliceReadiness = (
   const missingCompiledAssetIds = stationAssetIds.filter((assetId) => !compiled.has(assetId));
   const missingIndexedAssetIds = stationIndexedAssetIds.filter((assetId) => !indexed.has(assetId));
   const artReady = intakeCovers(stationVisualAssetIds, evidence.artMasterIntake);
+  const officerReady = evidence.officerMasterIntake?.status === "ready";
   const audioReady = intakeCovers(stationAudioAssetIds, evidence.audioMasterIntake);
   const periodReady =
     evidence.periodVgaReport?.projectId === nightShiftRuntimeProject.id &&
@@ -100,6 +103,13 @@ export const evaluateNightShiftStationSliceReadiness = (
       message: artReady
         ? "Every Foundation/Station Period VGA visual master passed intake."
         : `Pass all ${stationVisualAssetIds.length} Foundation/Station visual masters through native art intake.`,
+    },
+    {
+      id: "station-officer-review",
+      ready: officerReady,
+      message: officerReady
+        ? "All twelve officer cells passed strict native frame review."
+        : "Complete the officer 12-frame review before the Station slice can ship.",
     },
     {
       id: "station-audio-intake",
