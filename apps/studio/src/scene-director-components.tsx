@@ -1,6 +1,7 @@
 import type { AdventureSceneStagingReport } from "@evavo/adventure-design/scene-staging";
 import type { Point } from "@evavo/adventure-project-schema";
-import { useState } from "react";
+import { type PointerEvent as ReactPointerEvent, useState } from "react";
+import type { SceneDirectorEditCommand } from "./scene-director-edit.js";
 import {
   type SceneDirectorMode,
   type SceneDirectorOverlay,
@@ -22,6 +23,97 @@ const show = (
 
 const svgId = (value: string): string => value.replace(/[^a-zA-Z0-9_-]+/gu, "-");
 const shortId = (value: string): string => value.split(".").at(-1) ?? value;
+
+export interface SceneDirectorEditingController {
+  readonly onPreviewEdit: (command: SceneDirectorEditCommand) => void;
+  readonly onCommitEdit: (command: SceneDirectorEditCommand) => void;
+  readonly onCancelPreview: () => void;
+  readonly onUndo: () => void;
+  readonly onRedo: () => void;
+  readonly canUndo: boolean;
+  readonly canRedo: boolean;
+  readonly error: string | null;
+}
+
+type SceneDirectorDrag =
+  | {
+      readonly kind: "walk-point";
+      readonly pointerId: number;
+      readonly laneId: string;
+      readonly pointIndex: number;
+      readonly originalPoints: readonly Point[];
+      readonly lastPoint: Point;
+    }
+  | {
+      readonly kind: "approach-slot";
+      readonly pointerId: number;
+      readonly objectId: string;
+      readonly slotId: string;
+      readonly facing: string;
+      readonly lastPoint: Point;
+    };
+
+const clamp = (value: number, minimum: number, maximum: number): number =>
+  Math.min(maximum, Math.max(minimum, value));
+
+export const roundAndClampNativePoint = (
+  point: Point,
+  nativeSize: { readonly width: number; readonly height: number },
+): Point => ({
+  x: clamp(Math.round(point.x), 0, nativeSize.width),
+  y: clamp(Math.round(point.y), 0, nativeSize.height),
+});
+
+const nativePointFromPointer = (
+  event: ReactPointerEvent<SVGSVGElement>,
+  nativeSize: { readonly width: number; readonly height: number },
+): Point => {
+  const svg = event.currentTarget;
+  const matrix = svg.getScreenCTM();
+  if (matrix) {
+    const screenPoint = svg.createSVGPoint();
+    screenPoint.x = event.clientX;
+    screenPoint.y = event.clientY;
+    const native = screenPoint.matrixTransform(matrix.inverse());
+    return roundAndClampNativePoint(native, nativeSize);
+  }
+
+  const bounds = svg.getBoundingClientRect();
+  const width = bounds.width || 1;
+  const height = bounds.height || 1;
+  return roundAndClampNativePoint(
+    {
+      x: ((event.clientX - bounds.left) / width) * nativeSize.width,
+      y: ((event.clientY - bounds.top) / height) * nativeSize.height,
+    },
+    nativeSize,
+  );
+};
+
+const commandForDrag = (
+  overlay: SceneDirectorOverlay,
+  drag: SceneDirectorDrag,
+  point: Point,
+): SceneDirectorEditCommand => {
+  if (drag.kind === "walk-point") {
+    return {
+      kind: "set-walk-lane-points",
+      sceneId: overlay.sceneId,
+      laneId: drag.laneId as never,
+      points: drag.originalPoints.map((candidate, index) =>
+        index === drag.pointIndex ? point : candidate,
+      ),
+    };
+  }
+  return {
+    kind: "move-approach-slot",
+    sceneId: overlay.sceneId,
+    objectId: drag.objectId as never,
+    slotId: drag.slotId as never,
+    position: point,
+    facing: drag.facing as never,
+  };
+};
 
 const FacingRay = ({ point, facing }: { readonly point: Point; readonly facing: string }) => {
   const vectors: Readonly<Record<string, Point>> = {
@@ -50,18 +142,88 @@ const DirectorSvg = ({
   overlay,
   report,
   mode,
+  editing,
 }: {
   readonly overlay: SceneDirectorOverlay;
   readonly report: AdventureSceneStagingReport;
   readonly mode: SceneDirectorMode;
+  readonly editing?: SceneDirectorEditingController;
 }) => {
   const staging = overlay.staging;
+  const [drag, setDrag] = useState<SceneDirectorDrag | null>(null);
+
+  const startWalkDrag = (
+    event: ReactPointerEvent<SVGCircleElement>,
+    laneId: string,
+    pointIndex: number,
+    lanePoints: readonly Point[],
+  ): void => {
+    if (!editing || mode !== "walk") return;
+    event.preventDefault();
+    event.stopPropagation();
+    event.currentTarget.setPointerCapture(event.pointerId);
+    const point = lanePoints[pointIndex];
+    if (!point) return;
+    setDrag({
+      kind: "walk-point",
+      pointerId: event.pointerId,
+      laneId,
+      pointIndex,
+      originalPoints: [...lanePoints],
+      lastPoint: point,
+    });
+  };
+
+  const startApproachDrag = (
+    event: ReactPointerEvent<SVGCircleElement>,
+    objectId: string,
+    slotId: string,
+    facing: string,
+    point: Point,
+  ): void => {
+    if (!editing || mode !== "approach") return;
+    event.preventDefault();
+    event.stopPropagation();
+    event.currentTarget.setPointerCapture(event.pointerId);
+    setDrag({
+      kind: "approach-slot",
+      pointerId: event.pointerId,
+      objectId,
+      slotId,
+      facing,
+      lastPoint: point,
+    });
+  };
+
+  const onPointerMove = (event: ReactPointerEvent<SVGSVGElement>): void => {
+    if (!editing || !drag || drag.pointerId !== event.pointerId) return;
+    const point = nativePointFromPointer(event, overlay.nativeSize);
+    editing.onPreviewEdit(commandForDrag(overlay, drag, point));
+    setDrag({ ...drag, lastPoint: point });
+  };
+
+  const onPointerUp = (event: ReactPointerEvent<SVGSVGElement>): void => {
+    if (!editing || !drag || drag.pointerId !== event.pointerId) return;
+    const point = nativePointFromPointer(event, overlay.nativeSize);
+    editing.onCommitEdit(commandForDrag(overlay, drag, point));
+    setDrag(null);
+  };
+
+  const onPointerCancel = (event: ReactPointerEvent<SVGSVGElement>): void => {
+    if (!editing || !drag || drag.pointerId !== event.pointerId) return;
+    editing.onCancelPreview();
+    setDrag(null);
+  };
+
   return (
     <svg
-      className={`dir-svg is-${mode}`}
+      className={`dir-svg is-${mode}${editing ? " is-editable" : ""}`}
       viewBox={`0 0 ${overlay.nativeSize.width} ${overlay.nativeSize.height}`}
       role="img"
       aria-label={`${overlay.sceneName} ${mode} Scene Director overlay`}
+      onPointerMove={onPointerMove}
+      onPointerUp={onPointerUp}
+      onPointerCancel={onPointerCancel}
     >
       <defs>
         <pattern id="dir-grid-small" width="8" height="8" patternUnits="userSpaceOnUse">
@@ -115,7 +277,14 @@ const DirectorSvg = ({
             <g key={lane.id} className="dir-walk-lane">
               <polyline points={points(lane.points)} />
               {lane.points.map((point, index) => (
-                <circle key={`${lane.id}-${index}`} cx={point.x} cy={point.y} r="2" />
+                <circle
+                  key={`${lane.id}-${index}`}
+                  className={editing && mode === "walk" ? "dir-edit-handle" : undefined}
+                  cx={point.x}
+                  cy={point.y}
+                  r={editing && mode === "walk" ? 3.2 : 2}
+                  onPointerDown={(event) => startWalkDrag(event, lane.id, index, lane.points)}
+                />
               ))}
             </g>
           ))
@@ -216,7 +385,15 @@ const DirectorSvg = ({
         ? overlay.objects.flatMap((object) =>
             object.approachSlots.map((slot) => (
               <g key={slot.id} className="dir-approach-slot">
-                <circle cx={slot.position.x} cy={slot.position.y} r="4" />
+                <circle
+                  className={editing && mode === "approach" ? "dir-edit-handle" : undefined}
+                  cx={slot.position.x}
+                  cy={slot.position.y}
+                  r={4}
+                  onPointerDown={(event) =>
+                    startApproachDrag(event, object.instanceId, slot.id, slot.facing, slot.position)
+                  }
+                />
                 <line x1={slot.position.x - 6} y1={slot.position.y} x2={slot.position.x + 6} y2={slot.position.y} />
                 <line x1={slot.position.x} y1={slot.position.y - 6} x2={slot.position.x} y2={slot.position.y + 6} />
                 <FacingRay point={slot.position} facing={slot.facing} />
@@ -301,12 +478,19 @@ const DirectorSvg = ({
 export const SceneDirectorPanel = ({
   overlay,
   report,
+  editing,
 }: {
   readonly overlay: SceneDirectorOverlay;
   readonly report: AdventureSceneStagingReport;
+  readonly editing?: SceneDirectorEditingController;
 }) => {
   const [mode, setMode] = useState<SceneDirectorMode>("walk");
   const summary = sceneDirectorModeSummary(overlay, mode);
+
+  const chooseMode = (candidate: SceneDirectorMode): void => {
+    editing?.onCancelPreview();
+    setMode(candidate);
+  };
 
   return (
     <div className="dir-panel">
@@ -324,16 +508,38 @@ export const SceneDirectorPanel = ({
 
       <nav className="dir-mode-bar" aria-label="Scene Director overlay modes">
         {sceneDirectorModes.map((candidate) => (
-          <StagingButton key={candidate} active={mode === candidate} onClick={() => setMode(candidate)}>
+          <StagingButton key={candidate} active={mode === candidate} onClick={() => chooseMode(candidate)}>
             {modeLabel(candidate)}
           </StagingButton>
         ))}
+        {editing ? (
+          <div className="dir-edit-actions">
+            <span className="dir-edit-status">EDIT</span>
+            <StagingButton disabled={!editing.canUndo} onClick={editing.onUndo}>
+              Undo
+            </StagingButton>
+            <StagingButton disabled={!editing.canRedo} onClick={editing.onRedo}>
+              Redo
+            </StagingButton>
+          </div>
+        ) : null}
       </nav>
 
+      {editing?.error ? <div className="dir-edit-error" role="alert">{editing.error}</div> : null}
+
       <div className="dir-native-shell">
-        <DirectorSvg overlay={overlay} report={report} mode={mode} />
+        <DirectorSvg
+          key={mode}
+          overlay={overlay}
+          report={report}
+          mode={mode}
+          editing={editing}
+        />
         <footer>
-          <span>{modeLabel(mode)} · canonical native coordinates</span>
+          <span>
+            {modeLabel(mode)} · canonical native coordinates
+            {editing && (mode === "walk" || mode === "approach") ? " · drag handles to edit" : ""}
+          </span>
           <strong>{overlay.nativeSize.width} × {overlay.nativeSize.height} @ 1×</strong>
         </footer>
       </div>
