@@ -164,6 +164,9 @@ export const createMultiProtagonistPackagedRuntimeControllerWithFactory = (
   };
 
   return {
+    get selection() {
+      return controller.selection;
+    },
     activeProtagonistId: () => companion.activeProtagonistId,
     multiProtagonistState: () => companion,
     switchProtagonist,
