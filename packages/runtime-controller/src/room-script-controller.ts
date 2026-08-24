@@ -1,5 +1,3 @@
-import type { Point } from "@evavo/adventure-project-schema";
-import type { ResolvedFrame } from "@evavo/adventure-render-contract";
 import type { RuntimeBundle } from "@evavo/adventure-runtime-bundle";
 import {
   createSaveGame as createRuntimeSaveGame,
@@ -12,39 +10,35 @@ import {
   type RuntimeRoomScriptEvent,
   type RuntimeRoomScriptState,
 } from "@evavo/adventure-scene-runtime/room-scripts";
+import type { PackagedRuntimeControllerOptions } from "./packaged-controller.js";
 import {
-  createPackagedRuntimeController,
-  type PackagedRuntimeController,
-  type PackagedRuntimeControllerOptions,
-} from "./packaged-controller.js";
-import type { ParserBufferState, ParserKeyInput } from "./parser.js";
-import type { ProfiledRuntimeCameraState } from "./profiled-camera.js";
+  createBasePackagedSessionController,
+  type PackagedSessionController,
+  type PackagedSessionControllerFactory,
+} from "./session-controller.js";
 
-export interface RoomScriptPackagedRuntimeController {
+export interface RoomScriptPackagedRuntimeController extends PackagedSessionController {
   roomScriptState(): RuntimeRoomScriptState;
   drainRoomScriptEvents(): readonly RuntimeRoomScriptEvent[];
-  controlledActorInstanceId(): PackagedRuntimeController["controlledActorInstanceId"];
-  worldState(): ReturnType<PackagedRuntimeController["worldState"]>;
-  createFrame(tick: number): ResolvedFrame;
-  setPointer(position: Point | null): void;
-  setPressed(pressed: boolean): void;
-  activate(position: Point): void;
-  handleKey(input: ParserKeyInput): boolean;
-  createSaveGame(): SaveGame;
-  restoreSaveGame(input: unknown): number;
-  statusText(): string;
-  cameraState(): ProfiledRuntimeCameraState | null;
-  parserState(): ParserBufferState;
-  drainSceneAudioCueIds(): readonly string[];
 }
 
-export const createRoomScriptPackagedRuntimeController = (
+export const createRoomScriptPackagedRuntimeControllerWithFactory = (
   bundle: RuntimeBundle,
   options: PackagedRuntimeControllerOptions = {},
+  innerFactory: PackagedSessionControllerFactory = createBasePackagedSessionController,
 ): RoomScriptPackagedRuntimeController => {
-  let base = createPackagedRuntimeController(bundle, options);
+  const base = innerFactory(bundle, options);
   let roomScripts = createRuntimeRoomScriptState(base.worldState());
   let pendingEvents: RuntimeRoomScriptEvent[] = [];
+
+  const preserveCompanions = (save: SaveGame) => ({
+    ...(save.interface.profiledCamera ? { profiledCamera: save.interface.profiledCamera } : {}),
+    ...(save.interface.sentence ? { sentence: save.interface.sentence } : {}),
+    ...(save.audio ? { audio: save.audio } : {}),
+    ...(save.investigation ? { investigation: save.investigation } : {}),
+    ...(save.itemCombinations ? { itemCombinations: save.itemCombinations } : {}),
+    ...(save.multiProtagonist ? { multiProtagonist: save.multiProtagonist } : {}),
+  });
 
   const saveWithRoomScripts = (): SaveGame => {
     const save = base.createSaveGame();
@@ -54,17 +48,12 @@ export const createRoomScriptPackagedRuntimeController = (
       selectedItemId: save.interface.selectedItemId,
       statusText: save.interface.statusText,
       parser: save.interface.parser,
-      ...(save.interface.profiledCamera ? { profiledCamera: save.interface.profiledCamera } : {}),
-      ...(save.interface.sentence ? { sentence: save.interface.sentence } : {}),
-      ...(save.audio ? { audio: save.audio } : {}),
-      ...(save.investigation ? { investigation: save.investigation } : {}),
-      ...(save.itemCombinations ? { itemCombinations: save.itemCombinations } : {}),
-      ...(save.multiProtagonist ? { multiProtagonist: save.multiProtagonist } : {}),
+      ...preserveCompanions(save),
       roomScripts,
     });
   };
 
-  const restoreWorldAtSameTick = (world: ReturnType<PackagedRuntimeController["worldState"]>): void => {
+  const restoreWorldAtSameTick = (world: ReturnType<PackagedSessionController["worldState"]>): void => {
     const save = base.createSaveGame();
     const next = createRuntimeSaveGame(bundle, world, {
       controlledActorInstanceId: save.interface.controlledActorInstanceId,
@@ -72,23 +61,23 @@ export const createRoomScriptPackagedRuntimeController = (
       selectedItemId: save.interface.selectedItemId,
       statusText: save.interface.statusText,
       parser: save.interface.parser,
-      ...(save.interface.profiledCamera ? { profiledCamera: save.interface.profiledCamera } : {}),
-      ...(save.interface.sentence ? { sentence: save.interface.sentence } : {}),
+      ...preserveCompanions(save),
       roomScripts,
     });
     base.restoreSaveGame(next);
   };
 
   const applyRoomScripts = (): boolean => {
-    const transition = advanceRuntimeRoomScripts(bundle, base.worldState(), roomScripts);
+    const currentWorld = base.worldState();
+    const transition = advanceRuntimeRoomScripts(bundle, currentWorld, roomScripts);
     roomScripts = transition.state;
     pendingEvents.push(...transition.events);
-    if (transition.world === base.worldState()) return false;
+    if (transition.world === currentWorld) return false;
     restoreWorldAtSameTick(transition.world);
     return true;
   };
 
-  const createFrame = (tick: number): ResolvedFrame => {
+  const createFrame = (tick: number) => {
     let frame = base.createFrame(tick);
     if (applyRoomScripts()) frame = base.createFrame(tick);
     return frame;
@@ -109,7 +98,7 @@ export const createRoomScriptPackagedRuntimeController = (
       pendingEvents = [];
       return events;
     },
-    controlledActorInstanceId: () => base.controlledActorInstanceId,
+    controlledActorInstanceId: () => base.controlledActorInstanceId(),
     worldState: () => base.worldState(),
     createFrame,
     setPointer: (position) => base.setPointer(position),
@@ -124,3 +113,13 @@ export const createRoomScriptPackagedRuntimeController = (
     drainSceneAudioCueIds: () => base.drainSceneAudioCueIds(),
   };
 };
+
+export const createRoomScriptPackagedRuntimeController = (
+  bundle: RuntimeBundle,
+  options: PackagedRuntimeControllerOptions = {},
+): RoomScriptPackagedRuntimeController =>
+  createRoomScriptPackagedRuntimeControllerWithFactory(
+    bundle,
+    options,
+    createBasePackagedSessionController,
+  );
