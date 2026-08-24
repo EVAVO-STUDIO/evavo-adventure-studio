@@ -43,12 +43,12 @@
 .dir-edit-handle {
   cursor: grab;
   stroke-width: 1.1px !important;
-  transition: opacity 80ms linear;
+  transition: opacity 80ms linear, transform 80ms linear;
   vector-effect: non-scaling-stroke;
 }
 
 .dir-edit-handle:hover {
-  opacity: 0.78;
+  opacity: 0.82;
 }
 
 .dir-edit-handle:active {
@@ -64,6 +64,36 @@
 .dir-approach-slot .dir-edit-handle {
   fill: #10141a;
   stroke: #e5c785;
+}
+
+.dir-depth-key .dir-edit-handle {
+  fill: #10141a;
+  stroke: #c7b4e5;
+}
+
+.dir-occlusion-plane .dir-edit-handle {
+  fill: #10141a;
+  stroke: #ff7c93;
+}
+
+.dir-light-zone .dir-edit-handle {
+  fill: #10141a;
+  stroke: #e6b369;
+}
+
+.dir-surface-zone .dir-edit-handle {
+  fill: #10141a;
+  stroke: #d6bd8d;
+}
+
+.dir-entry-path .dir-edit-handle {
+  fill: #10141a;
+  stroke: #8fb5e4;
+}
+
+.dir-depth-key .dir-edit-handle,
+.dir-occlusion-plane .dir-edit-handle {
+  cursor: ns-resize;
 }
 
 @media (max-width: 900px) {
