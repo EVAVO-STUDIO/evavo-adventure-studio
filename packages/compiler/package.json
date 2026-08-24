@@ -72,6 +72,14 @@
       "types": "./dist/src/with-item-combinations.d.ts",
       "import": "./dist/src/with-item-combinations.js"
     },
+    "./with-multi-protagonist": {
+      "types": "./dist/src/with-multi-protagonist.d.ts",
+      "import": "./dist/src/with-multi-protagonist.js"
+    },
+    "./multi-protagonist": {
+      "types": "./dist/src/with-multi-protagonist.d.ts",
+      "import": "./dist/src/with-multi-protagonist.js"
+    },
     "./with-localisation": {
       "types": "./dist/src/with-localisation.d.ts",
       "import": "./dist/src/with-localisation.js"
