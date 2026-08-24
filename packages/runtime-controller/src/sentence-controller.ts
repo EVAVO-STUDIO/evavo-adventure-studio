@@ -26,33 +26,21 @@ import {
 import { hitTestSceneObject } from "@evavo/adventure-scene-runtime/interactions";
 import { uiSkinById } from "@evavo/adventure-ui-skin";
 import { hitTestUiSkin } from "@evavo/adventure-ui-skin/hit-testing";
-import {
-  createPackagedRuntimeController,
-  type PackagedRuntimeController,
-  type PackagedRuntimeControllerOptions,
-} from "./packaged-controller.js";
+import type { PackagedRuntimeControllerOptions } from "./packaged-controller.js";
 import { nativeScreenPointToWorld, type SoftwareCursorState } from "./input.js";
 import type { ParserBufferState, ParserKeyInput } from "./parser.js";
 import type { ProfiledRuntimeCameraState } from "./profiled-camera.js";
+import {
+  createBasePackagedSessionController,
+  type PackagedSessionController,
+  type PackagedSessionControllerFactory,
+} from "./session-controller.js";
 import { runtimeUiState } from "./runtime-ui.js";
 
-export interface SentencePackagedRuntimeController {
+export interface SentencePackagedRuntimeController extends PackagedSessionController {
   sentenceState(): SentenceState;
   sentenceText(): string;
   combinationState(): ItemCombinationRuntimeState;
-  controlledActorInstanceId(): Id<"actor-instance"> | null;
-  worldState(): ReturnType<PackagedRuntimeController["worldState"]>;
-  createFrame(tick: number): ResolvedFrame;
-  setPointer(position: Point | null): void;
-  setPressed(pressed: boolean): void;
-  activate(position: Point): void;
-  handleKey(input: ParserKeyInput): boolean;
-  createSaveGame(): SaveGame;
-  restoreSaveGame(input: unknown): number;
-  statusText(): string;
-  cameraState(): ProfiledRuntimeCameraState | null;
-  parserState(): ParserBufferState;
-  drainSceneAudioCueIds(): readonly string[];
 }
 
 const combinationManifestFor = (bundle: RuntimeBundle): ItemCombinationManifest => ({
@@ -71,7 +59,7 @@ const inventoryLabel = (bundle: RuntimeBundle, itemId: Id<"item">): string =>
 
 const objectTargetAt = (
   bundle: RuntimeBundle,
-  base: PackagedRuntimeController,
+  base: PackagedSessionController,
   position: Point,
 ): SentenceTarget | null => {
   const frame = base.createFrame(base.worldState().story.tick);
@@ -98,9 +86,10 @@ const replaceSentenceStatus = (frame: ResolvedFrame, text: string): ResolvedFram
   };
 };
 
-export const createSentencePackagedRuntimeController = (
+export const createSentencePackagedRuntimeControllerWithFactory = (
   bundle: RuntimeBundle,
   options: PackagedRuntimeControllerOptions = {},
+  innerFactory: PackagedSessionControllerFactory = createBasePackagedSessionController,
 ): SentencePackagedRuntimeController => {
   if (!bundle.uiSkins || !bundle.bitmapFonts) {
     throw new Error("Classic sentence control requires a packaged UI skin and bitmap fonts.");
@@ -110,7 +99,7 @@ export const createSentencePackagedRuntimeController = (
     throw new Error(`Classic sentence control requires a verb-list UI skin, received '${skin.interactionMode}'.`);
   }
   const grammar: SentenceGrammar = classicScumm5SentenceGrammar(skin.verbs);
-  const base = createPackagedRuntimeController(bundle, options);
+  const base = innerFactory(bundle, options);
   let sentence = createSentenceState(initialVerb(bundle));
   let combinations = createItemCombinationRuntimeState();
   let pointer: Point | null = null;
@@ -138,7 +127,7 @@ export const createSentencePackagedRuntimeController = (
       position,
     );
 
-  const restoreStory = (story: ReturnType<PackagedRuntimeController["worldState"]>["story"]): void => {
+  const restoreStory = (story: ReturnType<PackagedSessionController["worldState"]>["story"]): void => {
     const baseSave = base.createSaveGame();
     const save = createRuntimeSaveGame(bundle, { ...base.worldState(), story }, {
       controlledActorInstanceId: baseSave.interface.controlledActorInstanceId,
@@ -147,6 +136,9 @@ export const createSentencePackagedRuntimeController = (
       statusText: baseSave.interface.statusText,
       parser: baseSave.interface.parser,
       ...(baseSave.interface.profiledCamera ? { profiledCamera: baseSave.interface.profiledCamera } : {}),
+      ...(baseSave.investigation ? { investigation: baseSave.investigation } : {}),
+      ...(baseSave.multiProtagonist ? { multiProtagonist: baseSave.multiProtagonist } : {}),
+      ...(baseSave.roomScripts ? { roomScripts: baseSave.roomScripts } : {}),
       sentence,
       itemCombinations: { usedRecipeIds: combinations.usedRecipeIds },
     });
@@ -230,6 +222,9 @@ export const createSentencePackagedRuntimeController = (
       ...(baseSave.interface.profiledCamera ? { profiledCamera: baseSave.interface.profiledCamera } : {}),
       sentence,
       itemCombinations: { usedRecipeIds: combinations.usedRecipeIds },
+      ...(baseSave.investigation ? { investigation: baseSave.investigation } : {}),
+      ...(baseSave.multiProtagonist ? { multiProtagonist: baseSave.multiProtagonist } : {}),
+      ...(baseSave.roomScripts ? { roomScripts: baseSave.roomScripts } : {}),
     });
   };
 
@@ -247,7 +242,7 @@ export const createSentencePackagedRuntimeController = (
     sentenceState: () => sentence,
     sentenceText: () => formatSentence(grammar, sentence),
     combinationState: () => combinations,
-    controlledActorInstanceId: () => base.controlledActorInstanceId,
+    controlledActorInstanceId: () => base.controlledActorInstanceId(),
     worldState: () => base.worldState(),
     createFrame: (tick) => replaceSentenceStatus(base.createFrame(tick), displayText()),
     setPointer: (position) => {
@@ -268,3 +263,13 @@ export const createSentencePackagedRuntimeController = (
     drainSceneAudioCueIds: () => base.drainSceneAudioCueIds(),
   };
 };
+
+export const createSentencePackagedRuntimeController = (
+  bundle: RuntimeBundle,
+  options: PackagedRuntimeControllerOptions = {},
+): SentencePackagedRuntimeController =>
+  createSentencePackagedRuntimeControllerWithFactory(
+    bundle,
+    options,
+    createBasePackagedSessionController,
+  );
