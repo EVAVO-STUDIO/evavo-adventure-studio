@@ -98,3 +98,18 @@ export const nightShiftStationProductionPacketJson = (): string =>
 
 export const nightShiftStationProductionPacketFileName =
   "night-shift.station-production-packet.json";
+
+export const downloadNightShiftStationProductionPacket = (): void => {
+  const blob = new Blob([nightShiftStationProductionPacketJson()], {
+    type: "application/json;charset=utf-8",
+  });
+  const url = URL.createObjectURL(blob);
+  const link = document.createElement("a");
+  link.href = url;
+  link.download = nightShiftStationProductionPacketFileName;
+  link.style.display = "none";
+  document.body.appendChild(link);
+  link.click();
+  link.remove();
+  URL.revokeObjectURL(url);
+};
