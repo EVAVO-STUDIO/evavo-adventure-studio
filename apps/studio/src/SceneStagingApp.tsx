@@ -2,8 +2,18 @@ import {
   type AdventureSceneStagingSeverity,
   createAdventureSceneStagingReports,
 } from "@evavo/adventure-design/scene-staging";
+import type { SceneStagingManifest } from "@evavo/adventure-scene-instances/staging";
 import { type ChangeEvent, useEffect, useMemo, useState } from "react";
 import { SceneDirectorPanel } from "./scene-director-components.js";
+import {
+  applySceneDirectorEdit,
+  commitSceneDirectorEdit,
+  createSceneDirectorEditHistory,
+  redoSceneDirectorEdit,
+  type SceneDirectorEditCommand,
+  SceneDirectorEditError,
+  undoSceneDirectorEdit,
+} from "./scene-director-edit.js";
 import { createSceneDirectorOverlay } from "./scene-director-model.js";
 import {
   sceneDirectorPaletteBankAtOffset,
@@ -31,15 +41,22 @@ export const SceneStagingApp = () => {
   const [view, setView] = useState<StagingView>("stage");
   const [filter, setFilter] = useState<StagingFindingFilter>("all");
   const sample = sceneDirectorSamples[sampleIndex] ?? sceneDirectorSamples[0]!;
+  const [editHistory, setEditHistory] = useState(() =>
+    createSceneDirectorEditHistory(sceneDirectorSamples[0]!.staging),
+  );
+  const [previewStaging, setPreviewStaging] = useState<SceneStagingManifest | null>(null);
+  const [editError, setEditError] = useState<string | null>(null);
+  const activeStaging = previewStaging ?? editHistory.present;
+
   const reports = useMemo(
     () =>
       createAdventureSceneStagingReports(
         sample.project,
         sample.sceneInstances,
         undefined,
-        sample.staging,
+        activeStaging,
       ),
-    [sample],
+    [sample, activeStaging],
   );
   const report = reports[sceneIndex] ?? reports[0]!;
   const directorOverlay = useMemo(
@@ -47,21 +64,67 @@ export const SceneStagingApp = () => {
       createSceneDirectorOverlay(
         sample.project,
         sample.sceneInstances,
-        sample.staging,
+        activeStaging,
         report.sceneId,
         sample.paletteMaps,
       ),
-    [sample, report.sceneId],
+    [sample, activeStaging, report.sceneId],
   );
 
   useEffect(() => {
     setSceneIndex(0);
     setFilter("all");
-  }, [sampleIndex]);
+    setEditHistory(createSceneDirectorEditHistory(sample.staging));
+    setPreviewStaging(null);
+    setEditError(null);
+  }, [sample]);
 
   useEffect(() => {
     setFilter("all");
+    setPreviewStaging(null);
+    setEditError(null);
   }, [sceneIndex]);
+
+  const previewEdit = (command: SceneDirectorEditCommand): void => {
+    try {
+      setPreviewStaging(applySceneDirectorEdit(sample.project, editHistory.present, command));
+      setEditError(null);
+    } catch (error) {
+      setEditError(error instanceof Error ? error.message : String(error));
+    }
+  };
+
+  const commitEdit = (command: SceneDirectorEditCommand): void => {
+    try {
+      setEditHistory((history) => commitSceneDirectorEdit(sample.project, history, command));
+      setPreviewStaging(null);
+      setEditError(null);
+    } catch (error) {
+      setPreviewStaging(null);
+      setEditError(
+        error instanceof SceneDirectorEditError || error instanceof Error
+          ? error.message
+          : String(error),
+      );
+    }
+  };
+
+  const cancelPreview = (): void => {
+    setPreviewStaging(null);
+    setEditError(null);
+  };
+
+  const undoEdit = (): void => {
+    setEditHistory((history) => undoSceneDirectorEdit(history));
+    setPreviewStaging(null);
+    setEditError(null);
+  };
+
+  const redoEdit = (): void => {
+    setEditHistory((history) => redoSceneDirectorEdit(history));
+    setPreviewStaging(null);
+    setEditError(null);
+  };
 
   const count = (severity: AdventureSceneStagingSeverity): number =>
     report.findings.filter((finding) => finding.severity === severity).length;
@@ -189,7 +252,22 @@ export const SceneStagingApp = () => {
         </aside>
 
         <section className="stg-canvas">
-          {view === "stage" ? <SceneDirectorPanel overlay={directorOverlay} report={report} /> : null}
+          {view === "stage" ? (
+            <SceneDirectorPanel
+              overlay={directorOverlay}
+              report={report}
+              editing={{
+                onPreviewEdit: previewEdit,
+                onCommitEdit: commitEdit,
+                onCancelPreview: cancelPreview,
+                onUndo: undoEdit,
+                onRedo: redoEdit,
+                canUndo: editHistory.past.length > 0,
+                canRedo: editHistory.future.length > 0,
+                error: editError,
+              }}
+            />
+          ) : null}
           {view === "findings" ? (
             <FindingsPanel report={report} filter={filter} onFilter={setFilter} />
           ) : null}
