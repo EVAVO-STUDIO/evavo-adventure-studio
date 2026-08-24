@@ -1,4 +1,5 @@
 @import "./scene-director-palette.css";
+@import "./scene-director-edit.css";
 
 .stg-selector-group {
   display: flex;
