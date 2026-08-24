@@ -31,6 +31,8 @@ export const nightShiftRuntimeSourceFiles = (): readonly NightShiftRuntimeSource
   { fileName: "audio-mix.json", data: json(nightShiftRuntimeSource.audioMix) },
   { fileName: "front-end.json", data: json(nightShiftRuntimeSource.frontEnd) },
   { fileName: "lifecycle.json", data: json(nightShiftRuntimeSource.lifecycle) },
+  { fileName: "runtime-index-bindings.json", data: json(nightShiftRuntimeSource.runtimeIndexBindings) },
+  { fileName: "runtime-index-build-plan.json", data: json(nightShiftRuntimeSource.runtimeIndexBuildPlan) },
   { fileName: "production-manifest.json", data: nightShiftProductionManifestJson() },
 ];
 
