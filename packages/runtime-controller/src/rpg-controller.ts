@@ -1,4 +1,4 @@
-import type { RuntimeBundle } from "@evavo/adventure-runtime-bundle";
+import type { RuntimeBundle, RuntimeAdventureRpgCombatEncounter } from "@evavo/adventure-runtime-bundle";
 import {
   createSaveGame as createRuntimeSaveGame,
   loadSaveGame as loadRuntimeSaveGame,
@@ -21,6 +21,19 @@ import {
   type AdventureRpgScheduleWindow,
   type AdventureRpgState,
 } from "@evavo/adventure-scene-runtime/rpg";
+import {
+  advanceAdventureRpgBoundCombat,
+  createAdventureRpgBoundCombatState,
+  issueAdventureRpgBoundCombatAction,
+  type AdventureRpgBoundCombatState,
+  type AdventureRpgCombatBinding,
+} from "@evavo/adventure-scene-runtime/rpg-combat-integration";
+import type {
+  AdventureRpgCombatAction,
+  AdventureRpgCombatEvent,
+  AdventureRpgCombatPhase,
+  AdventureRpgCombatState,
+} from "@evavo/adventure-scene-runtime/rpg-combat";
 import type { PackagedRuntimeControllerOptions } from "./packaged-controller.js";
 import {
   createBasePackagedSessionController,
@@ -41,6 +54,11 @@ export interface AdventureRpgPackagedRuntimeController extends PackagedSessionCo
   adjustResource(resourceId: string, delta: number): void;
   scheduleActive(window: AdventureRpgScheduleWindow): boolean;
   createRpgImportSnapshot(sourceGameId: string, tags?: readonly string[]): AdventureRpgImportSnapshot;
+  activeCombatState(): AdventureRpgCombatState | null;
+  startCombat(encounterId: string): AdventureRpgCombatState;
+  issueCombatAction(action: AdventureRpgCombatAction): readonly AdventureRpgCombatEvent[];
+  advanceCombat(ticks: number): readonly AdventureRpgCombatEvent[];
+  finishCombat(): AdventureRpgCombatPhase;
 }
 
 const preserveCompanions = (save: SaveGame) => ({
@@ -51,6 +69,10 @@ const preserveCompanions = (save: SaveGame) => ({
   ...(save.itemCombinations ? { itemCombinations: save.itemCombinations } : {}),
   ...(save.multiProtagonist ? { multiProtagonist: save.multiProtagonist } : {}),
   ...(save.roomScripts ? { roomScripts: save.roomScripts } : {}),
+});
+
+const combatBinding = (encounter: RuntimeAdventureRpgCombatEncounter): AdventureRpgCombatBinding => ({
+  ...encounter,
 });
 
 export const createAdventureRpgPackagedRuntimeControllerWithFactory = (
@@ -65,8 +87,12 @@ export const createAdventureRpgPackagedRuntimeControllerWithFactory = (
   if (!defaultClassId) throw new Error("RPG manifest contains no playable class.");
   const controller = innerFactory(bundle, baseOptions);
   let rpg = createAdventureRpgState(manifest, defaultClassId);
+  let combat: { readonly encounter: RuntimeAdventureRpgCombatEncounter; readonly state: AdventureRpgBoundCombatState } | null = null;
 
   const createSaveGame = (): SaveGame => {
+    if (combat?.state.combat.phase === "active") {
+      throw new Error("Saving is disabled during active RPG combat; finish, flee or lose the encounter first.");
+    }
     const baseSave = controller.createSaveGame();
     return createRuntimeSaveGame(bundle, controller.worldState(), {
       controlledActorInstanceId: baseSave.interface.controlledActorInstanceId,
@@ -83,7 +109,54 @@ export const createAdventureRpgPackagedRuntimeControllerWithFactory = (
     const save = loadRuntimeSaveGame(bundle, input);
     const tick = controller.restoreSaveGame(save);
     rpg = save.rpg ?? createAdventureRpgState(manifest, defaultClassId);
+    combat = null;
     return tick;
+  };
+
+  const startCombat = (encounterId: string): AdventureRpgCombatState => {
+    if (combat?.state.combat.phase === "active") {
+      throw new Error(`RPG combat '${combat.encounter.id}' is already active.`);
+    }
+    const encounter = manifest.combatEncounters.find((candidate) => candidate.id === encounterId);
+    if (!encounter) throw new Error(`Unknown RPG combat encounter '${encounterId}'.`);
+    const state = createAdventureRpgBoundCombatState(manifest, rpg, combatBinding(encounter));
+    combat = { encounter, state };
+    rpg = state.rpg;
+    return state.combat;
+  };
+
+  const issueCombatAction = (action: AdventureRpgCombatAction): readonly AdventureRpgCombatEvent[] => {
+    if (!combat) throw new Error("No RPG combat encounter is active.");
+    const transition = issueAdventureRpgBoundCombatAction(
+      manifest,
+      combat.state,
+      combatBinding(combat.encounter),
+      action,
+    );
+    combat = { ...combat, state: transition };
+    rpg = transition.rpg;
+    return transition.events;
+  };
+
+  const advanceCombat = (ticks: number): readonly AdventureRpgCombatEvent[] => {
+    if (!combat) throw new Error("No RPG combat encounter is active.");
+    const transition = advanceAdventureRpgBoundCombat(
+      manifest,
+      combat.state,
+      combatBinding(combat.encounter),
+      ticks,
+    );
+    combat = { ...combat, state: transition };
+    rpg = transition.rpg;
+    return transition.events;
+  };
+
+  const finishCombat = (): AdventureRpgCombatPhase => {
+    if (!combat) throw new Error("No RPG combat encounter is active.");
+    const phase = combat.state.combat.phase;
+    if (phase === "active") throw new Error("Active RPG combat cannot finish before victory, defeat or flee.");
+    combat = null;
+    return phase;
   };
 
   return {
@@ -105,8 +178,12 @@ export const createAdventureRpgPackagedRuntimeControllerWithFactory = (
       rpg = adjustAdventureRpgResource(manifest, rpg, resourceId, delta);
     },
     scheduleActive: (window) => adventureRpgScheduleActive(manifest, rpg, window),
-    createRpgImportSnapshot: (sourceGameId, tags = []) =>
-      createAdventureRpgImportSnapshot(sourceGameId, rpg, tags),
+    createRpgImportSnapshot: (sourceGameId, tags = []) => createAdventureRpgImportSnapshot(sourceGameId, rpg, tags),
+    activeCombatState: () => combat?.state.combat ?? null,
+    startCombat,
+    issueCombatAction,
+    advanceCombat,
+    finishCombat,
     controlledActorInstanceId: () => controller.controlledActorInstanceId(),
     worldState: () => controller.worldState(),
     createFrame: (tick) => controller.createFrame(tick),
@@ -130,8 +207,4 @@ export const createAdventureRpgPackagedRuntimeController = (
   bundle: RuntimeBundle,
   options: AdventureRpgSessionOptions = {},
 ): AdventureRpgPackagedRuntimeController =>
-  createAdventureRpgPackagedRuntimeControllerWithFactory(
-    bundle,
-    options,
-    createBasePackagedSessionController,
-  );
+  createAdventureRpgPackagedRuntimeControllerWithFactory(bundle, options, createBasePackagedSessionController);
