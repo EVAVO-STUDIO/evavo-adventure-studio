@@ -6,12 +6,22 @@ import {
 } from "../src/night-shift-director-fixture.js";
 import { applySceneDirectorDocumentEdit } from "../src/scene-director-documents.js";
 import {
+  createSceneDirectorZip,
+  sceneDirectorArchiveFileName,
   sceneDirectorProjectFileName,
   sceneDirectorSceneInstancesFileName,
   sceneDirectorStagingFileName,
   serializeSceneDirectorDocuments,
   serializeSceneDirectorStaging,
 } from "../src/scene-director-export.js";
+
+const documents = () => ({
+  project: nightShiftDirectorProject,
+  sceneInstances: nightShiftDirectorInstances,
+  staging: nightShiftDirectorStaging,
+});
+
+const decode = (bytes: Uint8Array): string => new TextDecoder().decode(bytes);
 
 describe("Scene Director document export", () => {
   it("serializes schema-valid staging with a trailing newline", () => {
@@ -23,7 +33,7 @@ describe("Scene Director document export", () => {
     });
   });
 
-  it("uses portable proof-specific filenames for all canonical documents", () => {
+  it("uses portable proof-specific filenames for all canonical documents and archive", () => {
     expect(sceneDirectorProjectFileName("Night Shift / Proof")).toBe(
       "night-shift-proof.project.json",
     );
@@ -33,15 +43,14 @@ describe("Scene Director document export", () => {
     expect(sceneDirectorStagingFileName("Night Shift / Proof")).toBe(
       "night-shift-proof.scene-staging.json",
     );
+    expect(sceneDirectorArchiveFileName("Night Shift / Proof")).toBe(
+      "night-shift-proof.scene-director.zip",
+    );
   });
 
   it("round-trips project, scene-instance and staging ownership separately", () => {
-    let documents = {
-      project: nightShiftDirectorProject,
-      sceneInstances: nightShiftDirectorInstances,
-      staging: nightShiftDirectorStaging,
-    };
-    documents = applySceneDirectorDocumentEdit(documents, {
+    let edited = documents();
+    edited = applySceneDirectorDocumentEdit(edited, {
       kind: "set-navigation-area-shape",
       sceneId: "scene.night-shift.station" as never,
       areaId: "navigation.night-shift.station.main" as never,
@@ -54,13 +63,13 @@ describe("Scene Director document export", () => {
         ],
       },
     });
-    documents = applySceneDirectorDocumentEdit(documents, {
+    edited = applySceneDirectorDocumentEdit(edited, {
       kind: "set-object-instance-position",
       sceneId: "scene.night-shift.station" as never,
       objectId: "object.night-shift.radio" as never,
       position: { x: 122, y: 129 },
     });
-    documents = applySceneDirectorDocumentEdit(documents, {
+    edited = applySceneDirectorDocumentEdit(edited, {
       kind: "move-approach-slot",
       sceneId: "scene.night-shift.station" as never,
       objectId: "object.night-shift.radio" as never,
@@ -68,7 +77,7 @@ describe("Scene Director document export", () => {
       position: { x: 98, y: 151 },
     });
 
-    const files = serializeSceneDirectorDocuments(documents, "night-shift");
+    const files = serializeSceneDirectorDocuments(edited, "night-shift");
     expect(files).toHaveLength(3);
     const project = JSON.parse(files.find((file) => file.fileName.endsWith(".project.json"))!.data);
     const instances = JSON.parse(
@@ -87,5 +96,19 @@ describe("Scene Director document export", () => {
       x: 98,
       y: 151,
     });
+  });
+
+  it("creates deterministic store-only ZIP bytes containing all canonical filenames", () => {
+    const first = createSceneDirectorZip(documents(), "night-shift");
+    const second = createSceneDirectorZip(documents(), "night-shift");
+    expect([...first]).toEqual([...second]);
+    expect(first[0]).toBe(0x50);
+    expect(first[1]).toBe(0x4b);
+    expect(first[2]).toBe(0x03);
+    expect(first[3]).toBe(0x04);
+    const text = decode(first);
+    expect(text).toContain("night-shift.project.json");
+    expect(text).toContain("night-shift.scene-instances.json");
+    expect(text).toContain("night-shift.scene-staging.json");
   });
 });
