@@ -1,5 +1,4 @@
 import { encodeNativeIndexedPng } from "./native-png.js";
-import { nightShiftActorLightingPaletteBytes } from "./night-shift-foundation-generated.js";
 import {
   nightShiftFoundationIcons,
   type NightShiftFoundationIconMaster,
@@ -17,18 +16,12 @@ export interface NightShiftGeneratedIconOutput {
   readonly indexBytes: Uint8Array;
 }
 
-const iconPalette = (master: NightShiftFoundationIconMaster) => {
-  const palette = nightShiftActorLightingPaletteBytes();
-  return Array.from({ length: 4 }, (_, index) => {
-    const source = (master.paletteOffset + index) * 4;
-    return {
-      r: palette[source] ?? 0,
-      g: palette[source + 1] ?? 0,
-      b: palette[source + 2] ?? 0,
-      a: index === master.transparentIndex ? 0 : (palette[source + 3] ?? 255),
-    };
-  });
-};
+const uiIconPalette = [
+  { r: 11, g: 16, b: 21, a: 0 },
+  { r: 111, g: 125, b: 134, a: 255 },
+  { r: 184, g: 179, b: 167, a: 255 },
+  { r: 227, g: 223, b: 214, a: 255 },
+] as const;
 
 export const generateNightShiftFoundationIconOutput = (
   master: NightShiftFoundationIconMaster,
@@ -44,7 +37,7 @@ export const generateNightShiftFoundationIconOutput = (
     height: 16,
     transparentIndex: 0,
     maximumSourceIndex,
-    pngBytes: encodeNativeIndexedPng(16, 16, indexBytes, iconPalette(master)),
+    pngBytes: encodeNativeIndexedPng(16, 16, indexBytes, uiIconPalette),
     indexBytes,
   };
 };
