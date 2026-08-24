@@ -41,6 +41,11 @@ import {
   RuntimeSceneInstanceValidationError,
   validateRuntimeSceneInstances,
 } from "./instance-validation.js";
+import {
+  RuntimeInvestigationValidationError,
+  runtimeInvestigationManifestSchema,
+  validateRuntimeInvestigation,
+} from "./investigation.js";
 import { runtimeLocalisationPackSchema } from "./localisation.js";
 import {
   RuntimePaletteMapValidationError,
@@ -116,6 +121,7 @@ export const runtimeBundleSchema = z
     frontEnd: classicFrontEndManifestSchema.optional(),
     lifecycle: gameLifecycleManifestSchema.optional(),
     opening: gameOpeningManifestSchema.optional(),
+    investigation: runtimeInvestigationManifestSchema.optional(),
   })
   .strict()
   .superRefine((bundle, context) => {
@@ -152,6 +158,13 @@ export const runtimeBundleSchema = z
         code: "custom",
         path: ["lifecycle", "projectId"],
         message: `Lifecycle project '${bundle.lifecycle.projectId}' does not match runtime project '${bundle.projectId}'.`,
+      });
+    }
+    if (bundle.investigation && bundle.investigation.projectId !== bundle.projectId) {
+      context.addIssue({
+        code: "custom",
+        path: ["investigation", "projectId"],
+        message: `Investigation project '${bundle.investigation.projectId}' does not match runtime project '${bundle.projectId}'.`,
       });
     }
     if (bundle.opening) {
@@ -193,6 +206,12 @@ export const parseRuntimeBundle = (input: unknown): RuntimeBundle => {
   if (uiSkinIssues.length > 0) throw new RuntimeUiSkinValidationError(uiSkinIssues);
   const audioIssues = validateRuntimeAudioMix(bundle).filter((issue) => issue.severity === "error");
   if (audioIssues.length > 0) throw new RuntimeAudioMixValidationError(audioIssues);
+  if (bundle.investigation) {
+    const investigationIssues = validateRuntimeInvestigation(bundle.investigation);
+    if (investigationIssues.length > 0) {
+      throw new RuntimeInvestigationValidationError(investigationIssues);
+    }
+  }
   if (bundle.bitmapFonts) registerBitmapFontsForAssetCollection(bundle.assets, bundle.bitmapFonts);
   return bundle;
 };
@@ -202,6 +221,7 @@ export * from "./font-validation.js";
 export * from "./front-end-localisation.js";
 export * from "./indexed-asset-validation.js";
 export * from "./instance-validation.js";
+export * from "./investigation.js";
 export * from "./localisation.js";
 export * from "./palette-map-validation.js";
 export * from "./ui-validation.js";
