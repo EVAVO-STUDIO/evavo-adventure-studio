@@ -28,6 +28,7 @@ export interface MultiProtagonistPackagedRuntimeController extends PackagedSessi
   activeProtagonistId(): ProtagonistId;
   multiProtagonistState(): MultiProtagonistState;
   switchProtagonist(protagonistId: ProtagonistId): void;
+  replaceMultiProtagonistState(state: MultiProtagonistState): void;
 }
 
 const initialCompanion = (bundle: RuntimeBundle): MultiProtagonistState => {
@@ -85,6 +86,13 @@ export const createMultiProtagonistPackagedRuntimeControllerWithFactory = (
     companion = commitWorldToActiveProtagonist(companion, controller.worldState());
   };
 
+  const rebuildActive = (state: MultiProtagonistState): void => {
+    const globalWorld = controller.worldState();
+    const sourceSave = controller.createSaveGame();
+    companion = state;
+    controller = createControllerFor(companion.activeProtagonistId, globalWorld, sourceSave);
+  };
+
   const switchProtagonist = (protagonistId: ProtagonistId): void => {
     if (protagonistId === companion.activeProtagonistId) return;
     const globalWorld = controller.worldState();
@@ -136,6 +144,7 @@ export const createMultiProtagonistPackagedRuntimeControllerWithFactory = (
     activeProtagonistId: () => companion.activeProtagonistId,
     multiProtagonistState: () => companion,
     switchProtagonist,
+    replaceMultiProtagonistState: rebuildActive,
     controlledActorInstanceId: () => controller.controlledActorInstanceId(),
     worldState: () => controller.worldState(),
     createFrame: (tick) => controller.createFrame(tick),
