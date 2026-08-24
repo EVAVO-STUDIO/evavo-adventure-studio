@@ -16,6 +16,10 @@ export interface GameLifecycleScreenItem {
   readonly slot?: number;
 }
 
+export interface GameLifecycleScreenCapabilities {
+  readonly quickRetryAvailable?: boolean;
+}
+
 export type GameLifecycleScreenCommand =
   | { readonly kind: "move-selection"; readonly delta: -1 | 1 }
   | { readonly kind: "set-selection"; readonly index: number }
@@ -23,6 +27,7 @@ export type GameLifecycleScreenCommand =
   | { readonly kind: "back" };
 
 export type GameLifecycleScreenEffect =
+  | { readonly kind: "quick-retry" }
   | { readonly kind: "load-slot"; readonly slot: number }
   | { readonly kind: "restart" }
   | { readonly kind: "title" }
@@ -58,10 +63,16 @@ const slotDetail = (snapshot: SaveGameSlotSnapshot): string => {
   }
 };
 
+const retryAvailable = (
+  snapshots: readonly SaveGameSlotSnapshot[],
+  capabilities: GameLifecycleScreenCapabilities,
+): boolean => capabilities.quickRetryAvailable ?? validSlot(snapshots, 0);
+
 export const gameLifecycleScreenItems = (
   state: GameLifecycleScreenState,
   outcome: GameLifecycleOutcome,
   snapshots: readonly SaveGameSlotSnapshot[],
+  capabilities: GameLifecycleScreenCapabilities = {},
 ): readonly GameLifecycleScreenItem[] => {
   if (state.screen === "load") {
     return [
@@ -85,7 +96,7 @@ export const gameLifecycleScreenItems = (
     items.push({
       id: "quick-retry",
       label: outcome.menu.labels.quickRetry,
-      enabled: validSlot(snapshots, 0),
+      enabled: retryAvailable(snapshots, capabilities),
     });
   }
   if (outcome.menu.allowLoad) {
@@ -113,8 +124,9 @@ const normalizeSelection = (
   state: GameLifecycleScreenState,
   outcome: GameLifecycleOutcome,
   snapshots: readonly SaveGameSlotSnapshot[],
+  capabilities: GameLifecycleScreenCapabilities,
 ): GameLifecycleScreenState => {
-  const items = gameLifecycleScreenItems(state, outcome, snapshots);
+  const items = gameLifecycleScreenItems(state, outcome, snapshots, capabilities);
   return items[state.selectedIndex]?.enabled
     ? state
     : { ...state, selectedIndex: firstEnabledIndex(items) };
@@ -124,9 +136,10 @@ const openScreen = (
   screen: GameLifecycleScreen,
   outcome: GameLifecycleOutcome,
   snapshots: readonly SaveGameSlotSnapshot[],
+  capabilities: GameLifecycleScreenCapabilities,
 ): GameLifecycleScreenState => {
   const state: GameLifecycleScreenState = { screen, selectedIndex: 0 };
-  return normalizeSelection(state, outcome, snapshots);
+  return normalizeSelection(state, outcome, snapshots, capabilities);
 };
 
 const moveSelection = (
@@ -134,8 +147,9 @@ const moveSelection = (
   delta: -1 | 1,
   outcome: GameLifecycleOutcome,
   snapshots: readonly SaveGameSlotSnapshot[],
+  capabilities: GameLifecycleScreenCapabilities,
 ): GameLifecycleScreenState => {
-  const items = gameLifecycleScreenItems(state, outcome, snapshots);
+  const items = gameLifecycleScreenItems(state, outcome, snapshots, capabilities);
   if (items.length === 0) return state;
   let index = state.selectedIndex;
   for (let attempts = 0; attempts < items.length; attempts += 1) {
@@ -150,39 +164,42 @@ export const transitionGameLifecycleScreen = (
   command: GameLifecycleScreenCommand,
   outcome: GameLifecycleOutcome,
   snapshots: readonly SaveGameSlotSnapshot[],
+  capabilities: GameLifecycleScreenCapabilities = {},
 ): GameLifecycleScreenTransition => {
-  const current = normalizeSelection(state, outcome, snapshots);
+  const current = normalizeSelection(state, outcome, snapshots, capabilities);
   if (command.kind === "move-selection") {
     return {
-      state: moveSelection(current, command.delta, outcome, snapshots),
+      state: moveSelection(current, command.delta, outcome, snapshots, capabilities),
       effect: null,
     };
   }
   if (command.kind === "set-selection") {
-    const item = gameLifecycleScreenItems(current, outcome, snapshots)[command.index];
+    const item = gameLifecycleScreenItems(current, outcome, snapshots, capabilities)[command.index];
     return item?.enabled
       ? { state: { ...current, selectedIndex: command.index }, effect: null }
       : { state: current, effect: null };
   }
   if (command.kind === "back") {
     return current.screen === "load"
-      ? { state: openScreen("root", outcome, snapshots), effect: null }
+      ? { state: openScreen("root", outcome, snapshots, capabilities), effect: null }
       : { state: current, effect: null };
   }
 
-  const item = gameLifecycleScreenItems(current, outcome, snapshots)[current.selectedIndex];
+  const item = gameLifecycleScreenItems(current, outcome, snapshots, capabilities)[current.selectedIndex];
   if (!item?.enabled) return { state: current, effect: null };
   if (current.screen === "load") {
     return item.id === "back" || item.slot === undefined
-      ? { state: openScreen("root", outcome, snapshots), effect: null }
+      ? { state: openScreen("root", outcome, snapshots, capabilities), effect: null }
       : { state: current, effect: { kind: "load-slot", slot: item.slot } };
   }
 
   switch (item.id) {
     case "quick-retry":
-      return { state: current, effect: { kind: "load-slot", slot: 0 } };
+      return capabilities.quickRetryAvailable === true
+        ? { state: current, effect: { kind: "quick-retry" } }
+        : { state: current, effect: { kind: "load-slot", slot: 0 } };
     case "load":
-      return { state: openScreen("load", outcome, snapshots), effect: null };
+      return { state: openScreen("load", outcome, snapshots, capabilities), effect: null };
     case "restart":
       return { state: current, effect: { kind: "restart" } };
     case "title":
