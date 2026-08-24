@@ -80,14 +80,30 @@ const pngChunk = (type: string, data: Uint8Array): Uint8Array => {
   return output;
 };
 
+const assemblePng = (chunks: readonly Uint8Array[]): Uint8Array => {
+  const total = PNG_SIGNATURE.length + chunks.reduce((sum, chunk) => sum + chunk.length, 0);
+  const output = new Uint8Array(total);
+  output.set(PNG_SIGNATURE, 0);
+  let cursor = PNG_SIGNATURE.length;
+  for (const chunk of chunks) {
+    output.set(chunk, cursor);
+    cursor += chunk.length;
+  }
+  return output;
+};
+
+const assertDimensions = (width: number, height: number): void => {
+  if (!Number.isSafeInteger(width) || width <= 0 || !Number.isSafeInteger(height) || height <= 0) {
+    throw new RangeError("PNG dimensions must be positive safe integers.");
+  }
+};
+
 export const encodeNativeRgbaPng = (
   width: number,
   height: number,
   rgba: Uint8Array,
 ): Uint8Array => {
-  if (!Number.isSafeInteger(width) || width <= 0 || !Number.isSafeInteger(height) || height <= 0) {
-    throw new RangeError("PNG dimensions must be positive safe integers.");
-  }
+  assertDimensions(width, height);
   if (rgba.byteLength !== width * height * 4) {
     throw new RangeError(`PNG RGBA buffer has ${rgba.byteLength} bytes; expected ${width * height * 4}.`);
   }
@@ -108,18 +124,79 @@ export const encodeNativeRgbaPng = (
     scanlines.set(rgba.subarray(y * width * 4, (y + 1) * width * 4), destination + 1);
   }
 
-  const chunks = [
+  return assemblePng([
     pngChunk("IHDR", ihdr),
     pngChunk("IDAT", zlibStored(scanlines)),
     pngChunk("IEND", new Uint8Array()),
-  ];
-  const total = PNG_SIGNATURE.length + chunks.reduce((sum, chunk) => sum + chunk.length, 0);
-  const output = new Uint8Array(total);
-  output.set(PNG_SIGNATURE, 0);
-  let cursor = PNG_SIGNATURE.length;
-  for (const chunk of chunks) {
-    output.set(chunk, cursor);
-    cursor += chunk.length;
+  ]);
+};
+
+export interface NativeIndexedPngPaletteEntry {
+  readonly r: number;
+  readonly g: number;
+  readonly b: number;
+  readonly a?: number;
+}
+
+export const encodeNativeIndexedPng = (
+  width: number,
+  height: number,
+  indices: Uint8Array,
+  palette: readonly NativeIndexedPngPaletteEntry[],
+): Uint8Array => {
+  assertDimensions(width, height);
+  if (indices.byteLength !== width * height) {
+    throw new RangeError(`PNG index buffer has ${indices.byteLength} bytes; expected ${width * height}.`);
   }
-  return output;
+  if (palette.length < 1 || palette.length > 256) {
+    throw new RangeError("Indexed PNG palette must contain from 1 to 256 entries.");
+  }
+
+  let maximumIndex = 0;
+  for (const value of indices) maximumIndex = Math.max(maximumIndex, value);
+  if (maximumIndex >= palette.length) {
+    throw new RangeError(`Indexed PNG source uses palette index ${maximumIndex}; palette has ${palette.length} entries.`);
+  }
+
+  const ihdr = new Uint8Array(13);
+  writeUint32Be(ihdr, 0, width);
+  writeUint32Be(ihdr, 4, height);
+  ihdr[8] = 8;
+  ihdr[9] = 3;
+  ihdr[10] = 0;
+  ihdr[11] = 0;
+  ihdr[12] = 0;
+
+  const plte = new Uint8Array(palette.length * 3);
+  const alpha = new Uint8Array(palette.length);
+  let lastNonOpaque = -1;
+  palette.forEach((entry, index) => {
+    for (const [name, value] of [
+      ["r", entry.r],
+      ["g", entry.g],
+      ["b", entry.b],
+      ["a", entry.a ?? 255],
+    ] as const) {
+      if (!Number.isSafeInteger(value) || value < 0 || value > 255) {
+        throw new RangeError(`Indexed PNG palette ${name} component at entry ${index} must be 0–255.`);
+      }
+    }
+    plte[index * 3] = entry.r;
+    plte[index * 3 + 1] = entry.g;
+    plte[index * 3 + 2] = entry.b;
+    alpha[index] = entry.a ?? 255;
+    if (alpha[index] !== 255) lastNonOpaque = index;
+  });
+
+  const scanlines = new Uint8Array(height * (1 + width));
+  for (let y = 0; y < height; y += 1) {
+    const destination = y * (1 + width);
+    scanlines[destination] = 0;
+    scanlines.set(indices.subarray(y * width, (y + 1) * width), destination + 1);
+  }
+
+  const chunks: Uint8Array[] = [pngChunk("IHDR", ihdr), pngChunk("PLTE", plte)];
+  if (lastNonOpaque >= 0) chunks.push(pngChunk("tRNS", alpha.slice(0, lastNonOpaque + 1)));
+  chunks.push(pngChunk("IDAT", zlibStored(scanlines)), pngChunk("IEND", new Uint8Array()));
+  return assemblePng(chunks);
 };
