@@ -9,6 +9,7 @@ describe("Night Shift station vertical slice readiness", () => {
     expect(report.shippableReady).toBe(false);
     expect(report.gates.find((gate) => gate.id === "authored-source")?.ready).toBe(true);
     expect(report.gates.find((gate) => gate.id === "station-art-intake")?.ready).toBe(false);
+    expect(report.gates.find((gate) => gate.id === "station-officer-review")?.ready).toBe(false);
     expect(report.gates.find((gate) => gate.id === "station-package")?.ready).toBe(false);
   });
 
@@ -41,5 +42,24 @@ describe("Night Shift station vertical slice readiness", () => {
       },
     });
     expect(report.gates.find((gate) => gate.id === "station-art-intake")?.ready).toBe(false);
+  });
+
+  it("does not let a generic art intake substitute for the twelve-frame officer review", () => {
+    const report = evaluateNightShiftStationSliceReadiness({
+      officerMasterIntake: {
+        status: "blocked",
+        reviewedFrames: 11,
+        requiredFrames: 12,
+        issues: [
+          {
+            severity: "error",
+            code: "missing-frame-review",
+            frameId: "frame.night-shift.officer.notebook",
+            message: "Missing retained notebook frame review.",
+          },
+        ],
+      },
+    });
+    expect(report.gates.find((gate) => gate.id === "station-officer-review")?.ready).toBe(false);
   });
 });
