@@ -24,6 +24,18 @@
       "types": "./dist/src/multi-protagonist-bindings.d.ts",
       "import": "./dist/src/multi-protagonist-bindings.js"
     },
+    "./rpg": {
+      "types": "./dist/src/rpg.d.ts",
+      "import": "./dist/src/rpg.js"
+    },
+    "./rpg-puzzles": {
+      "types": "./dist/src/rpg-puzzles.d.ts",
+      "import": "./dist/src/rpg-puzzles.js"
+    },
+    "./room-scripts": {
+      "types": "./dist/src/room-scripts.d.ts",
+      "import": "./dist/src/room-scripts.js"
+    },
     "./ui-validation": {
       "types": "./dist/src/ui-validation.d.ts",
       "import": "./dist/src/ui-validation.js"
