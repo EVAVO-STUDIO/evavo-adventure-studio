@@ -56,6 +56,25 @@ describe("Night Shift Station production packet", () => {
     );
   });
 
+  it("embeds the exact seven-entry runtime index build plan", () => {
+    expect(nightShiftStationProductionPacket.runtimeIndexBuildPlan).toHaveLength(7);
+    expect(
+      nightShiftStationProductionPacket.runtimeIndexBuildPlan.find(
+        (entry) => entry.assetId === "asset.night-shift.background.station",
+      ),
+    ).toMatchObject({
+      width: 320,
+      height: 200,
+      transparentIndex: null,
+      defaultPalette: { paletteAssetId: "asset.palette.night-shift.station", paletteOffset: 0 },
+    });
+    expect(
+      nightShiftStationProductionPacket.runtimeIndexBuildPlan.find(
+        (entry) => entry.assetId === "asset.night-shift.actor.officer",
+      )?.frames,
+    ).toHaveLength(12);
+  });
+
   it("serialises deterministically with a stable filename", () => {
     expect(nightShiftStationProductionPacketJson()).toBe(nightShiftStationProductionPacketJson());
     expect(nightShiftStationProductionPacketJson().endsWith("\n")).toBe(true);
