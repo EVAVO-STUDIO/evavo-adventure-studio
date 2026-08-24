@@ -5,7 +5,6 @@ import type {
   SceneDirectorDocuments,
 } from "./scene-director-documents.js";
 import {
-  directorActiveObjectState,
   directorInverseTransformPoint,
   directorObjectScale,
   directorTransformLocalPoint,
@@ -19,6 +18,14 @@ export interface SceneDirectorCanonicalEditingController {
   readonly onPreviewEdit: (command: SceneDirectorDocumentCommand) => void;
   readonly onCommitEdit: (command: SceneDirectorDocumentCommand) => void;
   readonly onCancelPreview: () => void;
+}
+
+interface HotspotTarget {
+  readonly key: string;
+  readonly instanceId: Id<"object">;
+  readonly definitionId: Id<"object-definition">;
+  readonly stateId: Id<"object-state">;
+  readonly label: string;
 }
 
 const points = (value: readonly Point[]): string =>
@@ -149,6 +156,29 @@ const commandForDrag = (
   }
 };
 
+const hotspotTargetsForScene = (
+  documents: SceneDirectorDocuments,
+  sceneId: Id<"scene">,
+): readonly HotspotTarget[] => {
+  const composition = documents.sceneInstances.scenes.find((candidate) => candidate.sceneId === sceneId);
+  const definitions = new Map(
+    documents.sceneInstances.objectDefinitions.map((definition) => [definition.id as string, definition] as const),
+  );
+  return (composition?.objectInstances ?? []).flatMap((instance) => {
+    const definition = definitions.get(instance.definitionId);
+    if (!definition) return [];
+    return definition.states
+      .filter((state) => Boolean(state.interactionShape))
+      .map((state) => ({
+        key: `${instance.id}::${state.id}`,
+        instanceId: instance.id,
+        definitionId: definition.id,
+        stateId: state.id,
+        label: `${definition.name} · ${state.id.split(".").at(-1) ?? state.id}`,
+      }));
+  });
+};
+
 export const SceneDirectorCanonicalGeometryPanel = ({
   documents,
   sceneId,
@@ -160,6 +190,7 @@ export const SceneDirectorCanonicalGeometryPanel = ({
 }) => {
   const [mode, setMode] = useState<CanonicalGeometryMode>("walk");
   const [drag, setDrag] = useState<CanonicalDrag | null>(null);
+  const [hotspotSelection, setHotspotSelection] = useState("");
   const scene = documents.project.scenes.find((candidate) => candidate.id === sceneId);
   const composition = documents.sceneInstances.scenes.find((candidate) => candidate.sceneId === sceneId);
   if (!scene) return null;
@@ -167,6 +198,11 @@ export const SceneDirectorCanonicalGeometryPanel = ({
   const definitions = new Map(
     documents.sceneInstances.objectDefinitions.map((definition) => [definition.id as string, definition] as const),
   );
+  const hotspotTargets = hotspotTargetsForScene(documents, sceneId);
+  const selectedHotspotKey = hotspotTargets.some((target) => target.key === hotspotSelection)
+    ? hotspotSelection
+    : (hotspotTargets[0]?.key ?? "");
+  const selectedHotspot = hotspotTargets.find((target) => target.key === selectedHotspotKey) ?? null;
 
   const begin = (event: ReactPointerEvent<SVGCircleElement>, next: CanonicalDrag): void => {
     event.preventDefault();
@@ -197,7 +233,7 @@ export const SceneDirectorCanonicalGeometryPanel = ({
         <div>
           <span className="stg-eyebrow">CANONICAL GEOMETRY · MULTI-DOCUMENT</span>
           <h2>Project floor + composition control</h2>
-          <p>These handles edit project.json and scene-instances.json directly, then re-run semantic validation.</p>
+          <p>These handles edit project.json and scene-instances.json directly, then re-run linked semantic validation.</p>
         </div>
         <nav aria-label="Canonical geometry modes">
           {(["walk", "control", "hotspots", "objects"] as const).map((candidate) => (
@@ -214,6 +250,24 @@ export const SceneDirectorCanonicalGeometryPanel = ({
           ))}
         </nav>
       </header>
+
+      {mode === "hotspots" && hotspotTargets.length > 0 ? (
+        <label className="dir-canonical-state-picker">
+          <span>Placed object state</span>
+          <select
+            value={selectedHotspotKey}
+            onChange={(event) => {
+              cancel();
+              setHotspotSelection(event.currentTarget.value);
+            }}
+          >
+            {hotspotTargets.map((target) => (
+              <option key={target.key} value={target.key}>{target.label}</option>
+            ))}
+          </select>
+        </label>
+      ) : null}
+
       <div className="dir-canonical-shell">
         <svg
           viewBox={`0 0 ${scene.width} ${scene.height}`}
@@ -328,23 +382,25 @@ export const SceneDirectorCanonicalGeometryPanel = ({
               ))
             : null}
 
-          {mode === "hotspots"
-            ? composition?.objectInstances.map((instance) => {
-                const definition = definitions.get(instance.definitionId);
-                if (!definition) return null;
-                const state = directorActiveObjectState(definition, instance);
-                if (!state?.interactionShape) return null;
+          {mode === "hotspots" && selectedHotspot
+            ? (() => {
+                const instance = composition?.objectInstances.find(
+                  (candidate) => candidate.id === selectedHotspot.instanceId,
+                );
+                const definition = definitions.get(selectedHotspot.definitionId);
+                const state = definition?.states.find((candidate) => candidate.id === selectedHotspot.stateId);
+                if (!instance || !definition || !state?.interactionShape) return null;
                 const pivot = state.visual?.pivot ?? { x: 0, y: 0 };
                 const scale = directorObjectScale(documents, sceneId, instance);
                 const scenePoints = state.interactionShape.points.map((point) =>
                   directorTransformLocalPoint(point, instance.position, pivot, scale, instance.mirrored),
                 );
                 return (
-                  <g key={instance.id} className="dir-canonical-hotspot">
+                  <g className="dir-canonical-hotspot">
                     <polygon points={points(scenePoints)} />
                     {scenePoints.map((point, pointIndex) => (
                       <circle
-                        key={`${instance.id}.${pointIndex}`}
+                        key={`${instance.id}.${state.id}.${pointIndex}`}
                         className="dir-canonical-handle"
                         cx={point.x}
                         cy={point.y}
@@ -365,10 +421,12 @@ export const SceneDirectorCanonicalGeometryPanel = ({
                         }
                       />
                     ))}
-                    <text x={scenePoints[0]?.x ?? instance.position.x} y={(scenePoints[0]?.y ?? instance.position.y) - 4}>{definition.name}</text>
+                    <text x={scenePoints[0]?.x ?? instance.position.x} y={(scenePoints[0]?.y ?? instance.position.y) - 4}>
+                      {definition.name} · {state.id.split(".").at(-1) ?? state.id}
+                    </text>
                   </g>
                 );
-              })
+              })()
             : null}
         </svg>
         <footer>
