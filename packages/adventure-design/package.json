@@ -36,6 +36,10 @@
       "types": "./dist/src/progression.d.ts",
       "import": "./dist/src/progression.js"
     },
+    "./investigation": {
+      "types": "./dist/src/investigation.d.ts",
+      "import": "./dist/src/investigation.js"
+    },
     "./production-profiles": {
       "types": "./dist/src/production-profiles.d.ts",
       "import": "./dist/src/production-profiles.js"
