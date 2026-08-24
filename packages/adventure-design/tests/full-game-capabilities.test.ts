@@ -1,0 +1,120 @@
+import { describe, expect, it } from "vitest";
+import {
+  adventureCapabilityCatalog,
+  adventureReferenceGameCapabilities,
+  currentAdventureCapabilityCoverage,
+  evaluateAdventureReferenceGameReadiness,
+  validateAdventureCapabilityMatrix,
+} from "../src/full-game-capabilities.js";
+
+describe("full-game adventure capability matrix", () => {
+  it("defines one coverage record for every capability and all requested reference games", () => {
+    expect(validateAdventureCapabilityMatrix()).toEqual([]);
+    expect(new Set(adventureCapabilityCatalog.map((capability) => capability.id)).size).toBe(
+      adventureCapabilityCatalog.length,
+    );
+    expect(currentAdventureCapabilityCoverage).toHaveLength(adventureCapabilityCatalog.length);
+    expect(adventureReferenceGameCapabilities.map((profile) => profile.id)).toEqual([
+      "kings-quest-v",
+      "gabriel-knight-sins-of-the-fathers",
+      "quest-for-glory-vga",
+      "day-of-the-tentacle",
+      "leisure-suit-larry-vga",
+      "heart-of-china",
+      "rise-of-the-dragon",
+      "indiana-jones-fate-of-atlantis",
+    ]);
+  });
+
+  it("does not confuse whole-game readiness with a convincing room proof", () => {
+    for (const profile of adventureReferenceGameCapabilities) {
+      const readiness = evaluateAdventureReferenceGameReadiness(profile.id);
+      expect(readiness.requiredCount).toBeGreaterThan(10);
+      expect(readiness.stressScenes.length).toBeGreaterThanOrEqual(3);
+      expect(readiness.ready).toBe(false);
+      expect(readiness.gaps.length).toBeGreaterThan(0);
+    }
+  });
+
+  it("keeps Sierra investigation requirements distinct from Sierra storybook requirements", () => {
+    const kingsQuest = adventureReferenceGameCapabilities.find((profile) => profile.id === "kings-quest-v")!;
+    const gabrielKnight = adventureReferenceGameCapabilities.find(
+      (profile) => profile.id === "gabriel-knight-sins-of-the-fathers",
+    )!;
+    expect(kingsQuest.required).toContain("panoramic-exterior");
+    expect(kingsQuest.required).not.toContain("topic-dialogue");
+    expect(gabrielKnight.required).toEqual(
+      expect.arrayContaining([
+        "topic-dialogue",
+        "dialogue-fact-unlocks",
+        "chapter-day-progression",
+        "research-investigation-loop",
+      ]),
+    );
+  });
+
+  it("requires the actual Quest for Glory RPG simulation layer", () => {
+    const qfg = adventureReferenceGameCapabilities.find((profile) => profile.id === "quest-for-glory-vga")!;
+    expect(qfg.required).toEqual(
+      expect.arrayContaining([
+        "character-stats",
+        "skills-and-practice",
+        "character-classes",
+        "skill-gated-solutions",
+        "health-stamina-mana",
+        "equipment-money",
+        "real-time-combat",
+        "time-of-day-clock",
+        "npc-schedules",
+        "character-import-export",
+      ]),
+    );
+  });
+
+  it("requires SCUMM-style sentence and multi-character grammar for Day of the Tentacle", () => {
+    const dott = adventureReferenceGameCapabilities.find((profile) => profile.id === "day-of-the-tentacle")!;
+    expect(dott.required).toEqual(
+      expect.arrayContaining([
+        "verb-sentence-grammar",
+        "item-on-item",
+        "room-cutaways",
+        "multi-protagonist-switching",
+      ]),
+    );
+  });
+
+  it("requires branching and cinematic/action grammar for the Dynamix references", () => {
+    const heart = adventureReferenceGameCapabilities.find((profile) => profile.id === "heart-of-china")!;
+    const rise = adventureReferenceGameCapabilities.find((profile) => profile.id === "rise-of-the-dragon")!;
+    expect(heart.required).toEqual(
+      expect.arrayContaining([
+        "branching-route-topology",
+        "multi-protagonist-switching",
+        "cinematic-insets",
+        "travel-map",
+      ]),
+    );
+    expect(rise.required).toEqual(
+      expect.arrayContaining([
+        "branching-route-topology",
+        "cinematic-insets",
+        "timed-puzzle",
+        "action-minigame",
+      ]),
+    );
+  });
+
+  it("requires route branching and alternate solutions for Fate of Atlantis", () => {
+    const fate = adventureReferenceGameCapabilities.find(
+      (profile) => profile.id === "indiana-jones-fate-of-atlantis",
+    )!;
+    expect(fate.required).toEqual(
+      expect.arrayContaining([
+        "verb-sentence-grammar",
+        "branching-route-topology",
+        "alternate-puzzle-solutions",
+        "travel-map",
+      ]),
+    );
+  });
+});
