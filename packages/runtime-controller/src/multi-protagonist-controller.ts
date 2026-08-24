@@ -6,6 +6,7 @@ import {
   loadSaveGame as loadRuntimeSaveGame,
   type SaveGame,
 } from "@evavo/adventure-save-game";
+import type { InteractiveRuntimeWorldState } from "@evavo/adventure-scene-runtime/commands";
 import {
   createMultiProtagonistState,
   switchActiveProtagonist,
@@ -31,6 +32,7 @@ export interface MultiProtagonistPackagedRuntimeController {
   multiProtagonistState(): MultiProtagonistState;
   switchProtagonist(protagonistId: ProtagonistId): void;
   controlledActorInstanceId(): Id<"actor-instance"> | null;
+  worldState(): InteractiveRuntimeWorldState;
   createFrame(tick: number): ResolvedFrame;
   setPointer(position: Point | null): void;
   setPressed(pressed: boolean): void;
@@ -59,7 +61,7 @@ export const createMultiProtagonistPackagedRuntimeController = (
 
   const createControllerFor = (
     protagonistId: ProtagonistId,
-    sourceWorld?: ReturnType<PackagedRuntimeController["worldState"]>,
+    sourceWorld?: InteractiveRuntimeWorldState,
   ): PackagedRuntimeController => {
     const actorInstanceId = actorInstanceIdForProtagonist(bundle, companion, protagonistId);
     const next = createPackagedRuntimeController(bundle, {
@@ -134,6 +136,7 @@ export const createMultiProtagonistPackagedRuntimeController = (
     multiProtagonistState: () => companion,
     switchProtagonist,
     controlledActorInstanceId: () => controller.controlledActorInstanceId,
+    worldState: () => controller.worldState(),
     createFrame: (tick) => controller.createFrame(tick),
     setPointer: (position) => controller.setPointer(position),
     setPressed: (pressed) => controller.setPressed(pressed),
