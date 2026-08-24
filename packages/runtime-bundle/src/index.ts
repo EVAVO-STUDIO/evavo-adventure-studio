@@ -77,6 +77,11 @@ import {
   validateRuntimeRoomScripts,
 } from "./room-scripts.js";
 import {
+  RuntimeAdventureRpgPuzzleValidationError,
+  runtimeAdventureRpgPuzzleManifestSchema,
+  validateRuntimeAdventureRpgPuzzles,
+} from "./rpg-puzzles.js";
+import {
   RuntimeAdventureRpgValidationError,
   runtimeAdventureRpgManifestSchema,
   validateRuntimeAdventureRpg,
@@ -158,6 +163,7 @@ export const runtimeBundleSchema = z
     multiProtagonistBindings: runtimeMultiProtagonistBindingManifestSchema.optional(),
     roomScripts: runtimeRoomScriptManifestSchema.optional(),
     rpg: runtimeAdventureRpgManifestSchema.optional(),
+    rpgPuzzles: runtimeAdventureRpgPuzzleManifestSchema.optional(),
   })
   .strict()
   .superRefine((bundle, context) => {
@@ -174,6 +180,7 @@ export const runtimeBundleSchema = z
       ["multiProtagonistBindings", bundle.multiProtagonistBindings],
       ["roomScripts", bundle.roomScripts],
       ["rpg", bundle.rpg],
+      ["rpgPuzzles", bundle.rpgPuzzles],
     ] as const;
     for (const [key, value] of projectScoped) {
       if (value && value.projectId !== bundle.projectId) {
@@ -358,6 +365,25 @@ export const parseRuntimeBundle = (input: unknown): RuntimeBundle => {
     const rpgIssues = validateRuntimeAdventureRpg(bundle.rpg);
     if (rpgIssues.length > 0) throw new RuntimeAdventureRpgValidationError(rpgIssues);
   }
+  if (bundle.rpgPuzzles) {
+    if (!bundle.rpg) {
+      throw new RuntimeAdventureRpgPuzzleValidationError([
+        {
+          severity: "error",
+          code: "unknown-skill",
+          path: "rpgPuzzles",
+          message: "RPG puzzles require an RPG manifest.",
+        },
+      ]);
+    }
+    const classTags = new Set(bundle.rpg.classes.flatMap((entry) => entry.tags ?? []));
+    const puzzleIssues = validateRuntimeAdventureRpgPuzzles(bundle.rpgPuzzles, {
+      classTags,
+      skillIds: new Set(bundle.rpg.skills.map((entry) => entry.id)),
+      itemIds: new Set(bundle.inventoryItems.map((item) => item.id as string)),
+    });
+    if (puzzleIssues.length > 0) throw new RuntimeAdventureRpgPuzzleValidationError(puzzleIssues);
+  }
   if (bundle.bitmapFonts) registerBitmapFontsForAssetCollection(bundle.assets, bundle.bitmapFonts);
   return bundle;
 };
@@ -375,6 +401,7 @@ export * from "./multi-protagonist-bindings.js";
 export * from "./multi-protagonist.js";
 export * from "./palette-map-validation.js";
 export * from "./room-scripts.js";
+export * from "./rpg-puzzles.js";
 export * from "./rpg.js";
 export * from "./ui-validation.js";
 export * from "./validation.js";
