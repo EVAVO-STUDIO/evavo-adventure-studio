@@ -31,6 +31,18 @@
     "./investigation-controller": {
       "types": "./dist/src/investigation-controller.d.ts",
       "import": "./dist/src/investigation-controller.js"
+    },
+    "./multi-protagonist-controller": {
+      "types": "./dist/src/multi-protagonist-controller.d.ts",
+      "import": "./dist/src/multi-protagonist-controller.js"
+    },
+    "./multi-protagonist-projection": {
+      "types": "./dist/src/multi-protagonist-projection.d.ts",
+      "import": "./dist/src/multi-protagonist-projection.js"
+    },
+    "./multi-protagonist-actor": {
+      "types": "./dist/src/multi-protagonist-actor.d.ts",
+      "import": "./dist/src/multi-protagonist-actor.js"
     }
   },
   "files": [
