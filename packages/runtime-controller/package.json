@@ -43,6 +43,10 @@
     "./multi-protagonist-actor": {
       "types": "./dist/src/multi-protagonist-actor.d.ts",
       "import": "./dist/src/multi-protagonist-actor.js"
+    },
+    "./sentence-controller": {
+      "types": "./dist/src/sentence-controller.d.ts",
+      "import": "./dist/src/sentence-controller.js"
     }
   },
   "files": [
