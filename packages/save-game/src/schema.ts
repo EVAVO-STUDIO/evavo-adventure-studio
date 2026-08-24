@@ -8,6 +8,7 @@ import {
 } from "@evavo/adventure-project-schema";
 import type { InteractiveRuntimeWorldState } from "@evavo/adventure-scene-runtime/commands";
 import type { RuntimeInvestigationState } from "@evavo/adventure-scene-runtime/investigation-runtime";
+import type { MultiProtagonistState } from "@evavo/adventure-scene-runtime/multi-protagonist";
 import {
   type ProfiledNavigationMovementState,
   parseProfiledNavigationMovementState,
@@ -18,6 +19,7 @@ import {
   type SaveGameItemCombinationState,
   saveGameItemCombinationStateSchema,
 } from "./item-combinations.js";
+import { saveGameMultiProtagonistStateSchema } from "./multi-protagonist.js";
 import {
   type SaveGameProfiledRuntimeCameraState,
   saveGameProfiledRuntimeCameraStateSchema,
@@ -258,6 +260,7 @@ export interface SaveGamePayload {
   readonly audio?: AudioRuntimeState;
   readonly investigation?: RuntimeInvestigationState;
   readonly itemCombinations?: SaveGameItemCombinationState;
+  readonly multiProtagonist?: MultiProtagonistState;
 }
 
 const saveGamePayloadObjectSchema = z
@@ -271,6 +274,7 @@ const saveGamePayloadObjectSchema = z
     audio: audioRuntimeStateSchema.optional(),
     investigation: saveGameInvestigationStateSchema.optional(),
     itemCombinations: saveGameItemCombinationStateSchema.optional(),
+    multiProtagonist: saveGameMultiProtagonistStateSchema.optional(),
   })
   .strict();
 
