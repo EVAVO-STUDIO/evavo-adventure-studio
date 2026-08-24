@@ -23,7 +23,8 @@
   gap: 3px;
 }
 
-.stg-readiness-gates strong {
+.stg-readiness-gates strong,
+.stg-production-plan-summary strong {
   color: #aab1bd;
   font-size: 8px;
   letter-spacing: 0.08em;
@@ -48,4 +49,52 @@
 .stg-readiness-gates span.is-blocked {
   border-color: #634550;
   color: #d0a2af;
+}
+
+.stg-production-plan-summary {
+  margin-top: 10px;
+  padding-top: 9px;
+  border-top: 1px solid #262c34;
+}
+
+.stg-production-plan-summary > header {
+  display: flex;
+  justify-content: space-between;
+  align-items: baseline;
+  gap: 8px;
+  margin-bottom: 6px;
+}
+
+.stg-production-plan-summary > header span {
+  color: #767f8c;
+  font-family: "Courier New", monospace;
+  font-size: 7px;
+}
+
+.stg-production-plan-metrics,
+.stg-production-plan-roles {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 4px;
+}
+
+.stg-production-plan-roles {
+  margin-top: 5px;
+}
+
+.stg-production-plan-metrics span,
+.stg-production-plan-roles span {
+  padding: 4px 5px;
+  border: 1px solid #2b3138;
+  background: #0c0f13;
+  color: #8f98a4;
+  font-family: "Courier New", monospace;
+  font-size: 7px;
+}
+
+.stg-production-plan-metrics span strong,
+.stg-production-plan-roles span strong {
+  margin-right: 3px;
+  color: #d0cbc0;
+  font-size: inherit;
 }
