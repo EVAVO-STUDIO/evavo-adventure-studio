@@ -61,7 +61,13 @@ export type SaveGameCompatibilityIssueCode =
   | "room-script-scene-missing"
   | "room-script-id-missing"
   | "room-script-sequence-missing"
-  | "room-script-return-location-invalid";
+  | "room-script-return-location-invalid"
+  | "rpg-state-without-runtime-manifest"
+  | "rpg-class-missing"
+  | "rpg-stat-missing"
+  | "rpg-skill-missing"
+  | "rpg-resource-missing"
+  | "rpg-time-invalid";
 
 export interface SaveGameCompatibilityIssue {
   readonly severity: "error";
