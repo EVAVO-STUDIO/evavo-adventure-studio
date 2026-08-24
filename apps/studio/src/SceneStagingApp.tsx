@@ -5,6 +5,10 @@ import {
 import { type ChangeEvent, useEffect, useMemo, useState } from "react";
 import { SceneDirectorPanel } from "./scene-director-components.js";
 import { createSceneDirectorOverlay } from "./scene-director-model.js";
+import {
+  sceneDirectorPaletteBankAtOffset,
+  sceneDirectorPaletteSpecByAssetId,
+} from "./scene-director-palette-specs.js";
 import { sceneDirectorSamples } from "./scene-director-samples.js";
 import {
   FindingsPanel,
@@ -224,22 +228,49 @@ export const SceneStagingApp = () => {
           {directorOverlay.lightZones.length > 0 ? (
             <section>
               <span className="stg-eyebrow">INDEXED LIGHT BINDINGS</span>
-              <h2>{boundLights}/{directorOverlay.lightZones.length} production-ready</h2>
-              <ul>
-                {directorOverlay.lightZones.map(({ zone, map, bindingStatus }) => (
-                  <li key={zone.id}>
-                    <strong>{shortId(zone.id)}</strong>
-                    {" · "}{zone.blendMode}
-                    {map
-                      ? ` · ${map.paletteAssetId} +${map.paletteOffset}`
-                      : ` · ${zone.paletteMapId}`}
-                    {bindingStatus === "bound" ? " · bound" : ` · ${bindingStatus}`}
-                  </li>
-                ))}
-              </ul>
+              <h2>{boundLights}/{directorOverlay.lightZones.length} authored bindings</h2>
+              <div className="stg-palette-bindings">
+                {directorOverlay.lightZones.map(({ zone, map, bindingStatus }) => {
+                  const spec = map ? sceneDirectorPaletteSpecByAssetId(map.paletteAssetId) : null;
+                  const paletteBank = spec && map
+                    ? sceneDirectorPaletteBankAtOffset(spec, map.paletteOffset)
+                    : null;
+                  return (
+                    <article key={zone.id} className={`stg-palette-binding is-${bindingStatus}`}>
+                      <header>
+                        <strong>{shortId(zone.id)}</strong>
+                        <span>{zone.blendMode === "ordered-dither" ? "Bayer-4 · 8 px" : "hard"}</span>
+                      </header>
+                      <code>
+                        {map
+                          ? `${map.paletteAssetId} +${map.paletteOffset}`
+                          : zone.paletteMapId}
+                      </code>
+                      {paletteBank ? (
+                        <>
+                          <div className="stg-palette-bank-heading">
+                            <span>{paletteBank.label}</span>
+                            <small>{paletteBank.role}</small>
+                          </div>
+                          <div className="stg-palette-swatches" aria-label={`${paletteBank.label} palette bank`}>
+                            {paletteBank.colours.map((colour, index) => (
+                              <span
+                                key={`${paletteBank.offset + index}-${colour}`}
+                                title={`Index ${paletteBank.offset + index} · ${colour}`}
+                                style={{ backgroundColor: colour }}
+                              />
+                            ))}
+                          </div>
+                        </>
+                      ) : null}
+                      <footer>{bindingStatus}</footer>
+                    </article>
+                  );
+                })}
+              </div>
               <p>
-                Ordered-dither zones transition over the native boundary band and use Bayer palette selection;
-                missing palette assets must be resolved before the proof is considered shippable.
+                These bindings are authored at the project layer. Shipping still requires compiled palette
+                binaries and indexed evidence to pass the CLI/runtime integrity gates.
               </p>
             </section>
           ) : null}
