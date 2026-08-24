@@ -12,6 +12,7 @@ import {
 } from "./canonical.js";
 import { validateSaveGameCompatibility } from "./compatibility.js";
 import { SaveGameCompatibilityError } from "./errors.js";
+import { validateSavedInvestigation } from "./investigation-compatibility.js";
 import { assertSaveGameAllowed } from "./policy.js";
 import type { SaveGameProfiledRuntimeCameraState } from "./profiled-camera.js";
 import {
@@ -40,6 +41,7 @@ const completeCompatibilityIssues = (
 ) => [
   ...validateSaveGameCompatibility(bundle, save),
   ...validateSavedAudio(bundle, save),
+  ...validateSavedInvestigation(bundle, save),
 ];
 
 export const createSaveGame = (
