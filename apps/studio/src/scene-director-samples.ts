@@ -5,9 +5,9 @@ import type { SceneStagingManifest } from "@evavo/adventure-scene-instances/stag
 import { studioProject, studioSceneInstances } from "./fixture.js";
 import {
   nightShiftCompleteInstances,
-  nightShiftCompleteProject,
   nightShiftCompleteStaging,
 } from "./night-shift-complete-proof.js";
+import { nightShiftRuntimeProject } from "./night-shift-runtime-contracts.js";
 import {
   nightShiftDirectorPaletteMaps,
   redLedgerDirectorPaletteMaps,
@@ -59,11 +59,7 @@ export const sceneDirectorSamples: readonly SceneDirectorSample[] = [
     id: "night-shift",
     label: "Night Shift",
     productionLanguage: "Early procedural icon VGA",
-    project: withPaletteAsset(
-      nightShiftCompleteProject,
-      "asset.palette.night-shift.actor-lighting",
-      "palettes/night-shift-actor-lighting.pal",
-    ),
+    project: nightShiftRuntimeProject,
     sceneInstances: nightShiftCompleteInstances,
     staging: nightShiftCompleteStaging,
     paletteMaps: nightShiftDirectorPaletteMaps,
