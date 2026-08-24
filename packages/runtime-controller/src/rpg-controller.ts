@@ -21,7 +21,6 @@ import {
   type AdventureRpgScheduleWindow,
   type AdventureRpgState,
 } from "@evavo/adventure-scene-runtime/rpg";
-import { projectAdventureRpgIntoStory } from "@evavo/adventure-scene-runtime/rpg-projection";
 import type { PackagedRuntimeControllerOptions } from "./packaged-controller.js";
 import {
   createBasePackagedSessionController,
@@ -67,27 +66,6 @@ export const createAdventureRpgPackagedRuntimeControllerWithFactory = (
   const controller = innerFactory(bundle, baseOptions);
   let rpg = createAdventureRpgState(manifest, defaultClassId);
 
-  const synchronizeProjection = (): void => {
-    const baseSave = controller.createSaveGame();
-    const world = controller.worldState();
-    const projectedWorld = {
-      ...world,
-      story: projectAdventureRpgIntoStory(manifest, rpg, world.story),
-    };
-    const projectedSave = createRuntimeSaveGame(bundle, projectedWorld, {
-      controlledActorInstanceId: baseSave.interface.controlledActorInstanceId,
-      selectedVerbId: baseSave.interface.selectedVerbId,
-      selectedItemId: baseSave.interface.selectedItemId,
-      statusText: baseSave.interface.statusText,
-      parser: baseSave.interface.parser,
-      ...preserveCompanions(baseSave),
-      rpg,
-    });
-    controller.restoreSaveGame(projectedSave);
-  };
-
-  synchronizeProjection();
-
   const createSaveGame = (): SaveGame => {
     const baseSave = controller.createSaveGame();
     return createRuntimeSaveGame(bundle, controller.worldState(), {
@@ -105,13 +83,7 @@ export const createAdventureRpgPackagedRuntimeControllerWithFactory = (
     const save = loadRuntimeSaveGame(bundle, input);
     const tick = controller.restoreSaveGame(save);
     rpg = save.rpg ?? createAdventureRpgState(manifest, defaultClassId);
-    synchronizeProjection();
     return tick;
-  };
-
-  const mutateRpg = (next: AdventureRpgState): void => {
-    rpg = next;
-    synchronizeProjection();
   };
 
   return {
@@ -119,18 +91,18 @@ export const createAdventureRpgPackagedRuntimeControllerWithFactory = (
     rpgState: () => rpg,
     practiceSkill: (skillId, amount) => {
       const result = practiceAdventureRpgSkill(manifest, rpg, skillId, amount);
-      mutateRpg(result.state);
-      return { ...result, state: rpg };
+      rpg = result.state;
+      return result;
     },
     resolveSkillCheck: (check) => resolveAdventureRpgCheck(manifest, rpg, check),
     advanceRpgTime: (minutes) => {
-      mutateRpg(advanceAdventureRpgTime(manifest, rpg, minutes));
+      rpg = advanceAdventureRpgTime(manifest, rpg, minutes);
     },
     restRpg: (rule) => {
-      mutateRpg(restAdventureRpg(manifest, rpg, rule));
+      rpg = restAdventureRpg(manifest, rpg, rule);
     },
     adjustResource: (resourceId, delta) => {
-      mutateRpg(adjustAdventureRpgResource(manifest, rpg, resourceId, delta));
+      rpg = adjustAdventureRpgResource(manifest, rpg, resourceId, delta);
     },
     scheduleActive: (window) => adventureRpgScheduleActive(manifest, rpg, window),
     createRpgImportSnapshot: (sourceGameId, tags = []) =>
