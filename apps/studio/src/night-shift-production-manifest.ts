@@ -4,6 +4,7 @@ import {
   nightShiftPeriodVgaProductionAssetIds,
   nightShiftProductionAssets,
 } from "./night-shift-production-assets.js";
+import { nightShiftProductionWaves } from "./night-shift-production-waves.js";
 import { nightShiftRuntimeSourceSummary } from "./night-shift-runtime-source.js";
 
 export const nightShiftProductionManifest = {
@@ -40,6 +41,14 @@ export const nightShiftProductionManifest = {
     prohibitSyntheticMicrotexture: true,
   },
   sourceSummary: nightShiftRuntimeSourceSummary,
+  waves: nightShiftProductionWaves.map((wave) => ({
+    id: wave.id,
+    label: wave.label,
+    dependsOn: [...wave.dependsOn],
+    goal: wave.goal,
+    assetIds: [...wave.assetIds],
+    acceptance: [...wave.acceptance],
+  })),
   assets: [...nightShiftProductionAssets],
 } as const;
 
