@@ -4,10 +4,10 @@ import type { PaletteMapManifest } from "@evavo/adventure-scene-instances/palett
 import type { SceneStagingManifest } from "@evavo/adventure-scene-instances/staging";
 import { studioProject, studioSceneInstances } from "./fixture.js";
 import {
-  nightShiftDirectorInstances,
-  nightShiftDirectorProject,
-  nightShiftDirectorStaging,
-} from "./night-shift-director-fixture.js";
+  nightShiftGameplayInstances,
+  nightShiftGameplayProject,
+  nightShiftGameplayStaging,
+} from "./night-shift-gameplay-proof.js";
 import {
   nightShiftDirectorPaletteMaps,
   redLedgerDirectorPaletteMaps,
@@ -60,12 +60,12 @@ export const sceneDirectorSamples: readonly SceneDirectorSample[] = [
     label: "Night Shift",
     productionLanguage: "Early procedural icon VGA",
     project: withPaletteAsset(
-      nightShiftDirectorProject,
+      nightShiftGameplayProject,
       "asset.palette.night-shift.actor-lighting",
       "palettes/night-shift-actor-lighting.pal",
     ),
-    sceneInstances: nightShiftDirectorInstances,
-    staging: nightShiftDirectorStaging,
+    sceneInstances: nightShiftGameplayInstances,
+    staging: nightShiftGameplayStaging,
     paletteMaps: nightShiftDirectorPaletteMaps,
   },
 ] as const;
