@@ -1,8 +1,6 @@
 import { validateAudioMixManifest } from "@evavo/adventure-audio";
 import { describe, expect, it } from "vitest";
-import {
-  nightShiftCompleteStaging,
-} from "../src/night-shift-complete-proof.js";
+import { nightShiftCompleteStaging } from "../src/night-shift-complete-proof.js";
 import {
   nightShiftRuntimeContracts,
   nightShiftRuntimeProject,
@@ -11,7 +9,6 @@ import {
   sceneDirectorStagingAudioCueUsages,
   validateSceneDirectorStagingAudioCues,
 } from "../src/scene-director-audio-readiness.js";
-
 
 describe("Night Shift runtime contracts", () => {
   it("keeps front-end, lifecycle, audio and palette maps on one project identity", () => {
@@ -26,6 +23,47 @@ describe("Night Shift runtime contracts", () => {
     expect(
       validateAudioMixManifest(nightShiftRuntimeProject, nightShiftRuntimeContracts.audioMix),
     ).toEqual([]);
+  });
+
+  it("gives station, roadside and diner distinct persistent room ambience", () => {
+    expect(nightShiftRuntimeContracts.audioMix.soundscapes).toEqual([
+      expect.objectContaining({
+        sceneId: "scene.night-shift.station",
+        layers: [
+          expect.objectContaining({
+            cueId: "audio-cue.night-shift.station-room",
+            role: "room-tone",
+          }),
+        ],
+      }),
+      expect.objectContaining({
+        sceneId: "scene.night-shift.roadside",
+        layers: [
+          expect.objectContaining({
+            cueId: "audio-cue.night-shift.roadside-rain",
+            role: "ambience",
+          }),
+        ],
+      }),
+      expect.objectContaining({
+        sceneId: "scene.night-shift.diner",
+        layers: [
+          expect.objectContaining({
+            cueId: "audio-cue.night-shift.diner-room",
+            role: "room-tone",
+          }),
+        ],
+      }),
+    ]);
+    expect(nightShiftRuntimeContracts.audioMix.ducking).toEqual(
+      expect.arrayContaining([
+        expect.objectContaining({
+          sourceBus: "speech",
+          targetBus: "ambience",
+          targetVolume: 0.58,
+        }),
+      ]),
+    );
   });
 
   it("covers every staging-emitted footstep and choreography cue", () => {
