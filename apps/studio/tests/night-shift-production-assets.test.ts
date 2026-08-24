@@ -30,7 +30,7 @@ describe("Night Shift production asset plan", () => {
     }
   });
 
-  it("requires indexed runtime maps for all palette-driven visual masters", () => {
+  it("marks every final native indexed visual master without conflating that with runtime .idx remapping", () => {
     expect(nightShiftIndexedProductionAssetIds).toEqual(
       expect.arrayContaining([
         "asset.night-shift.background.station",
@@ -56,6 +56,18 @@ describe("Night Shift production asset plan", () => {
     expect(nightShiftIndexedProductionAssetIds).not.toContain("asset.night-shift.foreground.desk");
   });
 
+  it("requires explicit palette production assets for actor lighting and all three rooms", () => {
+    const paletteIds = nightShiftProductionAssets
+      .filter((asset) => asset.role === "palette")
+      .map((asset) => asset.assetId);
+    expect(paletteIds).toEqual([
+      "asset.palette.night-shift.actor-lighting",
+      "asset.palette.night-shift.station",
+      "asset.palette.night-shift.roadside",
+      "asset.palette.night-shift.diner",
+    ]);
+  });
+
   it("requires Period VGA review for all authored final pixel masters but not audio/palette binaries", () => {
     expect(nightShiftPeriodVgaProductionAssetIds).toEqual(
       expect.arrayContaining([
@@ -67,6 +79,7 @@ describe("Night Shift production asset plan", () => {
       ]),
     );
     expect(nightShiftPeriodVgaProductionAssetIds).not.toContain("asset.palette.night-shift.actor-lighting");
+    expect(nightShiftPeriodVgaProductionAssetIds).not.toContain("asset.palette.night-shift.station");
     expect(nightShiftPeriodVgaProductionAssetIds).not.toContain("asset.audio.night-shift.roadside-rain");
   });
 });
