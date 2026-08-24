@@ -58,6 +58,11 @@ import {
 } from "./item-combinations.js";
 import { runtimeLocalisationPackSchema } from "./localisation.js";
 import {
+  runtimeMultiProtagonistBindingManifestSchema,
+  type RuntimeMultiProtagonistBindingIssue,
+  validateRuntimeMultiProtagonistBindings,
+} from "./multi-protagonist-bindings.js";
+import {
   runtimeMultiProtagonistManifestSchema,
   type RuntimeMultiProtagonistIssue,
   validateRuntimeMultiProtagonist,
@@ -145,6 +150,7 @@ export const runtimeBundleSchema = z
     investigationBindings: runtimeInvestigationBindingManifestSchema.optional(),
     itemCombinations: runtimeItemCombinationManifestSchema.optional(),
     multiProtagonist: runtimeMultiProtagonistManifestSchema.optional(),
+    multiProtagonistBindings: runtimeMultiProtagonistBindingManifestSchema.optional(),
     roomScripts: runtimeRoomScriptManifestSchema.optional(),
   })
   .strict()
@@ -159,6 +165,7 @@ export const runtimeBundleSchema = z
       ["investigationBindings", bundle.investigationBindings],
       ["itemCombinations", bundle.itemCombinations],
       ["multiProtagonist", bundle.multiProtagonist],
+      ["multiProtagonistBindings", bundle.multiProtagonistBindings],
       ["roomScripts", bundle.roomScripts],
     ] as const;
     for (const [key, value] of projectScoped) {
@@ -201,6 +208,16 @@ export class RuntimeMultiProtagonistValidationError extends Error {
   constructor(issues: readonly RuntimeMultiProtagonistIssue[]) {
     super(`Runtime multi-protagonist manifest is invalid (${issues.length} issue(s)).`);
     this.name = "RuntimeMultiProtagonistValidationError";
+    this.issues = issues;
+  }
+}
+
+export class RuntimeMultiProtagonistBindingValidationError extends Error {
+  readonly issues: readonly RuntimeMultiProtagonistBindingIssue[];
+
+  constructor(issues: readonly RuntimeMultiProtagonistBindingIssue[]) {
+    super(`Runtime multi-protagonist bindings are invalid (${issues.length} issue(s)).`);
+    this.name = "RuntimeMultiProtagonistBindingValidationError";
     this.issues = issues;
   }
 }
@@ -290,6 +307,36 @@ export const parseRuntimeBundle = (input: unknown): RuntimeBundle => {
       throw new RuntimeMultiProtagonistValidationError(multiProtagonistIssues);
     }
   }
+  if (bundle.multiProtagonistBindings) {
+    const interactions = allRuntimeInteractions(bundle);
+    const dialogueChoices = allRuntimeDialogueChoices(bundle);
+    const recipeIds = new Set(bundle.itemCombinations?.recipes.map((recipe) => recipe.id) ?? []);
+    const oneShotRecipeIds = new Set(
+      (bundle.itemCombinations?.recipes ?? []).filter((recipe) => recipe.once === true).map((recipe) => recipe.id),
+    );
+    const bindingIssues = validateRuntimeMultiProtagonistBindings(bundle.multiProtagonistBindings, {
+      protagonistIds: new Set(bundle.multiProtagonist?.protagonists.map((entry) => entry.protagonistId as string) ?? []),
+      itemIds: new Set(bundle.inventoryItems.map((item) => item.id as string)),
+      interactionIds: new Set(interactions.map((interaction) => interaction.id as string)),
+      oneShotInteractionIds: new Set(interactions.filter((interaction) => interaction.once === true).map((interaction) => interaction.id as string)),
+      dialogueChoiceIds: new Set(dialogueChoices.map((choice) => choice.id as string)),
+      oneShotDialogueChoiceIds: new Set(dialogueChoices.filter((choice) => choice.once === true).map((choice) => choice.id as string)),
+      recipeIds,
+      oneShotRecipeIds,
+      entrancesByScene: runtimeEntrancesByScene(bundle),
+    });
+    if (!bundle.multiProtagonist) {
+      bindingIssues.unshift({
+        severity: "error",
+        code: "missing-multi-protagonist-manifest",
+        path: "multiProtagonistBindings",
+        message: "Cross-protagonist bindings require a multiProtagonist manifest.",
+      });
+    }
+    if (bindingIssues.length > 0) {
+      throw new RuntimeMultiProtagonistBindingValidationError(bindingIssues);
+    }
+  }
   if (bundle.roomScripts) {
     const roomScriptIssues = validateRuntimeRoomScripts(bundle.roomScripts, {
       sceneIds: new Set(bundle.scenes.map((scene) => scene.id as string)),
@@ -313,6 +360,7 @@ export * from "./investigation-bindings.js";
 export * from "./investigation.js";
 export * from "./item-combinations.js";
 export * from "./localisation.js";
+export * from "./multi-protagonist-bindings.js";
 export * from "./multi-protagonist.js";
 export * from "./palette-map-validation.js";
 export * from "./room-scripts.js";
