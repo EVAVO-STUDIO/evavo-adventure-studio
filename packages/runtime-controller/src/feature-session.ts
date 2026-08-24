@@ -24,6 +24,7 @@ type OptionalRpgController = Partial<Pick<
   | "rpgState"
   | "practiceSkill"
   | "resolveSkillCheck"
+  | "resolveRpgPuzzle"
   | "advanceRpgTime"
   | "restRpg"
   | "adjustResource"
@@ -110,6 +111,7 @@ const rpgFeatureApi = (session: PackagedFeatureSessionController): OptionalRpgCo
   ...(session.rpgState ? { rpgState: () => session.rpgState?.() as ReturnType<AdventureRpgPackagedRuntimeController["rpgState"]> } : {}),
   ...(session.practiceSkill ? { practiceSkill: (skillId: string, amount?: number) => session.practiceSkill?.(skillId, amount) as ReturnType<AdventureRpgPackagedRuntimeController["practiceSkill"]> } : {}),
   ...(session.resolveSkillCheck ? { resolveSkillCheck: (check) => session.resolveSkillCheck?.(check) as ReturnType<AdventureRpgPackagedRuntimeController["resolveSkillCheck"]> } : {}),
+  ...(session.resolveRpgPuzzle ? { resolveRpgPuzzle: (puzzleId: string, solutionId: string) => session.resolveRpgPuzzle?.(puzzleId, solutionId) as ReturnType<AdventureRpgPackagedRuntimeController["resolveRpgPuzzle"]> } : {}),
   ...(session.advanceRpgTime ? { advanceRpgTime: (minutes: number) => session.advanceRpgTime?.(minutes) } : {}),
   ...(session.restRpg ? { restRpg: (rule) => session.restRpg?.(rule) } : {}),
   ...(session.adjustResource ? { adjustResource: (resourceId: string, delta: number) => session.adjustResource?.(resourceId, delta) } : {}),
