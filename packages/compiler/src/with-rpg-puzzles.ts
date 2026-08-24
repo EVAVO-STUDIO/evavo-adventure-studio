@@ -1,7 +1,7 @@
 import type { AssetBuildManifest } from "@evavo/adventure-asset-contract";
 import type { AdventureProject } from "@evavo/adventure-project-schema";
+import { parseRuntimeBundle } from "@evavo/adventure-runtime-bundle";
 import {
-  parseRuntimeBundle,
   runtimeAdventureRpgPuzzleManifestSchema,
   type RuntimeAdventureRpgPuzzleManifest,
 } from "@evavo/adventure-runtime-bundle/rpg-puzzles";
