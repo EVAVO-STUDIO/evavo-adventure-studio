@@ -7,7 +7,7 @@ const glyph = (...rows: readonly string[]): readonly string[] => {
   return rows;
 };
 
-const G: Readonly<Record<string, readonly string[]>> = {
+const G: Record<string, readonly string[]> = {
   " ": glyph(".....",".....",".....",".....",".....",".....","....."),
   "!": glyph("..#..","..#..","..#..","..#..","..#..",".....","..#.."),
   "\"": glyph(".#.#.",".#.#.",".#.#.",".....",".....",".....","....."),
