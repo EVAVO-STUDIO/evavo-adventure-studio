@@ -2,6 +2,7 @@ import type { AudioRuntimeState } from "@evavo/adventure-audio/runtime";
 import type { Id } from "@evavo/adventure-project-schema";
 import type { RuntimeBundle } from "@evavo/adventure-runtime-bundle";
 import type { InteractiveRuntimeWorldState } from "@evavo/adventure-scene-runtime/commands";
+import type { RuntimeInvestigationState } from "@evavo/adventure-scene-runtime/investigation-runtime";
 import { validateSavedAudio } from "./audio-compatibility.js";
 import {
   canonicalSaveGameJson,
@@ -30,6 +31,7 @@ export interface CreateSaveGameOptions {
   };
   readonly profiledCamera?: SaveGameProfiledRuntimeCameraState;
   readonly audio?: AudioRuntimeState;
+  readonly investigation?: RuntimeInvestigationState;
 }
 
 const completeCompatibilityIssues = (
@@ -46,7 +48,7 @@ export const createSaveGame = (
   options: CreateSaveGameOptions,
 ): SaveGame => {
   assertSaveGameAllowed(bundle, world);
-  const { audio, ...interfaceState } = options;
+  const { audio, investigation, ...interfaceState } = options;
   const payload = saveGamePayloadSchema.parse({
     saveVersion: 1,
     projectId: bundle.projectId,
@@ -55,6 +57,7 @@ export const createSaveGame = (
     world,
     interface: interfaceState,
     ...(audio ? { audio } : {}),
+    ...(investigation ? { investigation } : {}),
   });
   const save = saveGameSchema.parse({
     ...payload,
