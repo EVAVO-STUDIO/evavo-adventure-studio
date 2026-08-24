@@ -4,6 +4,8 @@ import type { PeriodVgaAuditReport } from "@evavo/adventure-art-direction/period
 import { validateAudioMixManifest } from "@evavo/adventure-audio";
 import { validateSceneInstanceManifest } from "@evavo/adventure-scene-instances";
 import { validateSceneStagingManifest } from "@evavo/adventure-scene-instances/staging-validation";
+import type { NightShiftArtIntakeReport } from "./night-shift-art-master-intake.js";
+import type { NightShiftAudioIntakeReport } from "./night-shift-audio-master-intake.js";
 import { nightShiftCompleteInstances } from "./night-shift-complete-proof.js";
 import {
   nightShiftIndexedProductionAssetIds,
@@ -26,6 +28,8 @@ export type NightShiftDemoReadinessGateId =
   | "audio-contract"
   | "ui-contract"
   | "production-asset-plan"
+  | "art-master-intake"
+  | "audio-master-intake"
   | "compiled-assets"
   | "indexed-assets"
   | "period-vga"
@@ -41,6 +45,8 @@ export interface NightShiftDemoReadinessGate {
 }
 
 export interface NightShiftDemoEvidence {
+  readonly artMasterIntake?: NightShiftArtIntakeReport | null;
+  readonly audioMasterIntake?: NightShiftAudioIntakeReport | null;
   readonly assetManifest?: AssetBuildManifest | null;
   readonly indexedAssets?: IndexedAssetManifest | null;
   readonly periodVgaReport?: PeriodVgaAuditReport | null;
@@ -130,6 +136,8 @@ export const evaluateNightShiftDemoReadiness = (
   const audioContractReady = audioReady();
   const uiContractReady = validateNightShiftUiContracts().length === 0;
   const productionAssetPlanReady = validateNightShiftProductionAssetPlan().length === 0;
+  const artMasterReady = evidence.artMasterIntake?.status === "ready";
+  const audioMasterReady = evidence.audioMasterIntake?.status === "ready";
   const compiledAssetsReady = allExpectedAssetsCompiled(evidence.assetManifest);
   const indexedReady = allExpectedIndexedAssetsPresent(evidence.indexedAssets);
   const periodVgaReady =
@@ -183,6 +191,20 @@ export const evaluateNightShiftDemoReadiness = (
       productionAssetPlanReady,
       "Every runtime asset has an explicit native production and evidence requirement.",
       "Runtime assets and the Night Shift production master plan are out of sync.",
+    ),
+    gate(
+      "art-master-intake",
+      "evidence",
+      artMasterReady,
+      "Every required native visual master passed the Night Shift intake gate.",
+      "Submit every Period VGA visual master through native-size/palette/alpha/source-format intake before compilation.",
+    ),
+    gate(
+      "audio-master-intake",
+      "evidence",
+      audioMasterReady,
+      "Every required WAV master passed the Night Shift audio intake gate.",
+      "Submit every effect and ambience WAV through format/rate/channel/duration intake before compilation.",
     ),
     gate(
       "compiled-assets",
