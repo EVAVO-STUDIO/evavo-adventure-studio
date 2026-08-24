@@ -237,7 +237,7 @@ export const adventureReferenceGameCapabilities: readonly AdventureReferenceGame
     "Quest for Glory VGA",
     "sierra-rpg",
     [
-      "parser-intent",
+      "verb-icon-interface",
       "inventory",
       "alternate-puzzle-solutions",
       "time-of-day-clock",
@@ -373,6 +373,7 @@ export const currentAdventureCapabilityCoverage: readonly AdventureCapabilityCov
   ({ id }): AdventureCapabilityCoverage => {
     const proofed = new Set<AdventureCapabilityId>([
       "fixed-room",
+      "scrolling-room",
       "walk-regions",
       "per-region-perspective",
       "multi-plane-occlusion",
@@ -392,6 +393,7 @@ export const currentAdventureCapabilityCoverage: readonly AdventureCapabilityCov
       "native-vga-audit",
     ]);
     const implemented = new Set<AdventureCapabilityId>([
+      "multi-elevation-room",
       "parser-intent",
       "branching-dialogue",
       "portrait-dialogue",
@@ -400,9 +402,7 @@ export const currentAdventureCapabilityCoverage: readonly AdventureCapabilityCov
       "localisation",
     ]);
     const partial = new Set<AdventureCapabilityId>([
-      "scrolling-room",
       "panoramic-exterior",
-      "multi-elevation-room",
       "closeup-puzzle-view",
       "item-on-item",
       "alternate-puzzle-solutions",
