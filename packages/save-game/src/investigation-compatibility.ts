@@ -10,17 +10,11 @@ export const validateSavedInvestigation = (
   const state = save.investigation;
   const manifest = bundle.investigation;
 
-  if (!state) {
-    if (manifest) {
-      addSaveGameIssue(
-        issues,
-        "investigation-runtime-state-missing",
-        "investigation",
-        "Runtime bundle requires investigation state but the save does not contain it.",
-      );
-    }
-    return issues;
-  }
+  // Investigation was introduced as an optional companion to saveVersion 1.
+  // A save that predates the companion remains structurally loadable; an
+  // investigation-aware controller may initialize fresh semantic state after
+  // restore. When state is present, however, it must be strictly compatible.
+  if (!state) return issues;
 
   if (!manifest) {
     addSaveGameIssue(
@@ -36,7 +30,9 @@ export const validateSavedInvestigation = (
   const factIds = new Set(manifest.facts.map((fact) => fact.id as string));
   const topicIds = new Set(manifest.topics.map((topic) => topic.id as string));
   const sourceIds = new Set(manifest.researchSources.map((source) => source.id as string));
-  const objectiveIds = new Set(manifest.chapters.flatMap((chapter) => chapter.objectives.map((objective) => objective.id as string)));
+  const objectiveIds = new Set(
+    manifest.chapters.flatMap((chapter) => chapter.objectives.map((objective) => objective.id as string)),
+  );
 
   if (!chapterIds.has(state.chapterId)) {
     addSaveGameIssue(
