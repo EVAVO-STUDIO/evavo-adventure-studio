@@ -184,17 +184,14 @@ const applyCombatPractice = (
         binding.attackSkillId,
         binding.attackPractice ?? 1,
       ).state;
-    } else if (event.kind === "player-guarded" || (event.kind === "enemy-attacked" && event.guarded)) {
+    } else if (event.kind === "player-guarded") {
       next = practiceAdventureRpgSkill(
         manifest,
         next,
         binding.defenseSkillId,
         binding.defensePractice ?? 1,
       ).state;
-    } else if (
-      binding.dodgeSkillId &&
-      (event.kind === "player-dodged" || (event.kind === "enemy-attacked" && event.dodged))
-    ) {
+    } else if (binding.dodgeSkillId && event.kind === "player-dodged") {
       next = practiceAdventureRpgSkill(
         manifest,
         next,
