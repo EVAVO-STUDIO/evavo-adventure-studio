@@ -52,6 +52,10 @@
       "types": "./dist/src/profiled-movement.d.ts",
       "import": "./dist/src/profiled-movement.js"
     },
+    "./investigation-runtime": {
+      "types": "./dist/src/investigation-runtime.d.ts",
+      "import": "./dist/src/investigation-runtime.js"
+    },
     "./dialogue": {
       "types": "./dist/src/dialogue.d.ts",
       "import": "./dist/src/dialogue.js"
