@@ -24,6 +24,7 @@ import {
   sceneDirectorPaletteSpecByAssetId,
 } from "./scene-director-palette-specs.js";
 import { sceneDirectorSamples } from "./scene-director-samples.js";
+import { NightShiftReadinessPanel } from "./night-shift-readiness-panel.js";
 import {
   FindingsPanel,
   HandoffPanel,
@@ -316,6 +317,7 @@ export const SceneStagingApp = () => {
               different room grammar while preserving the same deterministic engine contract.
             </p>
           </section>
+          {sample.id === "night-shift" ? <NightShiftReadinessPanel /> : null}
           <section>
             <span className="stg-eyebrow">DIRECTOR DISCIPLINE</span>
             <h2>What the overlays protect</h2>
