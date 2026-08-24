@@ -77,6 +77,11 @@ import {
   validateRuntimeRoomScripts,
 } from "./room-scripts.js";
 import {
+  RuntimeAdventureRouteTopologyValidationError,
+  runtimeAdventureRouteTopologyManifestSchema,
+  validateRuntimeAdventureRouteTopology,
+} from "./route-topology.js";
+import {
   RuntimeAdventureRpgPuzzleValidationError,
   runtimeAdventureRpgPuzzleManifestSchema,
   validateRuntimeAdventureRpgPuzzles,
@@ -162,6 +167,7 @@ export const runtimeBundleSchema = z
     multiProtagonist: runtimeMultiProtagonistManifestSchema.optional(),
     multiProtagonistBindings: runtimeMultiProtagonistBindingManifestSchema.optional(),
     roomScripts: runtimeRoomScriptManifestSchema.optional(),
+    routeTopology: runtimeAdventureRouteTopologyManifestSchema.optional(),
     rpg: runtimeAdventureRpgManifestSchema.optional(),
     rpgPuzzles: runtimeAdventureRpgPuzzleManifestSchema.optional(),
   })
@@ -179,6 +185,7 @@ export const runtimeBundleSchema = z
       ["multiProtagonist", bundle.multiProtagonist],
       ["multiProtagonistBindings", bundle.multiProtagonistBindings],
       ["roomScripts", bundle.roomScripts],
+      ["routeTopology", bundle.routeTopology],
       ["rpg", bundle.rpg],
       ["rpgPuzzles", bundle.rpgPuzzles],
     ] as const;
@@ -361,6 +368,12 @@ export const parseRuntimeBundle = (input: unknown): RuntimeBundle => {
     });
     if (roomScriptIssues.length > 0) throw new RuntimeRoomScriptValidationError(roomScriptIssues);
   }
+  if (bundle.routeTopology) {
+    const routeIssues = validateRuntimeAdventureRouteTopology(bundle.routeTopology, {
+      entrancesByScene: runtimeEntrancesByScene(bundle),
+    });
+    if (routeIssues.length > 0) throw new RuntimeAdventureRouteTopologyValidationError(routeIssues);
+  }
   if (bundle.rpg) {
     const rpgIssues = validateRuntimeAdventureRpg(bundle.rpg);
     if (rpgIssues.length > 0) throw new RuntimeAdventureRpgValidationError(rpgIssues);
@@ -401,6 +414,7 @@ export * from "./multi-protagonist-bindings.js";
 export * from "./multi-protagonist.js";
 export * from "./palette-map-validation.js";
 export * from "./room-scripts.js";
+export * from "./route-topology.js";
 export * from "./rpg-puzzles.js";
 export * from "./rpg.js";
 export * from "./ui-validation.js";
