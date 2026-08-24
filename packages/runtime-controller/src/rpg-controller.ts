@@ -34,6 +34,10 @@ import type {
   AdventureRpgCombatPhase,
   AdventureRpgCombatState,
 } from "@evavo/adventure-scene-runtime/rpg-combat";
+import {
+  resolveAdventureRpgPuzzleSolution,
+  type AdventureRpgPuzzleResolution,
+} from "@evavo/adventure-scene-runtime/rpg-puzzles";
 import type { PackagedRuntimeControllerOptions } from "./packaged-controller.js";
 import {
   createBasePackagedSessionController,
@@ -49,6 +53,7 @@ export interface AdventureRpgPackagedRuntimeController extends PackagedSessionCo
   rpgState(): AdventureRpgState;
   practiceSkill(skillId: string, amount?: number): AdventureRpgPracticeResult;
   resolveSkillCheck(check: AdventureRpgCheck): AdventureRpgCheckResult;
+  resolveRpgPuzzle(puzzleId: string, solutionId: string): AdventureRpgPuzzleResolution;
   advanceRpgTime(minutes: number): void;
   restRpg(rule: AdventureRpgRestRule): void;
   adjustResource(resourceId: string, delta: number): void;
@@ -113,6 +118,47 @@ export const createAdventureRpgPackagedRuntimeControllerWithFactory = (
     return tick;
   };
 
+  const replaceStoryAndRpg = (
+    story: ReturnType<PackagedSessionController["worldState"]>["story"],
+    nextRpg: AdventureRpgState,
+  ): void => {
+    const baseSave = controller.createSaveGame();
+    rpg = nextRpg;
+    const save = createRuntimeSaveGame(bundle, { ...controller.worldState(), story }, {
+      controlledActorInstanceId: baseSave.interface.controlledActorInstanceId,
+      selectedVerbId: baseSave.interface.selectedVerbId,
+      selectedItemId: baseSave.interface.selectedItemId,
+      statusText: baseSave.interface.statusText,
+      parser: baseSave.interface.parser,
+      ...preserveCompanions(baseSave),
+      rpg,
+    });
+    controller.restoreSaveGame(save);
+  };
+
+  const resolveRpgPuzzle = (
+    puzzleId: string,
+    solutionId: string,
+  ): AdventureRpgPuzzleResolution => {
+    if (!bundle.rpgPuzzles) {
+      throw new Error(`Runtime bundle '${bundle.projectId}' has no RPG puzzle manifest.`);
+    }
+    const resolution = resolveAdventureRpgPuzzleSolution(
+      manifest,
+      bundle.rpgPuzzles,
+      controller.worldState().story,
+      rpg,
+      puzzleId,
+      solutionId,
+    );
+    if (resolution.kind === "success") {
+      replaceStoryAndRpg(resolution.story, resolution.rpg);
+    } else {
+      rpg = resolution.rpg;
+    }
+    return resolution;
+  };
+
   const startCombat = (encounterId: string): AdventureRpgCombatState => {
     if (combat?.state.combat.phase === "active") {
       throw new Error(`RPG combat '${combat.encounter.id}' is already active.`);
@@ -168,6 +214,7 @@ export const createAdventureRpgPackagedRuntimeControllerWithFactory = (
       return result;
     },
     resolveSkillCheck: (check) => resolveAdventureRpgCheck(manifest, rpg, check),
+    resolveRpgPuzzle,
     advanceRpgTime: (minutes) => {
       rpg = advanceAdventureRpgTime(manifest, rpg, minutes);
     },
