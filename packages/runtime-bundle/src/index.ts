@@ -42,6 +42,11 @@ import {
   validateRuntimeSceneInstances,
 } from "./instance-validation.js";
 import {
+  runtimeInvestigationBindingManifestSchema,
+  type RuntimeInvestigationBindingIssue,
+  validateRuntimeInvestigationBindings,
+} from "./investigation-bindings.js";
+import {
   RuntimeInvestigationValidationError,
   runtimeInvestigationManifestSchema,
   validateRuntimeInvestigation,
@@ -122,6 +127,7 @@ export const runtimeBundleSchema = z
     lifecycle: gameLifecycleManifestSchema.optional(),
     opening: gameOpeningManifestSchema.optional(),
     investigation: runtimeInvestigationManifestSchema.optional(),
+    investigationBindings: runtimeInvestigationBindingManifestSchema.optional(),
   })
   .strict()
   .superRefine((bundle, context) => {
@@ -167,6 +173,13 @@ export const runtimeBundleSchema = z
         message: `Investigation project '${bundle.investigation.projectId}' does not match runtime project '${bundle.projectId}'.`,
       });
     }
+    if (bundle.investigationBindings && bundle.investigationBindings.projectId !== bundle.projectId) {
+      context.addIssue({
+        code: "custom",
+        path: ["investigationBindings", "projectId"],
+        message: `Investigation-binding project '${bundle.investigationBindings.projectId}' does not match runtime project '${bundle.projectId}'.`,
+      });
+    }
     if (bundle.opening) {
       for (const issue of validateGameOpeningManifest(
         { id: bundle.projectId, sequences: bundle.sequences },
@@ -181,6 +194,33 @@ export const runtimeBundleSchema = z
     }
   });
 export type RuntimeBundle = z.infer<typeof runtimeBundleSchema>;
+
+export class RuntimeInvestigationBindingValidationError extends Error {
+  readonly issues: readonly RuntimeInvestigationBindingIssue[];
+
+  constructor(issues: readonly RuntimeInvestigationBindingIssue[]) {
+    super(`Runtime investigation bindings are invalid (${issues.length} issue(s)).`);
+    this.name = "RuntimeInvestigationBindingValidationError";
+    this.issues = issues;
+  }
+}
+
+const runtimeInteractionIds = (bundle: RuntimeBundle): ReadonlySet<string> =>
+  new Set([
+    ...bundle.scenes.flatMap((scene) =>
+      scene.hotspots.flatMap((hotspot) => hotspot.interactions.map((interaction) => interaction.id as string)),
+    ),
+    ...(bundle.sceneInstances?.objectDefinitions.flatMap((definition) =>
+      definition.states.flatMap((state) => state.interactions.map((interaction) => interaction.id as string)),
+    ) ?? []),
+  ]);
+
+const runtimeDialogueChoiceIds = (bundle: RuntimeBundle): ReadonlySet<string> =>
+  new Set(
+    bundle.dialogues.flatMap((dialogue) =>
+      dialogue.nodes.flatMap((node) => node.choices.map((choice) => choice.id as string)),
+    ),
+  );
 
 export const parseRuntimeBundle = (input: unknown): RuntimeBundle => {
   const bundle = runtimeBundleSchema.parse(input);
@@ -212,6 +252,16 @@ export const parseRuntimeBundle = (input: unknown): RuntimeBundle => {
       throw new RuntimeInvestigationValidationError(investigationIssues);
     }
   }
+  if (bundle.investigationBindings) {
+    const bindingIssues = validateRuntimeInvestigationBindings(bundle.investigationBindings, {
+      investigation: bundle.investigation,
+      interactionIds: runtimeInteractionIds(bundle),
+      dialogueChoiceIds: runtimeDialogueChoiceIds(bundle),
+    });
+    if (bindingIssues.length > 0) {
+      throw new RuntimeInvestigationBindingValidationError(bindingIssues);
+    }
+  }
   if (bundle.bitmapFonts) registerBitmapFontsForAssetCollection(bundle.assets, bundle.bitmapFonts);
   return bundle;
 };
@@ -221,6 +271,7 @@ export * from "./font-validation.js";
 export * from "./front-end-localisation.js";
 export * from "./indexed-asset-validation.js";
 export * from "./instance-validation.js";
+export * from "./investigation-bindings.js";
 export * from "./investigation.js";
 export * from "./localisation.js";
 export * from "./palette-map-validation.js";
