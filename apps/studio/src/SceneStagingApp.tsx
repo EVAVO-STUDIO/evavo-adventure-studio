@@ -3,6 +3,7 @@ import {
   createAdventureSceneStagingReports,
 } from "@evavo/adventure-design/scene-staging";
 import { type ChangeEvent, useEffect, useMemo, useState } from "react";
+import { SceneDirectorCanonicalGeometryPanel } from "./scene-director-canonical-editor.js";
 import { SceneDirectorPanel } from "./scene-director-components.js";
 import {
   applySceneDirectorDocumentEdit,
@@ -150,6 +151,16 @@ export const SceneStagingApp = () => {
   const boundLights = directorOverlay.lightZones.filter(
     (entry) => entry.bindingStatus === "bound",
   ).length;
+  const editing = {
+    onPreviewEdit: previewEdit,
+    onCommitEdit: commitEdit,
+    onCancelPreview: cancelPreview,
+    onUndo: undoEdit,
+    onRedo: redoEdit,
+    canUndo: editHistory.past.length > 0,
+    canRedo: editHistory.future.length > 0,
+    error: editError,
+  };
 
   return (
     <main className="stg-app">
@@ -230,10 +241,7 @@ export const SceneStagingApp = () => {
             <code>{report.sceneId}</code>
           </section>
           <dl className="stg-metrics">
-            <Metric
-              label="Canvas"
-              value={`${report.overlay.nativeSize.width} × ${report.overlay.nativeSize.height}`}
-            />
+            <Metric label="Canvas" value={`${report.overlay.nativeSize.width} × ${report.overlay.nativeSize.height}`} />
             <Metric label="Actors" value={report.metrics.actorCount} />
             <Metric label="Walkable" value={report.metrics.walkableActorCount} />
             <Metric label="Props" value={report.metrics.objectCount} />
@@ -241,10 +249,7 @@ export const SceneStagingApp = () => {
             <Metric label="Portals" value={report.metrics.portalCount} />
             <Metric
               label="Approaches"
-              value={directorOverlay.objects.reduce(
-                (sum, object) => sum + object.approachSlots.length,
-                0,
-              )}
+              value={directorOverlay.objects.reduce((sum, object) => sum + object.approachSlots.length, 0)}
             />
             <Metric label="Surfaces" value={directorOverlay.staging?.surfaceZones.length ?? 0} />
             <Metric label="Occlusion" value={directorOverlay.staging?.occlusionPlanes.length ?? 0} />
@@ -260,41 +265,24 @@ export const SceneStagingApp = () => {
             </div>
           </section>
           <section className="stg-severity-summary">
-            <div className="is-error">
-              <span>Errors</span>
-              <strong>{count("error")}</strong>
-            </div>
-            <div className="is-warning">
-              <span>Warnings</span>
-              <strong>{count("warning")}</strong>
-            </div>
-            <div className="is-note">
-              <span>Notes</span>
-              <strong>{count("note")}</strong>
-            </div>
+            <div className="is-error"><span>Errors</span><strong>{count("error")}</strong></div>
+            <div className="is-warning"><span>Warnings</span><strong>{count("warning")}</strong></div>
+            <div className="is-note"><span>Notes</span><strong>{count("note")}</strong></div>
           </section>
         </aside>
 
         <section className="stg-canvas">
           {view === "stage" ? (
-            <SceneDirectorPanel
-              overlay={directorOverlay}
-              report={report}
-              editing={{
-                onPreviewEdit: previewEdit,
-                onCommitEdit: commitEdit,
-                onCancelPreview: cancelPreview,
-                onUndo: undoEdit,
-                onRedo: redoEdit,
-                canUndo: editHistory.past.length > 0,
-                canRedo: editHistory.future.length > 0,
-                error: editError,
-              }}
-            />
+            <>
+              <SceneDirectorPanel overlay={directorOverlay} report={report} editing={editing} />
+              <SceneDirectorCanonicalGeometryPanel
+                documents={activeDocuments}
+                sceneId={report.sceneId}
+                editing={editing}
+              />
+            </>
           ) : null}
-          {view === "findings" ? (
-            <FindingsPanel report={report} filter={filter} onFilter={setFilter} />
-          ) : null}
+          {view === "findings" ? <FindingsPanel report={report} filter={filter} onFilter={setFilter} /> : null}
           {view === "layers" ? <LayerOrderPanel report={report} /> : null}
           {view === "handoff" ? <HandoffPanel report={report} /> : null}
         </section>
@@ -334,26 +322,17 @@ export const SceneStagingApp = () => {
               <div className="stg-palette-bindings">
                 {directorOverlay.lightZones.map(({ zone, map, bindingStatus }) => {
                   const spec = map ? sceneDirectorPaletteSpecByAssetId(map.paletteAssetId) : null;
-                  const paletteBank = spec && map
-                    ? sceneDirectorPaletteBankAtOffset(spec, map.paletteOffset)
-                    : null;
+                  const paletteBank = spec && map ? sceneDirectorPaletteBankAtOffset(spec, map.paletteOffset) : null;
                   return (
                     <article key={zone.id} className={`stg-palette-binding is-${bindingStatus}`}>
                       <header>
                         <strong>{shortId(zone.id)}</strong>
                         <span>{zone.blendMode === "ordered-dither" ? "Bayer-4 · 8 px" : "hard"}</span>
                       </header>
-                      <code>
-                        {map
-                          ? `${map.paletteAssetId} +${map.paletteOffset}`
-                          : zone.paletteMapId}
-                      </code>
+                      <code>{map ? `${map.paletteAssetId} +${map.paletteOffset}` : zone.paletteMapId}</code>
                       {paletteBank ? (
                         <>
-                          <div className="stg-palette-bank-heading">
-                            <span>{paletteBank.label}</span>
-                            <small>{paletteBank.role}</small>
-                          </div>
+                          <div className="stg-palette-bank-heading"><span>{paletteBank.label}</span><small>{paletteBank.role}</small></div>
                           <div className="stg-palette-swatches" aria-label={`${paletteBank.label} palette bank`}>
                             {paletteBank.colours.map((colour, index) => (
                               <span
@@ -389,14 +368,10 @@ export const SceneStagingApp = () => {
             <h2>{report.findings[0]?.message ?? "Play the room at 1× native size"}</h2>
             <p>
               {report.findings[0]?.recommendation ??
-                "Switch through every Scene Director overlay, then run the room from every entrance and " +
-                  "verify the final pixels, movement, occlusion and interactions agree."}
+                "Switch through every Scene Director overlay, then run the room from every entrance and verify the final pixels, movement, occlusion and interactions agree."}
             </p>
           </section>
-          <footer>
-            <span>Report v{report.reportVersion}</span>
-            <code>{shortId(report.projectId)}</code>
-          </footer>
+          <footer><span>Report v{report.reportVersion}</span><code>{shortId(report.projectId)}</code></footer>
         </aside>
       </div>
     </main>
