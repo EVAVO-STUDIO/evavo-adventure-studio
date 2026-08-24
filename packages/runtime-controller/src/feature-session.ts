@@ -1,5 +1,8 @@
 import type { RuntimeBundle } from "@evavo/adventure-runtime-bundle";
-import type { PackagedRuntimeControllerOptions } from "./packaged-controller.js";
+import type {
+  PackagedRuntimeController,
+  PackagedRuntimeControllerOptions,
+} from "./packaged-controller.js";
 import {
   createMultiProtagonistPackagedRuntimeControllerWithFactory,
   type MultiProtagonistPackagedRuntimeController,
@@ -79,4 +82,31 @@ export const createPackagedFeatureSessionController = (
     );
   }
   return inner(bundle, options);
+};
+
+export const createPackagedFeatureRuntimeController = (
+  bundle: RuntimeBundle,
+  options: PackagedRuntimeControllerOptions = {},
+): PackagedRuntimeController => {
+  const session = createPackagedFeatureSessionController(bundle, options);
+  return {
+    get selection() {
+      return session.selection;
+    },
+    get controlledActorInstanceId() {
+      return session.controlledActorInstanceId();
+    },
+    createFrame: (tick) => session.createFrame(tick),
+    setPointer: (position) => session.setPointer(position),
+    setPressed: (pressed) => session.setPressed(pressed),
+    activate: (position) => session.activate(position),
+    handleKey: (input) => session.handleKey(input),
+    createSaveGame: () => session.createSaveGame(),
+    restoreSaveGame: (input) => session.restoreSaveGame(input),
+    statusText: () => session.statusText(),
+    worldState: () => session.worldState(),
+    cameraState: () => session.cameraState(),
+    parserState: () => session.parserState(),
+    drainSceneAudioCueIds: () => session.drainSceneAudioCueIds(),
+  };
 };
