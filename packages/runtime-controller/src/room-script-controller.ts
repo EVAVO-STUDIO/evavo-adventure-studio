@@ -111,6 +111,9 @@ export const createRoomScriptPackagedRuntimeControllerWithFactory = (
     cameraState: () => base.cameraState(),
     parserState: () => base.parserState(),
     drainSceneAudioCueIds: () => base.drainSceneAudioCueIds(),
+    ...(base.itemCombinationUsedRecipeIds
+      ? { itemCombinationUsedRecipeIds: () => base.itemCombinationUsedRecipeIds?.() ?? [] }
+      : {}),
   };
 };
 
