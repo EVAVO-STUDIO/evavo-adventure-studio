@@ -105,10 +105,22 @@ const nightShiftHeadlamp = bank(
   ],
 );
 
+const nightShiftDinerWarm = bank(
+  "Diner practical warm",
+  96,
+  "Muted cream-and-amber late-diner practical ramp that lifts faces and paper while preserving dark navy uniform values.",
+  [
+    "#0b0908", "#19130f", "#2a1e16", "#3c2a1d",
+    "#513824", "#69482e", "#825b3a", "#9d7048",
+    "#8e6b59", "#aa8069", "#c3997d", "#d8b091",
+    "#e8c8ab", "#8b806a", "#b0a183", "#d9ceb3",
+  ],
+);
+
 export const nightShiftActorLightingPalette: SceneDirectorPaletteSpec = {
   assetId: "asset.palette.night-shift.actor-lighting" as Id<"asset">,
   entryCount: 128,
-  banks: [nightShiftBase, nightShiftFluorescent, nightShiftHeadlamp],
+  banks: [nightShiftBase, nightShiftFluorescent, nightShiftHeadlamp, nightShiftDinerWarm],
 };
 
 export const sceneDirectorPaletteSpecs: readonly SceneDirectorPaletteSpec[] = [
