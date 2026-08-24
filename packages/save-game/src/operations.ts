@@ -4,6 +4,7 @@ import type { RuntimeBundle } from "@evavo/adventure-runtime-bundle";
 import type { InteractiveRuntimeWorldState } from "@evavo/adventure-scene-runtime/commands";
 import type { RuntimeInvestigationState } from "@evavo/adventure-scene-runtime/investigation-runtime";
 import type { MultiProtagonistState } from "@evavo/adventure-scene-runtime/multi-protagonist";
+import type { RuntimeRoomScriptState } from "@evavo/adventure-scene-runtime/room-scripts";
 import { validateSavedAudio } from "./audio-compatibility.js";
 import {
   canonicalSaveGameJson,
@@ -19,6 +20,7 @@ import type { SaveGameItemCombinationState } from "./item-combinations.js";
 import { validateSavedMultiProtagonist } from "./multi-protagonist-compatibility.js";
 import { assertSaveGameAllowed } from "./policy.js";
 import type { SaveGameProfiledRuntimeCameraState } from "./profiled-camera.js";
+import { validateSavedRoomScripts } from "./room-script-compatibility.js";
 import type { SaveGameSentenceState } from "./sentence.js";
 import { validateSavedSentence } from "./sentence-compatibility.js";
 import {
@@ -42,6 +44,7 @@ export interface CreateSaveGameOptions {
   readonly investigation?: RuntimeInvestigationState;
   readonly itemCombinations?: SaveGameItemCombinationState;
   readonly multiProtagonist?: MultiProtagonistState;
+  readonly roomScripts?: RuntimeRoomScriptState;
 }
 
 const completeCompatibilityIssues = (
@@ -54,6 +57,7 @@ const completeCompatibilityIssues = (
   ...validateSavedItemCombinations(bundle, save),
   ...validateSavedMultiProtagonist(bundle, save),
   ...validateSavedSentence(bundle, save),
+  ...validateSavedRoomScripts(bundle, save),
 ];
 
 export const createSaveGame = (
@@ -67,6 +71,7 @@ export const createSaveGame = (
     investigation,
     itemCombinations,
     multiProtagonist,
+    roomScripts,
     sentence,
     ...interfaceState
   } = options;
@@ -84,6 +89,7 @@ export const createSaveGame = (
     ...(investigation ? { investigation } : {}),
     ...(itemCombinations ? { itemCombinations } : {}),
     ...(multiProtagonist ? { multiProtagonist } : {}),
+    ...(roomScripts ? { roomScripts } : {}),
   });
   const save = saveGameSchema.parse({
     ...payload,
