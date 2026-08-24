@@ -12,6 +12,7 @@ import {
   type ProtagonistId,
 } from "@evavo/adventure-scene-runtime/multi-protagonist";
 import { actorInstanceIdForProtagonist } from "./multi-protagonist-actor.js";
+import { applyNewMultiProtagonistBindings } from "./multi-protagonist-bindings-runtime.js";
 import {
   commitWorldToActiveProtagonist,
   projectMultiProtagonistIntoWorld,
@@ -29,6 +30,7 @@ export interface MultiProtagonistPackagedRuntimeController extends PackagedSessi
   multiProtagonistState(): MultiProtagonistState;
   switchProtagonist(protagonistId: ProtagonistId): void;
   replaceMultiProtagonistState(state: MultiProtagonistState): void;
+  drainMultiProtagonistBindingIds(): readonly string[];
 }
 
 const initialCompanion = (bundle: RuntimeBundle): MultiProtagonistState => {
@@ -53,6 +55,7 @@ export const createMultiProtagonistPackagedRuntimeControllerWithFactory = (
 ): MultiProtagonistPackagedRuntimeController => {
   let companion = initialCompanion(bundle);
   let controller: PackagedSessionController;
+  let pendingBindingIds: string[] = [];
 
   const createControllerFor = (
     protagonistId: ProtagonistId,
@@ -91,6 +94,24 @@ export const createMultiProtagonistPackagedRuntimeControllerWithFactory = (
     const sourceSave = controller.createSaveGame();
     companion = state;
     controller = createControllerFor(companion.activeProtagonistId, globalWorld, sourceSave);
+  };
+
+  const recipeIds = (): readonly string[] => controller.itemCombinationUsedRecipeIds?.() ?? [];
+
+  const applyBindingsAfter = (
+    beforeWorld: InteractiveRuntimeWorldState,
+    beforeRecipeIds: readonly string[],
+  ): boolean => {
+    const transition = applyNewMultiProtagonistBindings(
+      bundle,
+      { world: beforeWorld, usedRecipeIds: beforeRecipeIds },
+      { world: controller.worldState(), usedRecipeIds: recipeIds() },
+      companion,
+    );
+    if (transition.firedBindingIds.length === 0) return false;
+    pendingBindingIds.push(...transition.firedBindingIds);
+    rebuildActive(transition.state);
+    return true;
   };
 
   const switchProtagonist = (protagonistId: ProtagonistId): void => {
@@ -137,6 +158,7 @@ export const createMultiProtagonistPackagedRuntimeControllerWithFactory = (
         multiProtagonist: companion,
       },
     );
+    pendingBindingIds = [];
     return controller.restoreSaveGame(restored);
   };
 
@@ -145,13 +167,35 @@ export const createMultiProtagonistPackagedRuntimeControllerWithFactory = (
     multiProtagonistState: () => companion,
     switchProtagonist,
     replaceMultiProtagonistState: rebuildActive,
+    drainMultiProtagonistBindingIds: () => {
+      const drained = pendingBindingIds;
+      pendingBindingIds = [];
+      return drained;
+    },
     controlledActorInstanceId: () => controller.controlledActorInstanceId(),
     worldState: () => controller.worldState(),
-    createFrame: (tick) => controller.createFrame(tick),
+    createFrame: (tick) => {
+      const beforeWorld = controller.worldState();
+      const beforeRecipeIds = recipeIds();
+      let frame = controller.createFrame(tick);
+      if (applyBindingsAfter(beforeWorld, beforeRecipeIds)) frame = controller.createFrame(tick);
+      return frame;
+    },
     setPointer: (position) => controller.setPointer(position),
     setPressed: (pressed) => controller.setPressed(pressed),
-    activate: (position) => controller.activate(position),
-    handleKey: (input) => controller.handleKey(input),
+    activate: (position) => {
+      const beforeWorld = controller.worldState();
+      const beforeRecipeIds = recipeIds();
+      controller.activate(position);
+      applyBindingsAfter(beforeWorld, beforeRecipeIds);
+    },
+    handleKey: (input) => {
+      const beforeWorld = controller.worldState();
+      const beforeRecipeIds = recipeIds();
+      const handled = controller.handleKey(input);
+      applyBindingsAfter(beforeWorld, beforeRecipeIds);
+      return handled;
+    },
     createSaveGame,
     restoreSaveGame,
     statusText: () => controller.statusText(),
