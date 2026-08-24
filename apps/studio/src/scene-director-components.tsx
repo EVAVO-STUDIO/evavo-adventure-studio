@@ -51,6 +51,52 @@ type SceneDirectorDrag =
       readonly slotId: string;
       readonly facing: string;
       readonly lastPoint: Point;
+    }
+  | {
+      readonly kind: "depth-key";
+      readonly pointerId: number;
+      readonly curveId: string;
+      readonly keyIndex: number;
+      readonly scale: number;
+      readonly lastPoint: Point;
+    }
+  | {
+      readonly kind: "occlusion-baseline";
+      readonly pointerId: number;
+      readonly planeId: string;
+      readonly lastPoint: Point;
+    }
+  | {
+      readonly kind: "light-vertex";
+      readonly pointerId: number;
+      readonly zoneId: string;
+      readonly pointIndex: number;
+      readonly originalPoints: readonly Point[];
+      readonly lastPoint: Point;
+    }
+  | {
+      readonly kind: "surface-vertex";
+      readonly pointerId: number;
+      readonly zoneId: string;
+      readonly pointIndex: number;
+      readonly originalPoints: readonly Point[];
+      readonly lastPoint: Point;
+    }
+  | {
+      readonly kind: "entry-spawn";
+      readonly pointerId: number;
+      readonly entranceId: string;
+      readonly originalPath: readonly Point[];
+      readonly lastPoint: Point;
+    }
+  | {
+      readonly kind: "entry-path-point";
+      readonly pointerId: number;
+      readonly entranceId: string;
+      readonly originalSpawn?: Point;
+      readonly pointIndex: number;
+      readonly originalPath: readonly Point[];
+      readonly lastPoint: Point;
     };
 
 const clamp = (value: number, minimum: number, maximum: number): number =>
@@ -90,29 +136,81 @@ const nativePointFromPointer = (
   );
 };
 
+const replacePoint = (
+  source: readonly Point[],
+  pointIndex: number,
+  point: Point,
+): readonly Point[] => source.map((candidate, index) => (index === pointIndex ? point : candidate));
+
 const commandForDrag = (
   overlay: SceneDirectorOverlay,
   drag: SceneDirectorDrag,
   point: Point,
 ): SceneDirectorEditCommand => {
-  if (drag.kind === "walk-point") {
-    return {
-      kind: "set-walk-lane-points",
-      sceneId: overlay.sceneId,
-      laneId: drag.laneId as never,
-      points: drag.originalPoints.map((candidate, index) =>
-        index === drag.pointIndex ? point : candidate,
-      ),
-    };
+  switch (drag.kind) {
+    case "walk-point":
+      return {
+        kind: "set-walk-lane-points",
+        sceneId: overlay.sceneId,
+        laneId: drag.laneId as never,
+        points: replacePoint(drag.originalPoints, drag.pointIndex, point),
+      };
+    case "approach-slot":
+      return {
+        kind: "move-approach-slot",
+        sceneId: overlay.sceneId,
+        objectId: drag.objectId as never,
+        slotId: drag.slotId as never,
+        position: point,
+        facing: drag.facing as never,
+      };
+    case "depth-key":
+      return {
+        kind: "set-depth-key",
+        sceneId: overlay.sceneId,
+        curveId: drag.curveId as never,
+        keyIndex: drag.keyIndex,
+        y: point.y,
+        scale: drag.scale,
+      };
+    case "occlusion-baseline":
+      return {
+        kind: "set-occlusion-baseline",
+        sceneId: overlay.sceneId,
+        planeId: drag.planeId as never,
+        baselineY: point.y,
+      };
+    case "light-vertex":
+      return {
+        kind: "set-light-zone-shape",
+        sceneId: overlay.sceneId,
+        zoneId: drag.zoneId as never,
+        shape: { points: replacePoint(drag.originalPoints, drag.pointIndex, point) },
+      };
+    case "surface-vertex":
+      return {
+        kind: "set-surface-zone-shape",
+        sceneId: overlay.sceneId,
+        zoneId: drag.zoneId as never,
+        shape: { points: replacePoint(drag.originalPoints, drag.pointIndex, point) },
+      };
+    case "entry-spawn":
+      return {
+        kind: "set-entry-path",
+        sceneId: overlay.sceneId,
+        entranceId: drag.entranceId as never,
+        spawnPosition: point,
+        entryPath: drag.originalPath,
+      };
+    case "entry-path-point":
+      return {
+        kind: "set-entry-path",
+        sceneId: overlay.sceneId,
+        entranceId: drag.entranceId as never,
+        ...(drag.originalSpawn ? { spawnPosition: drag.originalSpawn } : {}),
+        entryPath: replacePoint(drag.originalPath, drag.pointIndex, point),
+      };
   }
-  return {
-    kind: "move-approach-slot",
-    sceneId: overlay.sceneId,
-    objectId: drag.objectId as never,
-    slotId: drag.slotId as never,
-    position: point,
-    facing: drag.facing as never,
-  };
 };
 
 const FacingRay = ({ point, facing }: { readonly point: Point; readonly facing: string }) => {
@@ -152,6 +250,12 @@ const DirectorSvg = ({
   const staging = overlay.staging;
   const [drag, setDrag] = useState<SceneDirectorDrag | null>(null);
 
+  const capture = (event: ReactPointerEvent<SVGCircleElement>): void => {
+    event.preventDefault();
+    event.stopPropagation();
+    event.currentTarget.setPointerCapture(event.pointerId);
+  };
+
   const startWalkDrag = (
     event: ReactPointerEvent<SVGCircleElement>,
     laneId: string,
@@ -159,11 +263,9 @@ const DirectorSvg = ({
     lanePoints: readonly Point[],
   ): void => {
     if (!editing || mode !== "walk") return;
-    event.preventDefault();
-    event.stopPropagation();
-    event.currentTarget.setPointerCapture(event.pointerId);
     const point = lanePoints[pointIndex];
     if (!point) return;
+    capture(event);
     setDrag({
       kind: "walk-point",
       pointerId: event.pointerId,
@@ -182,15 +284,109 @@ const DirectorSvg = ({
     point: Point,
   ): void => {
     if (!editing || mode !== "approach") return;
-    event.preventDefault();
-    event.stopPropagation();
-    event.currentTarget.setPointerCapture(event.pointerId);
+    capture(event);
     setDrag({
       kind: "approach-slot",
       pointerId: event.pointerId,
       objectId,
       slotId,
       facing,
+      lastPoint: point,
+    });
+  };
+
+  const startDepthDrag = (
+    event: ReactPointerEvent<SVGCircleElement>,
+    curveId: string,
+    keyIndex: number,
+    scale: number,
+    y: number,
+  ): void => {
+    if (!editing || mode !== "depth") return;
+    capture(event);
+    setDrag({
+      kind: "depth-key",
+      pointerId: event.pointerId,
+      curveId,
+      keyIndex,
+      scale,
+      lastPoint: { x: overlay.nativeSize.width - 9, y },
+    });
+  };
+
+  const startOcclusionDrag = (
+    event: ReactPointerEvent<SVGCircleElement>,
+    planeId: string,
+    baselineY: number,
+  ): void => {
+    if (!editing || mode !== "occlusion") return;
+    capture(event);
+    setDrag({
+      kind: "occlusion-baseline",
+      pointerId: event.pointerId,
+      planeId,
+      lastPoint: { x: overlay.nativeSize.width - 9, y: baselineY },
+    });
+  };
+
+  const startVertexDrag = (
+    event: ReactPointerEvent<SVGCircleElement>,
+    kind: "light-vertex" | "surface-vertex",
+    zoneId: string,
+    pointIndex: number,
+    sourcePoints: readonly Point[],
+  ): void => {
+    if (!editing) return;
+    if (kind === "light-vertex" && mode !== "light") return;
+    if (kind === "surface-vertex" && mode !== "surface") return;
+    const point = sourcePoints[pointIndex];
+    if (!point) return;
+    capture(event);
+    setDrag({
+      kind,
+      pointerId: event.pointerId,
+      zoneId,
+      pointIndex,
+      originalPoints: [...sourcePoints],
+      lastPoint: point,
+    });
+  };
+
+  const startEntrySpawnDrag = (
+    event: ReactPointerEvent<SVGCircleElement>,
+    entranceId: string,
+    spawnPosition: Point,
+    entryPath: readonly Point[],
+  ): void => {
+    if (!editing || mode !== "entry") return;
+    capture(event);
+    setDrag({
+      kind: "entry-spawn",
+      pointerId: event.pointerId,
+      entranceId,
+      originalPath: [...entryPath],
+      lastPoint: spawnPosition,
+    });
+  };
+
+  const startEntryPathDrag = (
+    event: ReactPointerEvent<SVGCircleElement>,
+    entranceId: string,
+    spawnPosition: Point | undefined,
+    pointIndex: number,
+    entryPath: readonly Point[],
+  ): void => {
+    if (!editing || mode !== "entry") return;
+    const point = entryPath[pointIndex];
+    if (!point) return;
+    capture(event);
+    setDrag({
+      kind: "entry-path-point",
+      pointerId: event.pointerId,
+      entranceId,
+      ...(spawnPosition ? { originalSpawn: spawnPosition } : {}),
+      pointIndex,
+      originalPath: [...entryPath],
       lastPoint: point,
     });
   };
@@ -302,6 +498,20 @@ const DirectorSvg = ({
         ? staging?.surfaceZones.map((zone) => (
             <g key={zone.id} className="dir-surface-zone">
               <polygon points={points(zone.shape.points)} />
+              {editing && mode === "surface"
+                ? zone.shape.points.map((point, index) => (
+                    <circle
+                      key={`${zone.id}-edit-${index}`}
+                      className="dir-edit-handle"
+                      cx={point.x}
+                      cy={point.y}
+                      r="3"
+                      onPointerDown={(event) =>
+                        startVertexDrag(event, "surface-vertex", zone.id, index, zone.shape.points)
+                      }
+                    />
+                  ))
+                : null}
               <text x={zone.shape.points[0]?.x ?? 0} y={(zone.shape.points[0]?.y ?? 0) - 3}>
                 {zone.surface} ×{zone.movementMultiplier.toFixed(2)}
               </text>
@@ -324,6 +534,20 @@ const DirectorSvg = ({
                     clipPath={`url(#${clipId})`}
                   />
                 ) : null}
+                {editing && mode === "light"
+                  ? zone.shape.points.map((point, index) => (
+                      <circle
+                        key={`${zone.id}-edit-${index}`}
+                        className="dir-edit-handle"
+                        cx={point.x}
+                        cy={point.y}
+                        r="3"
+                        onPointerDown={(event) =>
+                          startVertexDrag(event, "light-vertex", zone.id, index, zone.shape.points)
+                        }
+                      />
+                    ))
+                  : null}
                 <text x={zone.shape.points[0]?.x ?? 0} y={(zone.shape.points[0]?.y ?? 0) - 3}>
                   {target} · {transition} · {bindingStatus}
                 </text>
@@ -334,9 +558,20 @@ const DirectorSvg = ({
 
       {show(mode, "depth")
         ? staging?.depthScaleCurves.flatMap((curve) =>
-            curve.keys.map((key) => (
-              <g key={`${curve.id}-${key.y}`} className="dir-depth-key">
+            curve.keys.map((key, keyIndex) => (
+              <g key={`${curve.id}-${keyIndex}`} className="dir-depth-key">
                 <line x1="0" y1={key.y} x2={overlay.nativeSize.width} y2={key.y} />
+                {editing && mode === "depth" ? (
+                  <circle
+                    className="dir-edit-handle"
+                    cx={overlay.nativeSize.width - 9}
+                    cy={key.y}
+                    r="3.2"
+                    onPointerDown={(event) =>
+                      startDepthDrag(event, curve.id, keyIndex, key.scale, key.y)
+                    }
+                  />
+                ) : null}
                 <text x="5" y={key.y - 2}>
                   {Math.round(key.scale * 100)}%
                 </text>
@@ -350,6 +585,17 @@ const DirectorSvg = ({
             <g key={plane.id} className="dir-occlusion-plane">
               <line x1="0" y1={plane.baselineY} x2={overlay.nativeSize.width} y2={plane.baselineY} />
               <circle cx={plane.position.x} cy={plane.position.y} r="3" />
+              {editing && mode === "occlusion" ? (
+                <circle
+                  className="dir-edit-handle"
+                  cx={overlay.nativeSize.width - 9}
+                  cy={plane.baselineY}
+                  r="3.2"
+                  onPointerDown={(event) =>
+                    startOcclusionDrag(event, plane.id, plane.baselineY)
+                  }
+                />
+              ) : null}
               <text x={plane.position.x + 5} y={plane.position.y - 4}>
                 {plane.id} · baseline {Math.round(plane.baselineY)}
               </text>
@@ -389,7 +635,7 @@ const DirectorSvg = ({
                   className={editing && mode === "approach" ? "dir-edit-handle" : undefined}
                   cx={slot.position.x}
                   cy={slot.position.y}
-                  r={4}
+                  r="4"
                   onPointerDown={(event) =>
                     startApproachDrag(event, object.instanceId, slot.id, slot.facing, slot.position)
                   }
@@ -408,13 +654,46 @@ const DirectorSvg = ({
       {show(mode, "entry")
         ? staging?.entryChoreographies.map((entry) => {
             const entrance = overlay.entrances.find((candidate) => candidate.id === entry.entranceId);
-            const route = [entry.spawnPosition ?? entrance?.position, ...entry.entryPath].filter(
+            const spawn = entry.spawnPosition ?? entrance?.position;
+            const route = [spawn, ...entry.entryPath].filter(
               (point): point is Point => Boolean(point),
             );
             return (
               <g key={entry.entranceId} className="dir-entry-path">
                 {route.length > 1 ? <polyline points={points(route)} markerEnd="url(#dir-arrow)" /> : null}
-                {route[0] ? <circle cx={route[0].x} cy={route[0].y} r="4" /> : null}
+                {spawn ? (
+                  <circle
+                    className={editing && mode === "entry" && entry.spawnPosition ? "dir-edit-handle" : undefined}
+                    cx={spawn.x}
+                    cy={spawn.y}
+                    r="4"
+                    onPointerDown={(event) => {
+                      if (entry.spawnPosition) {
+                        startEntrySpawnDrag(event, entry.entranceId, entry.spawnPosition, entry.entryPath);
+                      }
+                    }}
+                  />
+                ) : null}
+                {editing && mode === "entry"
+                  ? entry.entryPath.map((point, index) => (
+                      <circle
+                        key={`${entry.entranceId}-path-${index}`}
+                        className="dir-edit-handle"
+                        cx={point.x}
+                        cy={point.y}
+                        r="3.2"
+                        onPointerDown={(event) =>
+                          startEntryPathDrag(
+                            event,
+                            entry.entranceId,
+                            entry.spawnPosition,
+                            index,
+                            entry.entryPath,
+                          )
+                        }
+                      />
+                    ))
+                  : null}
                 {entrance ? <circle className="is-arrival" cx={entrance.position.x} cy={entrance.position.y} r="4" /> : null}
                 <text x={(route[0]?.x ?? 0) + 5} y={(route[0]?.y ?? 0) - 5}>
                   {entry.unlockControlAt}
@@ -474,6 +753,16 @@ const DirectorSvg = ({
     </svg>
   );
 };
+
+const directlyEditableModes = new Set<SceneDirectorMode>([
+  "walk",
+  "depth",
+  "occlusion",
+  "approach",
+  "surface",
+  "light",
+  "entry",
+]);
 
 export const SceneDirectorPanel = ({
   overlay,
@@ -538,7 +827,7 @@ export const SceneDirectorPanel = ({
         <footer>
           <span>
             {modeLabel(mode)} · canonical native coordinates
-            {editing && (mode === "walk" || mode === "approach") ? " · drag handles to edit" : ""}
+            {editing && directlyEditableModes.has(mode) ? " · drag handles to edit" : ""}
           </span>
           <strong>{overlay.nativeSize.width} × {overlay.nativeSize.height} @ 1×</strong>
         </footer>
