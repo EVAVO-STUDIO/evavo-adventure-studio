@@ -77,7 +77,7 @@ const binding: AdventureRpgCombatBinding = {
     attackPower: 40,
     defensePower: 20,
     agility: 20,
-    attackIntervalTicks: 6,
+    attackIntervalTicks: 5,
     telegraphTicks: 2,
     recoveryTicks: 1,
   },
@@ -112,34 +112,36 @@ describe("RPG-bound combat", () => {
     expect(attacked.rpg.practice.weapon).toBe(1);
     expect(attacked.combat.enemyHealth).toBeLessThan(binding.enemy.maximumHealth);
 
-    const advanced = advanceAdventureRpgBoundCombat(manifest, attacked, binding, 6);
+    const advanced = advanceAdventureRpgBoundCombat(manifest, attacked, binding, 5);
     expect(advanced.rpg.resources.health).toBeLessThan(80);
     expect(advanced.rpg.resources.stamina).toBeGreaterThanOrEqual(attacked.rpg.resources.stamina ?? 0);
   });
 
-  it("turns player timing choices into defensive practice and deterministic outcomes", () => {
+  it("turns player timing choices into one practice award per defensive action", () => {
     let state = createAdventureRpgBoundCombatState(
       manifest,
       createAdventureRpgState(manifest, "fighter"),
       binding,
     );
     state = issueAdventureRpgBoundCombatAction(manifest, state, binding, "guard");
-    const guarded = advanceAdventureRpgBoundCombat(manifest, state, binding, 6);
+    expect(state.rpg.practice.parry).toBe(1);
+    const guarded = advanceAdventureRpgBoundCombat(manifest, state, binding, 5);
     expect(guarded.events).toEqual(
       expect.arrayContaining([
         expect.objectContaining({ kind: "enemy-attacked", guarded: true, dodged: false }),
       ]),
     );
-    expect(guarded.rpg.practice.parry).toBeGreaterThanOrEqual(1);
+    expect(guarded.rpg.practice.parry).toBe(1);
 
     let dodging = createAdventureRpgBoundCombatState(manifest, guarded.rpg, binding);
     dodging = issueAdventureRpgBoundCombatAction(manifest, dodging, binding, "dodge");
-    const dodged = advanceAdventureRpgBoundCombat(manifest, dodging, binding, 6);
+    expect(dodging.rpg.practice.dodge).toBe(1);
+    const dodged = advanceAdventureRpgBoundCombat(manifest, dodging, binding, 5);
     expect(dodged.events).toEqual(
       expect.arrayContaining([
         expect.objectContaining({ kind: "enemy-attacked", damage: 0, dodged: true }),
       ]),
     );
-    expect(dodged.rpg.practice.dodge).toBeGreaterThanOrEqual(1);
+    expect(dodged.rpg.practice.dodge).toBe(1);
   });
 });
