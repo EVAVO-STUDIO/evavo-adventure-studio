@@ -32,6 +32,10 @@
       "types": "./dist/src/occlusion.d.ts",
       "import": "./dist/src/occlusion.js"
     },
+    "./elevation-frame": {
+      "types": "./dist/src/elevation-frame.d.ts",
+      "import": "./dist/src/elevation-frame.js"
+    },
     "./lighting": {
       "types": "./dist/src/lighting.d.ts",
       "import": "./dist/src/lighting.js"
