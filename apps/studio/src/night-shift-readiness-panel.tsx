@@ -4,6 +4,10 @@ import {
   nightShiftPeriodVgaProductionAssetIds,
   nightShiftProductionAssets,
 } from "./night-shift-production-assets.js";
+import {
+  nightShiftProductionManifestFileName,
+  nightShiftProductionManifestJson,
+} from "./night-shift-production-manifest.js";
 import "./night-shift-readiness-panel.css";
 
 const roleCounts = (): readonly { readonly role: string; readonly count: number }[] => {
@@ -14,6 +18,21 @@ const roleCounts = (): readonly { readonly role: string; readonly count: number 
   return [...counts.entries()]
     .map(([role, count]) => ({ role, count }))
     .sort((left, right) => left.role.localeCompare(right.role));
+};
+
+const downloadProductionManifest = (): void => {
+  const blob = new Blob([nightShiftProductionManifestJson()], {
+    type: "application/json;charset=utf-8",
+  });
+  const url = URL.createObjectURL(blob);
+  const link = document.createElement("a");
+  link.href = url;
+  link.download = nightShiftProductionManifestFileName;
+  link.style.display = "none";
+  document.body.appendChild(link);
+  link.click();
+  link.remove();
+  URL.revokeObjectURL(url);
 };
 
 export const NightShiftReadinessPanel = () => {
@@ -68,6 +87,9 @@ export const NightShiftReadinessPanel = () => {
             <span key={role}><strong>{count}</strong> {role}</span>
           ))}
         </div>
+        <button type="button" className="stg-production-plan-export" onClick={downloadProductionManifest}>
+          Export production manifest
+        </button>
       </div>
     </section>
   );
