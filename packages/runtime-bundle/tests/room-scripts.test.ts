@@ -6,7 +6,7 @@ import {
 
 const context = {
   sceneIds: new Set(["scene.room", "scene.cutaway"]),
-  entrancesByScene: new Map([
+  entranceIdsByScene: new Map([
     ["scene.room", new Set(["entrance.room"])],
     ["scene.cutaway", new Set(["entrance.cutaway"])],
   ]),
@@ -26,7 +26,7 @@ describe("runtime room-script manifest", () => {
           sceneId: "scene.room",
           trigger: { kind: "scene-first-enter" },
           once: true,
-          actions: [],
+          actions: [{ kind: "set-flag", flag: "introduced", value: true }],
         },
         {
           id: "room-script.room.gag",
