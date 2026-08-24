@@ -9,6 +9,10 @@ import {
 } from "./multi-protagonist-controller.js";
 import { createRoomScriptPackagedRuntimeControllerWithFactory } from "./room-script-controller.js";
 import {
+  createAdventureRoutePackagedRuntimeControllerWithFactory,
+  type AdventureRoutePackagedRuntimeController,
+} from "./route-topology-controller.js";
+import {
   createAdventureRpgPackagedRuntimeControllerWithFactory,
   type AdventureRpgPackagedRuntimeController,
 } from "./rpg-controller.js";
@@ -37,13 +41,28 @@ type OptionalRpgController = Partial<Pick<
   | "finishCombat"
 >>;
 
-export interface PackagedFeatureSessionController extends PackagedSessionController, OptionalRpgController {
+type OptionalRouteController = Partial<Pick<
+  AdventureRoutePackagedRuntimeController,
+  | "routeState"
+  | "availableRouteEdges"
+  | "traverseRouteEdge"
+  | "routeAtTerminal"
+  | "routeAtRequiredReconvergence"
+>>;
+
+export interface PackagedFeatureSessionController
+  extends PackagedSessionController,
+    OptionalRpgController,
+    OptionalRouteController {
   activeProtagonistId?(): ReturnType<MultiProtagonistPackagedRuntimeController["activeProtagonistId"]>;
   multiProtagonistState?(): ReturnType<MultiProtagonistPackagedRuntimeController["multiProtagonistState"]>;
   switchProtagonist?(protagonistId: Parameters<MultiProtagonistPackagedRuntimeController["switchProtagonist"]>[0]): void;
 }
 
-export interface PackagedFeatureRuntimeController extends PackagedRuntimeController, OptionalRpgController {
+export interface PackagedFeatureRuntimeController
+  extends PackagedRuntimeController,
+    OptionalRpgController,
+    OptionalRouteController {
   activeProtagonistId?(): ReturnType<MultiProtagonistPackagedRuntimeController["activeProtagonistId"]>;
   multiProtagonistState?(): ReturnType<MultiProtagonistPackagedRuntimeController["multiProtagonistState"]>;
   switchProtagonist?(protagonistId: Parameters<MultiProtagonistPackagedRuntimeController["switchProtagonist"]>[0]): void;
@@ -54,6 +73,7 @@ export interface PackagedFeatureSessionDescription {
   readonly roomScripts: boolean;
   readonly rpg: boolean;
   readonly multiProtagonist: boolean;
+  readonly routeTopology: boolean;
   readonly stack: readonly string[];
 }
 
@@ -67,17 +87,20 @@ export const describePackagedFeatureSession = (
   const roomScripts = bundle.roomScripts !== undefined;
   const rpg = bundle.rpg !== undefined;
   const multiProtagonist = bundle.multiProtagonist !== undefined;
+  const routeTopology = bundle.routeTopology !== undefined;
   return {
     sentence,
     roomScripts,
     rpg,
     multiProtagonist,
+    routeTopology,
     stack: [
       "base",
       ...(sentence ? ["sentence"] : []),
       ...(roomScripts ? ["room-scripts"] : []),
       ...(rpg ? ["rpg"] : []),
       ...(multiProtagonist ? ["multi-protagonist"] : []),
+      ...(routeTopology ? ["route-topology"] : []),
     ],
   };
 };
@@ -91,6 +114,15 @@ const roomScriptFactory = (inner: PackagedSessionControllerFactory): PackagedSes
 const rpgFactory = (inner: PackagedSessionControllerFactory): PackagedSessionControllerFactory =>
   (bundle, options = {}) => createAdventureRpgPackagedRuntimeControllerWithFactory(bundle, options, inner);
 
+const multiProtagonistFactory = (inner: PackagedSessionControllerFactory): PackagedSessionControllerFactory =>
+  (bundle, options = {}) => {
+    const { requestedActorInstanceId: _ignored, ...multiOptions } = options;
+    return createMultiProtagonistPackagedRuntimeControllerWithFactory(bundle, multiOptions, inner);
+  };
+
+const routeFactory = (inner: PackagedSessionControllerFactory): PackagedSessionControllerFactory =>
+  (bundle, options = {}) => createAdventureRoutePackagedRuntimeControllerWithFactory(bundle, options, inner);
+
 export const createPackagedFeatureSessionController = (
   bundle: RuntimeBundle,
   options: PackagedRuntimeControllerOptions = {},
@@ -100,10 +132,8 @@ export const createPackagedFeatureSessionController = (
   if (description.sentence) inner = sentenceFactory(inner);
   if (description.roomScripts) inner = roomScriptFactory(inner);
   if (description.rpg) inner = rpgFactory(inner);
-  if (description.multiProtagonist) {
-    const { requestedActorInstanceId: _ignored, ...multiOptions } = options;
-    return createMultiProtagonistPackagedRuntimeControllerWithFactory(bundle, multiOptions, inner);
-  }
+  if (description.multiProtagonist) inner = multiProtagonistFactory(inner);
+  if (description.routeTopology) inner = routeFactory(inner);
   return inner(bundle, options) as PackagedFeatureSessionController;
 };
 
@@ -122,6 +152,14 @@ const rpgFeatureApi = (session: PackagedFeatureSessionController): OptionalRpgCo
   ...(session.issueCombatAction ? { issueCombatAction: (action) => session.issueCombatAction?.(action) ?? [] } : {}),
   ...(session.advanceCombat ? { advanceCombat: (ticks: number) => session.advanceCombat?.(ticks) ?? [] } : {}),
   ...(session.finishCombat ? { finishCombat: () => session.finishCombat?.() as ReturnType<AdventureRpgPackagedRuntimeController["finishCombat"]> } : {}),
+});
+
+const routeFeatureApi = (session: PackagedFeatureSessionController): OptionalRouteController => ({
+  ...(session.routeState ? { routeState: () => session.routeState?.() as ReturnType<AdventureRoutePackagedRuntimeController["routeState"]> } : {}),
+  ...(session.availableRouteEdges ? { availableRouteEdges: () => session.availableRouteEdges?.() ?? [] } : {}),
+  ...(session.traverseRouteEdge ? { traverseRouteEdge: (edgeId: string) => session.traverseRouteEdge?.(edgeId) as ReturnType<AdventureRoutePackagedRuntimeController["traverseRouteEdge"]> } : {}),
+  ...(session.routeAtTerminal ? { routeAtTerminal: () => session.routeAtTerminal?.() ?? false } : {}),
+  ...(session.routeAtRequiredReconvergence ? { routeAtRequiredReconvergence: () => session.routeAtRequiredReconvergence?.() ?? false } : {}),
 });
 
 export const createPackagedFeatureRuntimeController = (
@@ -149,6 +187,7 @@ export const createPackagedFeatureRuntimeController = (
     parserState: () => session.parserState(),
     drainSceneAudioCueIds: () => session.drainSceneAudioCueIds(),
     ...rpgFeatureApi(session),
+    ...routeFeatureApi(session),
     ...(session.activeProtagonistId
       ? { activeProtagonistId: () => session.activeProtagonistId?.() as ReturnType<MultiProtagonistPackagedRuntimeController["activeProtagonistId"]> }
       : {}),
