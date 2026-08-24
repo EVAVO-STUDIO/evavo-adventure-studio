@@ -1,0 +1,78 @@
+.dir-edit-actions {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  margin-left: auto;
+  padding-left: 8px;
+  border-left: 1px solid #2b2f38;
+}
+
+.dir-edit-status {
+  display: inline-flex;
+  min-height: 24px;
+  align-items: center;
+  padding: 0 7px;
+  color: #aeb4c0;
+  font-family: "Courier New", monospace;
+  font-size: 7px;
+  font-weight: 700;
+  letter-spacing: 0.12em;
+}
+
+.dir-mode-bar .stg-button:disabled {
+  cursor: default;
+  opacity: 0.34;
+}
+
+.dir-edit-error {
+  padding: 7px 9px;
+  border: 1px solid rgb(255 105 125 / 40%);
+  border-radius: 4px;
+  color: #ff9cad;
+  background: rgb(82 22 34 / 18%);
+  font-family: "Courier New", monospace;
+  font-size: 8px;
+  line-height: 1.45;
+}
+
+.dir-svg.is-editable {
+  touch-action: none;
+  user-select: none;
+}
+
+.dir-edit-handle {
+  cursor: grab;
+  stroke-width: 1.1px !important;
+  transition: opacity 80ms linear;
+  vector-effect: non-scaling-stroke;
+}
+
+.dir-edit-handle:hover {
+  opacity: 0.78;
+}
+
+.dir-edit-handle:active {
+  cursor: grabbing;
+  opacity: 1;
+}
+
+.dir-walk-lane .dir-edit-handle {
+  fill: #10141a;
+  stroke: #b6d8bf;
+}
+
+.dir-approach-slot .dir-edit-handle {
+  fill: #10141a;
+  stroke: #e5c785;
+}
+
+@media (max-width: 900px) {
+  .dir-edit-actions {
+    width: 100%;
+    margin-left: 0;
+    padding-top: 4px;
+    padding-left: 0;
+    border-top: 1px solid #2b2f38;
+    border-left: 0;
+  }
+}
