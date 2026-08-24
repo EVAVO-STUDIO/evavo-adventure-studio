@@ -15,6 +15,7 @@ import { DynamixCinematicLabApp } from "./DynamixCinematicLabApp.js";
 import { StudioErrorBoundary } from "./ErrorBoundary.js";
 import { FontApp } from "./FontApp.js";
 import { FrontEndApp } from "./FrontEndApp.js";
+import { FullGameCapabilityApp } from "./FullGameCapabilityApp.js";
 import { GeometryApp } from "./GeometryApp.js";
 import { LifecycleApp } from "./LifecycleApp.js";
 import { LocalisationApp } from "./LocalisationApp.js";
@@ -56,6 +57,8 @@ const application: ReactNode =
     <ShowcaseGalleryApp />
   ) : workspace === "profiles" ? (
     <ProductionProfilesApp />
+  ) : workspace === "full-game" ? (
+    <FullGameCapabilityApp />
   ) : workspace === "progression" ? (
     <ProgressionApp />
   ) : workspace === "staging" ? (
@@ -106,6 +109,7 @@ const workspaces = [
   { id: "lifecycle", href: "/?workspace=lifecycle", label: "Endings" },
   { id: "polish", href: "/?workspace=polish", label: "Polish" },
   { id: "profiles", href: "/?workspace=profiles", label: "Profiles" },
+  { id: "full-game", href: "/?workspace=full-game", label: "Full Game" },
   { id: "showcases", href: "/?workspace=showcases", label: "Showcases" },
   { id: "feel", href: "/?workspace=feel", label: "Feel" },
   { id: "design", href: "/?workspace=design", label: "Design" },
@@ -136,6 +140,7 @@ const activeWorkspace =
   workspace === "feel" ||
   workspace === "showcases" ||
   workspace === "profiles" ||
+  workspace === "full-game" ||
   workspace === "progression" ||
   workspace === "staging" ||
   workspace === "composition" ||
