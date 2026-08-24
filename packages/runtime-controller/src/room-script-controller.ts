@@ -38,6 +38,7 @@ export const createRoomScriptPackagedRuntimeControllerWithFactory = (
     ...(save.investigation ? { investigation: save.investigation } : {}),
     ...(save.itemCombinations ? { itemCombinations: save.itemCombinations } : {}),
     ...(save.multiProtagonist ? { multiProtagonist: save.multiProtagonist } : {}),
+    ...(save.rpg ? { rpg: save.rpg } : {}),
   });
 
   const saveWithRoomScripts = (): SaveGame => {
