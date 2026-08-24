@@ -56,6 +56,10 @@
       "types": "./dist/src/investigation-runtime.d.ts",
       "import": "./dist/src/investigation-runtime.js"
     },
+    "./multi-protagonist": {
+      "types": "./dist/src/multi-protagonist.d.ts",
+      "import": "./dist/src/multi-protagonist.js"
+    },
     "./dialogue": {
       "types": "./dist/src/dialogue.d.ts",
       "import": "./dist/src/dialogue.js"
