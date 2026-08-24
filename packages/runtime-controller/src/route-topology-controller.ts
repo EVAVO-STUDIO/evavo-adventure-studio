@@ -96,6 +96,7 @@ export const createAdventureRoutePackagedRuntimeControllerWithFactory = (
   };
 
   return {
+    ...controller,
     selection: controller.selection,
     routeState: () => route,
     availableRouteEdges: () => availableAdventureRouteEdges(manifest, controller.worldState().story, route),
