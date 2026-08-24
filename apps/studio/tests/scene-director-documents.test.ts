@@ -78,7 +78,7 @@ describe("Scene Director composite documents", () => {
     const documents = applySceneDirectorDocumentEdit(initial(), {
       kind: "set-object-state-interaction-shape",
       definitionId: "object-definition.night-shift.radio" as never,
-      stateId: "object-state.night-shift.radio.ready" as never,
+      stateId: "object-state.night-shift.radio.rack" as never,
       shape: {
         points: [
           { x: -1, y: -1 },
@@ -91,7 +91,7 @@ describe("Scene Director composite documents", () => {
     const radio = documents.sceneInstances.objectDefinitions.find(
       (definition) => definition.id === "object-definition.night-shift.radio",
     );
-    expect(radio?.states.find((state) => state.id === "object-state.night-shift.radio.ready")?.interactionShape)
+    expect(radio?.states.find((state) => state.id === "object-state.night-shift.radio.rack")?.interactionShape)
       .toMatchObject({ points: [{ x: -1, y: -1 }] });
   });
 
