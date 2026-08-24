@@ -5,6 +5,7 @@ import type { InteractiveRuntimeWorldState } from "@evavo/adventure-scene-runtim
 import type { RuntimeInvestigationState } from "@evavo/adventure-scene-runtime/investigation-runtime";
 import type { MultiProtagonistState } from "@evavo/adventure-scene-runtime/multi-protagonist";
 import type { RuntimeRoomScriptState } from "@evavo/adventure-scene-runtime/room-scripts";
+import type { AdventureRpgState } from "@evavo/adventure-scene-runtime/rpg";
 import { validateSavedAudio } from "./audio-compatibility.js";
 import {
   canonicalSaveGameJson,
@@ -21,6 +22,7 @@ import { validateSavedMultiProtagonist } from "./multi-protagonist-compatibility
 import { assertSaveGameAllowed } from "./policy.js";
 import type { SaveGameProfiledRuntimeCameraState } from "./profiled-camera.js";
 import { validateSavedRoomScripts } from "./room-script-compatibility.js";
+import { validateSavedAdventureRpg } from "./rpg-compatibility.js";
 import type { SaveGameSentenceState } from "./sentence.js";
 import { validateSavedSentence } from "./sentence-compatibility.js";
 import {
@@ -45,6 +47,7 @@ export interface CreateSaveGameOptions {
   readonly itemCombinations?: SaveGameItemCombinationState;
   readonly multiProtagonist?: MultiProtagonistState;
   readonly roomScripts?: RuntimeRoomScriptState;
+  readonly rpg?: AdventureRpgState;
 }
 
 const completeCompatibilityIssues = (
@@ -58,6 +61,7 @@ const completeCompatibilityIssues = (
   ...validateSavedMultiProtagonist(bundle, save),
   ...validateSavedSentence(bundle, save),
   ...validateSavedRoomScripts(bundle, save),
+  ...validateSavedAdventureRpg(bundle, save),
 ];
 
 export const createSaveGame = (
@@ -72,6 +76,7 @@ export const createSaveGame = (
     itemCombinations,
     multiProtagonist,
     roomScripts,
+    rpg,
     sentence,
     ...interfaceState
   } = options;
@@ -90,6 +95,7 @@ export const createSaveGame = (
     ...(itemCombinations ? { itemCombinations } : {}),
     ...(multiProtagonist ? { multiProtagonist } : {}),
     ...(roomScripts ? { roomScripts } : {}),
+    ...(rpg ? { rpg } : {}),
   });
   const save = saveGameSchema.parse({
     ...payload,
