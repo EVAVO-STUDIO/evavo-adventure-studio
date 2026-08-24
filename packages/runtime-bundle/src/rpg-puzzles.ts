@@ -55,6 +55,7 @@ export const runtimeAdventureRpgPuzzleManifestSchema = z
 export type RuntimeAdventureRpgPuzzleManifest = z.infer<typeof runtimeAdventureRpgPuzzleManifestSchema>;
 
 export type RuntimeAdventureRpgPuzzleIssueCode =
+  | "missing-rpg-manifest"
   | "duplicate-puzzle"
   | "duplicate-solution"
   | "unknown-class-tag"
