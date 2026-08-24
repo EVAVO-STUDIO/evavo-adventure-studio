@@ -36,6 +36,13 @@ describe("full-game adventure capability matrix", () => {
     }
   });
 
+  it("tracks scrolling as proofed and elevation as implemented pending a full stress room", () => {
+    const coverage = new Map(currentAdventureCapabilityCoverage.map((entry) => [entry.id, entry] as const));
+    expect(coverage.get("scrolling-room")?.status).toBe("proofed");
+    expect(coverage.get("multi-elevation-room")?.status).toBe("implemented");
+    expect(coverage.get("panoramic-exterior")?.status).toBe("partial");
+  });
+
   it("keeps Sierra investigation requirements distinct from Sierra storybook requirements", () => {
     const kingsQuest = adventureReferenceGameCapabilities.find((profile) => profile.id === "kings-quest-v")!;
     const gabrielKnight = adventureReferenceGameCapabilities.find(
@@ -53,8 +60,10 @@ describe("full-game adventure capability matrix", () => {
     );
   });
 
-  it("requires the actual Quest for Glory RPG simulation layer", () => {
+  it("requires the actual Quest for Glory RPG simulation layer on the VGA icon lane", () => {
     const qfg = adventureReferenceGameCapabilities.find((profile) => profile.id === "quest-for-glory-vga")!;
+    expect(qfg.required).toContain("verb-icon-interface");
+    expect(qfg.required).not.toContain("parser-intent");
     expect(qfg.required).toEqual(
       expect.arrayContaining([
         "character-stats",
