@@ -3,6 +3,10 @@ import { nightShiftFontGeneratedSource, nightShiftFontIndexBytes, nightShiftFont
 import { nightShiftActorLightingPaletteBytes } from "./night-shift-foundation-generated.js";
 import { nightShiftGeneratedFoundationIcons } from "./night-shift-foundation-icon-outputs.js";
 import {
+  nightShiftOfficerArtBriefFileName,
+  nightShiftOfficerArtBriefJson,
+} from "./night-shift-officer-art-brief.js";
+import {
   nightShiftOfficerMasterContract,
   nightShiftOfficerReviewGuide,
   nightShiftOfficerReviewGuidePngBytes,
@@ -59,6 +63,7 @@ export const createNightShiftFoundationTechnicalArchive = (): Uint8Array => {
       masterSize: nightShiftOfficerMasterContract.masterSize,
       frameCount: nightShiftOfficerMasterContract.frameCount,
       horizontalStride: nightShiftOfficerMasterContract.horizontalStride,
+      artBriefPath: `guides/${nightShiftOfficerArtBriefFileName}`,
       reviewGuidePath: `guides/${nightShiftOfficerReviewGuide.fileName}`,
       reviewGuidePurpose: nightShiftOfficerReviewGuide.purpose,
       reviewTemplatePath: `guides/${nightShiftOfficerReviewTemplateFileName}`,
@@ -66,7 +71,7 @@ export const createNightShiftFoundationTechnicalArchive = (): Uint8Array => {
       reviewRules: nightShiftOfficerMasterContract.reviewRules,
     },
     warning:
-      "This archive supplies reproducible technical sources and non-runtime officer drawing/review guides. Foundation is not complete until the generated sources and final officer art pass production intake and Period VGA review.",
+      "This archive supplies reproducible technical sources and non-runtime officer art/review guides. Foundation is not complete until the generated sources and final officer art pass production intake and Period VGA review.",
   } as const;
 
   return createDeterministicStoredZip([
@@ -85,6 +90,10 @@ export const createNightShiftFoundationTechnicalArchive = (): Uint8Array => {
     {
       path: nightShiftFontGeneratedSource.indexPath,
       data: nightShiftFontIndexBytes(),
+    },
+    {
+      path: `guides/${nightShiftOfficerArtBriefFileName}`,
+      data: new TextEncoder().encode(nightShiftOfficerArtBriefJson()),
     },
     {
       path: `guides/${nightShiftOfficerReviewGuide.fileName}`,
