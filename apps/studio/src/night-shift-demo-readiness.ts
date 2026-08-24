@@ -11,12 +11,14 @@ import {
 } from "./night-shift-runtime-contracts.js";
 import { nightShiftRuntimeStaging } from "./night-shift-runtime-staging.js";
 import { validateSceneDirectorStagingAudioCues } from "./scene-director-audio-readiness.js";
+import { validateNightShiftUiContracts } from "./night-shift-ui-contracts.js";
 
 export type NightShiftDemoReadinessGateId =
   | "project-composition-staging"
   | "front-end"
   | "lifecycle"
   | "audio-contract"
+  | "ui-contract"
   | "compiled-assets"
   | "indexed-assets"
   | "period-vga"
@@ -115,6 +117,7 @@ export const evaluateNightShiftDemoReadiness = (
     nightShiftRuntimeContracts.lifecycle.outcomes.some((outcome) => outcome.kind === "failure") &&
     nightShiftRuntimeContracts.lifecycle.outcomes.some((outcome) => outcome.kind === "success");
   const audioContractReady = audioReady();
+  const uiContractReady = validateNightShiftUiContracts().length === 0;
   const compiledAssetsReady =
     evidence.assetManifest?.projectId === nightShiftRuntimeProject.id &&
     evidence.assetManifest.assets.length > 0;
@@ -159,11 +162,18 @@ export const evaluateNightShiftDemoReadiness = (
       "Audio mix or production staging cue coverage contains blocking issues.",
     ),
     gate(
+      "ui-contract",
+      "authored",
+      uiContractReady,
+      "Early-SCI1 icon bar, score, inventory and bitmap-font contracts are valid.",
+      "Native icon-bar UI or bitmap-font contracts contain blocking issues.",
+    ),
+    gate(
       "compiled-assets",
       "evidence",
       compiledAssetsReady,
       "Compiled asset manifest is present for the proof project.",
-      "Compile the final visual/audio assets and retain their manifest evidence.",
+      "Compile the final visual/audio/UI assets and retain their manifest evidence.",
     ),
     gate(
       "indexed-assets",
