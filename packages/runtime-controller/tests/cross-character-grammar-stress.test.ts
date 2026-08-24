@@ -1,14 +1,7 @@
 import type { Id } from "@evavo/adventure-project-schema";
 import type { RuntimeBundle } from "@evavo/adventure-runtime-bundle";
 import type { InteractiveRuntimeWorldState } from "@evavo/adventure-scene-runtime/commands";
-import {
-  createItemCombinationRuntimeState,
-  createSentenceState,
-  executeSentenceIntent,
-  selectSentenceTarget,
-  selectSentenceVerb,
-  type SentenceGrammar,
-} from "@evavo/adventure-scene-runtime/sentence-execution";
+import { createItemCombinationRuntimeState } from "@evavo/adventure-scene-runtime/item-combinations";
 import {
   createMultiProtagonistState,
   switchActiveProtagonist,
@@ -18,6 +11,13 @@ import {
   advanceRuntimeRoomScripts,
   createRuntimeRoomScriptState,
 } from "@evavo/adventure-scene-runtime/room-scripts";
+import {
+  createSentenceState,
+  selectSentenceTarget,
+  selectSentenceVerb,
+  type SentenceGrammar,
+} from "@evavo/adventure-scene-runtime/sentence";
+import { executeSentenceIntent } from "@evavo/adventure-scene-runtime/sentence-execution";
 import { describe, expect, it } from "vitest";
 import { applyNewMultiProtagonistBindings } from "../src/multi-protagonist-bindings-runtime.js";
 import { projectMultiProtagonistIntoWorld } from "../src/multi-protagonist-projection.js";
