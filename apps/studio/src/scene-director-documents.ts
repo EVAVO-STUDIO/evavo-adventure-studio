@@ -50,7 +50,7 @@ export type SceneDirectorDocumentCommand =
       readonly kind: "set-object-state-interaction-shape";
       readonly definitionId: Id<"object-definition">;
       readonly stateId: Id<"object-state">;
-      readonly shape: Polygon;
+      readonly shape: Polygon | null;
     }
   | {
       readonly kind: "set-object-instance-position";
@@ -345,7 +345,7 @@ export const applySceneDirectorDocumentEdit = (
     }
 
     case "set-object-state-interaction-shape": {
-      assertLocalPolygon(command, command.shape, "Object interaction shape");
+      if (command.shape) assertLocalPolygon(command, command.shape, "Object interaction shape");
       const definitionIndex = documents.sceneInstances.objectDefinitions.findIndex(
         (definition) => definition.id === command.definitionId,
       );
@@ -361,6 +361,7 @@ export const applySceneDirectorDocumentEdit = (
       if (!state) {
         throw new SceneDirectorDocumentEditError(command, `Object state '${command.stateId}' was not found.`);
       }
+      const { interactionShape: _previousShape, ...stateWithoutShape } = state;
       const sceneInstances = parseInstanceEdit(command, {
         ...documents.sceneInstances,
         objectDefinitions: documents.sceneInstances.objectDefinitions.map((candidate, index) =>
@@ -369,7 +370,10 @@ export const applySceneDirectorDocumentEdit = (
                 ...definition,
                 states: definition.states.map((candidateState, candidateIndex) =>
                   candidateIndex === stateIndex
-                    ? { ...state, interactionShape: command.shape }
+                    ? {
+                        ...stateWithoutShape,
+                        ...(command.shape ? { interactionShape: command.shape } : {}),
+                      }
                     : candidateState,
                 ),
               }
