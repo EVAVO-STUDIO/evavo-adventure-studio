@@ -8,7 +8,10 @@ import {
   type MultiProtagonistPackagedRuntimeController,
 } from "./multi-protagonist-controller.js";
 import { createRoomScriptPackagedRuntimeControllerWithFactory } from "./room-script-controller.js";
-import { createAdventureRpgPackagedRuntimeControllerWithFactory } from "./rpg-controller.js";
+import {
+  createAdventureRpgPackagedRuntimeControllerWithFactory,
+  type AdventureRpgPackagedRuntimeController,
+} from "./rpg-controller.js";
 import { createSentencePackagedRuntimeControllerWithFactory } from "./sentence-controller.js";
 import {
   createBasePackagedSessionController,
@@ -16,13 +19,30 @@ import {
   type PackagedSessionControllerFactory,
 } from "./session-controller.js";
 
-export interface PackagedFeatureSessionController extends PackagedSessionController {
+type OptionalRpgController = Partial<Pick<
+  AdventureRpgPackagedRuntimeController,
+  | "rpgState"
+  | "practiceSkill"
+  | "resolveSkillCheck"
+  | "advanceRpgTime"
+  | "restRpg"
+  | "adjustResource"
+  | "scheduleActive"
+  | "createRpgImportSnapshot"
+  | "activeCombatState"
+  | "startCombat"
+  | "issueCombatAction"
+  | "advanceCombat"
+  | "finishCombat"
+>>;
+
+export interface PackagedFeatureSessionController extends PackagedSessionController, OptionalRpgController {
   activeProtagonistId?(): ReturnType<MultiProtagonistPackagedRuntimeController["activeProtagonistId"]>;
   multiProtagonistState?(): ReturnType<MultiProtagonistPackagedRuntimeController["multiProtagonistState"]>;
   switchProtagonist?(protagonistId: Parameters<MultiProtagonistPackagedRuntimeController["switchProtagonist"]>[0]): void;
 }
 
-export interface PackagedFeatureRuntimeController extends PackagedRuntimeController {
+export interface PackagedFeatureRuntimeController extends PackagedRuntimeController, OptionalRpgController {
   activeProtagonistId?(): ReturnType<MultiProtagonistPackagedRuntimeController["activeProtagonistId"]>;
   multiProtagonistState?(): ReturnType<MultiProtagonistPackagedRuntimeController["multiProtagonistState"]>;
   switchProtagonist?(protagonistId: Parameters<MultiProtagonistPackagedRuntimeController["switchProtagonist"]>[0]): void;
@@ -81,14 +101,26 @@ export const createPackagedFeatureSessionController = (
   if (description.rpg) inner = rpgFactory(inner);
   if (description.multiProtagonist) {
     const { requestedActorInstanceId: _ignored, ...multiOptions } = options;
-    return createMultiProtagonistPackagedRuntimeControllerWithFactory(
-      bundle,
-      multiOptions,
-      inner,
-    );
+    return createMultiProtagonistPackagedRuntimeControllerWithFactory(bundle, multiOptions, inner);
   }
-  return inner(bundle, options);
+  return inner(bundle, options) as PackagedFeatureSessionController;
 };
+
+const rpgFeatureApi = (session: PackagedFeatureSessionController): OptionalRpgController => ({
+  ...(session.rpgState ? { rpgState: () => session.rpgState?.() as ReturnType<AdventureRpgPackagedRuntimeController["rpgState"]> } : {}),
+  ...(session.practiceSkill ? { practiceSkill: (skillId: string, amount?: number) => session.practiceSkill?.(skillId, amount) as ReturnType<AdventureRpgPackagedRuntimeController["practiceSkill"]> } : {}),
+  ...(session.resolveSkillCheck ? { resolveSkillCheck: (check) => session.resolveSkillCheck?.(check) as ReturnType<AdventureRpgPackagedRuntimeController["resolveSkillCheck"]> } : {}),
+  ...(session.advanceRpgTime ? { advanceRpgTime: (minutes: number) => session.advanceRpgTime?.(minutes) } : {}),
+  ...(session.restRpg ? { restRpg: (rule) => session.restRpg?.(rule) } : {}),
+  ...(session.adjustResource ? { adjustResource: (resourceId: string, delta: number) => session.adjustResource?.(resourceId, delta) } : {}),
+  ...(session.scheduleActive ? { scheduleActive: (window) => session.scheduleActive?.(window) ?? false } : {}),
+  ...(session.createRpgImportSnapshot ? { createRpgImportSnapshot: (sourceGameId: string, tags?: readonly string[]) => session.createRpgImportSnapshot?.(sourceGameId, tags) as ReturnType<AdventureRpgPackagedRuntimeController["createRpgImportSnapshot"]> } : {}),
+  ...(session.activeCombatState ? { activeCombatState: () => session.activeCombatState?.() ?? null } : {}),
+  ...(session.startCombat ? { startCombat: (encounterId: string) => session.startCombat?.(encounterId) as ReturnType<AdventureRpgPackagedRuntimeController["startCombat"]> } : {}),
+  ...(session.issueCombatAction ? { issueCombatAction: (action) => session.issueCombatAction?.(action) ?? [] } : {}),
+  ...(session.advanceCombat ? { advanceCombat: (ticks: number) => session.advanceCombat?.(ticks) ?? [] } : {}),
+  ...(session.finishCombat ? { finishCombat: () => session.finishCombat?.() as ReturnType<AdventureRpgPackagedRuntimeController["finishCombat"]> } : {}),
+});
 
 export const createPackagedFeatureRuntimeController = (
   bundle: RuntimeBundle,
@@ -114,6 +146,7 @@ export const createPackagedFeatureRuntimeController = (
     cameraState: () => session.cameraState(),
     parserState: () => session.parserState(),
     drainSceneAudioCueIds: () => session.drainSceneAudioCueIds(),
+    ...rpgFeatureApi(session),
     ...(session.activeProtagonistId
       ? { activeProtagonistId: () => session.activeProtagonistId?.() as ReturnType<MultiProtagonistPackagedRuntimeController["activeProtagonistId"]> }
       : {}),
@@ -121,11 +154,7 @@ export const createPackagedFeatureRuntimeController = (
       ? { multiProtagonistState: () => session.multiProtagonistState?.() as ReturnType<MultiProtagonistPackagedRuntimeController["multiProtagonistState"]> }
       : {}),
     ...(session.switchProtagonist
-      ? {
-          switchProtagonist: (
-            protagonistId: Parameters<MultiProtagonistPackagedRuntimeController["switchProtagonist"]>[0],
-          ) => session.switchProtagonist?.(protagonistId),
-        }
+      ? { switchProtagonist: (protagonistId) => session.switchProtagonist?.(protagonistId) }
       : {}),
   };
 };
