@@ -1,6 +1,8 @@
 import type { AdventureProject, Id, Point, Polygon } from "@evavo/adventure-project-schema";
 import {
   type ActorFootprint,
+  type ApproachSlot,
+  type EntryChoreography,
   type SceneStaging,
   type SceneStagingManifest,
   sceneStagingManifestSchema,
@@ -25,7 +27,7 @@ export type SceneDirectorEditCommand =
       readonly objectId: Id<"object">;
       readonly slotId: Id<"approach-slot">;
       readonly position: Point;
-      readonly facing?: string;
+      readonly facing?: ApproachSlot["facing"];
     }
   | {
       readonly kind: "set-depth-key";
@@ -131,6 +133,18 @@ const requireItem = <T>(
 ): T => {
   if (value === undefined) throw new SceneDirectorEditError(command, message);
   return value;
+};
+
+const replaceEntryPath = (
+  entry: EntryChoreography,
+  command: Extract<SceneDirectorEditCommand, { readonly kind: "set-entry-path" }>,
+): EntryChoreography => {
+  const { spawnPosition: _previousSpawn, ...withoutSpawn } = entry;
+  return {
+    ...withoutSpawn,
+    entryPath: [...command.entryPath],
+    ...(command.spawnPosition ? { spawnPosition: command.spawnPosition } : {}),
+  };
 };
 
 export const applySceneDirectorEdit = (
@@ -300,15 +314,7 @@ export const applySceneDirectorEdit = (
       return replaceScene(manifest, sceneIndex, {
         ...staging,
         entryChoreographies: staging.entryChoreographies.map((candidate, index) =>
-          index === entryIndex
-            ? {
-                ...entry,
-                entryPath: [...command.entryPath],
-                ...(command.spawnPosition
-                  ? { spawnPosition: command.spawnPosition }
-                  : { spawnPosition: undefined }),
-              }
-            : candidate,
+          index === entryIndex ? replaceEntryPath(entry, command) : candidate,
         ),
       });
     }
