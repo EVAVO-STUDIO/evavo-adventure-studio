@@ -59,7 +59,8 @@ export type RuntimeAdventureRpgPuzzleIssueCode =
   | "duplicate-solution"
   | "unknown-class-tag"
   | "unknown-skill"
-  | "unknown-item";
+  | "unknown-item"
+  | "class-without-solution";
 
 export interface RuntimeAdventureRpgPuzzleIssue {
   readonly severity: "error";
@@ -69,16 +70,26 @@ export interface RuntimeAdventureRpgPuzzleIssue {
 }
 
 export interface RuntimeAdventureRpgPuzzleValidationContext {
-  readonly classTags: ReadonlySet<string>;
+  readonly classes: readonly { readonly id: string; readonly tags?: readonly string[] }[];
   readonly skillIds: ReadonlySet<string>;
   readonly itemIds: ReadonlySet<string>;
 }
+
+const solutionClassEligible = (
+  classTags: readonly string[],
+  solution: RuntimeAdventureRpgPuzzleSolution,
+): boolean => {
+  if (solution.classTagsAll.some((tag) => !classTags.includes(tag))) return false;
+  if (solution.classTagsAny.length > 0 && !solution.classTagsAny.some((tag) => classTags.includes(tag))) return false;
+  return true;
+};
 
 export const validateRuntimeAdventureRpgPuzzles = (
   manifest: RuntimeAdventureRpgPuzzleManifest,
   context: RuntimeAdventureRpgPuzzleValidationContext,
 ): readonly RuntimeAdventureRpgPuzzleIssue[] => {
   const issues: RuntimeAdventureRpgPuzzleIssue[] = [];
+  const knownClassTags = new Set(context.classes.flatMap((entry) => entry.tags ?? []));
   const puzzleIds = new Set<string>();
   manifest.puzzles.forEach((puzzle, puzzleIndex) => {
     const puzzlePath = `puzzles[${puzzleIndex}]`;
@@ -94,7 +105,7 @@ export const validateRuntimeAdventureRpgPuzzles = (
       }
       solutionIds.add(solution.id);
       for (const tag of [...solution.classTagsAll, ...solution.classTagsAny]) {
-        if (!context.classTags.has(tag)) {
+        if (!knownClassTags.has(tag)) {
           issues.push({ severity: "error", code: "unknown-class-tag", path: solutionPath, message: `RPG solution '${solution.id}' references unknown class tag '${tag}'.` });
         }
       }
@@ -109,8 +120,18 @@ export const validateRuntimeAdventureRpgPuzzles = (
         }
       }
     });
+    for (const playableClass of context.classes) {
+      if (!puzzle.solutions.some((solution) => solutionClassEligible(playableClass.tags ?? [], solution))) {
+        issues.push({
+          severity: "error",
+          code: "class-without-solution",
+          path: puzzlePath,
+          message: `RPG puzzle '${puzzle.id}' has no authored solution available to class '${playableClass.id}'.`,
+        });
+      }
+    }
   });
-  return issues.sort((left, right) => left.path.localeCompare(right.path) || left.code.localeCompare(right.code));
+  return issues.sort((left, right) => left.path.localeCompare(right.path) || left.code.localeCompare(right.code) || left.message.localeCompare(right.message));
 };
 
 export class RuntimeAdventureRpgPuzzleValidationError extends Error {
