@@ -40,6 +40,41 @@ export const validateSavedAdventureRpg = (
   validateKeys(state.skills, skillIds, "rpg-skill-missing", "rpg.skills");
   validateKeys(state.practice, skillIds, "rpg-skill-missing", "rpg.practice");
   validateKeys(state.resources, resourceIds, "rpg-resource-missing", "rpg.resources");
+
+  const validateRange = (
+    values: Readonly<Record<string, number>>,
+    definitions: readonly { readonly id: string; readonly minimum: number; readonly maximum: number }[],
+    path: string,
+  ): void => {
+    for (const definition of definitions) {
+      const value = values[definition.id];
+      if (value === undefined) continue;
+      if (!Number.isFinite(value) || value < definition.minimum || value > definition.maximum) {
+        addSaveGameIssue(
+          issues,
+          "rpg-value-invalid",
+          `${path}.${definition.id}`,
+          `Saved RPG value '${definition.id}'=${value} is outside ${definition.minimum}–${definition.maximum}.`,
+        );
+      }
+    }
+  };
+  validateRange(state.stats, manifest.stats, "rpg.stats");
+  validateRange(state.skills, manifest.skills, "rpg.skills");
+  validateRange(state.resources, manifest.resources, "rpg.resources");
+  for (const [skillId, practice] of Object.entries(state.practice)) {
+    if (!Number.isFinite(practice) || practice < 0) {
+      addSaveGameIssue(
+        issues,
+        "rpg-value-invalid",
+        `rpg.practice.${skillId}`,
+        `Saved RPG practice '${skillId}' must be a non-negative finite value.`,
+      );
+    }
+  }
+  if (state.day < 1) {
+    addSaveGameIssue(issues, "rpg-time-invalid", "rpg.day", "Saved RPG day must be at least 1.");
+  }
   if (state.minuteOfDay < 0 || state.minuteOfDay >= manifest.minutesPerDay) {
     addSaveGameIssue(
       issues,
