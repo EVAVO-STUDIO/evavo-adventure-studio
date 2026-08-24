@@ -8,114 +8,35 @@
       "types": "./dist/src/index.d.ts",
       "import": "./dist/src/index.js"
     },
-    "./with-front-end": {
-      "types": "./dist/src/with-front-end.d.ts",
-      "import": "./dist/src/with-front-end.js"
-    },
-    "./with-instances": {
-      "types": "./dist/src/with-instances.d.ts",
-      "import": "./dist/src/with-instances.js"
-    },
-    "./scene-instances": {
-      "types": "./dist/src/with-instances.d.ts",
-      "import": "./dist/src/with-instances.js"
-    },
-    "./with-staging": {
-      "types": "./dist/src/with-staging.d.ts",
-      "import": "./dist/src/with-staging.js"
-    },
-    "./scene-staging": {
-      "types": "./dist/src/with-staging.d.ts",
-      "import": "./dist/src/with-staging.js"
-    },
-    "./with-indexed-assets": {
-      "types": "./dist/src/with-indexed-assets.d.ts",
-      "import": "./dist/src/with-indexed-assets.js"
-    },
-    "./indexed-assets": {
-      "types": "./dist/src/with-indexed-assets.d.ts",
-      "import": "./dist/src/with-indexed-assets.js"
-    },
-    "./with-palette-maps": {
-      "types": "./dist/src/with-palette-maps.d.ts",
-      "import": "./dist/src/with-palette-maps.js"
-    },
-    "./palette-maps": {
-      "types": "./dist/src/with-palette-maps.d.ts",
-      "import": "./dist/src/with-palette-maps.js"
-    },
-    "./with-lifecycle": {
-      "types": "./dist/src/with-lifecycle.d.ts",
-      "import": "./dist/src/with-lifecycle.js"
-    },
-    "./with-investigation": {
-      "types": "./dist/src/with-investigation.d.ts",
-      "import": "./dist/src/with-investigation.js"
-    },
-    "./investigation": {
-      "types": "./dist/src/with-investigation.d.ts",
-      "import": "./dist/src/with-investigation.js"
-    },
-    "./with-investigation-bindings": {
-      "types": "./dist/src/with-investigation-bindings.d.ts",
-      "import": "./dist/src/with-investigation-bindings.js"
-    },
-    "./investigation-bindings": {
-      "types": "./dist/src/with-investigation-bindings.d.ts",
-      "import": "./dist/src/with-investigation-bindings.js"
-    },
-    "./with-item-combinations": {
-      "types": "./dist/src/with-item-combinations.d.ts",
-      "import": "./dist/src/with-item-combinations.js"
-    },
-    "./item-combinations": {
-      "types": "./dist/src/with-item-combinations.d.ts",
-      "import": "./dist/src/with-item-combinations.js"
-    },
-    "./with-multi-protagonist": {
-      "types": "./dist/src/with-multi-protagonist.d.ts",
-      "import": "./dist/src/with-multi-protagonist.js"
-    },
-    "./multi-protagonist": {
-      "types": "./dist/src/with-multi-protagonist.d.ts",
-      "import": "./dist/src/with-multi-protagonist.js"
-    },
-    "./with-multi-protagonist-bindings": {
-      "types": "./dist/src/with-multi-protagonist-bindings.d.ts",
-      "import": "./dist/src/with-multi-protagonist-bindings.js"
-    },
-    "./multi-protagonist-bindings": {
-      "types": "./dist/src/with-multi-protagonist-bindings.d.ts",
-      "import": "./dist/src/with-multi-protagonist-bindings.js"
-    },
-    "./with-room-scripts": {
-      "types": "./dist/src/with-room-scripts.d.ts",
-      "import": "./dist/src/with-room-scripts.js"
-    },
-    "./room-scripts": {
-      "types": "./dist/src/with-room-scripts.d.ts",
-      "import": "./dist/src/with-room-scripts.js"
-    },
-    "./with-rpg": {
-      "types": "./dist/src/with-rpg.d.ts",
-      "import": "./dist/src/with-rpg.js"
-    },
-    "./rpg": {
-      "types": "./dist/src/with-rpg.d.ts",
-      "import": "./dist/src/with-rpg.js"
-    },
-    "./with-localisation": {
-      "types": "./dist/src/with-localisation.d.ts",
-      "import": "./dist/src/with-localisation.js"
-    },
-    "./with-opening": {
-      "types": "./dist/src/with-opening.d.ts",
-      "import": "./dist/src/with-opening.js"
-    },
-    "./with-play-feel": {
-      "types": "./dist/src/with-play-feel.d.ts",
-      "import": "./dist/src/with-play-feel.js"
-    }
+    "./with-front-end": { "types": "./dist/src/with-front-end.d.ts", "import": "./dist/src/with-front-end.js" },
+    "./with-instances": { "types": "./dist/src/with-instances.d.ts", "import": "./dist/src/with-instances.js" },
+    "./scene-instances": { "types": "./dist/src/with-instances.d.ts", "import": "./dist/src/with-instances.js" },
+    "./with-staging": { "types": "./dist/src/with-staging.d.ts", "import": "./dist/src/with-staging.js" },
+    "./scene-staging": { "types": "./dist/src/with-staging.d.ts", "import": "./dist/src/with-staging.js" },
+    "./with-indexed-assets": { "types": "./dist/src/with-indexed-assets.d.ts", "import": "./dist/src/with-indexed-assets.js" },
+    "./indexed-assets": { "types": "./dist/src/with-indexed-assets.d.ts", "import": "./dist/src/with-indexed-assets.js" },
+    "./with-palette-maps": { "types": "./dist/src/with-palette-maps.d.ts", "import": "./dist/src/with-palette-maps.js" },
+    "./palette-maps": { "types": "./dist/src/with-palette-maps.d.ts", "import": "./dist/src/with-palette-maps.js" },
+    "./with-lifecycle": { "types": "./dist/src/with-lifecycle.d.ts", "import": "./dist/src/with-lifecycle.js" },
+    "./with-investigation": { "types": "./dist/src/with-investigation.d.ts", "import": "./dist/src/with-investigation.js" },
+    "./investigation": { "types": "./dist/src/with-investigation.d.ts", "import": "./dist/src/with-investigation.js" },
+    "./with-investigation-bindings": { "types": "./dist/src/with-investigation-bindings.d.ts", "import": "./dist/src/with-investigation-bindings.js" },
+    "./investigation-bindings": { "types": "./dist/src/with-investigation-bindings.d.ts", "import": "./dist/src/with-investigation-bindings.js" },
+    "./with-item-combinations": { "types": "./dist/src/with-item-combinations.d.ts", "import": "./dist/src/with-item-combinations.js" },
+    "./item-combinations": { "types": "./dist/src/with-item-combinations.d.ts", "import": "./dist/src/with-item-combinations.js" },
+    "./with-multi-protagonist": { "types": "./dist/src/with-multi-protagonist.d.ts", "import": "./dist/src/with-multi-protagonist.js" },
+    "./multi-protagonist": { "types": "./dist/src/with-multi-protagonist.d.ts", "import": "./dist/src/with-multi-protagonist.js" },
+    "./with-multi-protagonist-bindings": { "types": "./dist/src/with-multi-protagonist-bindings.d.ts", "import": "./dist/src/with-multi-protagonist-bindings.js" },
+    "./multi-protagonist-bindings": { "types": "./dist/src/with-multi-protagonist-bindings.d.ts", "import": "./dist/src/with-multi-protagonist-bindings.js" },
+    "./with-room-scripts": { "types": "./dist/src/with-room-scripts.d.ts", "import": "./dist/src/with-room-scripts.js" },
+    "./room-scripts": { "types": "./dist/src/with-room-scripts.d.ts", "import": "./dist/src/with-room-scripts.js" },
+    "./with-rpg": { "types": "./dist/src/with-rpg.d.ts", "import": "./dist/src/with-rpg.js" },
+    "./rpg": { "types": "./dist/src/with-rpg.d.ts", "import": "./dist/src/with-rpg.js" },
+    "./with-rpg-puzzles": { "types": "./dist/src/with-rpg-puzzles.d.ts", "import": "./dist/src/with-rpg-puzzles.js" },
+    "./rpg-puzzles": { "types": "./dist/src/with-rpg-puzzles.d.ts", "import": "./dist/src/with-rpg-puzzles.js" },
+    "./with-localisation": { "types": "./dist/src/with-localisation.d.ts", "import": "./dist/src/with-localisation.js" },
+    "./with-opening": { "types": "./dist/src/with-opening.d.ts", "import": "./dist/src/with-opening.js" },
+    "./with-play-feel": { "types": "./dist/src/with-play-feel.d.ts", "import": "./dist/src/with-play-feel.js" }
   },
   "files": ["dist"],
   "scripts": {
