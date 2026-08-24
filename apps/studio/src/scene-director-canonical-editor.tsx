@@ -1,15 +1,15 @@
-import type { Id, Point, Polygon } from "@evavo/adventure-project-schema";
-import type {
-  ObjectDefinition,
-  ObjectStateDefinition,
-  SceneObjectInstance,
-} from "@evavo/adventure-scene-instances";
-import { sampleDepthScale } from "@evavo/adventure-scene-instances/staging";
+import type { Id, Point } from "@evavo/adventure-project-schema";
 import { type PointerEvent as ReactPointerEvent, useState } from "react";
 import type {
   SceneDirectorDocumentCommand,
   SceneDirectorDocuments,
 } from "./scene-director-documents.js";
+import {
+  directorActiveObjectState,
+  directorInverseTransformPoint,
+  directorObjectScale,
+  directorTransformLocalPoint,
+} from "./scene-director-object-geometry.js";
 import { StagingButton } from "./scene-staging-components.js";
 import "./scene-director-canonical-editor.css";
 
@@ -23,98 +23,6 @@ export interface SceneDirectorCanonicalEditingController {
 
 const points = (value: readonly Point[]): string =>
   value.map((point) => `${point.x},${point.y}`).join(" ");
-
-const polygonContains = (point: Point, polygon: Polygon): boolean => {
-  const source = polygon.points;
-  let inside = false;
-  for (let index = 0, previous = source.length - 1; index < source.length; previous = index++) {
-    const current = source[index];
-    const prior = source[previous];
-    if (!current || !prior) continue;
-    const crosses =
-      current.y > point.y !== prior.y > point.y &&
-      point.x <
-        ((prior.x - current.x) * (point.y - current.y)) /
-          (prior.y - current.y) +
-          current.x;
-    if (crosses) inside = !inside;
-  }
-  return inside;
-};
-
-const baseDepthScale = (
-  bands: SceneDirectorDocuments["project"]["scenes"][number]["depthBands"],
-  y: number,
-): number => {
-  if (bands.length === 0) return 1;
-  const selected = [...bands].sort((left, right) => {
-    const leftMin = Math.min(left.farY, left.nearY);
-    const leftMax = Math.max(left.farY, left.nearY);
-    const rightMin = Math.min(right.farY, right.nearY);
-    const rightMax = Math.max(right.farY, right.nearY);
-    const leftDistance = y < leftMin ? leftMin - y : y > leftMax ? y - leftMax : 0;
-    const rightDistance = y < rightMin ? rightMin - y : y > rightMax ? y - rightMax : 0;
-    return leftDistance - rightDistance || left.id.localeCompare(right.id);
-  })[0];
-  if (!selected) return 1;
-  const span = selected.nearY - selected.farY;
-  if (span === 0) return selected.nearScale;
-  const progress = Math.max(0, Math.min(1, (y - selected.farY) / span));
-  return selected.farScale + (selected.nearScale - selected.farScale) * progress;
-};
-
-const objectScale = (
-  documents: SceneDirectorDocuments,
-  sceneId: Id<"scene">,
-  instance: SceneObjectInstance,
-): number => {
-  const scene = documents.project.scenes.find((candidate) => candidate.id === sceneId);
-  if (!scene) return instance.scaleMultiplier;
-  let scale = baseDepthScale(scene.depthBands, instance.position.y);
-  const staging = documents.staging.scenes.find((candidate) => candidate.sceneId === sceneId);
-  const area = scene.navigationAreas
-    .filter((candidate) => polygonContains(instance.position, candidate.shape))
-    .sort((left, right) => right.elevation - left.elevation || left.id.localeCompare(right.id))[0];
-  const override = area
-    ? staging?.navigationScaleOverrides.find((candidate) => candidate.areaId === area.id)
-    : undefined;
-  if (override?.mode === "fixed" && override.fixedScale !== undefined) scale = override.fixedScale;
-  if (override?.mode === "curve") {
-    const curve = staging?.depthScaleCurves.find((candidate) => candidate.id === override.curveId);
-    if (curve) scale = sampleDepthScale(curve, instance.position.y);
-  }
-  return scale * instance.scaleMultiplier;
-};
-
-const activeState = (
-  definition: ObjectDefinition,
-  instance: SceneObjectInstance,
-): ObjectStateDefinition | null => {
-  const stateId = instance.initialStateId ?? definition.initialStateId;
-  return definition.states.find((candidate) => candidate.id === stateId) ?? null;
-};
-
-const transformLocalPoint = (
-  point: Point,
-  anchor: Point,
-  pivot: Point,
-  scale: number,
-  mirrored: boolean,
-): Point => ({
-  x: anchor.x + (point.x - pivot.x) * scale * (mirrored ? -1 : 1),
-  y: anchor.y + (point.y - pivot.y) * scale,
-});
-
-const inverseTransformPoint = (
-  point: Point,
-  anchor: Point,
-  pivot: Point,
-  scale: number,
-  mirrored: boolean,
-): Point => ({
-  x: pivot.x + ((point.x - anchor.x) / scale) * (mirrored ? -1 : 1),
-  y: pivot.y + (point.y - anchor.y) / scale,
-});
 
 const clamp = (value: number, minimum: number, maximum: number): number =>
   Math.min(maximum, Math.max(minimum, value));
@@ -219,7 +127,13 @@ const commandForDrag = (
         position: point,
       };
     case "hotspot-vertex": {
-      const local = inverseTransformPoint(point, drag.anchor, drag.pivot, drag.scale, drag.mirrored);
+      const local = directorInverseTransformPoint(
+        point,
+        drag.anchor,
+        drag.pivot,
+        drag.scale,
+        drag.mirrored,
+      );
       return {
         kind: "set-object-state-interaction-shape",
         definitionId: drag.definitionId,
@@ -418,12 +332,12 @@ export const SceneDirectorCanonicalGeometryPanel = ({
             ? composition?.objectInstances.map((instance) => {
                 const definition = definitions.get(instance.definitionId);
                 if (!definition) return null;
-                const state = activeState(definition, instance);
+                const state = directorActiveObjectState(definition, instance);
                 if (!state?.interactionShape) return null;
                 const pivot = state.visual?.pivot ?? { x: 0, y: 0 };
-                const scale = objectScale(documents, sceneId, instance);
+                const scale = directorObjectScale(documents, sceneId, instance);
                 const scenePoints = state.interactionShape.points.map((point) =>
-                  transformLocalPoint(point, instance.position, pivot, scale, instance.mirrored),
+                  directorTransformLocalPoint(point, instance.position, pivot, scale, instance.mirrored),
                 );
                 return (
                   <g key={instance.id} className="dir-canonical-hotspot">
