@@ -11,6 +11,7 @@ import {
   redoSceneDirectorDocumentEdit,
   SceneDirectorDocumentEditError,
   undoSceneDirectorDocumentEdit,
+  validateSceneDirectorDocuments,
 } from "../src/scene-director-documents.js";
 
 const initial = () => ({
@@ -20,6 +21,10 @@ const initial = () => ({
 });
 
 describe("Scene Director composite documents", () => {
+  it("starts from a semantically valid linked document set", () => {
+    expect(validateSceneDirectorDocuments(initial())).toEqual([]);
+  });
+
   it("edits canonical navigation polygons in project.json while preserving valid composition", () => {
     const documents = applySceneDirectorDocumentEdit(initial(), {
       kind: "set-navigation-area-shape",
@@ -60,6 +65,36 @@ describe("Scene Director composite documents", () => {
     ).toThrow(SceneDirectorDocumentEditError);
   });
 
+  it("rejects self-intersecting canonical navigation polygons before schema export", () => {
+    expect(() =>
+      applySceneDirectorDocumentEdit(initial(), {
+        kind: "set-navigation-area-shape",
+        sceneId: "scene.night-shift.station" as never,
+        areaId: "navigation.night-shift.station.main" as never,
+        shape: {
+          points: [
+            { x: 20, y: 120 },
+            { x: 280, y: 190 },
+            { x: 20, y: 190 },
+            { x: 280, y: 120 },
+          ],
+        },
+      }),
+    ).toThrow(/self-intersects/u);
+  });
+
+  it("revalidates staging semantics after staging edits, not only Zod shape", () => {
+    expect(() =>
+      applySceneDirectorDocumentEdit(initial(), {
+        kind: "move-approach-slot",
+        sceneId: "scene.night-shift.station" as never,
+        objectId: "object.night-shift.radio" as never,
+        slotId: "approach-slot.night-shift.radio.front" as never,
+        position: { x: 5, y: 5 },
+      }),
+    ).toThrow(/staging/u);
+  });
+
   it("moves canonical navigation portal endpoints only when semantic validation remains valid", () => {
     const documents = applySceneDirectorDocumentEdit(initial(), {
       kind: "set-navigation-portal-endpoint",
@@ -93,6 +128,24 @@ describe("Scene Director composite documents", () => {
     );
     expect(radio?.states.find((state) => state.id === "object-state.night-shift.radio.rack")?.interactionShape)
       .toMatchObject({ points: [{ x: -1, y: -1 }] });
+  });
+
+  it("rejects self-intersecting local hotspot polygons", () => {
+    expect(() =>
+      applySceneDirectorDocumentEdit(initial(), {
+        kind: "set-object-state-interaction-shape",
+        definitionId: "object-definition.night-shift.radio" as never,
+        stateId: "object-state.night-shift.radio.rack" as never,
+        shape: {
+          points: [
+            { x: 0, y: 0 },
+            { x: 16, y: 14 },
+            { x: 0, y: 14 },
+            { x: 16, y: 0 },
+          ],
+        },
+      }),
+    ).toThrow(/self-intersects/u);
   });
 
   it("moves placed objects without changing their reusable object definitions", () => {
