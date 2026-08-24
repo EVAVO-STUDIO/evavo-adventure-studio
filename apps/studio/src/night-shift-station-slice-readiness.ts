@@ -4,6 +4,7 @@ import type { PeriodVgaAuditReport } from "@evavo/adventure-art-direction/period
 import type { NightShiftArtIntakeReport } from "./night-shift-art-master-intake.js";
 import type { NightShiftAudioIntakeReport } from "./night-shift-audio-master-intake.js";
 import { evaluateNightShiftDemoReadiness } from "./night-shift-demo-readiness.js";
+import { nightShiftProductionAssets } from "./night-shift-production-assets.js";
 import { nightShiftProductionWaves } from "./night-shift-production-waves.js";
 import { nightShiftRuntimeProject } from "./night-shift-runtime-contracts.js";
 
@@ -11,12 +12,18 @@ const stationWaveIds = new Set(["foundation", "station"]);
 const stationAssetIds = nightShiftProductionWaves
   .filter((wave) => stationWaveIds.has(wave.id))
   .flatMap((wave) => wave.assetIds);
-const stationIndexedAssetIds = new Set(
-  stationAssetIds.filter((assetId) => {
-    const asset = nightShiftRuntimeProject.assets.find((candidate) => candidate.id === assetId);
-    return asset?.kind === "image" || asset?.kind === "spritesheet";
-  }),
+const stationRequirements = nightShiftProductionAssets.filter((asset) =>
+  stationAssetIds.includes(asset.assetId),
 );
+const stationIndexedAssetIds = stationRequirements
+  .filter((asset) => asset.indexed)
+  .map((asset) => asset.assetId);
+const stationVisualAssetIds = stationRequirements
+  .filter((asset) => asset.evidence.includes("period-vga"))
+  .map((asset) => asset.assetId);
+const stationAudioAssetIds = stationRequirements
+  .filter((asset) => asset.role === "audio-effect" || asset.role === "audio-ambience")
+  .map((asset) => asset.assetId);
 
 export interface NightShiftStationSliceEvidence {
   readonly artMasterIntake?: NightShiftArtIntakeReport | null;
@@ -52,6 +59,14 @@ const indexedIds = (manifest: IndexedAssetManifest | null | undefined): Readonly
     ? new Set(manifest.assets.map((asset) => asset.assetId as string))
     : new Set();
 
+const intakeCovers = (
+  expected: readonly string[],
+  report: { readonly status: string; readonly missingAssetIds: readonly string[]; readonly issues: readonly unknown[] } | null | undefined,
+): boolean =>
+  !!report &&
+  report.issues.length === 0 &&
+  expected.every((assetId) => !report.missingAssetIds.includes(assetId));
+
 export const evaluateNightShiftStationSliceReadiness = (
   evidence: NightShiftStationSliceEvidence = {},
 ): NightShiftStationSliceReadiness => {
@@ -59,18 +74,14 @@ export const evaluateNightShiftStationSliceReadiness = (
   const compiled = compiledIds(evidence.assetManifest);
   const indexed = indexedIds(evidence.indexedAssets);
   const missingCompiledAssetIds = stationAssetIds.filter((assetId) => !compiled.has(assetId));
-  const missingIndexedAssetIds = [...stationIndexedAssetIds].filter((assetId) => !indexed.has(assetId));
-  const artReady = evidence.artMasterIntake?.issues.length === 0 &&
-    stationAssetIds
-      .filter((assetId) => evidence.artMasterIntake?.missingAssetIds.includes(assetId) === false)
-      .length > 0;
-  const audioReady = evidence.audioMasterIntake?.issues.length === 0 &&
-    stationAssetIds
-      .filter((assetId) => evidence.audioMasterIntake?.missingAssetIds.includes(assetId) === false)
-      .length > 0;
+  const missingIndexedAssetIds = stationIndexedAssetIds.filter((assetId) => !indexed.has(assetId));
+  const artReady = intakeCovers(stationVisualAssetIds, evidence.artMasterIntake);
+  const audioReady = intakeCovers(stationAudioAssetIds, evidence.audioMasterIntake);
   const periodReady =
     evidence.periodVgaReport?.projectId === nightShiftRuntimeProject.id &&
-    evidence.periodVgaReport.status === "ready";
+    evidence.periodVgaReport.status === "ready" &&
+    evidence.periodVgaReport.evidenceAssets >= stationVisualAssetIds.length &&
+    evidence.periodVgaReport.reviewedAssets >= stationVisualAssetIds.length;
   const packageReady = evidence.packagedBundleReady === true;
   const replayReady = (evidence.deterministicReplayCount ?? 0) >= 1;
   const screenshotReady = (evidence.nativeScreenshotCount ?? 0) >= 2;
@@ -87,15 +98,15 @@ export const evaluateNightShiftStationSliceReadiness = (
       id: "station-art-intake",
       ready: artReady,
       message: artReady
-        ? "Foundation/station visual masters have no intake errors."
-        : "Pass Foundation and Station visual masters through native art intake.",
+        ? "Every Foundation/Station Period VGA visual master passed intake."
+        : `Pass all ${stationVisualAssetIds.length} Foundation/Station visual masters through native art intake.`,
     },
     {
       id: "station-audio-intake",
       ready: audioReady,
       message: audioReady
-        ? "Foundation/station audio masters have no intake errors."
-        : "Pass Station Foley and room tone through audio intake.",
+        ? "Every Station effect/ambience master passed audio intake."
+        : `Pass all ${stationAudioAssetIds.length} Station audio masters through audio intake.`,
     },
     {
       id: "station-compiled-assets",
@@ -110,15 +121,15 @@ export const evaluateNightShiftStationSliceReadiness = (
       ready: missingIndexedAssetIds.length === 0,
       message:
         missingIndexedAssetIds.length === 0
-          ? "Every Foundation/Station image/spritesheet has an indexed runtime map."
+          ? "Every Foundation/Station indexed master has a runtime map."
           : `${missingIndexedAssetIds.length} Foundation/Station indexed maps are missing.`,
     },
     {
       id: "station-period-vga",
       ready: periodReady,
       message: periodReady
-        ? "Station slice has an approved Period VGA audit."
-        : "Approve the native station slice through the Period VGA audit.",
+        ? "Station slice has complete approved Period VGA coverage."
+        : `Approve all ${stationVisualAssetIds.length} Foundation/Station visual masters through the Period VGA audit.`,
     },
     {
       id: "station-package",
