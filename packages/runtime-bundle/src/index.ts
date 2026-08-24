@@ -72,10 +72,15 @@ import {
   validateRuntimePaletteMaps,
 } from "./palette-map-validation.js";
 import {
-  runtimeRoomScriptManifestSchema,
   RuntimeRoomScriptValidationError,
+  runtimeRoomScriptManifestSchema,
   validateRuntimeRoomScripts,
 } from "./room-scripts.js";
+import {
+  RuntimeAdventureRpgValidationError,
+  runtimeAdventureRpgManifestSchema,
+  validateRuntimeAdventureRpg,
+} from "./rpg.js";
 import {
   RuntimeUiSkinValidationError,
   validateRuntimeUiSkins,
@@ -152,6 +157,7 @@ export const runtimeBundleSchema = z
     multiProtagonist: runtimeMultiProtagonistManifestSchema.optional(),
     multiProtagonistBindings: runtimeMultiProtagonistBindingManifestSchema.optional(),
     roomScripts: runtimeRoomScriptManifestSchema.optional(),
+    rpg: runtimeAdventureRpgManifestSchema.optional(),
   })
   .strict()
   .superRefine((bundle, context) => {
@@ -167,6 +173,7 @@ export const runtimeBundleSchema = z
       ["multiProtagonist", bundle.multiProtagonist],
       ["multiProtagonistBindings", bundle.multiProtagonistBindings],
       ["roomScripts", bundle.roomScripts],
+      ["rpg", bundle.rpg],
     ] as const;
     for (const [key, value] of projectScoped) {
       if (value && value.projectId !== bundle.projectId) {
@@ -347,6 +354,10 @@ export const parseRuntimeBundle = (input: unknown): RuntimeBundle => {
     });
     if (roomScriptIssues.length > 0) throw new RuntimeRoomScriptValidationError(roomScriptIssues);
   }
+  if (bundle.rpg) {
+    const rpgIssues = validateRuntimeAdventureRpg(bundle.rpg);
+    if (rpgIssues.length > 0) throw new RuntimeAdventureRpgValidationError(rpgIssues);
+  }
   if (bundle.bitmapFonts) registerBitmapFontsForAssetCollection(bundle.assets, bundle.bitmapFonts);
   return bundle;
 };
@@ -364,5 +375,6 @@ export * from "./multi-protagonist-bindings.js";
 export * from "./multi-protagonist.js";
 export * from "./palette-map-validation.js";
 export * from "./room-scripts.js";
+export * from "./rpg.js";
 export * from "./ui-validation.js";
 export * from "./validation.js";
