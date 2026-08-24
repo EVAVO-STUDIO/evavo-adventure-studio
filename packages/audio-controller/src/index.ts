@@ -6,10 +6,10 @@ import type {
 } from "@evavo/adventure-project-schema";
 import type { RuntimeBundle } from "@evavo/adventure-runtime-bundle";
 import {
-  createPackagedRuntimeController,
-  type PackagedRuntimeController,
-  type PackagedRuntimeControllerOptions,
-} from "@evavo/adventure-runtime-controller";
+  createPackagedFeatureRuntimeController,
+  type PackagedFeatureRuntimeController,
+} from "@evavo/adventure-runtime-controller/feature-session";
+import type { PackagedRuntimeControllerOptions } from "@evavo/adventure-runtime-controller";
 import { advanceProfiledRuntimeCamera } from "@evavo/adventure-runtime-controller/profiled-camera";
 import {
   createSaveGame as createRuntimeSaveGame,
@@ -39,7 +39,7 @@ export interface AudioNarrativeSequenceSkipResult {
 }
 
 export interface AudioPackagedRuntimeController
-  extends PackagedRuntimeController {
+  extends PackagedFeatureRuntimeController {
   audioState(): AudioRuntimeState | null;
   drainAudioCommands(): readonly AudioCommand[];
   completeAudioVoice(voiceId: Id<"audio-voice">): void;
@@ -196,7 +196,7 @@ export const createAudioPackagedRuntimeController = (
   bundle: RuntimeBundle,
   options: PackagedRuntimeControllerOptions = {},
 ): AudioPackagedRuntimeController => {
-  const controller = createPackagedRuntimeController(bundle, options);
+  const controller = createPackagedFeatureRuntimeController(bundle, options);
   const mix = bundle.audioMix ?? null;
   let commands: AudioCommand[] = [];
   let audio: AudioRuntimeState | null = null;
@@ -476,20 +476,43 @@ export const createAudioPackagedRuntimeController = (
     return restoredTick;
   };
 
+  const featureApi = {
+    ...(controller.activeProtagonistId
+      ? { activeProtagonistId: () => controller.activeProtagonistId?.() as NonNullable<PackagedFeatureRuntimeController["activeProtagonistId"]> extends (...args: never[]) => infer R ? R : never }
+      : {}),
+    ...(controller.multiProtagonistState
+      ? { multiProtagonistState: () => controller.multiProtagonistState?.() as NonNullable<PackagedFeatureRuntimeController["multiProtagonistState"]> extends (...args: never[]) => infer R ? R : never }
+      : {}),
+    ...(controller.switchProtagonist
+      ? {
+          switchProtagonist: (protagonistId: Parameters<NonNullable<PackagedFeatureRuntimeController["switchProtagonist"]>>[0]) =>
+            aroundMutation(() => controller.switchProtagonist?.(protagonistId)),
+        }
+      : {}),
+    ...(controller.rpgState ? { rpgState: () => controller.rpgState?.() as ReturnType<NonNullable<PackagedFeatureRuntimeController["rpgState"]>> } : {}),
+    ...(controller.practiceSkill ? { practiceSkill: (skillId: string, amount?: number) => aroundMutation(() => controller.practiceSkill?.(skillId, amount)) as ReturnType<NonNullable<PackagedFeatureRuntimeController["practiceSkill"]>> } : {}),
+    ...(controller.resolveSkillCheck ? { resolveSkillCheck: (check: Parameters<NonNullable<PackagedFeatureRuntimeController["resolveSkillCheck"]>>[0]) => aroundMutation(() => controller.resolveSkillCheck?.(check)) as ReturnType<NonNullable<PackagedFeatureRuntimeController["resolveSkillCheck"]>> } : {}),
+    ...(controller.advanceRpgTime ? { advanceRpgTime: (minutes: number) => aroundMutation(() => controller.advanceRpgTime?.(minutes)) } : {}),
+    ...(controller.restRpg ? { restRpg: (rule: Parameters<NonNullable<PackagedFeatureRuntimeController["restRpg"]>>[0]) => aroundMutation(() => controller.restRpg?.(rule)) } : {}),
+    ...(controller.adjustResource ? { adjustResource: (resourceId: string, delta: number) => aroundMutation(() => controller.adjustResource?.(resourceId, delta)) } : {}),
+    ...(controller.scheduleActive ? { scheduleActive: (window: Parameters<NonNullable<PackagedFeatureRuntimeController["scheduleActive"]>>[0]) => controller.scheduleActive?.(window) ?? false } : {}),
+    ...(controller.createRpgImportSnapshot ? { createRpgImportSnapshot: (sourceGameId: string, tags?: readonly string[]) => controller.createRpgImportSnapshot?.(sourceGameId, tags) as ReturnType<NonNullable<PackagedFeatureRuntimeController["createRpgImportSnapshot"]>> } : {}),
+    ...(controller.activeCombatState ? { activeCombatState: () => controller.activeCombatState?.() ?? null } : {}),
+    ...(controller.startCombat ? { startCombat: (encounterId: string) => aroundMutation(() => controller.startCombat?.(encounterId)) as ReturnType<NonNullable<PackagedFeatureRuntimeController["startCombat"]>> } : {}),
+    ...(controller.issueCombatAction ? { issueCombatAction: (action: Parameters<NonNullable<PackagedFeatureRuntimeController["issueCombatAction"]>>[0]) => aroundMutation(() => controller.issueCombatAction?.(action)) as ReturnType<NonNullable<PackagedFeatureRuntimeController["issueCombatAction"]>> } : {}),
+    ...(controller.advanceCombat ? { advanceCombat: (ticks: number) => aroundMutation(() => controller.advanceCombat?.(ticks)) as ReturnType<NonNullable<PackagedFeatureRuntimeController["advanceCombat"]>> } : {}),
+    ...(controller.finishCombat ? { finishCombat: () => aroundMutation(() => controller.finishCombat?.()) as ReturnType<NonNullable<PackagedFeatureRuntimeController["finishCombat"]>> } : {}),
+  };
+
   return {
-    selection: controller.selection,
-    controlledActorInstanceId: controller.controlledActorInstanceId,
+    ...controller,
+    ...featureApi,
     setPointer: controller.setPointer,
     setPressed: controller.setPressed,
     activate: (position) => aroundMutation(() => controller.activate(position)),
     handleKey: (input) => aroundMutation(() => controller.handleKey(input)),
     createSaveGame: createControllerSave,
     restoreSaveGame: restoreControllerSave,
-    statusText: controller.statusText,
-    worldState: controller.worldState,
-    cameraState: controller.cameraState,
-    parserState: controller.parserState,
-    drainSceneAudioCueIds: controller.drainSceneAudioCueIds,
     audioState: () => audio,
     drainAudioCommands: () => {
       const drained = commands;
@@ -517,20 +540,14 @@ export const createAudioPackagedRuntimeController = (
         clearTrackedNarrativeIfInactive();
         return frame;
       }
-
       let frame = controller.createFrame(synchronizedTick);
-      processSceneAudioCues();
-      for (
-        let nextTick = synchronizedTick + 1;
-        nextTick <= tick;
-        nextTick += 1
-      ) {
-        const previous = controller.worldState();
+      for (let nextTick = synchronizedTick + 1; nextTick <= tick; nextTick += 1) {
+        const before = controller.worldState();
         frame = controller.createFrame(nextTick);
-        synchronizeWorld(previous, controller.worldState());
+        synchronizeWorld(before, controller.worldState());
         processSceneAudioCues();
+        clearTrackedNarrativeIfInactive();
       }
-      clearTrackedNarrativeIfInactive();
       return frame;
     },
   };
