@@ -22,6 +22,7 @@ import {
   useRuntimeInvestigationResearchSource,
   useRuntimeInvestigationTopic,
 } from "@evavo/adventure-scene-runtime/investigation-runtime";
+import { applyConsumedRuntimeInvestigationBindings } from "./investigation-bindings-runtime.js";
 import {
   createPackagedRuntimeController,
   type PackagedRuntimeController,
@@ -31,9 +32,6 @@ import {
 type RuntimeInvestigationPresenceVariant = NonNullable<
   NonNullable<RuntimeBundle["investigation"]>["presenceVariants"]
 >[number];
-type RuntimeInvestigationEffect = NonNullable<
-  RuntimeBundle["investigationBindings"]
->["interactions"][number]["effects"][number];
 
 export interface InvestigationPackagedRuntimeController extends PackagedRuntimeController {
   investigationState(): RuntimeInvestigationState | null;
@@ -77,52 +75,17 @@ export const createInvestigationPackagedRuntimeController = (
     return investigation;
   };
 
-  const applyEffect = (effect: RuntimeInvestigationEffect): void => {
-    if (!investigation) return;
-    switch (effect.kind) {
-      case "use-research-source":
-        update((state) => useRuntimeInvestigationResearchSource(bundle, state, effect.sourceId));
-        return;
-      case "discover-facts":
-        update((state) =>
-          discoverRuntimeInvestigationFacts(bundle, state, effect.factIds, {
-            kind: effect.discoveryKind,
-            sourceId: effect.sourceId,
-            chapterId: state.chapterId,
-          }),
-        );
-        return;
-      case "use-topic":
-        update((state) => useRuntimeInvestigationTopic(bundle, state, effect.topicId, effect.speakerId));
-        return;
-      case "set-flag":
-        update((state) => setRuntimeInvestigationFlag(state, effect.flag, effect.value));
-        return;
-      case "advance-chapter":
-        advanceChapter();
-        return;
-    }
-  };
-
   const applyNewSemanticBindings = (
     previousWorld: InteractiveRuntimeWorldState,
     nextWorld: InteractiveRuntimeWorldState,
   ): void => {
-    const bindings = bundle.investigationBindings;
-    if (!investigation || !bindings) return;
-    const previousInteractions = new Set(previousWorld.story.consumedInteractionIds);
-    const previousChoices = new Set(previousWorld.story.consumedDialogueChoiceIds);
-
-    for (const interactionId of nextWorld.story.consumedInteractionIds) {
-      if (previousInteractions.has(interactionId)) continue;
-      const binding = bindings.interactions.find((candidate) => candidate.interactionId === interactionId);
-      for (const effect of binding?.effects ?? []) applyEffect(effect);
-    }
-    for (const choiceId of nextWorld.story.consumedDialogueChoiceIds) {
-      if (previousChoices.has(choiceId)) continue;
-      const binding = bindings.dialogueChoices.find((candidate) => candidate.choiceId === choiceId);
-      for (const effect of binding?.effects ?? []) applyEffect(effect);
-    }
+    if (!investigation) return;
+    investigation = applyConsumedRuntimeInvestigationBindings(
+      bundle,
+      investigation,
+      previousWorld,
+      nextWorld,
+    );
   };
 
   const createSaveGame = (): SaveGame => {
