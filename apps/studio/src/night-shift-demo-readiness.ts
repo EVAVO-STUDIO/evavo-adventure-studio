@@ -18,6 +18,7 @@ import {
   nightShiftRuntimeContracts,
   nightShiftRuntimeProject,
 } from "./night-shift-runtime-contracts.js";
+import { validateNightShiftRuntimeIndexBindings } from "./night-shift-runtime-index-bindings.js";
 import { nightShiftRuntimeIndexedAssetIds } from "./night-shift-runtime-index-requirements.js";
 import { nightShiftRuntimeStaging } from "./night-shift-runtime-staging.js";
 import { validateSceneDirectorStagingAudioCues } from "./scene-director-audio-readiness.js";
@@ -141,7 +142,8 @@ export const evaluateNightShiftDemoReadiness = (
   const uiContractReady = validateNightShiftUiContracts().length === 0;
   const productionAssetPlanReady =
     validateNightShiftProductionAssetPlan().length === 0 &&
-    validateNightShiftProductionWaves().length === 0;
+    validateNightShiftProductionWaves().length === 0 &&
+    validateNightShiftRuntimeIndexBindings().length === 0;
   const artMasterReady = evidence.artMasterIntake?.status === "ready";
   const officerMasterReady = evidence.officerMasterIntake?.status === "ready";
   const audioMasterReady = evidence.audioMasterIntake?.status === "ready";
@@ -196,8 +198,8 @@ export const evaluateNightShiftDemoReadiness = (
       "production-asset-plan",
       "authored",
       productionAssetPlanReady,
-      "Every runtime asset has a native production requirement and exactly one ordered build wave.",
-      "Runtime assets, production requirements or Foundation/Station/Roadside/Diner wave assignments are out of sync.",
+      "Every runtime asset has a native production requirement, ordered build wave and explicit default palette binding where runtime indexing is used.",
+      "Runtime assets, production waves or scene index-to-palette bindings are incomplete or out of sync.",
     ),
     gate(
       "art-master-intake",
