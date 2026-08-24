@@ -52,6 +52,10 @@
       "types": "./dist/src/full-game-capabilities.d.ts",
       "import": "./dist/src/full-game-capabilities.js"
     },
+    "./scene-archetypes": {
+      "types": "./dist/src/scene-archetypes.d.ts",
+      "import": "./dist/src/scene-archetypes.js"
+    },
     "./dynamix-cinematic": {
       "types": "./dist/src/dynamix-cinematic.d.ts",
       "import": "./dist/src/dynamix-cinematic.js"
