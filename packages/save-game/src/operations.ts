@@ -5,6 +5,7 @@ import type { InteractiveRuntimeWorldState } from "@evavo/adventure-scene-runtim
 import type { RuntimeInvestigationState } from "@evavo/adventure-scene-runtime/investigation-runtime";
 import type { MultiProtagonistState } from "@evavo/adventure-scene-runtime/multi-protagonist";
 import type { RuntimeRoomScriptState } from "@evavo/adventure-scene-runtime/room-scripts";
+import type { AdventureRouteTopologyState } from "@evavo/adventure-scene-runtime/route-topology";
 import type { AdventureRpgState } from "@evavo/adventure-scene-runtime/rpg";
 import { validateSavedAudio } from "./audio-compatibility.js";
 import {
@@ -22,6 +23,7 @@ import { validateSavedMultiProtagonist } from "./multi-protagonist-compatibility
 import { assertSaveGameAllowed } from "./policy.js";
 import type { SaveGameProfiledRuntimeCameraState } from "./profiled-camera.js";
 import { validateSavedRoomScripts } from "./room-script-compatibility.js";
+import { validateSavedRouteTopology } from "./route-topology-compatibility.js";
 import { validateSavedAdventureRpg } from "./rpg-compatibility.js";
 import type { SaveGameSentenceState } from "./sentence.js";
 import { validateSavedSentence } from "./sentence-compatibility.js";
@@ -47,6 +49,7 @@ export interface CreateSaveGameOptions {
   readonly itemCombinations?: SaveGameItemCombinationState;
   readonly multiProtagonist?: MultiProtagonistState;
   readonly roomScripts?: RuntimeRoomScriptState;
+  readonly routeTopology?: AdventureRouteTopologyState;
   readonly rpg?: AdventureRpgState;
 }
 
@@ -61,6 +64,7 @@ const completeCompatibilityIssues = (
   ...validateSavedMultiProtagonist(bundle, save),
   ...validateSavedSentence(bundle, save),
   ...validateSavedRoomScripts(bundle, save),
+  ...validateSavedRouteTopology(bundle, save),
   ...validateSavedAdventureRpg(bundle, save),
 ];
 
@@ -76,6 +80,7 @@ export const createSaveGame = (
     itemCombinations,
     multiProtagonist,
     roomScripts,
+    routeTopology,
     rpg,
     sentence,
     ...interfaceState
@@ -95,6 +100,7 @@ export const createSaveGame = (
     ...(itemCombinations ? { itemCombinations } : {}),
     ...(multiProtagonist ? { multiProtagonist } : {}),
     ...(roomScripts ? { roomScripts } : {}),
+    ...(routeTopology ? { routeTopology } : {}),
     ...(rpg ? { rpg } : {}),
   });
   const save = saveGameSchema.parse({
