@@ -4,10 +4,7 @@
   "private": true,
   "type": "module",
   "exports": {
-    ".": {
-      "types": "./dist/src/public.d.ts",
-      "import": "./dist/src/public.js"
-    },
+    ".": { "types": "./dist/src/public.d.ts", "import": "./dist/src/public.js" },
     "./commands": { "types": "./dist/src/runtime-commands.d.ts", "import": "./dist/src/runtime-commands.js" },
     "./interactions": { "types": "./dist/src/interactions.d.ts", "import": "./dist/src/interactions.js" },
     "./movement": { "types": "./dist/src/movement.d.ts", "import": "./dist/src/movement.js" },
@@ -23,6 +20,7 @@
     "./multi-protagonist": { "types": "./dist/src/multi-protagonist.d.ts", "import": "./dist/src/multi-protagonist.js" },
     "./multi-protagonist-bindings": { "types": "./dist/src/multi-protagonist-bindings.d.ts", "import": "./dist/src/multi-protagonist-bindings.js" },
     "./room-scripts": { "types": "./dist/src/room-scripts.d.ts", "import": "./dist/src/room-scripts.js" },
+    "./route-topology": { "types": "./dist/src/route-topology.d.ts", "import": "./dist/src/route-topology.js" },
     "./rpg": { "types": "./dist/src/rpg.d.ts", "import": "./dist/src/rpg.js" },
     "./rpg-projection": { "types": "./dist/src/rpg-projection.d.ts", "import": "./dist/src/rpg-projection.js" },
     "./rpg-puzzles": { "types": "./dist/src/rpg-puzzles.d.ts", "import": "./dist/src/rpg-puzzles.js" },
