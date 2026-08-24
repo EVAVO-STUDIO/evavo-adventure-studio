@@ -9,7 +9,6 @@ import type { NightShiftAudioIntakeReport } from "./night-shift-audio-master-int
 import { nightShiftCompleteInstances } from "./night-shift-complete-proof.js";
 import type { NightShiftOfficerMasterIntakeReport } from "./night-shift-officer-master-intake.js";
 import {
-  nightShiftIndexedProductionAssetIds,
   nightShiftPeriodVgaProductionAssetIds,
   nightShiftProductionAssets,
   validateNightShiftProductionAssetPlan,
@@ -19,6 +18,7 @@ import {
   nightShiftRuntimeContracts,
   nightShiftRuntimeProject,
 } from "./night-shift-runtime-contracts.js";
+import { nightShiftRuntimeIndexedAssetIds } from "./night-shift-runtime-index-requirements.js";
 import { nightShiftRuntimeStaging } from "./night-shift-runtime-staging.js";
 import { validateSceneDirectorStagingAudioCues } from "./scene-director-audio-readiness.js";
 import { validateNightShiftUiContracts } from "./night-shift-ui-contracts.js";
@@ -125,7 +125,7 @@ const allExpectedIndexedAssetsPresent = (
 ): boolean => {
   if (manifest?.projectId !== nightShiftRuntimeProject.id) return false;
   const indexed = new Set(manifest.assets.map((record) => record.assetId as string));
-  return nightShiftIndexedProductionAssetIds.every((assetId) => indexed.has(assetId));
+  return nightShiftRuntimeIndexedAssetIds.every((assetId) => indexed.has(assetId));
 };
 
 export const evaluateNightShiftDemoReadiness = (
@@ -231,8 +231,8 @@ export const evaluateNightShiftDemoReadiness = (
       "indexed-assets",
       "evidence",
       indexedReady,
-      `All ${nightShiftIndexedProductionAssetIds.length} indexed masters have verified runtime index maps.`,
-      `Produce verified .idx maps for all ${nightShiftIndexedProductionAssetIds.length} indexed backgrounds, actors, props, font and UI icons.`,
+      `All ${nightShiftRuntimeIndexedAssetIds.length} scene-rendered indexed assets have verified runtime index maps.`,
+      `Produce verified .idx maps for the ${nightShiftRuntimeIndexedAssetIds.length} scene-rendered backgrounds, actors and props that use runtime palette remapping.`,
     ),
     gate(
       "period-vga",
