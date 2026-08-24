@@ -46,7 +46,9 @@ export type SaveGameCompatibilityIssueCode =
   | "investigation-topic-missing"
   | "investigation-source-missing"
   | "investigation-objective-missing"
-  | "investigation-provenance-chapter-missing";
+  | "investigation-provenance-chapter-missing"
+  | "item-combination-state-without-runtime-manifest"
+  | "item-combination-recipe-missing";
 
 export interface SaveGameCompatibilityIssue {
   readonly severity: "error";
