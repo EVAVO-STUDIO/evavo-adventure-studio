@@ -48,7 +48,12 @@ export type SaveGameCompatibilityIssueCode =
   | "investigation-objective-missing"
   | "investigation-provenance-chapter-missing"
   | "item-combination-state-without-runtime-manifest"
-  | "item-combination-recipe-missing";
+  | "item-combination-recipe-missing"
+  | "multi-protagonist-state-without-runtime-manifest"
+  | "multi-protagonist-active-missing"
+  | "multi-protagonist-identity-mismatch"
+  | "multi-protagonist-location-invalid"
+  | "multi-protagonist-item-missing";
 
 export interface SaveGameCompatibilityIssue {
   readonly severity: "error";
