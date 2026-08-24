@@ -41,6 +41,7 @@ export const canonicaliseRuntimeAdventureRpgManifest = (
     stats: [...manifest.stats].sort((left, right) => left.id.localeCompare(right.id)),
     skills: [...manifest.skills].sort((left, right) => left.id.localeCompare(right.id)),
     resources: [...manifest.resources].sort((left, right) => left.id.localeCompare(right.id)),
+    combatEncounters: [...manifest.combatEncounters].sort((left, right) => left.id.localeCompare(right.id)),
   };
 };
 
