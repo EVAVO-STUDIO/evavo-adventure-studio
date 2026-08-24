@@ -12,6 +12,8 @@ export * from "./policy.js";
 export * from "./profiled-camera.js";
 export * from "./room-script-compatibility.js";
 export * from "./room-scripts.js";
+export * from "./rpg-compatibility.js";
+export * from "./rpg.js";
 export * from "./sentence-compatibility.js";
 export * from "./sentence.js";
 export * from "./schema.js";
