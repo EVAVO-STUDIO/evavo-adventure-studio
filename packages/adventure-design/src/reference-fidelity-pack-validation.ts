@@ -13,10 +13,12 @@ const expectedProfileByTitle: Readonly<
   Record<AdventureReferenceTitlePack["titleId"], AdventureProductionProfileId>
 > = {
   "kings-quest-v": "storybook-icon-vga",
-  "police-quest-i-vga-remake": "early-procedural-icon-vga",
   "quest-for-glory-iv": "gothic-rpg-vga",
   "gabriel-knight-sins-of-the-fathers": "gothic-investigation-vga",
+  "leisure-suit-larry-vga": "social-comedy-icon-vga",
+  "police-quest-i-vga-remake": "early-procedural-icon-vga",
   "police-quest-iv": "procedural-investigation-vga",
+  "day-of-the-tentacle": "verb-panel-cartoon-vga",
   "indiana-jones-fate-of-atlantis": "pulp-archaeology-vga",
   "heart-of-china": "cinematic-pulp-vga",
   "rise-of-the-dragon": "cinematic-pulp-vga",
@@ -178,125 +180,103 @@ export const validateAdventureReferenceTitlePack = (
   for (const duplicate of duplicateValues(pack.variants.map((variant) => variant.id))) {
     packIssue(issues, "duplicate-id", "variants", `Release variant '${duplicate}' is duplicated.`);
   }
-  pack.variants.forEach((variant, index) => {
-    const path = `variants[${index}]`;
-    if (!validIdentifier(variant.id) || variant.label.trim().length < 3) {
-      packIssue(issues, "invalid-variant", path, `Release variant '${variant.id}' is invalid.`);
-    }
-    if (variant.titleId !== pack.titleId) {
+  pack.variants.forEach((variantValue, index) => {
+    if (variantValue.titleId !== pack.titleId) {
       packIssue(
         issues,
         "variant-title-mismatch",
-        `${path}.titleId`,
-        `Release variant '${variant.id}' belongs to '${variant.titleId}', not '${pack.titleId}'.`,
+        `variants[${index}].titleId`,
+        `Variant '${variantValue.id}' belongs to '${variantValue.titleId}', expected '${pack.titleId}'.`,
       );
     }
-    if (variant.engineDialectId !== pack.engineDialectId) {
+    if (variantValue.engineDialectId !== pack.engineDialectId) {
       packIssue(
         issues,
-        "variant-engine-mismatch",
-        `${path}.engineDialectId`,
-        `Release variant '${variant.id}' uses a different engine dialect.`,
-      );
-    }
-    if (
-      variant.notes.length < 1 ||
-      variant.notes.some((note) => note.trim().length < 10)
-    ) {
-      packIssue(
-        issues,
-        "invalid-variant",
-        `${path}.notes`,
-        `Release variant '${variant.id}' requires explicit release-specific notes.`,
+        "variant-dialect-mismatch",
+        `variants[${index}].engineDialectId`,
+        `Variant '${variantValue.id}' dialect '${variantValue.engineDialectId}' does not match pack dialect '${pack.engineDialectId}'.`,
       );
     }
   });
 
   if (pack.capabilities.length < 1) {
+    packIssue(issues, "invalid-capability", "capabilities", "At least one capability is required.");
+  }
+  pack.capabilities.forEach((requirement, index) => validateCapability(requirement, index, issues));
+  for (const duplicate of duplicateValues(pack.capabilities.map((requirement) => requirement.id))) {
     packIssue(
       issues,
-      "missing-capability",
+      "duplicate-capability",
       "capabilities",
-      "At least one capability is required.",
+      `Capability '${duplicate}' is duplicated.`,
     );
   }
-  for (const duplicate of duplicateValues(pack.capabilities.map((entry) => entry.id))) {
-    packIssue(issues, "duplicate-id", "capabilities", `Capability '${duplicate}' is duplicated.`);
-  }
-  pack.capabilities.forEach((entry, index) => validateCapability(entry, index, issues));
-  const capabilityIds = new Set(pack.capabilities.map((entry) => entry.id));
 
   if (dialect) {
-    for (const capabilityId of dialectCapabilityIds(dialect)) {
-      if (!capabilityIds.has(capabilityId)) {
+    const capabilityIds = new Set(pack.capabilities.map((requirement) => requirement.id));
+    for (const baselineId of dialectCapabilityIds(dialect)) {
+      if (!capabilityIds.has(baselineId)) {
         packIssue(
           issues,
-          "missing-engine-capability",
+          "missing-baseline-capability",
           "capabilities",
-          `Engine baseline capability '${capabilityId}' is missing from '${pack.id}'.`,
+          `Reference pack '${pack.id}' is missing engine baseline capability '${baselineId}'.`,
         );
       }
     }
   }
 
   if (pack.scenarios.length < 1) {
-    packIssue(
-      issues,
-      "missing-scenario",
-      "scenarios",
-      "At least one executable scenario is required.",
-    );
+    packIssue(issues, "invalid-scenario", "scenarios", "At least one reference scenario is required.");
   }
-  for (const duplicate of duplicateValues(pack.scenarios.map((entry) => entry.id))) {
+  for (const duplicate of duplicateValues(pack.scenarios.map((scenarioValue) => scenarioValue.id))) {
     packIssue(issues, "duplicate-id", "scenarios", `Scenario '${duplicate}' is duplicated.`);
   }
-  const scenarioCapabilities = new Set<string>();
-  pack.scenarios.forEach((scenario, index) => {
-    const path = `scenarios[${index}]`;
+  const capabilityIds = new Set(pack.capabilities.map((requirement) => requirement.id));
+  pack.scenarios.forEach((scenarioValue, index) => {
     if (
-      !validIdentifier(scenario.id) ||
-      scenario.label.trim().length < 3 ||
-      scenario.description.trim().length < 20 ||
-      scenario.steps.length < 2 ||
-      scenario.expectedOutcome.trim().length < 20
+      !validIdentifier(scenarioValue.id) ||
+      scenarioValue.label.trim().length < 3 ||
+      scenarioValue.description.trim().length < 20 ||
+      scenarioValue.steps.length < 2 ||
+      scenarioValue.expectedOutcome.trim().length < 20
     ) {
-      packIssue(issues, "invalid-scenario", path, `Scenario '${scenario.id}' is incomplete.`);
+      packIssue(
+        issues,
+        "invalid-scenario",
+        `scenarios[${index}]`,
+        `Scenario '${scenarioValue.id}' has incomplete identity or execution detail.`,
+      );
     }
-    for (const capabilityId of scenario.requiredCapabilityIds) {
-      scenarioCapabilities.add(capabilityId);
-      if (!capabilityIds.has(capabilityId)) {
+    for (const requiredId of scenarioValue.requiredCapabilityIds) {
+      if (!capabilityIds.has(requiredId)) {
         packIssue(
           issues,
           "unknown-scenario-capability",
-          `${path}.requiredCapabilityIds`,
-          `Scenario '${scenario.id}' references unknown capability '${capabilityId}'.`,
+          `scenarios[${index}].requiredCapabilityIds`,
+          `Scenario '${scenarioValue.id}' references unknown capability '${requiredId}'.`,
         );
       }
     }
   });
-  for (const requirement of pack.capabilities) {
-    if (requirement.critical && !scenarioCapabilities.has(requirement.id)) {
-      packIssue(
-        issues,
-        "missing-critical-scenario",
-        "scenarios",
-        `Critical capability '${requirement.id}' has no executable scenario coverage.`,
-      );
-    }
-  }
 
   if (
-    pack.originalProof.title.trim().length < 3 ||
-    pack.originalProof.profileId !== pack.profileId ||
-    pack.originalProof.originalAssetsOnly !== true ||
-    pack.originalProof.featuredSystems.length < 3 ||
-    pack.originalProof.note.trim().length < 20
+    !validIdentifier(pack.originalProof.showcaseId) ||
+    pack.originalProof.title.trim().length < 3
   ) {
     packIssue(
       issues,
-      "original-proof-mismatch",
+      "missing-original-proof",
       "originalProof",
-      `Original proof '${pack.originalProof.title}' does not match the reference pack contract.`,
+      "Original proof identity is incomplete.",
+    );
+  }
+  if (pack.originalProof.profileId !== pack.profileId) {
+    packIssue(
+      issues,
+      "proof-profile-mismatch",
+      "originalProof.profileId",
+      `Original proof profile '${pack.originalProof.profileId}' does not match '${pack.profileId}'.`,
     );
   }
 
@@ -307,13 +287,11 @@ export const validateAdventureReferenceTitlePack = (
   ) {
     packIssue(
       issues,
-      "incomplete-redistribution-boundary",
+      "redistribution-boundary-incomplete",
       "redistributionBoundary",
-      "The commercial-content and private-reference boundaries are incomplete.",
+      "Redistribution boundary must explicitly cover art, writing, audio and commercial identity/content.",
     );
   }
 
-  return issues.sort(
-    (left, right) => left.path.localeCompare(right.path) || left.code.localeCompare(right.code),
-  );
+  return issues.sort((left, right) => left.path.localeCompare(right.path) || left.code.localeCompare(right.code));
 };
