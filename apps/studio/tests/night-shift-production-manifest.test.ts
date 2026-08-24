@@ -1,0 +1,50 @@
+import { describe, expect, it } from "vitest";
+import {
+  nightShiftProductionManifest,
+  nightShiftProductionManifestFileName,
+  nightShiftProductionManifestJson,
+} from "../src/night-shift-production-manifest.js";
+import {
+  nightShiftIndexedProductionAssetIds,
+  nightShiftPeriodVgaProductionAssetIds,
+  nightShiftProductionAssets,
+} from "../src/night-shift-production-assets.js";
+
+describe("Night Shift production manifest", () => {
+  it("encodes the early procedural VGA lane and complete proof contract", () => {
+    expect(nightShiftProductionManifest).toMatchObject({
+      manifestVersion: 1,
+      productionProfileId: "early-procedural-icon-vga",
+      referenceLane: "police-quest-i-vga-remake",
+      nativeCanvas: { width: 320, height: 200 },
+      proof: {
+        scenes: [
+          "scene.night-shift.station",
+          "scene.night-shift.roadside",
+          "scene.night-shift.diner",
+        ],
+        successScore: 32,
+        minimumNativeScreenshots: 6,
+      },
+    });
+  });
+
+  it("contains every production asset and evidence requirement", () => {
+    expect(nightShiftProductionManifest.assets).toHaveLength(nightShiftProductionAssets.length);
+    expect(nightShiftProductionManifest.evidencePolicy.indexedAssetIds).toEqual(
+      nightShiftIndexedProductionAssetIds,
+    );
+    expect(nightShiftProductionManifest.evidencePolicy.periodVgaAssetIds).toEqual(
+      nightShiftPeriodVgaProductionAssetIds,
+    );
+  });
+
+  it("serialises deterministically with a stable filename", () => {
+    const first = nightShiftProductionManifestJson();
+    const second = nightShiftProductionManifestJson();
+    expect(first).toBe(second);
+    expect(first.endsWith("\n")).toBe(true);
+    expect(JSON.parse(first).projectId).toBe(nightShiftProductionManifest.projectId);
+    expect(nightShiftProductionManifestFileName).toBe("night-shift.production-manifest.json");
+  });
+});
