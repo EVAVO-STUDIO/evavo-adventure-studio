@@ -26,6 +26,7 @@ export interface RuntimeRoomScriptState {
   readonly previousConsumedInteractionIds: readonly Id<"interaction">[];
   readonly previousConsumedDialogueChoiceIds: readonly Id<"dialogue-choice">[];
   readonly activeCutaway: ActiveRuntimeRoomCutaway | null;
+  readonly pendingSceneEnter: boolean;
 }
 
 export type RuntimeRoomScriptEvent =
@@ -58,18 +59,19 @@ export const createRuntimeRoomScriptState = (
 ): RuntimeRoomScriptState => ({
   sceneId: world.story.currentSceneId,
   enteredAtTick: world.story.tick,
-  visitedSceneIds: [world.story.currentSceneId],
+  visitedSceneIds: [],
   firedScriptIds: [],
   previousConsumedInteractionIds: [...world.story.consumedInteractionIds],
   previousConsumedDialogueChoiceIds: [...world.story.consumedDialogueChoiceIds],
   activeCutaway: null,
+  pendingSceneEnter: true,
 });
 
 const scriptTriggered = (
   script: RuntimeRoomScript,
   world: InteractiveRuntimeWorldState,
   state: RuntimeRoomScriptState,
-  sceneChanged: boolean,
+  sceneEntered: boolean,
   firstEnter: boolean,
   newInteractions: ReadonlySet<string>,
   newChoices: ReadonlySet<string>,
@@ -78,7 +80,7 @@ const scriptTriggered = (
   if (script.when && !evaluateCondition(script.when, world.story)) return false;
   switch (script.trigger.kind) {
     case "scene-enter":
-      return sceneChanged;
+      return sceneEntered;
     case "scene-first-enter":
       return firstEnter;
     case "interaction-consumed":
@@ -102,11 +104,8 @@ const applyScript = (
     { kind: "room-script-fired", scriptId: script.id },
   ];
   const actionTransition = applyActions(world.story, script.actions);
-  let nextWorld: InteractiveRuntimeWorldState = {
-    ...world,
-    story: actionTransition.state,
-  };
-  let runtimeEvents: RuntimeEvent[] = [...actionTransition.events];
+  let nextWorld: InteractiveRuntimeWorldState = { ...world, story: actionTransition.state };
+  const runtimeEvents: RuntimeEvent[] = [...actionTransition.events];
   let nextState: RuntimeRoomScriptState = {
     ...state,
     firedScriptIds: script.once
@@ -137,12 +136,15 @@ const applyScript = (
       sceneId: script.cutaway.sceneId,
       enteredAtTick: nextWorld.story.tick,
       visitedSceneIds: uniqueSorted([...nextState.visitedSceneIds, script.cutaway.sceneId]),
-      activeCutaway: {
-        scriptId: script.id,
-        sequenceId: script.cutaway.sequenceId,
-        returnSceneId,
-        returnEntranceId,
-      },
+      activeCutaway: script.cutaway.returnToPreviousLocation
+        ? {
+            scriptId: script.id,
+            sequenceId: script.cutaway.sequenceId,
+            returnSceneId,
+            returnEntranceId,
+          }
+        : null,
+      pendingSceneEnter: false,
     };
     scriptEvents.push({
       kind: "room-cutaway-started",
@@ -195,6 +197,7 @@ const maybeReturnCutaway = (
       previousConsumedInteractionIds: [...returned.state.consumedInteractionIds],
       previousConsumedDialogueChoiceIds: [...returned.state.consumedDialogueChoiceIds],
       activeCutaway: null,
+      pendingSceneEnter: true,
     },
     events: [
       {
@@ -215,11 +218,24 @@ export const advanceRuntimeRoomScripts = (
 ): RuntimeRoomScriptTransition => {
   const returning = maybeReturnCutaway(world, state);
   if (returning) return returning;
+  const sceneChanged = world.story.currentSceneId !== state.sceneId;
+  const sceneEntered = state.pendingSceneEnter || sceneChanged;
+  const firstEnter = sceneEntered && !state.visitedSceneIds.includes(world.story.currentSceneId);
+  const workingState: RuntimeRoomScriptState = sceneEntered
+    ? {
+        ...state,
+        sceneId: world.story.currentSceneId,
+        enteredAtTick: sceneChanged ? world.story.tick : state.enteredAtTick,
+        visitedSceneIds: uniqueSorted([...state.visitedSceneIds, world.story.currentSceneId]),
+        pendingSceneEnter: false,
+      }
+    : state;
+
   if (!bundle.roomScripts) {
     return {
       world,
       state: {
-        ...state,
+        ...workingState,
         previousConsumedInteractionIds: [...world.story.consumedInteractionIds],
         previousConsumedDialogueChoiceIds: [...world.story.consumedDialogueChoiceIds],
       },
@@ -228,16 +244,6 @@ export const advanceRuntimeRoomScripts = (
     };
   }
 
-  const sceneChanged = world.story.currentSceneId !== state.sceneId;
-  const firstEnter = sceneChanged && !state.visitedSceneIds.includes(world.story.currentSceneId);
-  const workingState: RuntimeRoomScriptState = sceneChanged
-    ? {
-        ...state,
-        sceneId: world.story.currentSceneId,
-        enteredAtTick: world.story.tick,
-        visitedSceneIds: uniqueSorted([...state.visitedSceneIds, world.story.currentSceneId]),
-      }
-    : state;
   const oldInteractions = new Set(state.previousConsumedInteractionIds);
   const oldChoices = new Set(state.previousConsumedDialogueChoiceIds);
   const newInteractions = new Set(
@@ -261,14 +267,12 @@ export const advanceRuntimeRoomScripts = (
         script,
         nextWorld,
         nextState,
-        sceneChanged,
+        sceneEntered,
         firstEnter,
         newInteractions,
         newChoices,
       )
-    ) {
-      continue;
-    }
+    ) continue;
     const applied = applyScript(bundle, nextWorld, nextState, script);
     nextWorld = applied.world;
     nextState = applied.state;
