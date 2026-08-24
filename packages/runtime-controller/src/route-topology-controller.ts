@@ -16,6 +16,12 @@ import {
   type AdventureRouteTopologyState,
   type AdventureRouteTraversalResult,
 } from "@evavo/adventure-scene-runtime/route-topology";
+import {
+  adventureTravelDestinations,
+  travelToAdventureRouteNode,
+  type AdventureTravelDestination,
+  type AdventureTravelResult,
+} from "@evavo/adventure-scene-runtime/travel-map";
 import type { PackagedRuntimeControllerOptions } from "./packaged-controller.js";
 import {
   createBasePackagedSessionController,
@@ -27,6 +33,8 @@ export interface AdventureRoutePackagedRuntimeController extends PackagedSession
   routeState(): AdventureRouteTopologyState;
   availableRouteEdges(): readonly RuntimeAdventureRouteEdge[];
   traverseRouteEdge(edgeId: string): AdventureRouteTraversalResult;
+  travelDestinations(): readonly AdventureTravelDestination[];
+  travelToNode(nodeId: string): AdventureTravelResult;
   routeAtTerminal(): boolean;
   routeAtRequiredReconvergence(): boolean;
 }
@@ -86,8 +94,19 @@ export const createAdventureRoutePackagedRuntimeControllerWithFactory = (
     controller.restoreSaveGame(save);
   };
 
-  const traverseRouteEdge = (edgeId: string): AdventureRouteTraversalResult => {
-    const result = traverseAdventureRouteEdge(manifest, controller.worldState().story, route, edgeId);
+  const applyTraversal = (result: AdventureRouteTraversalResult): AdventureRouteTraversalResult => {
+    if (result.kind === "traversed") {
+      route = result.state;
+      replaceStory(result.story);
+    }
+    return result;
+  };
+
+  const traverseRouteEdge = (edgeId: string): AdventureRouteTraversalResult =>
+    applyTraversal(traverseAdventureRouteEdge(manifest, controller.worldState().story, route, edgeId));
+
+  const travelToNode = (nodeId: string): AdventureTravelResult => {
+    const result = travelToAdventureRouteNode(manifest, controller.worldState().story, route, nodeId);
     if (result.kind === "traversed") {
       route = result.state;
       replaceStory(result.story);
@@ -101,6 +120,8 @@ export const createAdventureRoutePackagedRuntimeControllerWithFactory = (
     routeState: () => route,
     availableRouteEdges: () => availableAdventureRouteEdges(manifest, controller.worldState().story, route),
     traverseRouteEdge,
+    travelDestinations: () => adventureTravelDestinations(manifest, controller.worldState().story, route),
+    travelToNode,
     routeAtTerminal: () => adventureRouteAtTerminal(manifest, route),
     routeAtRequiredReconvergence: () => adventureRouteAtRequiredReconvergence(manifest, route),
     controlledActorInstanceId: () => controller.controlledActorInstanceId(),
