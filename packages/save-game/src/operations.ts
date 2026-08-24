@@ -3,6 +3,7 @@ import type { Id } from "@evavo/adventure-project-schema";
 import type { RuntimeBundle } from "@evavo/adventure-runtime-bundle";
 import type { InteractiveRuntimeWorldState } from "@evavo/adventure-scene-runtime/commands";
 import type { RuntimeInvestigationState } from "@evavo/adventure-scene-runtime/investigation-runtime";
+import type { MultiProtagonistState } from "@evavo/adventure-scene-runtime/multi-protagonist";
 import { validateSavedAudio } from "./audio-compatibility.js";
 import {
   canonicalSaveGameJson,
@@ -15,6 +16,7 @@ import { SaveGameCompatibilityError } from "./errors.js";
 import { validateSavedInvestigation } from "./investigation-compatibility.js";
 import { validateSavedItemCombinations } from "./item-combination-compatibility.js";
 import type { SaveGameItemCombinationState } from "./item-combinations.js";
+import { validateSavedMultiProtagonist } from "./multi-protagonist-compatibility.js";
 import { assertSaveGameAllowed } from "./policy.js";
 import type { SaveGameProfiledRuntimeCameraState } from "./profiled-camera.js";
 import {
@@ -36,6 +38,7 @@ export interface CreateSaveGameOptions {
   readonly audio?: AudioRuntimeState;
   readonly investigation?: RuntimeInvestigationState;
   readonly itemCombinations?: SaveGameItemCombinationState;
+  readonly multiProtagonist?: MultiProtagonistState;
 }
 
 const completeCompatibilityIssues = (
@@ -46,6 +49,7 @@ const completeCompatibilityIssues = (
   ...validateSavedAudio(bundle, save),
   ...validateSavedInvestigation(bundle, save),
   ...validateSavedItemCombinations(bundle, save),
+  ...validateSavedMultiProtagonist(bundle, save),
 ];
 
 export const createSaveGame = (
@@ -54,7 +58,7 @@ export const createSaveGame = (
   options: CreateSaveGameOptions,
 ): SaveGame => {
   assertSaveGameAllowed(bundle, world);
-  const { audio, investigation, itemCombinations, ...interfaceState } = options;
+  const { audio, investigation, itemCombinations, multiProtagonist, ...interfaceState } = options;
   const payload = saveGamePayloadSchema.parse({
     saveVersion: 1,
     projectId: bundle.projectId,
@@ -65,6 +69,7 @@ export const createSaveGame = (
     ...(audio ? { audio } : {}),
     ...(investigation ? { investigation } : {}),
     ...(itemCombinations ? { itemCombinations } : {}),
+    ...(multiProtagonist ? { multiProtagonist } : {}),
   });
   const save = saveGameSchema.parse({
     ...payload,
