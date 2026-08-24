@@ -201,8 +201,9 @@ export const downloadSceneDirectorDocuments = (
   documents: SceneDirectorDocuments,
   sampleId: string,
 ): void => {
+  const zip = new Uint8Array(createSceneDirectorZip(documents, sampleId));
   downloadBlob(
     sceneDirectorArchiveFileName(sampleId),
-    new Blob([createSceneDirectorZip(documents, sampleId)], { type: "application/zip" }),
+    new Blob([zip.buffer], { type: "application/zip" }),
   );
 };
