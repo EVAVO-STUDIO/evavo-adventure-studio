@@ -1,10 +1,10 @@
 import { nightShiftRuntimeProject } from "./night-shift-runtime-contracts.js";
 import {
-  nightShiftIndexedProductionAssetIds,
   nightShiftPeriodVgaProductionAssetIds,
   nightShiftProductionAssets,
 } from "./night-shift-production-assets.js";
 import { nightShiftProductionWaves } from "./night-shift-production-waves.js";
+import { nightShiftRuntimeIndexedAssetIds } from "./night-shift-runtime-index-requirements.js";
 import { nightShiftRuntimeSourceSummary } from "./night-shift-runtime-source.js";
 
 export const nightShiftProductionManifest = {
@@ -32,7 +32,7 @@ export const nightShiftProductionManifest = {
   },
   evidencePolicy: {
     periodVgaAssetIds: [...nightShiftPeriodVgaProductionAssetIds],
-    indexedAssetIds: [...nightShiftIndexedProductionAssetIds],
+    runtimeIndexedAssetIds: [...nightShiftRuntimeIndexedAssetIds],
     requireRawOneToOneReview: true,
     requireIntegerScaleReview: true,
     requireBinarySpriteAlpha: true,
