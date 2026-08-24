@@ -8,6 +8,7 @@ import {
   nightShiftProductionManifestFileName,
   nightShiftProductionManifestJson,
 } from "./night-shift-production-manifest.js";
+import { evaluateNightShiftProductionProgress } from "./night-shift-production-progress.js";
 import { downloadNightShiftRuntimeSource } from "./night-shift-runtime-source-export.js";
 import "./night-shift-readiness-panel.css";
 
@@ -41,6 +42,11 @@ export const NightShiftReadinessPanel = () => {
   const authored = report.gates.filter((gate) => gate.phase === "authored");
   const evidence = report.gates.filter((gate) => gate.phase === "evidence");
   const roles = roleCounts();
+  const productionProgress = evaluateNightShiftProductionProgress(new Set());
+  const nextWave = productionProgress.nextWave;
+  const nextWaveProgress = nextWave
+    ? productionProgress.waves.find((wave) => wave.id === nextWave.id) ?? null
+    : null;
 
   return (
     <section className="stg-night-shift-readiness">
@@ -88,6 +94,24 @@ export const NightShiftReadinessPanel = () => {
             <span key={role}><strong>{count}</strong> {role}</span>
           ))}
         </div>
+        {nextWave && nextWaveProgress ? (
+          <div className="stg-production-next-wave">
+            <span className="stg-eyebrow">NEXT PRODUCTION WAVE</span>
+            <h3>{nextWave.label}</h3>
+            <p>{nextWave.goal}</p>
+            <strong>
+              {nextWaveProgress.completedAssets}/{nextWaveProgress.totalAssets} masters accepted
+            </strong>
+            <ul>
+              {nextWaveProgress.missingAssetIds.slice(0, 8).map((assetId) => (
+                <li key={assetId}>{assetId}</li>
+              ))}
+            </ul>
+            {nextWaveProgress.missingAssetIds.length > 8 ? (
+              <small>+ {nextWaveProgress.missingAssetIds.length - 8} more in the production manifest</small>
+            ) : null}
+          </div>
+        ) : null}
         <div className="stg-production-plan-actions">
           <button type="button" className="stg-production-plan-export" onClick={downloadProductionManifest}>
             Export production manifest
