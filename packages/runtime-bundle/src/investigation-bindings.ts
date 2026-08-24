@@ -58,6 +58,8 @@ export type RuntimeInvestigationBindingIssueCode =
   | "duplicate-dialogue-choice-binding"
   | "unknown-interaction"
   | "unknown-dialogue-choice"
+  | "non-once-interaction-binding"
+  | "non-once-dialogue-choice-binding"
   | "unknown-fact"
   | "unknown-topic"
   | "unknown-source";
@@ -73,6 +75,8 @@ export interface RuntimeInvestigationBindingValidationContext {
   readonly investigation?: RuntimeInvestigationManifest;
   readonly interactionIds: ReadonlySet<string>;
   readonly dialogueChoiceIds: ReadonlySet<string>;
+  readonly oneShotInteractionIds: ReadonlySet<string>;
+  readonly oneShotDialogueChoiceIds: ReadonlySet<string>;
 }
 
 const duplicateBindingIssues = (
@@ -171,6 +175,15 @@ export const validateRuntimeInvestigationBindings = (
         path: `interactions[${index}].interactionId`,
         message: `Investigation binding references unknown interaction '${binding.interactionId}'.`,
       });
+    } else if (!context.oneShotInteractionIds.has(binding.interactionId)) {
+      issues.push({
+        severity: "error",
+        code: "non-once-interaction-binding",
+        path: `interactions[${index}].interactionId`,
+        message:
+          `Automatic investigation binding '${binding.interactionId}' must reference an interaction with once: true ` +
+          "so consumption is deterministic.",
+      });
     }
     validateEffects(binding.effects, `interactions[${index}]`);
   });
@@ -182,6 +195,15 @@ export const validateRuntimeInvestigationBindings = (
         code: "unknown-dialogue-choice",
         path: `dialogueChoices[${index}].choiceId`,
         message: `Investigation binding references unknown dialogue choice '${binding.choiceId}'.`,
+      });
+    } else if (!context.oneShotDialogueChoiceIds.has(binding.choiceId)) {
+      issues.push({
+        severity: "error",
+        code: "non-once-dialogue-choice-binding",
+        path: `dialogueChoices[${index}].choiceId`,
+        message:
+          `Automatic investigation binding '${binding.choiceId}' must reference a dialogue choice with once: true ` +
+          "so consumption is deterministic.",
       });
     }
     validateEffects(binding.effects, `dialogueChoices[${index}]`);
