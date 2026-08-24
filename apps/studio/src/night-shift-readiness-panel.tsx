@@ -1,5 +1,6 @@
 import { evaluateNightShiftDemoReadiness } from "./night-shift-demo-readiness.js";
 import { downloadNightShiftFoundationTechnicalArchive } from "./night-shift-foundation-export.js";
+import { evaluateNightShiftFoundationPreflight } from "./night-shift-foundation-preflight.js";
 import {
   nightShiftPeriodVgaProductionAssetIds,
   nightShiftProductionAssets,
@@ -23,15 +24,6 @@ const roleCounts = (): readonly { readonly role: string; readonly count: number 
     .sort((left, right) => left.role.localeCompare(right.role));
 };
 
-const generatedFoundationAssetIds = [
-  "asset.palette.night-shift.actor-lighting",
-  "asset.night-shift.font.system",
-  "asset.night-shift.ui.walk",
-  "asset.night-shift.ui.look",
-  "asset.night-shift.ui.use",
-  "asset.night-shift.ui.talk",
-] as const;
-
 const downloadProductionManifest = (): void => {
   const blob = new Blob([nightShiftProductionManifestJson()], {
     type: "application/json;charset=utf-8",
@@ -52,6 +44,7 @@ export const NightShiftReadinessPanel = () => {
   const authored = report.gates.filter((gate) => gate.phase === "authored");
   const evidence = report.gates.filter((gate) => gate.phase === "evidence");
   const roles = roleCounts();
+  const foundationPreflight = evaluateNightShiftFoundationPreflight();
   const productionProgress = evaluateNightShiftProductionProgress(new Set());
   const nextWave = productionProgress.nextWave;
   const nextWaveProgress = nextWave
@@ -113,8 +106,14 @@ export const NightShiftReadinessPanel = () => {
               {nextWaveProgress.completedAssets}/{nextWaveProgress.totalAssets} masters accepted
             </strong>
             <div className="stg-foundation-generated-status">
-              <strong>{generatedFoundationAssetIds.length}/7 reproducible technical sources ready</strong>
-              <small>Palette, true indexed 5×7 bitmap font and four indexed icon PNGs are generated deterministically; only the officer strip remains deliberately art-authored.</small>
+              <strong>{foundationPreflight.generatedTechnicalAssetIds.length}/7 reproducible technical sources ready</strong>
+              <small>
+                Generated font/icons pass structural native master intake; palette bytes are deterministic. Only
+                {" "}{foundationPreflight.remainingAuthoredMasterIds.join(", ")} remains deliberately art-authored.
+              </small>
+              <small>
+                Foundation runtime-index requirement: {foundationPreflight.foundationRuntimeIndexedAssetIds.join(", ")}.
+              </small>
             </div>
             <ul>
               {nextWaveProgress.missingAssetIds.slice(0, 8).map((assetId) => (
