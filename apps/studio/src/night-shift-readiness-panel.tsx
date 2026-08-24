@@ -8,6 +8,7 @@ import {
   nightShiftProductionManifestFileName,
   nightShiftProductionManifestJson,
 } from "./night-shift-production-manifest.js";
+import { downloadNightShiftRuntimeSource } from "./night-shift-runtime-source-export.js";
 import "./night-shift-readiness-panel.css";
 
 const roleCounts = (): readonly { readonly role: string; readonly count: number }[] => {
@@ -87,9 +88,14 @@ export const NightShiftReadinessPanel = () => {
             <span key={role}><strong>{count}</strong> {role}</span>
           ))}
         </div>
-        <button type="button" className="stg-production-plan-export" onClick={downloadProductionManifest}>
-          Export production manifest
-        </button>
+        <div className="stg-production-plan-actions">
+          <button type="button" className="stg-production-plan-export" onClick={downloadProductionManifest}>
+            Export production manifest
+          </button>
+          <button type="button" className="stg-production-plan-export" onClick={downloadNightShiftRuntimeSource}>
+            Export runtime source ZIP
+          </button>
+        </div>
       </div>
     </section>
   );
