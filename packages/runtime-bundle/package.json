@@ -24,6 +24,14 @@
       "types": "./dist/src/multi-protagonist-bindings.d.ts",
       "import": "./dist/src/multi-protagonist-bindings.js"
     },
+    "./route-topology": {
+      "types": "./dist/src/route-topology.d.ts",
+      "import": "./dist/src/route-topology.js"
+    },
+    "./route-topology-analysis": {
+      "types": "./dist/src/route-topology-analysis.d.ts",
+      "import": "./dist/src/route-topology-analysis.js"
+    },
     "./rpg": {
       "types": "./dist/src/rpg.d.ts",
       "import": "./dist/src/rpg.js"
