@@ -1,4 +1,5 @@
 import { evaluateNightShiftDemoReadiness } from "./night-shift-demo-readiness.js";
+import "./night-shift-readiness-panel.css";
 
 export const NightShiftReadinessPanel = () => {
   const report = evaluateNightShiftDemoReadiness();
