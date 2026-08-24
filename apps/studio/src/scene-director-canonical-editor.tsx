@@ -10,11 +10,16 @@ import type {
   SceneDirectorDocumentCommand,
   SceneDirectorDocuments,
 } from "./scene-director-documents.js";
-import type { SceneDirectorEditingController } from "./scene-director-components.js";
 import { StagingButton } from "./scene-staging-components.js";
 import "./scene-director-canonical-editor.css";
 
 export type CanonicalGeometryMode = "walk" | "control" | "hotspots" | "objects";
+
+export interface SceneDirectorCanonicalEditingController {
+  readonly onPreviewEdit: (command: SceneDirectorDocumentCommand) => void;
+  readonly onCommitEdit: (command: SceneDirectorDocumentCommand) => void;
+  readonly onCancelPreview: () => void;
+}
 
 const points = (value: readonly Point[]): string =>
   value.map((point) => `${point.x},${point.y}`).join(" ");
@@ -237,7 +242,7 @@ export const SceneDirectorCanonicalGeometryPanel = ({
 }: {
   readonly documents: SceneDirectorDocuments;
   readonly sceneId: Id<"scene">;
-  readonly editing: SceneDirectorEditingController;
+  readonly editing: SceneDirectorCanonicalEditingController;
 }) => {
   const [mode, setMode] = useState<CanonicalGeometryMode>("walk");
   const [drag, setDrag] = useState<CanonicalDrag | null>(null);
