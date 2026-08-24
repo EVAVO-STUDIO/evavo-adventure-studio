@@ -37,5 +37,11 @@ export const nightShiftDirectorPaletteMaps = paletteMapManifestSchema.parse({
       paletteOffset: 64,
       description: "Headlamp-warm roadside ramp entered through ordered Bayer transition.",
     },
+    {
+      id: "palette-map.night-shift.diner-warm",
+      paletteAssetId: "asset.palette.night-shift.actor-lighting",
+      paletteOffset: 96,
+      description: "Muted diner practical ramp for late-night faces, paper and cream surfaces.",
+    },
   ],
 });
