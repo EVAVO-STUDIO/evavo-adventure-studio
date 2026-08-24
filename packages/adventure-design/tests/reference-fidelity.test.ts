@@ -42,7 +42,7 @@ const capabilityIds = (titleId: AdventureReferenceTitlePack["titleId"]) =>
   );
 
 describe("adventure reference fidelity packs", () => {
-  it("ships eight title-specific packs over four explicit engine dialects", () => {
+  it("ships ten title-specific packs over four explicit engine dialects", () => {
     expect(adventureReferenceEngineDialects.map((entry) => entry.id)).toEqual([
       "sierra-sci1-vga",
       "sierra-sci32-vga",
@@ -53,8 +53,10 @@ describe("adventure reference fidelity packs", () => {
       "kings-quest-v",
       "quest-for-glory-iv",
       "gabriel-knight-sins-of-the-fathers",
+      "leisure-suit-larry-vga",
       "police-quest-i-vga-remake",
       "police-quest-iv",
+      "day-of-the-tentacle",
       "indiana-jones-fate-of-atlantis",
       "heart-of-china",
       "rise-of-the-dragon",
@@ -66,8 +68,10 @@ describe("adventure reference fidelity packs", () => {
     const kq5 = capabilityIds("kings-quest-v");
     const qfg4 = capabilityIds("quest-for-glory-iv");
     const gk1 = capabilityIds("gabriel-knight-sins-of-the-fathers");
+    const lsl = capabilityIds("leisure-suit-larry-vga");
     const pq1 = capabilityIds("police-quest-i-vga-remake");
     const pq4 = capabilityIds("police-quest-iv");
+    const dott = capabilityIds("day-of-the-tentacle");
     const foa = capabilityIds("indiana-jones-fate-of-atlantis");
     const heart = capabilityIds("heart-of-china");
     const rise = capabilityIds("rise-of-the-dragon");
@@ -101,6 +105,19 @@ describe("adventure reference fidelity packs", () => {
       "temporary-icon-bar",
       "narration-feedback",
       "score-counter",
+      "relationship-state",
+      "dialogue-tree",
+      "death-restart-flow",
+    ] as const) {
+      expect(lsl.has(id)).toBe(true);
+    }
+    expect(lsl.has("storybook-room-state")).toBe(false);
+    expect(lsl.has("persistent-verb-panel")).toBe(false);
+
+    for (const id of [
+      "temporary-icon-bar",
+      "narration-feedback",
+      "score-counter",
       "death-restart-flow",
       "procedure-checks",
       "procedural-failure",
@@ -121,6 +138,18 @@ describe("adventure reference fidelity packs", () => {
     ] as const) {
       expect(pq4.has(id)).toBe(true);
     }
+
+    for (const id of [
+      "persistent-verb-panel",
+      "sentence-construction",
+      "protagonist-switching",
+      "route-dependent-world-state",
+      "alternative-puzzle-solutions",
+    ] as const) {
+      expect(dott.has(id)).toBe(true);
+    }
+    expect(dott.has("multi-route-structure")).toBe(false);
+    expect(dott.has("travel-map")).toBe(false);
 
     for (const id of [
       "persistent-verb-panel",
@@ -168,6 +197,20 @@ describe("adventure reference fidelity packs", () => {
         ]),
       );
     }
+    expect(adventureReferenceTitlePackByTitleId("day-of-the-tentacle").originalProof).toEqual(
+      expect.objectContaining({
+        title: "Saltwake Island",
+        profileId: "verb-panel-cartoon-vga",
+        status: "available",
+      }),
+    );
+    expect(adventureReferenceTitlePackByTitleId("leisure-suit-larry-vga").originalProof).toEqual(
+      expect.objectContaining({
+        title: "After Hours",
+        profileId: "social-comedy-icon-vga",
+        status: "available",
+      }),
+    );
     expect(adventureReferenceTitlePackByTitleId("police-quest-i-vga-remake").originalProof).toEqual(
       expect.objectContaining({
         title: "Night Shift",
@@ -245,6 +288,12 @@ describe("adventure reference fidelity packs", () => {
   });
 
   it("resolves exact title variants and refuses unknown IDs", () => {
+    expect(adventureReferenceTitlePackByVariantId("dott.dos.cd.en").titleId).toBe(
+      "day-of-the-tentacle",
+    );
+    expect(adventureReferenceTitlePackByVariantId("lsl-vga.dos.floppy.en").titleId).toBe(
+      "leisure-suit-larry-vga",
+    );
     expect(adventureReferenceTitlePackByVariantId("pq1-vga.dos.floppy.en").titleId).toBe(
       "police-quest-i-vga-remake",
     );
