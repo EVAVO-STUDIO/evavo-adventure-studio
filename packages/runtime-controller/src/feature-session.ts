@@ -4,12 +4,9 @@ import {
   createMultiProtagonistPackagedRuntimeControllerWithFactory,
   type MultiProtagonistPackagedRuntimeController,
 } from "./multi-protagonist-controller.js";
-import {
-  createRoomScriptPackagedRuntimeControllerWithFactory,
-} from "./room-script-controller.js";
-import {
-  createSentencePackagedRuntimeControllerWithFactory,
-} from "./sentence-controller.js";
+import { createRoomScriptPackagedRuntimeControllerWithFactory } from "./room-script-controller.js";
+import { createAdventureRpgPackagedRuntimeControllerWithFactory } from "./rpg-controller.js";
+import { createSentencePackagedRuntimeControllerWithFactory } from "./sentence-controller.js";
 import {
   createBasePackagedSessionController,
   type PackagedSessionController,
@@ -25,6 +22,7 @@ export interface PackagedFeatureSessionController extends PackagedSessionControl
 export interface PackagedFeatureSessionDescription {
   readonly sentence: boolean;
   readonly roomScripts: boolean;
+  readonly rpg: boolean;
   readonly multiProtagonist: boolean;
   readonly stack: readonly string[];
 }
@@ -37,15 +35,18 @@ export const describePackagedFeatureSession = (
     bundle.uiSkins !== undefined &&
     bundle.bitmapFonts !== undefined;
   const roomScripts = bundle.roomScripts !== undefined;
+  const rpg = bundle.rpg !== undefined;
   const multiProtagonist = bundle.multiProtagonist !== undefined;
   return {
     sentence,
     roomScripts,
+    rpg,
     multiProtagonist,
     stack: [
       "base",
       ...(sentence ? ["sentence"] : []),
       ...(roomScripts ? ["room-scripts"] : []),
+      ...(rpg ? ["rpg"] : []),
       ...(multiProtagonist ? ["multi-protagonist"] : []),
     ],
   };
@@ -57,6 +58,9 @@ const sentenceFactory = (inner: PackagedSessionControllerFactory): PackagedSessi
 const roomScriptFactory = (inner: PackagedSessionControllerFactory): PackagedSessionControllerFactory =>
   (bundle, options = {}) => createRoomScriptPackagedRuntimeControllerWithFactory(bundle, options, inner);
 
+const rpgFactory = (inner: PackagedSessionControllerFactory): PackagedSessionControllerFactory =>
+  (bundle, options = {}) => createAdventureRpgPackagedRuntimeControllerWithFactory(bundle, options, inner);
+
 export const createPackagedFeatureSessionController = (
   bundle: RuntimeBundle,
   options: PackagedRuntimeControllerOptions = {},
@@ -65,6 +69,7 @@ export const createPackagedFeatureSessionController = (
   let inner: PackagedSessionControllerFactory = createBasePackagedSessionController;
   if (description.sentence) inner = sentenceFactory(inner);
   if (description.roomScripts) inner = roomScriptFactory(inner);
+  if (description.rpg) inner = rpgFactory(inner);
   if (description.multiProtagonist) {
     const { requestedActorInstanceId: _ignored, ...multiOptions } = options;
     return createMultiProtagonistPackagedRuntimeControllerWithFactory(
