@@ -66,8 +66,8 @@ export type SceneDirectorEditCommand =
 export class SceneDirectorEditError extends Error {
   readonly command: SceneDirectorEditCommand;
 
-  constructor(command: SceneDirectorEditCommand, message: string) {
-    super(message);
+  constructor(command: SceneDirectorEditCommand, message: string, options?: ErrorOptions) {
+    super(message, options);
     this.name = "SceneDirectorEditError";
     this.command = command;
   }
@@ -120,11 +120,21 @@ const replaceScene = (
   manifest: SceneStagingManifest,
   sceneIndex: number,
   staging: SceneStaging,
-): SceneStagingManifest =>
-  sceneStagingManifestSchema.parse({
-    ...manifest,
-    scenes: manifest.scenes.map((candidate, index) => (index === sceneIndex ? staging : candidate)),
-  });
+  command: SceneDirectorEditCommand,
+): SceneStagingManifest => {
+  try {
+    return sceneStagingManifestSchema.parse({
+      ...manifest,
+      scenes: manifest.scenes.map((candidate, index) => (index === sceneIndex ? staging : candidate)),
+    });
+  } catch (error) {
+    throw new SceneDirectorEditError(
+      command,
+      `Scene Director edit '${command.kind}' would create invalid staging data.`,
+      { cause: error },
+    );
+  }
+};
 
 const requireItem = <T>(
   command: SceneDirectorEditCommand,
@@ -157,13 +167,18 @@ export const applySceneDirectorEdit = (
 
   switch (command.kind) {
     case "set-actor-footprint":
-      return replaceScene(manifest, sceneIndex, {
-        ...staging,
-        actorFootprints: {
-          ...staging.actorFootprints,
-          [command.actorId]: command.footprint,
+      return replaceScene(
+        manifest,
+        sceneIndex,
+        {
+          ...staging,
+          actorFootprints: {
+            ...staging.actorFootprints,
+            [command.actorId]: command.footprint,
+          },
         },
-      });
+        command,
+      );
 
     case "set-walk-lane-points": {
       if (command.points.length < 2) {
@@ -178,12 +193,17 @@ export const applySceneDirectorEdit = (
         staging.preferredWalkLanes[laneIndex],
         `Preferred walk lane '${command.laneId}' was not found.`,
       );
-      return replaceScene(manifest, sceneIndex, {
-        ...staging,
-        preferredWalkLanes: staging.preferredWalkLanes.map((candidate, index) =>
-          index === laneIndex ? { ...lane, points: [...command.points] } : candidate,
-        ),
-      });
+      return replaceScene(
+        manifest,
+        sceneIndex,
+        {
+          ...staging,
+          preferredWalkLanes: staging.preferredWalkLanes.map((candidate, index) =>
+            index === laneIndex ? { ...lane, points: [...command.points] } : candidate,
+          ),
+        },
+        command,
+      );
     }
 
     case "move-approach-slot": {
@@ -198,21 +218,26 @@ export const applySceneDirectorEdit = (
         slots[slotIndex],
         `Approach slot '${command.slotId}' was not found on '${command.objectId}'.`,
       );
-      return replaceScene(manifest, sceneIndex, {
-        ...staging,
-        approachSlotsByObject: {
-          ...staging.approachSlotsByObject,
-          [command.objectId]: slots.map((candidate, index) =>
-            index === slotIndex
-              ? {
-                  ...slot,
-                  position: command.position,
-                  ...(command.facing ? { facing: command.facing } : {}),
-                }
-              : candidate,
-          ),
+      return replaceScene(
+        manifest,
+        sceneIndex,
+        {
+          ...staging,
+          approachSlotsByObject: {
+            ...staging.approachSlotsByObject,
+            [command.objectId]: slots.map((candidate, index) =>
+              index === slotIndex
+                ? {
+                    ...slot,
+                    position: command.position,
+                    ...(command.facing ? { facing: command.facing } : {}),
+                  }
+                : candidate,
+            ),
+          },
         },
-      });
+        command,
+      );
     }
 
     case "set-depth-key": {
@@ -235,12 +260,17 @@ export const applySceneDirectorEdit = (
       const keys = curve.keys.map((key, index) =>
         index === command.keyIndex ? { y: command.y, scale: command.scale } : key,
       );
-      return replaceScene(manifest, sceneIndex, {
-        ...staging,
-        depthScaleCurves: staging.depthScaleCurves.map((candidate, index) =>
-          index === curveIndex ? { ...curve, keys } : candidate,
-        ),
-      });
+      return replaceScene(
+        manifest,
+        sceneIndex,
+        {
+          ...staging,
+          depthScaleCurves: staging.depthScaleCurves.map((candidate, index) =>
+            index === curveIndex ? { ...curve, keys } : candidate,
+          ),
+        },
+        command,
+      );
     }
 
     case "set-occlusion-baseline": {
@@ -256,12 +286,17 @@ export const applySceneDirectorEdit = (
         staging.occlusionPlanes[planeIndex],
         `Occlusion plane '${command.planeId}' was not found.`,
       );
-      return replaceScene(manifest, sceneIndex, {
-        ...staging,
-        occlusionPlanes: staging.occlusionPlanes.map((candidate, index) =>
-          index === planeIndex ? { ...plane, baselineY: command.baselineY } : candidate,
-        ),
-      });
+      return replaceScene(
+        manifest,
+        sceneIndex,
+        {
+          ...staging,
+          occlusionPlanes: staging.occlusionPlanes.map((candidate, index) =>
+            index === planeIndex ? { ...plane, baselineY: command.baselineY } : candidate,
+          ),
+        },
+        command,
+      );
     }
 
     case "set-light-zone-shape": {
@@ -272,12 +307,17 @@ export const applySceneDirectorEdit = (
         staging.paletteLightZones[zoneIndex],
         `Palette-light zone '${command.zoneId}' was not found.`,
       );
-      return replaceScene(manifest, sceneIndex, {
-        ...staging,
-        paletteLightZones: staging.paletteLightZones.map((candidate, index) =>
-          index === zoneIndex ? { ...zone, shape: command.shape } : candidate,
-        ),
-      });
+      return replaceScene(
+        manifest,
+        sceneIndex,
+        {
+          ...staging,
+          paletteLightZones: staging.paletteLightZones.map((candidate, index) =>
+            index === zoneIndex ? { ...zone, shape: command.shape } : candidate,
+          ),
+        },
+        command,
+      );
     }
 
     case "set-surface-zone-shape": {
@@ -288,12 +328,17 @@ export const applySceneDirectorEdit = (
         staging.surfaceZones[zoneIndex],
         `Surface zone '${command.zoneId}' was not found.`,
       );
-      return replaceScene(manifest, sceneIndex, {
-        ...staging,
-        surfaceZones: staging.surfaceZones.map((candidate, index) =>
-          index === zoneIndex ? { ...zone, shape: command.shape } : candidate,
-        ),
-      });
+      return replaceScene(
+        manifest,
+        sceneIndex,
+        {
+          ...staging,
+          surfaceZones: staging.surfaceZones.map((candidate, index) =>
+            index === zoneIndex ? { ...zone, shape: command.shape } : candidate,
+          ),
+        },
+        command,
+      );
     }
 
     case "set-entry-path": {
@@ -311,12 +356,17 @@ export const applySceneDirectorEdit = (
         staging.entryChoreographies[entryIndex],
         `Entry choreography '${command.entranceId}' was not found.`,
       );
-      return replaceScene(manifest, sceneIndex, {
-        ...staging,
-        entryChoreographies: staging.entryChoreographies.map((candidate, index) =>
-          index === entryIndex ? replaceEntryPath(entry, command) : candidate,
-        ),
-      });
+      return replaceScene(
+        manifest,
+        sceneIndex,
+        {
+          ...staging,
+          entryChoreographies: staging.entryChoreographies.map((candidate, index) =>
+            index === entryIndex ? replaceEntryPath(entry, command) : candidate,
+          ),
+        },
+        command,
+      );
     }
   }
 };
