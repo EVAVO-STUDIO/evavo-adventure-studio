@@ -22,6 +22,12 @@ export interface PackagedFeatureSessionController extends PackagedSessionControl
   switchProtagonist?(protagonistId: Parameters<MultiProtagonistPackagedRuntimeController["switchProtagonist"]>[0]): void;
 }
 
+export interface PackagedFeatureRuntimeController extends PackagedRuntimeController {
+  activeProtagonistId?(): ReturnType<MultiProtagonistPackagedRuntimeController["activeProtagonistId"]>;
+  multiProtagonistState?(): ReturnType<MultiProtagonistPackagedRuntimeController["multiProtagonistState"]>;
+  switchProtagonist?(protagonistId: Parameters<MultiProtagonistPackagedRuntimeController["switchProtagonist"]>[0]): void;
+}
+
 export interface PackagedFeatureSessionDescription {
   readonly sentence: boolean;
   readonly roomScripts: boolean;
@@ -87,7 +93,7 @@ export const createPackagedFeatureSessionController = (
 export const createPackagedFeatureRuntimeController = (
   bundle: RuntimeBundle,
   options: PackagedRuntimeControllerOptions = {},
-): PackagedRuntimeController => {
+): PackagedFeatureRuntimeController => {
   const session = createPackagedFeatureSessionController(bundle, options);
   return {
     get selection() {
@@ -108,5 +114,18 @@ export const createPackagedFeatureRuntimeController = (
     cameraState: () => session.cameraState(),
     parserState: () => session.parserState(),
     drainSceneAudioCueIds: () => session.drainSceneAudioCueIds(),
+    ...(session.activeProtagonistId
+      ? { activeProtagonistId: () => session.activeProtagonistId?.() as ReturnType<MultiProtagonistPackagedRuntimeController["activeProtagonistId"]> }
+      : {}),
+    ...(session.multiProtagonistState
+      ? { multiProtagonistState: () => session.multiProtagonistState?.() as ReturnType<MultiProtagonistPackagedRuntimeController["multiProtagonistState"]> }
+      : {}),
+    ...(session.switchProtagonist
+      ? {
+          switchProtagonist: (
+            protagonistId: Parameters<MultiProtagonistPackagedRuntimeController["switchProtagonist"]>[0],
+          ) => session.switchProtagonist?.(protagonistId),
+        }
+      : {}),
   };
 };
