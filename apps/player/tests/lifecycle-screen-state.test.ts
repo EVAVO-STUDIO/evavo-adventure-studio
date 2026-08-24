@@ -46,7 +46,7 @@ const slots = (): readonly SaveGameSlotSnapshot[] =>
   );
 
 describe("game lifecycle recovery screen", () => {
-  it("disables Quick Retry without slot zero while keeping unconditional routes", () => {
+  it("disables Quick Retry without slot zero or a dedicated checkpoint", () => {
     const items = gameLifecycleScreenItems(createGameLifecycleScreenState(), outcome, slots());
     expect(items.map((item) => [item.id, item.enabled])).toEqual([
       ["quick-retry", false],
@@ -54,6 +54,40 @@ describe("game lifecycle recovery screen", () => {
       ["restart", true],
       ["title", true],
     ]);
+  });
+
+  it("enables Quick Retry from a dedicated checkpoint without requiring slot zero", () => {
+    const state = createGameLifecycleScreenState();
+    const capabilities = { quickRetryAvailable: true };
+    expect(gameLifecycleScreenItems(state, outcome, slots(), capabilities)[0]).toMatchObject({
+      id: "quick-retry",
+      enabled: true,
+    });
+    expect(
+      transitionGameLifecycleScreen(state, { kind: "activate" }, outcome, slots(), capabilities).effect,
+    ).toEqual({ kind: "quick-retry" });
+  });
+
+  it("keeps the legacy slot-zero Quick Retry behavior when no dedicated checkpoint is supplied", () => {
+    const snapshots = slots().map((snapshot) =>
+      snapshot.slot === 0
+        ? {
+            slot: 0,
+            status: "valid" as const,
+            tick: 100,
+            sceneId: "scene.office" as never,
+            sceneName: "Office",
+            score: 2,
+            inventoryCount: 0,
+            saveFingerprint: "fnv1a64:1111111111111111",
+          }
+        : snapshot,
+    );
+    const state = createGameLifecycleScreenState();
+    expect(transitionGameLifecycleScreen(state, { kind: "activate" }, outcome, snapshots).effect).toEqual({
+      kind: "load-slot",
+      slot: 0,
+    });
   });
 
   it("loads the exact selected manual slot", () => {
