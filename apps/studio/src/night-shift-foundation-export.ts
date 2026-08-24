@@ -1,4 +1,5 @@
 import { createDeterministicStoredZip } from "./deterministic-binary-zip.js";
+import { nightShiftFontGeneratedSource, nightShiftFontIndexBytes, nightShiftFontPngBytes } from "./night-shift-font-generated.js";
 import { nightShiftActorLightingPaletteBytes } from "./night-shift-foundation-generated.js";
 import { nightShiftGeneratedFoundationIcons } from "./night-shift-foundation-icon-outputs.js";
 
@@ -14,17 +15,25 @@ export const createNightShiftFoundationTechnicalArchive = (): Uint8Array => {
     scope: {
       generated: [
         "asset.palette.night-shift.actor-lighting",
+        "asset.night-shift.font.system",
         ...icons.map((icon) => icon.assetId),
       ],
-      stillRequiresAuthoredMaster: [
-        "asset.night-shift.font.system",
-        "asset.night-shift.actor.officer",
-      ],
+      stillRequiresAuthoredMaster: ["asset.night-shift.actor.officer"],
     },
     palette: {
       path: "palettes/night-shift-actor-lighting.rgba",
       entries: 128,
       byteLength: 512,
+    },
+    font: {
+      assetId: nightShiftFontGeneratedSource.assetId,
+      pngPath: nightShiftFontGeneratedSource.pngPath,
+      indexPath: nightShiftFontGeneratedSource.indexPath,
+      width: nightShiftFontGeneratedSource.width,
+      height: nightShiftFontGeneratedSource.height,
+      glyphCount: nightShiftFontGeneratedSource.glyphCount,
+      transparentIndex: nightShiftFontGeneratedSource.transparentIndex,
+      maximumSourceIndex: nightShiftFontGeneratedSource.maximumSourceIndex,
     },
     icons: icons.map((icon) => ({
       assetId: icon.assetId,
@@ -36,7 +45,7 @@ export const createNightShiftFoundationTechnicalArchive = (): Uint8Array => {
       maximumSourceIndex: icon.maximumSourceIndex,
     })),
     warning:
-      "This archive supplies reproducible technical sources only. Foundation is not complete until the bitmap-font and officer masters pass production intake and Period VGA review.",
+      "This archive supplies reproducible technical sources only. Foundation is not complete until the generated palette/font/icons and the officer master pass production intake and Period VGA review.",
   } as const;
 
   return createDeterministicStoredZip([
@@ -47,6 +56,14 @@ export const createNightShiftFoundationTechnicalArchive = (): Uint8Array => {
     {
       path: "palettes/night-shift-actor-lighting.rgba",
       data: nightShiftActorLightingPaletteBytes(),
+    },
+    {
+      path: nightShiftFontGeneratedSource.pngPath,
+      data: nightShiftFontPngBytes(),
+    },
+    {
+      path: nightShiftFontGeneratedSource.indexPath,
+      data: nightShiftFontIndexBytes(),
     },
     ...icons.flatMap((icon) => [
       { path: icon.pngPath, data: icon.pngBytes },
