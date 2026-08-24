@@ -28,6 +28,13 @@ const uiAssets = [
   ["asset.night-shift.ui.talk", "ui/night-shift/icon-talk.png", "image"],
 ] as const;
 
+const paletteAssets = [
+  ["asset.palette.night-shift.actor-lighting", "palettes/night-shift-actor-lighting.pal"],
+  ["asset.palette.night-shift.station", "palettes/night-shift-station.pal"],
+  ["asset.palette.night-shift.roadside", "palettes/night-shift-roadside.pal"],
+  ["asset.palette.night-shift.diner", "palettes/night-shift-diner.pal"],
+] as const;
+
 export const nightShiftRuntimeProject = parseAdventureProject({
   ...nightShiftCompleteProject,
   actors: nightShiftCompleteProject.actors.map((actor) =>
@@ -35,11 +42,7 @@ export const nightShiftRuntimeProject = parseAdventureProject({
   ),
   assets: [
     ...nightShiftCompleteProject.assets,
-    {
-      id: "asset.palette.night-shift.actor-lighting",
-      path: "palettes/night-shift-actor-lighting.pal",
-      kind: "palette",
-    },
+    ...paletteAssets.map(([id, path]) => ({ id, path, kind: "palette" as const })),
     ...audioAssets.map(([id, path]) => ({ id, path, kind: "audio" as const })),
     ...uiAssets.map(([id, path, kind]) => ({ id, path, kind })),
   ],
