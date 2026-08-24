@@ -1,3 +1,4 @@
+import { afterHoursShowcase } from "./production-showcase-after-hours.js";
 import { coldMeridianShowcase } from "./production-showcase-cold-meridian.js";
 import { glassFinchShowcase } from "./production-showcase-glass-finch.js";
 import { hollowValeShowcase } from "./production-showcase-hollow-vale.js";
@@ -13,6 +14,7 @@ import { vacuumCourtesyShowcase } from "./production-showcase-vacuum-courtesy.js
 export const adventureProductionShowcases: readonly AdventureProductionShowcase[] = [
   glassFinchShowcase,
   vacuumCourtesyShowcase,
+  afterHoursShowcase,
   redLedgerShowcase,
   hollowValeShowcase,
   nightShiftShowcase,
