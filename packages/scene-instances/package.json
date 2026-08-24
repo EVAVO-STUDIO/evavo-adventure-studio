@@ -23,6 +23,10 @@
     "./staging-validation": {
       "types": "./dist/src/staging-validation.d.ts",
       "import": "./dist/src/staging-validation.js"
+    },
+    "./elevation-navigation": {
+      "types": "./dist/src/elevation-navigation.d.ts",
+      "import": "./dist/src/elevation-navigation.js"
     }
   },
   "files": [
