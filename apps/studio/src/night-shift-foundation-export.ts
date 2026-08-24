@@ -1,5 +1,9 @@
 import { createDeterministicStoredZip } from "./deterministic-binary-zip.js";
-import { nightShiftFontGeneratedSource, nightShiftFontIndexBytes, nightShiftFontPngBytes } from "./night-shift-font-generated.js";
+import { nightShiftFontGeneratedSource, nightShiftFontIndexBytes } from "./night-shift-font-generated.js";
+import {
+  nightShiftFontIndexedOutput,
+  nightShiftFontIndexedPngBytes,
+} from "./night-shift-font-indexed-output.js";
 import { nightShiftActorLightingPaletteBytes } from "./night-shift-foundation-generated.js";
 import { nightShiftGeneratedFoundationIcons } from "./night-shift-foundation-icon-outputs.js";
 import {
@@ -40,13 +44,15 @@ export const createNightShiftFoundationTechnicalArchive = (): Uint8Array => {
     },
     font: {
       assetId: nightShiftFontGeneratedSource.assetId,
-      pngPath: nightShiftFontGeneratedSource.pngPath,
-      indexPath: nightShiftFontGeneratedSource.indexPath,
+      pngPath: nightShiftFontIndexedOutput.pngPath,
+      indexPath: nightShiftFontIndexedOutput.indexPath,
       width: nightShiftFontGeneratedSource.width,
       height: nightShiftFontGeneratedSource.height,
       glyphCount: nightShiftFontGeneratedSource.glyphCount,
-      transparentIndex: nightShiftFontGeneratedSource.transparentIndex,
-      maximumSourceIndex: nightShiftFontGeneratedSource.maximumSourceIndex,
+      transparentIndex: nightShiftFontIndexedOutput.transparentIndex,
+      maximumSourceIndex: nightShiftFontIndexedOutput.maximumSourceIndex,
+      pngColourType: nightShiftFontIndexedOutput.pngColourType,
+      paletteEntries: nightShiftFontIndexedOutput.paletteEntries,
     },
     icons: icons.map((icon) => ({
       assetId: icon.assetId,
@@ -56,6 +62,7 @@ export const createNightShiftFoundationTechnicalArchive = (): Uint8Array => {
       height: icon.height,
       transparentIndex: icon.transparentIndex,
       maximumSourceIndex: icon.maximumSourceIndex,
+      pngColourType: 3,
     })),
     officer: {
       assetId: nightShiftOfficerMasterContract.assetId,
@@ -71,7 +78,7 @@ export const createNightShiftFoundationTechnicalArchive = (): Uint8Array => {
       reviewRules: nightShiftOfficerMasterContract.reviewRules,
     },
     warning:
-      "This archive supplies reproducible technical sources and non-runtime officer art/review guides. Foundation is not complete until the generated sources and final officer art pass production intake and Period VGA review.",
+      "This archive supplies reproducible palette-indexed technical sources and non-runtime officer art/review guides. Foundation is not complete until the generated sources and final officer art pass production intake and Period VGA review.",
   } as const;
 
   return createDeterministicStoredZip([
@@ -84,11 +91,11 @@ export const createNightShiftFoundationTechnicalArchive = (): Uint8Array => {
       data: nightShiftActorLightingPaletteBytes(),
     },
     {
-      path: nightShiftFontGeneratedSource.pngPath,
-      data: nightShiftFontPngBytes(),
+      path: nightShiftFontIndexedOutput.pngPath,
+      data: nightShiftFontIndexedPngBytes(),
     },
     {
-      path: nightShiftFontGeneratedSource.indexPath,
+      path: nightShiftFontIndexedOutput.indexPath,
       data: nightShiftFontIndexBytes(),
     },
     {
