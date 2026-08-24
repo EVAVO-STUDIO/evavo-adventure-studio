@@ -128,6 +128,27 @@
   font-size: 7px;
 }
 
+.stg-foundation-generated-status {
+  display: grid;
+  gap: 2px;
+  margin: 5px 0 6px;
+  padding: 5px 6px;
+  border: 1px solid #405446;
+  background: #0d1511;
+}
+
+.stg-foundation-generated-status strong {
+  color: #a9c2ae;
+  font-size: 7px;
+}
+
+.stg-foundation-generated-status small {
+  color: #7f9785;
+  font-family: "Courier New", monospace;
+  font-size: 7px;
+  line-height: 1.4;
+}
+
 .stg-production-next-wave ul {
   display: grid;
   gap: 2px;
