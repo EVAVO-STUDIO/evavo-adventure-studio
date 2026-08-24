@@ -1,10 +1,12 @@
 import {
   adventureCapabilityCatalog,
-  adventureReferenceGameCapabilities,
   currentAdventureCapabilityCoverage,
-  evaluateAdventureReferenceGameReadiness,
   type AdventureCapabilityStatus,
 } from "@evavo/adventure-design/full-game-capabilities";
+import {
+  adventureFullGameReferenceProfiles,
+  evaluateAdventureFullGameReference,
+} from "@evavo/adventure-design/full-game-reference-policy";
 import { adventureFullGameUpgradePlan } from "@evavo/adventure-design/full-game-upgrade-plan";
 import { adventureSceneArchetypes } from "@evavo/adventure-design/scene-archetypes";
 import { type ChangeEvent, useMemo, useState } from "react";
@@ -18,9 +20,9 @@ const labelForCapability = new Map(
 
 export const FullGameCapabilityApp = () => {
   const [referenceIndex, setReferenceIndex] = useState(0);
-  const reference = adventureReferenceGameCapabilities[referenceIndex] ?? adventureReferenceGameCapabilities[0]!;
+  const reference = adventureFullGameReferenceProfiles[referenceIndex] ?? adventureFullGameReferenceProfiles[0]!;
   const readiness = useMemo(
-    () => evaluateAdventureReferenceGameReadiness(reference.id),
+    () => evaluateAdventureFullGameReference(reference.id),
     [reference],
   );
   const required = new Set(reference.required);
@@ -51,7 +53,7 @@ export const FullGameCapabilityApp = () => {
               setReferenceIndex(Number(event.currentTarget.value))
             }
           >
-            {adventureReferenceGameCapabilities.map((candidate, index) => (
+            {adventureFullGameReferenceProfiles.map((candidate, index) => (
               <option key={candidate.id} value={index}>
                 {candidate.label}
               </option>
