@@ -7,6 +7,10 @@ import {
   nightShiftOfficerReviewGuide,
   nightShiftOfficerReviewGuidePngBytes,
 } from "./night-shift-officer-master-contract.js";
+import {
+  nightShiftOfficerReviewTemplateFileName,
+  nightShiftOfficerReviewTemplateJson,
+} from "./night-shift-officer-review-template.js";
 
 export const nightShiftFoundationTechnicalArchiveFileName =
   "night-shift.foundation-technical-sources.zip";
@@ -57,11 +61,12 @@ export const createNightShiftFoundationTechnicalArchive = (): Uint8Array => {
       horizontalStride: nightShiftOfficerMasterContract.horizontalStride,
       reviewGuidePath: `guides/${nightShiftOfficerReviewGuide.fileName}`,
       reviewGuidePurpose: nightShiftOfficerReviewGuide.purpose,
+      reviewTemplatePath: `guides/${nightShiftOfficerReviewTemplateFileName}`,
       slots: nightShiftOfficerMasterContract.slots,
       reviewRules: nightShiftOfficerMasterContract.reviewRules,
     },
     warning:
-      "This archive supplies reproducible technical sources and a non-runtime officer drawing guide. Foundation is not complete until the generated sources and final officer art pass production intake and Period VGA review.",
+      "This archive supplies reproducible technical sources and non-runtime officer drawing/review guides. Foundation is not complete until the generated sources and final officer art pass production intake and Period VGA review.",
   } as const;
 
   return createDeterministicStoredZip([
@@ -84,6 +89,10 @@ export const createNightShiftFoundationTechnicalArchive = (): Uint8Array => {
     {
       path: `guides/${nightShiftOfficerReviewGuide.fileName}`,
       data: nightShiftOfficerReviewGuidePngBytes(),
+    },
+    {
+      path: `guides/${nightShiftOfficerReviewTemplateFileName}`,
+      data: new TextEncoder().encode(nightShiftOfficerReviewTemplateJson()),
     },
     ...icons.flatMap((icon) => [
       { path: icon.pngPath, data: icon.pngBytes },
