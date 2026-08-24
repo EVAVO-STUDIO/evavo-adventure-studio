@@ -92,6 +92,7 @@ export const evaluateNightShiftOfficerMaster = (
   if (evidence.syntheticMicrotexture) issue(issues, "synthetic-microtexture", "Officer master contains synthetic/AI-like microtexture that does not belong at native VGA scale.");
 
   const reviewByFrame = new Map(evidence.frameReviews.map((review) => [review.frameId, review] as const));
+  const requiredFrameIds = new Set(nightShiftOfficerMasterSlots.map((slot) => slot.frameId));
   for (const slot of nightShiftOfficerMasterSlots) {
     const review = reviewByFrame.get(slot.frameId);
     if (!review) {
@@ -117,7 +118,7 @@ export const evaluateNightShiftOfficerMaster = (
   );
   return {
     status: issues.length === 0 ? "ready" : "blocked",
-    reviewedFrames: evidence.frameReviews.filter((review) => reviewByFrame.has(review.frameId)).length,
+    reviewedFrames: evidence.frameReviews.filter((review) => requiredFrameIds.has(review.frameId)).length,
     requiredFrames: nightShiftOfficerMasterSlots.length,
     issues,
   };
