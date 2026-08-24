@@ -13,11 +13,12 @@ describe("packaged feature session composition", () => {
       roomScripts: false,
       rpg: false,
       multiProtagonist: false,
+      routeTopology: false,
       stack: ["base"],
     });
   });
 
-  it("orders SCUMM sentence, room scripts, RPG and protagonist state from inner to outer", () => {
+  it("orders SCUMM sentence, room scripts, RPG, protagonist state and routes from inner to outer", () => {
     const bundle = {
       ...base,
       presentation: { interactionMode: "verb-list" },
@@ -40,13 +41,22 @@ describe("packaged feature session composition", () => {
         activeProtagonistId: "actor.a",
         protagonists: [],
       },
+      routeTopology: {
+        manifestVersion: 1,
+        projectId: "project.stack",
+        startNodeId: "route-node.start",
+        routes: [],
+        nodes: [{ id: "route-node.start", label: "Start", terminal: true, tags: [] }],
+        edges: [],
+      },
     } as unknown as RuntimeBundle;
     expect(describePackagedFeatureSession(bundle)).toEqual({
       sentence: true,
       roomScripts: true,
       rpg: true,
       multiProtagonist: true,
-      stack: ["base", "sentence", "room-scripts", "rpg", "multi-protagonist"],
+      routeTopology: true,
+      stack: ["base", "sentence", "room-scripts", "rpg", "multi-protagonist", "route-topology"],
     });
   });
 });
