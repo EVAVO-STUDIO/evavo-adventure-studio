@@ -59,6 +59,9 @@ interface PlayerPersistence {
   saveSlot(slot: number): void;
   loadSlot(slot: number): number;
   listSlots(): readonly SaveGameSlotSnapshot[];
+  captureRetryCheckpoint?(): void;
+  restoreRetryCheckpoint?(): number;
+  hasRetryCheckpoint?(): boolean;
 }
 
 interface PlayerReplayControls {
@@ -197,6 +200,7 @@ const mountPlayer = async (
     player.input.setPointer(point);
     player.input.setPressed(true);
     if (point) {
+      player.persistence?.captureRetryCheckpoint?.();
       player.replay?.recordActivation(logicalTick, point);
       player.input.activate(point);
     }
@@ -287,12 +291,16 @@ const mountPlayer = async (
     player.input?.setPointer(null);
     player.replay?.cancel();
     statusRail.replace(outcome.title);
+    const retryAvailable = player.persistence.hasRetryCheckpoint?.() === true;
 
     void runGameLifecycleScreen(host, {
       bundle: player.bundle,
       outcome,
       snapshots: player.persistence.listSlots,
       loadSlot: (slot) => player.persistence?.loadSlot(slot) ?? logicalTick,
+      ...(retryAvailable && player.persistence.restoreRetryCheckpoint
+        ? { quickRetry: player.persistence.restoreRetryCheckpoint }
+        : {}),
     })
       .then((result) => {
         if (result.kind === "title") {
@@ -310,9 +318,11 @@ const mountPlayer = async (
         player.renderer.render(player.createFrame(logicalTick));
         presentedLifecycleOutcomeId = null;
         statusRail.announce(
-          result.slot === 0
-            ? text("status.quickSaveRestored")
-            : text("status.saveSlotRestored", { slot: result.slot }),
+          result.kind === "retry"
+            ? text("status.gameRestored")
+            : result.slot === 0
+              ? text("status.quickSaveRestored")
+              : text("status.saveSlotRestored", { slot: result.slot }),
         );
         host.focus();
       })
@@ -526,6 +536,11 @@ const packagedPlayer = async (
     ? controller.restoreSaveGame(initialSave)
     : controller.worldState().story.tick;
   const recorder = createPlayerReplayRecorder(bundle);
+  const retryEnabled =
+    bundle.lifecycle?.outcomes.some(
+      (outcome) => outcome.kind === "failure" && outcome.menu.allowQuickRetry,
+    ) === true;
+  let retryCheckpoint: SaveGame | null = null;
   const persistence: PlayerPersistence = {
     saveQuickSlot: () =>
       writeSaveGameSlot(window.localStorage, bundle, controller.createSaveGame()),
@@ -541,6 +556,18 @@ const packagedPlayer = async (
     loadSlot: (slot) =>
       controller.restoreSaveGame(readSaveGameSlot(window.localStorage, bundle, slot)),
     listSlots: () => listSaveGameSlots(window.localStorage, bundle, 10),
+    ...(retryEnabled
+      ? {
+          captureRetryCheckpoint: () => {
+            retryCheckpoint = controller.createSaveGame();
+          },
+          restoreRetryCheckpoint: () => {
+            if (!retryCheckpoint) throw new Error("No retry checkpoint is available.");
+            return controller.restoreSaveGame(retryCheckpoint);
+          },
+          hasRetryCheckpoint: () => retryCheckpoint !== null,
+        }
+      : {}),
   };
   const replay: PlayerReplayControls = {
     start: () => recorder.start(controller.createSaveGame()),
