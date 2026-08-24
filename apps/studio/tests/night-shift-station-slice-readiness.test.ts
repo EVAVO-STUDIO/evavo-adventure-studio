@@ -22,13 +22,19 @@ describe("Night Shift station vertical slice readiness", () => {
     expect(report.missingCompiledAssetIds).toEqual(expected);
   });
 
-  it("does not require foreground plates to have runtime index maps", () => {
+  it("requires runtime index maps only for scene-rendered palette-remapped assets", () => {
     const report = evaluateNightShiftStationSliceReadiness();
     expect(report.missingIndexedAssetIds).not.toContain("asset.night-shift.foreground.desk");
     expect(report.missingIndexedAssetIds).not.toContain("asset.night-shift.foreground.door-frame");
+    expect(report.missingIndexedAssetIds).not.toContain("asset.night-shift.font.system");
+    expect(report.missingIndexedAssetIds).not.toContain("asset.night-shift.ui.walk");
+    expect(report.missingIndexedAssetIds).not.toContain("asset.night-shift.ui.look");
+    expect(report.missingIndexedAssetIds).not.toContain("asset.night-shift.ui.use");
+    expect(report.missingIndexedAssetIds).not.toContain("asset.night-shift.ui.talk");
     expect(report.missingIndexedAssetIds).toContain("asset.night-shift.background.station");
     expect(report.missingIndexedAssetIds).toContain("asset.night-shift.actor.officer");
-    expect(report.missingIndexedAssetIds).toContain("asset.night-shift.font.system");
+    expect(report.missingIndexedAssetIds).toContain("asset.night-shift.actor.sergeant");
+    expect(report.missingIndexedAssetIds).toContain("asset.night-shift.object.radio");
   });
 
   it("does not accept a clean but incomplete art intake report", () => {
