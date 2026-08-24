@@ -42,6 +42,7 @@ export const nightShiftProductionWaves: readonly NightShiftProductionWave[] = [
     dependsOn: ["foundation"],
     goal: "Produce the complete briefing/readiness room so Adventure Studio can package and play one polished procedural scene end to end.",
     assetIds: ids([
+      "asset.palette.night-shift.station",
       "asset.night-shift.background.station",
       "asset.night-shift.actor.sergeant",
       "asset.night-shift.object.radio",
@@ -59,7 +60,8 @@ export const nightShiftProductionWaves: readonly NightShiftProductionWave[] = [
     acceptance: [
       "Briefing, radio, keys and station exit are readable practical targets at 320×200 without oversized props.",
       "Officer routes across preferred floor lanes and passes behind desk/door-frame planes without body clipping.",
-      "Fluorescent palette treatment remains hard/indexed and visibly different from the neutral actor bank.",
+      "The Station scene palette is locked from the approved native room master and covers the background plus radio/keys/door/briefing index ranges.",
+      "Fluorescent actor palette treatment remains hard/indexed and visibly different from the neutral actor bank.",
       "Briefing → radio → keys → exit progression reaches 14 points and all staged Foley cues resolve.",
     ],
   },
@@ -69,6 +71,7 @@ export const nightShiftProductionWaves: readonly NightShiftProductionWave[] = [
     dependsOn: ["foundation", "station"],
     goal: "Prove wet-night perspective, vehicle occlusion, ordered palette lighting and recoverable procedural failure.",
     assetIds: ids([
+      "asset.palette.night-shift.roadside",
       "asset.night-shift.background.roadside",
       "asset.night-shift.actor.driver",
       "asset.night-shift.object.sedan",
@@ -79,8 +82,9 @@ export const nightShiftProductionWaves: readonly NightShiftProductionWave[] = [
     ]),
     acceptance: [
       "Roadside remains legible through dark wet values without bloom, HDR exposure or excessive saturated neon.",
+      "The Roadside scene palette is locked from the approved native room master and resolves the background/sedan index ranges consistently.",
       "Officer can move behind/in front of the sedan using authored baseline occlusion and safe approach staging.",
-      "Headlamp zone demonstrates the real eight-pixel Bayer-4 palette transition with no interpolated RGB colours.",
+      "Headlamp zone demonstrates the real eight-pixel Bayer-4 actor palette transition with no interpolated RGB colours.",
       "Observe → talk → resolve succeeds; unsafe action enters lifecycle failure and private pre-action retry restores the stop.",
     ],
   },
@@ -90,6 +94,7 @@ export const nightShiftProductionWaves: readonly NightShiftProductionWave[] = [
     dependsOn: ["foundation", "station", "roadside"],
     goal: "Finish the witness/receipt room and capture the complete 32-point success path plus retained Period VGA evidence.",
     assetIds: ids([
+      "asset.palette.night-shift.diner",
       "asset.night-shift.background.diner",
       "asset.night-shift.actor.server",
       "asset.night-shift.object.receipt",
@@ -99,7 +104,8 @@ export const nightShiftProductionWaves: readonly NightShiftProductionWave[] = [
       "asset.audio.night-shift.diner-room",
     ]),
     acceptance: [
-      "Warm diner practical bank is visibly distinct from roadside headlamp and station fluorescent banks.",
+      "The Diner scene palette is locked from the approved native room master and resolves background/receipt index ranges consistently.",
+      "Warm diner actor practical bank is visibly distinct from roadside headlamp and station fluorescent banks.",
       "Server remains an in-scene performance behind the counter rather than switching to a modern dialogue overlay.",
       "Witness conversation gates receipt corroboration and proof completion reaches exactly 32 points.",
       "Retain native screenshots and deterministic success/failure-retry replays only after the full three-room package passes runtime parsing.",
