@@ -11,11 +11,13 @@ import {
   validateSceneInstanceManifest,
 } from "@evavo/adventure-scene-instances";
 import type { SceneStagingManifest } from "@evavo/adventure-scene-instances/staging";
+import { validateSceneStagingManifest } from "@evavo/adventure-scene-instances/staging-validation";
 import {
   applySceneDirectorEdit,
   type SceneDirectorEditCommand,
   SceneDirectorEditError,
 } from "./scene-director-edit.js";
+import { evaluateSceneDirectorPolygonQuality } from "./scene-director-polygon-quality.js";
 
 export interface SceneDirectorDocuments {
   readonly project: AdventureProject;
@@ -99,14 +101,18 @@ const assertNativePoint = (
   }
 };
 
-const polygonArea = (shape: Polygon): number => {
-  let total = 0;
-  for (let index = 0; index < shape.points.length; index += 1) {
-    const current = shape.points[index];
-    const next = shape.points[(index + 1) % shape.points.length];
-    if (current && next) total += current.x * next.y - next.x * current.y;
+const assertPolygonQuality = (
+  command: SceneDirectorDocumentCommand,
+  shape: Polygon,
+  label: string,
+): void => {
+  const issues = evaluateSceneDirectorPolygonQuality(shape);
+  if (issues.length > 0) {
+    throw new SceneDirectorDocumentEditError(
+      command,
+      `${label} is invalid: ${issues.map((issue) => issue.message).join(" ")}`,
+    );
   }
-  return Math.abs(total / 2);
 };
 
 const assertNativePolygon = (
@@ -116,10 +122,8 @@ const assertNativePolygon = (
   height: number,
   label: string,
 ): void => {
-  if (shape.points.length < 3 || polygonArea(shape) <= 0.0001) {
-    throw new SceneDirectorDocumentEditError(command, `${label} must contain a non-degenerate polygon.`);
-  }
   for (const point of shape.points) assertNativePoint(command, point, width, height, label);
+  assertPolygonQuality(command, shape, label);
 };
 
 const assertLocalPolygon = (
@@ -127,12 +131,10 @@ const assertLocalPolygon = (
   shape: Polygon,
   label: string,
 ): void => {
-  if (shape.points.length < 3 || polygonArea(shape) <= 0.0001) {
-    throw new SceneDirectorDocumentEditError(command, `${label} must contain a non-degenerate polygon.`);
-  }
   if (!shape.points.every(finitePoint)) {
     throw new SceneDirectorDocumentEditError(command, `${label} must contain finite local coordinates.`);
   }
+  assertPolygonQuality(command, shape, label);
 };
 
 const sceneById = (project: AdventureProject, sceneId: Id<"scene">) => {
@@ -147,12 +149,11 @@ const sceneById = (project: AdventureProject, sceneId: Id<"scene">) => {
   return { scene, sceneIndex };
 };
 
-const validateSceneInstancesAgainstProject = (
-  command: SceneDirectorDocumentCommand,
+const sceneInstanceIssues = (
   project: AdventureProject,
   sceneInstances: SceneInstanceManifest,
-): void => {
-  const issues = validateSceneInstanceManifest(
+) =>
+  validateSceneInstanceManifest(
     {
       projectId: project.id,
       scenes: project.scenes,
@@ -164,12 +165,47 @@ const validateSceneInstancesAgainstProject = (
     },
     sceneInstances,
   );
+
+const stagingIssues = (documents: SceneDirectorDocuments) =>
+  validateSceneStagingManifest(
+    {
+      projectId: documents.project.id,
+      scenes: documents.project.scenes,
+      actors: documents.project.actors,
+      assets: documents.project.assets,
+      sequences: documents.project.sequences,
+      sceneInstances: documents.sceneInstances,
+    },
+    documents.staging,
+  );
+
+export const validateSceneDirectorDocuments = (
+  documents: SceneDirectorDocuments,
+): readonly { readonly source: "scene-instances" | "staging"; readonly message: string }[] => [
+  ...sceneInstanceIssues(documents.project, documents.sceneInstances).map((issue) => ({
+    source: "scene-instances" as const,
+    message: issue.message,
+  })),
+  ...stagingIssues(documents).map((issue) => ({
+    source: "staging" as const,
+    message: issue.message,
+  })),
+];
+
+const assertCompositeValid = (
+  command: SceneDirectorDocumentCommand,
+  documents: SceneDirectorDocuments,
+): SceneDirectorDocuments => {
+  const issues = validateSceneDirectorDocuments(documents);
   if (issues.length > 0) {
+    const first = issues[0];
     throw new SceneDirectorDocumentEditError(
       command,
-      `Director edit would create ${issues.length} invalid scene-instance reference(s): ${issues[0]?.message ?? "unknown issue"}`,
+      `Director edit would create ${issues.length} invalid linked-document reference(s): ` +
+        `[${first?.source ?? "unknown"}] ${first?.message ?? "unknown issue"}`,
     );
   }
+  return documents;
 };
 
 const parseProjectEdit = (
@@ -206,11 +242,12 @@ export const applySceneDirectorDocumentEdit = (
 ): SceneDirectorDocuments => {
   if (isStagingCommand(command)) {
     try {
-      return {
+      return assertCompositeValid(command, {
         ...documents,
         staging: applySceneDirectorEdit(documents.project, documents.staging, command),
-      };
+      });
     } catch (error) {
+      if (error instanceof SceneDirectorDocumentEditError) throw error;
       if (error instanceof SceneDirectorEditError) {
         throw new SceneDirectorDocumentEditError(command, error.message, { cause: error });
       }
@@ -240,8 +277,7 @@ export const applySceneDirectorDocumentEdit = (
             : candidate,
         ),
       });
-      validateSceneInstancesAgainstProject(command, project, documents.sceneInstances);
-      return { ...documents, project };
+      return assertCompositeValid(command, { ...documents, project });
     }
 
     case "set-entrance-position": {
@@ -267,8 +303,7 @@ export const applySceneDirectorDocumentEdit = (
             : candidate,
         ),
       });
-      validateSceneInstancesAgainstProject(command, project, documents.sceneInstances);
-      return { ...documents, project };
+      return assertCompositeValid(command, { ...documents, project });
     }
 
     case "set-navigation-portal-endpoint": {
@@ -306,8 +341,7 @@ export const applySceneDirectorDocumentEdit = (
             : candidate,
         ),
       });
-      validateSceneInstancesAgainstProject(command, documents.project, sceneInstances);
-      return { ...documents, sceneInstances };
+      return assertCompositeValid(command, { ...documents, sceneInstances });
     }
 
     case "set-object-state-interaction-shape": {
@@ -342,8 +376,7 @@ export const applySceneDirectorDocumentEdit = (
             : candidate,
         ),
       });
-      validateSceneInstancesAgainstProject(command, documents.project, sceneInstances);
-      return { ...documents, sceneInstances };
+      return assertCompositeValid(command, { ...documents, sceneInstances });
     }
 
     case "set-object-instance-position": {
@@ -376,8 +409,7 @@ export const applySceneDirectorDocumentEdit = (
             : candidate,
         ),
       });
-      validateSceneInstancesAgainstProject(command, documents.project, sceneInstances);
-      return { ...documents, sceneInstances };
+      return assertCompositeValid(command, { ...documents, sceneInstances });
     }
   }
 };
