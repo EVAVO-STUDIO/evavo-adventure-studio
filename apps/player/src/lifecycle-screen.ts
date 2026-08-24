@@ -5,6 +5,7 @@ import {
   createGameLifecycleScreenState,
   gameLifecycleScreenItems,
   transitionGameLifecycleScreen,
+  type GameLifecycleScreenCapabilities,
   type GameLifecycleScreenEffect,
   type GameLifecycleScreenState,
 } from "./lifecycle-screen-state.js";
@@ -15,10 +16,12 @@ export interface GameLifecycleScreenOptions {
   readonly outcome: GameLifecycleOutcome;
   readonly snapshots: () => readonly SaveGameSlotSnapshot[];
   readonly loadSlot: (slot: number) => number;
+  readonly quickRetry?: () => number;
 }
 
 export type GameLifecycleScreenResult =
   | { readonly kind: "loaded"; readonly tick: number; readonly slot: number }
+  | { readonly kind: "retry"; readonly tick: number }
   | { readonly kind: "restart" }
   | { readonly kind: "title" };
 
@@ -55,6 +58,9 @@ export const runGameLifecycleScreen = (
     let state = createGameLifecycleScreenState();
     let notice: string | null = null;
     let settled = false;
+    const capabilities: GameLifecycleScreenCapabilities = {
+      ...(options.quickRetry ? { quickRetryAvailable: true } : {}),
+    };
 
     const stage = element("div", `game-lifecycle-stage is-${options.outcome.kind}`);
     const shade = element("div", "game-lifecycle-shade");
@@ -91,6 +97,19 @@ export const runGameLifecycleScreen = (
     const applyEffect = (effect: GameLifecycleScreenEffect): void => {
       if (!effect) return;
       switch (effect.kind) {
+        case "quick-retry":
+          try {
+            if (!options.quickRetry) {
+              notice = "QUICK RETRY IS NOT AVAILABLE.";
+              render();
+              return;
+            }
+            complete({ kind: "retry", tick: options.quickRetry() });
+          } catch (error) {
+            notice = `RETRY FAILED — ${errorText(error)}`;
+            render();
+          }
+          return;
         case "restart":
           complete({ kind: "restart" });
           return;
@@ -115,6 +134,7 @@ export const runGameLifecycleScreen = (
         command,
         options.outcome,
         options.snapshots(),
+        capabilities,
       );
       state = transition.state;
       applyEffect(transition.effect);
@@ -123,7 +143,7 @@ export const runGameLifecycleScreen = (
 
     const render = (): void => {
       const snapshots = options.snapshots();
-      const items = gameLifecycleScreenItems(state, options.outcome, snapshots);
+      const items = gameLifecycleScreenItems(state, options.outcome, snapshots, capabilities);
       frame.replaceChildren();
       frame.dataset["screen"] = state.screen;
       frame.dataset["outcomeKind"] = options.outcome.kind;
@@ -159,6 +179,7 @@ export const runGameLifecycleScreen = (
             { kind: "set-selection", index },
             options.outcome,
             options.snapshots(),
+            capabilities,
           );
           state = selected.state;
           apply({ kind: "activate" });
