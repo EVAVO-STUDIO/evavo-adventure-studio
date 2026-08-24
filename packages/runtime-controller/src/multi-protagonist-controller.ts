@@ -1,5 +1,3 @@
-import type { Id, Point } from "@evavo/adventure-project-schema";
-import type { ResolvedFrame } from "@evavo/adventure-render-contract";
 import type { RuntimeBundle } from "@evavo/adventure-runtime-bundle";
 import {
   createSaveGame as createRuntimeSaveGame,
@@ -18,32 +16,18 @@ import {
   commitWorldToActiveProtagonist,
   projectMultiProtagonistIntoWorld,
 } from "./multi-protagonist-projection.js";
-import {
-  createPackagedRuntimeController,
-  type PackagedRuntimeController,
-  type PackagedRuntimeControllerOptions,
-} from "./packaged-controller.js";
+import type { PackagedRuntimeControllerOptions } from "./packaged-controller.js";
 import { controlledActorRequestFromSave } from "./input.js";
-import type { ParserBufferState, ParserKeyInput } from "./parser.js";
-import type { ProfiledRuntimeCameraState } from "./profiled-camera.js";
+import {
+  createBasePackagedSessionController,
+  type PackagedSessionController,
+  type PackagedSessionControllerFactory,
+} from "./session-controller.js";
 
-export interface MultiProtagonistPackagedRuntimeController {
+export interface MultiProtagonistPackagedRuntimeController extends PackagedSessionController {
   activeProtagonistId(): ProtagonistId;
   multiProtagonistState(): MultiProtagonistState;
   switchProtagonist(protagonistId: ProtagonistId): void;
-  controlledActorInstanceId(): Id<"actor-instance"> | null;
-  worldState(): InteractiveRuntimeWorldState;
-  createFrame(tick: number): ResolvedFrame;
-  setPointer(position: Point | null): void;
-  setPressed(pressed: boolean): void;
-  activate(position: Point): void;
-  handleKey(input: ParserKeyInput): boolean;
-  createSaveGame(): SaveGame;
-  restoreSaveGame(input: unknown): number;
-  statusText(): string;
-  cameraState(): ProfiledRuntimeCameraState | null;
-  parserState(): ParserBufferState;
-  drainSceneAudioCueIds(): readonly string[];
 }
 
 const initialCompanion = (bundle: RuntimeBundle): MultiProtagonistState => {
@@ -52,23 +36,34 @@ const initialCompanion = (bundle: RuntimeBundle): MultiProtagonistState => {
   return createMultiProtagonistState(manifest.protagonists, manifest.activeProtagonistId);
 };
 
-export const createMultiProtagonistPackagedRuntimeController = (
+const companionOptions = (save: SaveGame) => ({
+  ...(save.interface.profiledCamera ? { profiledCamera: save.interface.profiledCamera } : {}),
+  ...(save.interface.sentence ? { sentence: save.interface.sentence } : {}),
+  ...(save.audio ? { audio: save.audio } : {}),
+  ...(save.investigation ? { investigation: save.investigation } : {}),
+  ...(save.itemCombinations ? { itemCombinations: save.itemCombinations } : {}),
+  ...(save.roomScripts ? { roomScripts: save.roomScripts } : {}),
+});
+
+export const createMultiProtagonistPackagedRuntimeControllerWithFactory = (
   bundle: RuntimeBundle,
   options: Omit<PackagedRuntimeControllerOptions, "requestedActorInstanceId"> = {},
+  innerFactory: PackagedSessionControllerFactory = createBasePackagedSessionController,
 ): MultiProtagonistPackagedRuntimeController => {
   let companion = initialCompanion(bundle);
-  let controller: PackagedRuntimeController;
+  let controller: PackagedSessionController;
 
   const createControllerFor = (
     protagonistId: ProtagonistId,
     sourceWorld?: InteractiveRuntimeWorldState,
-  ): PackagedRuntimeController => {
+    sourceSave?: SaveGame,
+  ): PackagedSessionController => {
     const actorInstanceId = actorInstanceIdForProtagonist(bundle, companion, protagonistId);
-    const next = createPackagedRuntimeController(bundle, {
+    const next = innerFactory(bundle, {
       ...options,
       requestedActorInstanceId: controlledActorRequestFromSave(actorInstanceId),
     });
-    const baseSave = next.createSaveGame();
+    const baseSave = sourceSave ?? next.createSaveGame();
     const projectionBase = sourceWorld ?? next.worldState();
     const projectedWorld = projectMultiProtagonistIntoWorld(projectionBase, companion);
     const projectedSave = createRuntimeSaveGame(bundle, projectedWorld, {
@@ -77,6 +72,7 @@ export const createMultiProtagonistPackagedRuntimeController = (
       selectedItemId: null,
       statusText: `CONTROL • ${protagonistId}`,
       parser: baseSave.interface.parser,
+      ...companionOptions(baseSave),
       multiProtagonist: companion,
     });
     next.restoreSaveGame(projectedSave);
@@ -92,9 +88,10 @@ export const createMultiProtagonistPackagedRuntimeController = (
   const switchProtagonist = (protagonistId: ProtagonistId): void => {
     if (protagonistId === companion.activeProtagonistId) return;
     const globalWorld = controller.worldState();
+    const sourceSave = controller.createSaveGame();
     commitCurrent();
     companion = switchActiveProtagonist(companion, protagonistId);
-    controller = createControllerFor(protagonistId, globalWorld);
+    controller = createControllerFor(protagonistId, globalWorld, sourceSave);
   };
 
   const createSaveGame = (): SaveGame => {
@@ -106,7 +103,7 @@ export const createMultiProtagonistPackagedRuntimeController = (
       selectedItemId: baseSave.interface.selectedItemId,
       statusText: baseSave.interface.statusText,
       parser: baseSave.interface.parser,
-      ...(baseSave.interface.profiledCamera ? { profiledCamera: baseSave.interface.profiledCamera } : {}),
+      ...companionOptions(baseSave),
       multiProtagonist: companion,
     });
   };
@@ -115,19 +112,23 @@ export const createMultiProtagonistPackagedRuntimeController = (
     const save = loadRuntimeSaveGame(bundle, input);
     companion = save.multiProtagonist ?? initialCompanion(bundle);
     const actorInstanceId = actorInstanceIdForProtagonist(bundle, companion);
-    controller = createPackagedRuntimeController(bundle, {
+    controller = innerFactory(bundle, {
       ...options,
       requestedActorInstanceId: controlledActorRequestFromSave(actorInstanceId),
     });
-    const restored = createRuntimeSaveGame(bundle, projectMultiProtagonistIntoWorld(save.world, companion), {
-      controlledActorInstanceId: actorInstanceId,
-      selectedVerbId: save.interface.selectedVerbId,
-      selectedItemId: save.interface.selectedItemId,
-      statusText: save.interface.statusText,
-      parser: save.interface.parser,
-      ...(save.interface.profiledCamera ? { profiledCamera: save.interface.profiledCamera } : {}),
-      multiProtagonist: companion,
-    });
+    const restored = createRuntimeSaveGame(
+      bundle,
+      projectMultiProtagonistIntoWorld(save.world, companion),
+      {
+        controlledActorInstanceId: actorInstanceId,
+        selectedVerbId: save.interface.selectedVerbId,
+        selectedItemId: save.interface.selectedItemId,
+        statusText: save.interface.statusText,
+        parser: save.interface.parser,
+        ...companionOptions(save),
+        multiProtagonist: companion,
+      },
+    );
     return controller.restoreSaveGame(restored);
   };
 
@@ -135,7 +136,7 @@ export const createMultiProtagonistPackagedRuntimeController = (
     activeProtagonistId: () => companion.activeProtagonistId,
     multiProtagonistState: () => companion,
     switchProtagonist,
-    controlledActorInstanceId: () => controller.controlledActorInstanceId,
+    controlledActorInstanceId: () => controller.controlledActorInstanceId(),
     worldState: () => controller.worldState(),
     createFrame: (tick) => controller.createFrame(tick),
     setPointer: (position) => controller.setPointer(position),
@@ -150,3 +151,13 @@ export const createMultiProtagonistPackagedRuntimeController = (
     drainSceneAudioCueIds: () => controller.drainSceneAudioCueIds(),
   };
 };
+
+export const createMultiProtagonistPackagedRuntimeController = (
+  bundle: RuntimeBundle,
+  options: Omit<PackagedRuntimeControllerOptions, "requestedActorInstanceId"> = {},
+): MultiProtagonistPackagedRuntimeController =>
+  createMultiProtagonistPackagedRuntimeControllerWithFactory(
+    bundle,
+    options,
+    createBasePackagedSessionController,
+  );
