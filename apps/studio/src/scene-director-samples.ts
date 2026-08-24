@@ -3,11 +3,9 @@ import type { SceneInstanceManifest } from "@evavo/adventure-scene-instances";
 import type { PaletteMapManifest } from "@evavo/adventure-scene-instances/palette-maps";
 import type { SceneStagingManifest } from "@evavo/adventure-scene-instances/staging";
 import { studioProject, studioSceneInstances } from "./fixture.js";
-import {
-  nightShiftCompleteInstances,
-  nightShiftCompleteStaging,
-} from "./night-shift-complete-proof.js";
+import { nightShiftCompleteInstances } from "./night-shift-complete-proof.js";
 import { nightShiftRuntimeProject } from "./night-shift-runtime-contracts.js";
+import { nightShiftRuntimeStaging } from "./night-shift-runtime-staging.js";
 import {
   nightShiftDirectorPaletteMaps,
   redLedgerDirectorPaletteMaps,
@@ -61,7 +59,7 @@ export const sceneDirectorSamples: readonly SceneDirectorSample[] = [
     productionLanguage: "Early procedural icon VGA",
     project: nightShiftRuntimeProject,
     sceneInstances: nightShiftCompleteInstances,
-    staging: nightShiftCompleteStaging,
+    staging: nightShiftRuntimeStaging,
     paletteMaps: nightShiftDirectorPaletteMaps,
   },
 ] as const;
