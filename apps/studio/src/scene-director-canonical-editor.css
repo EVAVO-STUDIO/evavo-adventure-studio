@@ -1,0 +1,135 @@
+.dir-canonical-editor {
+  display: grid;
+  gap: 10px;
+  margin: 14px 18px 18px;
+  padding-top: 14px;
+  border-top: 1px solid #242832;
+}
+
+.dir-canonical-editor > header {
+  display: flex;
+  align-items: end;
+  justify-content: space-between;
+  gap: 16px;
+}
+
+.dir-canonical-editor h2 {
+  margin: 5px 0 0;
+  font-size: 16px;
+}
+
+.dir-canonical-editor header p {
+  max-width: 610px;
+  margin: 5px 0 0;
+  color: #7e8594;
+  font-size: 9px;
+  line-height: 1.45;
+}
+
+.dir-canonical-editor nav {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 3px;
+}
+
+.dir-canonical-shell {
+  overflow: hidden;
+  border: 1px solid #303540;
+  border-radius: 5px;
+  background: #07090d;
+}
+
+.dir-canonical-shell svg {
+  display: block;
+  width: 100%;
+  image-rendering: pixelated;
+  touch-action: none;
+  user-select: none;
+}
+
+.dir-canonical-shell footer {
+  display: flex;
+  min-height: 28px;
+  align-items: center;
+  justify-content: space-between;
+  padding: 0 9px;
+  border-top: 1px solid #262b34;
+  color: #747c8a;
+  background: #0d1015;
+  font-family: "Courier New", monospace;
+  font-size: 7px;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+}
+
+.dir-canonical-bg {
+  fill: #0d1118;
+}
+
+.dir-canonical-nav polygon {
+  fill: rgb(111 187 208 / 14%);
+  stroke: rgb(111 187 208 / 90%);
+  stroke-width: 0.85;
+  vector-effect: non-scaling-stroke;
+}
+
+.dir-canonical-portal line {
+  stroke: #d9b56b;
+  stroke-width: 1;
+  stroke-dasharray: 4 2;
+  vector-effect: non-scaling-stroke;
+}
+
+.dir-canonical-hotspot polygon {
+  fill: rgb(255 65 102 / 11%);
+  stroke: rgb(255 112 140 / 92%);
+  stroke-width: 0.85;
+  vector-effect: non-scaling-stroke;
+}
+
+.dir-canonical-handle {
+  cursor: grab;
+  fill: #0c1016;
+  stroke: #f0f2f5;
+  stroke-width: 1;
+  vector-effect: non-scaling-stroke;
+}
+
+.dir-canonical-handle:hover {
+  fill: #1b2029;
+  stroke: #fff;
+}
+
+.dir-canonical-handle:active {
+  cursor: grabbing;
+}
+
+.dir-canonical-portal .dir-canonical-handle,
+.dir-canonical-entrance .dir-canonical-handle {
+  stroke: #e4c47d;
+}
+
+.dir-canonical-object .dir-canonical-handle {
+  stroke: #ff708c;
+}
+
+.dir-canonical-hotspot .dir-canonical-handle {
+  stroke: #ff96ab;
+}
+
+.dir-canonical-editor text {
+  fill: #d0d5de;
+  font-family: "Courier New", monospace;
+  font-size: 5.5px;
+  paint-order: stroke;
+  stroke: rgb(7 8 11 / 92%);
+  stroke-width: 1.7px;
+  stroke-linejoin: round;
+}
+
+@media (max-width: 900px) {
+  .dir-canonical-editor > header {
+    align-items: stretch;
+    flex-direction: column;
+  }
+}
