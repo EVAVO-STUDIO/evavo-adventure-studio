@@ -67,22 +67,23 @@ const companionOptions = (save: SaveGame) => ({
   ...(save.rpg ? { rpg: save.rpg } : {}),
 });
 
-const rpgApi = (controller: PackagedSessionController): OptionalRpgController => {
-  const candidate = controller as PackagedSessionController & OptionalRpgController;
+const rpgApi = (getController: () => PackagedSessionController): OptionalRpgController => {
+  const initial = getController() as PackagedSessionController & OptionalRpgController;
+  const current = () => getController() as PackagedSessionController & OptionalRpgController;
   return {
-    ...(candidate.rpgState ? { rpgState: () => candidate.rpgState?.() as ReturnType<AdventureRpgPackagedRuntimeController["rpgState"]> } : {}),
-    ...(candidate.practiceSkill ? { practiceSkill: (skillId: string, amount?: number) => candidate.practiceSkill?.(skillId, amount) as ReturnType<AdventureRpgPackagedRuntimeController["practiceSkill"]> } : {}),
-    ...(candidate.resolveSkillCheck ? { resolveSkillCheck: (check) => candidate.resolveSkillCheck?.(check) as ReturnType<AdventureRpgPackagedRuntimeController["resolveSkillCheck"]> } : {}),
-    ...(candidate.advanceRpgTime ? { advanceRpgTime: (minutes: number) => candidate.advanceRpgTime?.(minutes) } : {}),
-    ...(candidate.restRpg ? { restRpg: (rule) => candidate.restRpg?.(rule) } : {}),
-    ...(candidate.adjustResource ? { adjustResource: (resourceId: string, delta: number) => candidate.adjustResource?.(resourceId, delta) } : {}),
-    ...(candidate.scheduleActive ? { scheduleActive: (window) => candidate.scheduleActive?.(window) ?? false } : {}),
-    ...(candidate.createRpgImportSnapshot ? { createRpgImportSnapshot: (sourceGameId: string, tags?: readonly string[]) => candidate.createRpgImportSnapshot?.(sourceGameId, tags) as ReturnType<AdventureRpgPackagedRuntimeController["createRpgImportSnapshot"]> } : {}),
-    ...(candidate.activeCombatState ? { activeCombatState: () => candidate.activeCombatState?.() ?? null } : {}),
-    ...(candidate.startCombat ? { startCombat: (encounterId: string) => candidate.startCombat?.(encounterId) as ReturnType<AdventureRpgPackagedRuntimeController["startCombat"]> } : {}),
-    ...(candidate.issueCombatAction ? { issueCombatAction: (action) => candidate.issueCombatAction?.(action) ?? [] } : {}),
-    ...(candidate.advanceCombat ? { advanceCombat: (ticks: number) => candidate.advanceCombat?.(ticks) ?? [] } : {}),
-    ...(candidate.finishCombat ? { finishCombat: () => candidate.finishCombat?.() as ReturnType<AdventureRpgPackagedRuntimeController["finishCombat"]> } : {}),
+    ...(initial.rpgState ? { rpgState: () => current().rpgState?.() as ReturnType<AdventureRpgPackagedRuntimeController["rpgState"]> } : {}),
+    ...(initial.practiceSkill ? { practiceSkill: (skillId: string, amount?: number) => current().practiceSkill?.(skillId, amount) as ReturnType<AdventureRpgPackagedRuntimeController["practiceSkill"]> } : {}),
+    ...(initial.resolveSkillCheck ? { resolveSkillCheck: (check) => current().resolveSkillCheck?.(check) as ReturnType<AdventureRpgPackagedRuntimeController["resolveSkillCheck"]> } : {}),
+    ...(initial.advanceRpgTime ? { advanceRpgTime: (minutes: number) => current().advanceRpgTime?.(minutes) } : {}),
+    ...(initial.restRpg ? { restRpg: (rule) => current().restRpg?.(rule) } : {}),
+    ...(initial.adjustResource ? { adjustResource: (resourceId: string, delta: number) => current().adjustResource?.(resourceId, delta) } : {}),
+    ...(initial.scheduleActive ? { scheduleActive: (window) => current().scheduleActive?.(window) ?? false } : {}),
+    ...(initial.createRpgImportSnapshot ? { createRpgImportSnapshot: (sourceGameId: string, tags?: readonly string[]) => current().createRpgImportSnapshot?.(sourceGameId, tags) as ReturnType<AdventureRpgPackagedRuntimeController["createRpgImportSnapshot"]> } : {}),
+    ...(initial.activeCombatState ? { activeCombatState: () => current().activeCombatState?.() ?? null } : {}),
+    ...(initial.startCombat ? { startCombat: (encounterId: string) => current().startCombat?.(encounterId) as ReturnType<AdventureRpgPackagedRuntimeController["startCombat"]> } : {}),
+    ...(initial.issueCombatAction ? { issueCombatAction: (action) => current().issueCombatAction?.(action) ?? [] } : {}),
+    ...(initial.advanceCombat ? { advanceCombat: (ticks: number) => current().advanceCombat?.(ticks) ?? [] } : {}),
+    ...(initial.finishCombat ? { finishCombat: () => current().finishCombat?.() as ReturnType<AdventureRpgPackagedRuntimeController["finishCombat"]> } : {}),
   };
 };
 
@@ -204,7 +205,7 @@ export const createMultiProtagonistPackagedRuntimeControllerWithFactory = (
       pendingBindingIds = [];
       return drained;
     },
-    ...rpgApi(controller),
+    ...rpgApi(() => controller),
     controlledActorInstanceId: () => controller.controlledActorInstanceId(),
     worldState: () => controller.worldState(),
     createFrame: (tick) => {
