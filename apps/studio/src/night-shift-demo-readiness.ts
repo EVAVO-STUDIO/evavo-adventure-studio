@@ -4,14 +4,12 @@ import type { PeriodVgaAuditReport } from "@evavo/adventure-art-direction/period
 import { validateAudioMixManifest } from "@evavo/adventure-audio";
 import { validateSceneInstanceManifest } from "@evavo/adventure-scene-instances";
 import { validateSceneStagingManifest } from "@evavo/adventure-scene-instances/staging-validation";
-import {
-  nightShiftCompleteInstances,
-  nightShiftCompleteStaging,
-} from "./night-shift-complete-proof.js";
+import { nightShiftCompleteInstances } from "./night-shift-complete-proof.js";
 import {
   nightShiftRuntimeContracts,
   nightShiftRuntimeProject,
 } from "./night-shift-runtime-contracts.js";
+import { nightShiftRuntimeStaging } from "./night-shift-runtime-staging.js";
 import { validateSceneDirectorStagingAudioCues } from "./scene-director-audio-readiness.js";
 
 export type NightShiftDemoReadinessGateId =
@@ -85,7 +83,7 @@ const authoredCoreReady = (): boolean => {
       sequences: nightShiftRuntimeProject.sequences,
       sceneInstances: nightShiftCompleteInstances,
     },
-    nightShiftCompleteStaging,
+    nightShiftRuntimeStaging,
   );
   return instanceIssues.length === 0 && stagingIssues.length === 0;
 };
@@ -93,7 +91,7 @@ const authoredCoreReady = (): boolean => {
 const audioReady = (): boolean =>
   validateAudioMixManifest(nightShiftRuntimeProject, nightShiftRuntimeContracts.audioMix).length === 0 &&
   validateSceneDirectorStagingAudioCues(
-    nightShiftCompleteStaging,
+    nightShiftRuntimeStaging,
     nightShiftRuntimeContracts.audioMix,
   ).length === 0;
 
@@ -136,8 +134,8 @@ export const evaluateNightShiftDemoReadiness = (
       "project-composition-staging",
       "authored",
       authoredCore,
-      "Three-room project, composition and staging semantics are valid.",
-      "Project/composition/staging semantics still contain blocking issues.",
+      "Three-room project, composition and production staging semantics are valid.",
+      "Project/composition/production staging semantics still contain blocking issues.",
     ),
     gate(
       "front-end",
@@ -157,8 +155,8 @@ export const evaluateNightShiftDemoReadiness = (
       "audio-contract",
       "authored",
       audioContractReady,
-      "Every emitted staging cue resolves through a valid audio mix.",
-      "Audio mix or staging cue coverage contains blocking issues.",
+      "Every emitted production staging cue resolves through a valid audio mix.",
+      "Audio mix or production staging cue coverage contains blocking issues.",
     ),
     gate(
       "compiled-assets",
