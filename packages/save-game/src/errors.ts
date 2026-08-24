@@ -56,7 +56,12 @@ export type SaveGameCompatibilityIssueCode =
   | "multi-protagonist-item-missing"
   | "sentence-verb-missing"
   | "sentence-item-missing"
-  | "sentence-object-missing";
+  | "sentence-object-missing"
+  | "room-script-state-without-runtime-manifest"
+  | "room-script-scene-missing"
+  | "room-script-id-missing"
+  | "room-script-sequence-missing"
+  | "room-script-return-location-invalid";
 
 export interface SaveGameCompatibilityIssue {
   readonly severity: "error";
