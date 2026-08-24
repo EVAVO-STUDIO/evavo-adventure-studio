@@ -69,7 +69,7 @@ export interface RuntimeMultiProtagonistBindingValidationContext {
 export const validateRuntimeMultiProtagonistBindings = (
   manifest: RuntimeMultiProtagonistBindingManifest,
   context: RuntimeMultiProtagonistBindingValidationContext,
-): readonly RuntimeMultiProtagonistBindingIssue[] => {
+): RuntimeMultiProtagonistBindingIssue[] => {
   const issues: RuntimeMultiProtagonistBindingIssue[] = [];
   const seen = new Set<string>();
   manifest.bindings.forEach((binding, index) => {
