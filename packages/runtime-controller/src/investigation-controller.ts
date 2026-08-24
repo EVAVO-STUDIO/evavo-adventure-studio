@@ -27,10 +27,14 @@ import {
   type PackagedRuntimeControllerOptions,
 } from "./packaged-controller.js";
 
+type RuntimeInvestigationPresenceVariant = NonNullable<
+  NonNullable<RuntimeBundle["investigation"]>["presenceVariants"]
+>[number];
+
 export interface InvestigationPackagedRuntimeController extends PackagedRuntimeController {
   investigationState(): RuntimeInvestigationState | null;
   investigationChapterReadiness(): RuntimeInvestigationChapterReadiness | null;
-  investigationPresence(): readonly NonNullable<RuntimeBundle["investigation"]>["presenceVariants"][number][];
+  investigationPresence(): readonly RuntimeInvestigationPresenceVariant[];
   discoverInvestigationFacts(
     factIds: readonly RuntimeInvestigationFactId[],
     discovery: RuntimeInvestigationDiscovery,
