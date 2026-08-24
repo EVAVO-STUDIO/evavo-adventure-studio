@@ -51,6 +51,11 @@ import {
   runtimeInvestigationManifestSchema,
   validateRuntimeInvestigation,
 } from "./investigation.js";
+import {
+  RuntimeItemCombinationValidationError,
+  runtimeItemCombinationManifestSchema,
+  validateRuntimeItemCombinations,
+} from "./item-combinations.js";
 import { runtimeLocalisationPackSchema } from "./localisation.js";
 import {
   RuntimePaletteMapValidationError,
@@ -128,6 +133,7 @@ export const runtimeBundleSchema = z
     opening: gameOpeningManifestSchema.optional(),
     investigation: runtimeInvestigationManifestSchema.optional(),
     investigationBindings: runtimeInvestigationBindingManifestSchema.optional(),
+    itemCombinations: runtimeItemCombinationManifestSchema.optional(),
   })
   .strict()
   .superRefine((bundle, context) => {
@@ -178,6 +184,13 @@ export const runtimeBundleSchema = z
         code: "custom",
         path: ["investigationBindings", "projectId"],
         message: `Investigation-binding project '${bundle.investigationBindings.projectId}' does not match runtime project '${bundle.projectId}'.`,
+      });
+    }
+    if (bundle.itemCombinations && bundle.itemCombinations.projectId !== bundle.projectId) {
+      context.addIssue({
+        code: "custom",
+        path: ["itemCombinations", "projectId"],
+        message: `Item-combination project '${bundle.itemCombinations.projectId}' does not match runtime project '${bundle.projectId}'.`,
       });
     }
     if (bundle.opening) {
@@ -263,6 +276,15 @@ export const parseRuntimeBundle = (input: unknown): RuntimeBundle => {
       throw new RuntimeInvestigationBindingValidationError(bindingIssues);
     }
   }
+  if (bundle.itemCombinations) {
+    const combinationIssues = validateRuntimeItemCombinations(
+      bundle.itemCombinations,
+      new Set(bundle.inventoryItems.map((item) => item.id as string)),
+    );
+    if (combinationIssues.length > 0) {
+      throw new RuntimeItemCombinationValidationError(combinationIssues);
+    }
+  }
   if (bundle.bitmapFonts) registerBitmapFontsForAssetCollection(bundle.assets, bundle.bitmapFonts);
   return bundle;
 };
@@ -274,6 +296,7 @@ export * from "./indexed-asset-validation.js";
 export * from "./instance-validation.js";
 export * from "./investigation-bindings.js";
 export * from "./investigation.js";
+export * from "./item-combinations.js";
 export * from "./localisation.js";
 export * from "./palette-map-validation.js";
 export * from "./ui-validation.js";
