@@ -12,7 +12,7 @@ import {
 import { evaluateNightShiftProductionProgress } from "./night-shift-production-progress.js";
 import { nightShiftRuntimeIndexedAssetIds } from "./night-shift-runtime-index-requirements.js";
 import { downloadNightShiftRuntimeSource } from "./night-shift-runtime-source-export.js";
-import { downloadNightShiftStationProductionPacket } from "./night-shift-station-production-packet.js";
+import { downloadNightShiftStationHandoffArchive } from "./night-shift-station-export.js";
 import "./night-shift-readiness-panel.css";
 
 const roleCounts = (): readonly { readonly role: string; readonly count: number }[] => {
@@ -136,8 +136,8 @@ export const NightShiftReadinessPanel = () => {
           <button type="button" className="stg-production-plan-export" onClick={downloadNightShiftFoundationTechnicalArchive}>
             Export Foundation technical ZIP
           </button>
-          <button type="button" className="stg-production-plan-export" onClick={downloadNightShiftStationProductionPacket}>
-            Export Station production packet
+          <button type="button" className="stg-production-plan-export" onClick={downloadNightShiftStationHandoffArchive}>
+            Export Station handoff ZIP
           </button>
         </div>
       </div>
