@@ -30,6 +30,7 @@ const bundle = {
 
 const unusedFactory: PackagedSessionControllerFactory = () =>
   ({
+    selection: { kind: "none", reason: "no-walkable-actor", candidates: [] } as never,
     controlledActorInstanceId: () => null,
     worldState: () => ({}) as never,
     createFrame: () => ({}) as never,
