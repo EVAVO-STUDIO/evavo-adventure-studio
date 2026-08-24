@@ -7,6 +7,7 @@ import { validateSceneStagingManifest } from "@evavo/adventure-scene-instances/s
 import type { NightShiftArtIntakeReport } from "./night-shift-art-master-intake.js";
 import type { NightShiftAudioIntakeReport } from "./night-shift-audio-master-intake.js";
 import { nightShiftCompleteInstances } from "./night-shift-complete-proof.js";
+import type { NightShiftOfficerMasterIntakeReport } from "./night-shift-officer-master-intake.js";
 import {
   nightShiftIndexedProductionAssetIds,
   nightShiftPeriodVgaProductionAssetIds,
@@ -30,6 +31,7 @@ export type NightShiftDemoReadinessGateId =
   | "ui-contract"
   | "production-asset-plan"
   | "art-master-intake"
+  | "officer-master-intake"
   | "audio-master-intake"
   | "compiled-assets"
   | "indexed-assets"
@@ -47,6 +49,7 @@ export interface NightShiftDemoReadinessGate {
 
 export interface NightShiftDemoEvidence {
   readonly artMasterIntake?: NightShiftArtIntakeReport | null;
+  readonly officerMasterIntake?: NightShiftOfficerMasterIntakeReport | null;
   readonly audioMasterIntake?: NightShiftAudioIntakeReport | null;
   readonly assetManifest?: AssetBuildManifest | null;
   readonly indexedAssets?: IndexedAssetManifest | null;
@@ -140,6 +143,7 @@ export const evaluateNightShiftDemoReadiness = (
     validateNightShiftProductionAssetPlan().length === 0 &&
     validateNightShiftProductionWaves().length === 0;
   const artMasterReady = evidence.artMasterIntake?.status === "ready";
+  const officerMasterReady = evidence.officerMasterIntake?.status === "ready";
   const audioMasterReady = evidence.audioMasterIntake?.status === "ready";
   const compiledAssetsReady = allExpectedAssetsCompiled(evidence.assetManifest);
   const indexedReady = allExpectedIndexedAssetsPresent(evidence.indexedAssets);
@@ -201,6 +205,13 @@ export const evaluateNightShiftDemoReadiness = (
       artMasterReady,
       "Every required native visual master passed the Night Shift intake gate.",
       "Submit every Period VGA visual master through native-size/palette/alpha/source-format intake before compilation.",
+    ),
+    gate(
+      "officer-master-intake",
+      "evidence",
+      officerMasterReady,
+      "All twelve officer frames passed retained native silhouette/anchor/palette/contact review.",
+      "Complete the 12-frame officer review template and pass strict 264×50 officer master intake.",
     ),
     gate(
       "audio-master-intake",
