@@ -7,11 +7,11 @@ import {
 import {
   ADVENTURE_CREATIVE_HANDOFF_V3_PROTOCOL_FINGERPRINT,
 } from "./creative-production-protocol-v3.js";
+import type { IllustratedConspiracyProductionAuthority } from "./illustrated-conspiracy-production.js";
 import {
-  createNinthReliquaryProductionPlan,
-  ninthReliquaryAssetSpecs,
-  type IllustratedConspiracyProductionAuthority,
-} from "./illustrated-conspiracy-production.js";
+  createExpandedNinthReliquaryProductionPlan,
+  ninthReliquaryCompleteAssetSpecs,
+} from "./ninth-reliquary-expanded-production.js";
 
 export interface AdventureOriginalFullGameProof {
   readonly id: string;
@@ -71,7 +71,7 @@ export const ninthReliquaryFullGameProof: AdventureOriginalFullGameProof = {
     "Night train and mountain hospice route with protagonist switching, inventory/evidence exchange, travel topology and character-specific knowledge.",
     "Hand-animated confrontation that uses approved model/X-sheet timing, returns to exploration deterministically and survives save/replay.",
   ],
-  requiredCreativeAssetIds: ninthReliquaryAssetSpecs.map((spec) => spec.assetId),
+  requiredCreativeAssetIds: ninthReliquaryCompleteAssetSpecs.map((spec) => spec.assetId),
   creativeProtocolFingerprint: ADVENTURE_CREATIVE_HANDOFF_V3_PROTOCOL_FINGERPRINT,
 };
 
@@ -132,7 +132,7 @@ export const validateNinthReliquaryProductionAuthorities = (
 ): readonly string[] => {
   const issues: string[] = [];
   try {
-    const plan = createNinthReliquaryProductionPlan(authorityByAsset);
+    const plan = createExpandedNinthReliquaryProductionPlan(authorityByAsset);
     if (plan.length !== ninthReliquaryFullGameProof.requiredCreativeAssetIds.length) {
       issues.push("Ninth Reliquary v3 work-order count does not cover the required creative asset set.");
     }
