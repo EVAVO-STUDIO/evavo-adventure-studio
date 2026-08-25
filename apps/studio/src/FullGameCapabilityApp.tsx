@@ -8,6 +8,7 @@ import {
   evaluateAdventureFullGameReference,
 } from "@evavo/adventure-design/full-game-reference-policy";
 import { adventureFullGameUpgradePlan } from "@evavo/adventure-design/full-game-upgrade-plan";
+import { adventureReferenceProofLanes } from "@evavo/adventure-design/reference-proof-lanes";
 import { adventureSceneArchetypes } from "@evavo/adventure-design/scene-archetypes";
 import { type ChangeEvent, useMemo, useState } from "react";
 import "./full-game-capability.css";
@@ -149,6 +150,53 @@ export const FullGameCapabilityApp = () => {
           ))}
         </section>
       </div>
+
+      <section className="fgc-proof-lanes">
+        <header>
+          <div>
+            <span className="fgc-eyebrow">REFERENCE PROOF LANES</span>
+            <h2>Authentic grammar, repaired friction</h2>
+          </div>
+          <p>
+            Historical lanes preserve the target era's production grammar. Modern-retro lanes are labelled as
+            benchmarks. All use original worlds/assets while deliberately repairing frustration that tests
+            precision or foreknowledge instead of understanding.
+          </p>
+        </header>
+        <div className="fgc-proof-lane-grid">
+          {adventureReferenceProofLanes.map((lane) => (
+            <article key={lane.id} className={`is-${lane.kind}`}>
+              <div className="fgc-proof-lane-title">
+                <span>{lane.kind === "historical-fidelity" ? "HISTORICAL FIDELITY" : "MODERN-RETRO BENCHMARK"}</span>
+                <strong>{lane.label}</strong>
+                <small>{lane.referencePressure} · {lane.targetEra}</small>
+              </div>
+              <dl>
+                <div><dt>Original proof</dt><dd>{lane.showcaseId}</dd></div>
+                <div><dt>Production profile</dt><dd>{lane.profileId}</dd></div>
+                {lane.fidelityPackId ? <div><dt>Fidelity pack</dt><dd>{lane.fidelityPackId}</dd></div> : null}
+              </dl>
+              <div className="fgc-proof-columns">
+                <section>
+                  <span className="fgc-eyebrow">MUST STAY AUTHENTIC</span>
+                  <ul>{lane.authenticMustKeep.slice(0, 4).map((item) => <li key={item}>{item}</li>)}</ul>
+                </section>
+                <section>
+                  <span className="fgc-eyebrow">DELIBERATE REPAIRS</span>
+                  <div className="fgc-repair-tags">
+                    {lane.qualityRepairs.map((repair) => <span key={repair}>{repair.replaceAll("-", " ")}</span>)}
+                  </div>
+                </section>
+              </div>
+              <div className="fgc-proof-scenes">
+                <span className="fgc-eyebrow">PROOF SCENES</span>
+                <ol>{lane.proofScenes.map((scene) => <li key={scene}>{scene}</li>)}</ol>
+              </div>
+              <p className="fgc-completion-rule">{lane.completionRule}</p>
+            </article>
+          ))}
+        </div>
+      </section>
     </main>
   );
 };
