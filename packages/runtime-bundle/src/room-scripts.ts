@@ -26,6 +26,13 @@ export const runtimeRoomScriptTriggerSchema = z.discriminatedUnion("kind", [
     .strict(),
   z
     .object({
+      kind: z.literal("room-tick-cycle"),
+      startTick: z.number().int().nonnegative().default(0),
+      intervalTicks: z.number().int().positive(),
+    })
+    .strict(),
+  z
+    .object({
       kind: z.literal("condition"),
       condition: conditionSchema,
     })
