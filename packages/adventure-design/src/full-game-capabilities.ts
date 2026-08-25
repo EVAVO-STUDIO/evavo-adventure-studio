@@ -68,6 +68,8 @@ export type AdventureCapabilityId =
   | "deterministic-save-replay"
   | "indexed-palette-lighting"
   | "native-vga-audit"
+  | "handdrawn-cel-production"
+  | "cross-studio-creative-handoff"
   | "localisation"
   | "full-game-evidence";
 
@@ -140,6 +142,8 @@ export const adventureCapabilityCatalog: readonly AdventureCapabilityDefinition[
   capability("deterministic-save-replay", "production", "Deterministic saves/replays", "Mid-scene state, replay and restoration remain stable across authored systems."),
   capability("indexed-palette-lighting", "presentation", "Indexed palette lighting", "Hard and Bayer palette substitution without RGB tint/interpolation."),
   capability("native-vga-audit", "production", "Native VGA audit", "Raw 1× and integer-scale evidence prevents generic/modern retro styling."),
+  capability("handdrawn-cel-production", "production", "Governed hand-drawn/cel production", "Model-sheet-locked cel characters, authored layouts, frame/exposure plans and accepted native deliveries retain style and continuity evidence."),
+  capability("cross-studio-creative-handoff", "production", "Cross-studio creative handoff", "Adventure Studio, Art Studio and Cel Animation Studio share versioned work-order, review, repair, alpha, sequence and delivery evidence contracts."),
   capability("localisation", "production", "Localisation", "Text/UI/dialogue layout supports translated content without breaking native presentation."),
   capability("full-game-evidence", "production", "Full-game evidence", "Whole-game route/replay/screenshot evidence proves all required archetypes, not one showcase room."),
 ] as const;
@@ -152,18 +156,25 @@ export type AdventureReferenceGameId =
   | "leisure-suit-larry-vga"
   | "heart-of-china"
   | "rise-of-the-dragon"
-  | "indiana-jones-fate-of-atlantis";
+  | "indiana-jones-fate-of-atlantis"
+  | "broken-sword-shadow-of-the-templars";
 
 export interface AdventureReferenceGameCapabilityProfile {
   readonly id: AdventureReferenceGameId;
   readonly label: string;
-  readonly family: "sierra-sci" | "sierra-investigation" | "sierra-rpg" | "lucasarts-scumm5" | "dynamix-dgds";
+  readonly family:
+    | "sierra-sci"
+    | "sierra-investigation"
+    | "sierra-rpg"
+    | "lucasarts-scumm5"
+    | "dynamix-dgds"
+    | "revolution-handdrawn";
   readonly required: readonly AdventureCapabilityId[];
   readonly signature: readonly AdventureCapabilityId[];
   readonly stressScenes: readonly string[];
 }
 
-const commonClassic: readonly AdventureCapabilityId[] = [
+const commonAdventure: readonly AdventureCapabilityId[] = [
   "fixed-room",
   "walk-regions",
   "per-region-perspective",
@@ -175,8 +186,12 @@ const commonClassic: readonly AdventureCapabilityId[] = [
   "conditional-hotspots",
   "cutscene-sequences",
   "deterministic-save-replay",
-  "native-vga-audit",
   "full-game-evidence",
+];
+
+const commonClassic: readonly AdventureCapabilityId[] = [
+  ...commonAdventure,
+  "native-vga-audit",
 ];
 
 const reference = (
@@ -191,6 +206,22 @@ const reference = (
   label,
   family,
   required: [...new Set([...commonClassic, ...required])],
+  signature,
+  stressScenes,
+});
+
+const modernReference = (
+  id: AdventureReferenceGameId,
+  label: string,
+  family: AdventureReferenceGameCapabilityProfile["family"],
+  required: readonly AdventureCapabilityId[],
+  signature: readonly AdventureCapabilityId[],
+  stressScenes: readonly string[],
+): AdventureReferenceGameCapabilityProfile => ({
+  id,
+  label,
+  family,
+  required: [...new Set([...commonAdventure, ...required])],
   signature,
   stressScenes,
 });
@@ -360,6 +391,37 @@ export const adventureReferenceGameCapabilities: readonly AdventureReferenceGame
       "Action/fight insert returning deterministically to the shared story graph",
     ],
   ),
+  modernReference(
+    "broken-sword-shadow-of-the-templars",
+    "Broken Sword: Shadow of the Templars",
+    "revolution-handdrawn",
+    [
+      "context-interface",
+      "branching-dialogue",
+      "topic-dialogue",
+      "dialogue-fact-unlocks",
+      "research-investigation-loop",
+      "closeup-puzzle-view",
+      "travel-map",
+      "room-cutaways",
+      "handdrawn-cel-production",
+      "cross-studio-creative-handoff",
+    ],
+    [
+      "context-interface",
+      "handdrawn-cel-production",
+      "cross-studio-creative-handoff",
+      "room-cutaways",
+      "research-investigation-loop",
+    ],
+    [
+      "Hand-painted European street/cafe incident with clean context interaction, foreground occlusion and cinematic conversation",
+      "Archive/conservation research location where evidence unlocks topics, travel and revised interpretations",
+      "Model-sheet-locked cel character walk and interaction sequence with exact X-sheet timing, neighbour review and proven real alpha",
+      "Temporary cinematic chapel reveal that uses an authored blocking sequence and returns to the exact exploration state",
+      "Travel/revisit sequence proving changed people, access and evidence across a coherent hand-drawn world",
+    ],
+  ),
 ] as const;
 
 export interface AdventureCapabilityCoverage {
@@ -417,6 +479,8 @@ export const currentAdventureCapabilityCoverage: readonly AdventureCapabilityCov
       "research-investigation-loop",
       "global-progression-graph",
       "character-import-export",
+      "handdrawn-cel-production",
+      "cross-studio-creative-handoff",
       "localisation",
     ]);
     const partial = new Set<AdventureCapabilityId>([
