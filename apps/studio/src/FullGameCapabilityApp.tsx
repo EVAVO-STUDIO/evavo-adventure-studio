@@ -1,12 +1,17 @@
 import {
   adventureCapabilityCatalog,
   currentAdventureCapabilityCoverage,
+  type AdventureCapabilityId,
   type AdventureCapabilityStatus,
 } from "@evavo/adventure-design/full-game-capabilities";
 import {
   adventureFullGameReferenceProfiles,
   evaluateAdventureFullGameReference,
 } from "@evavo/adventure-design/full-game-reference-policy";
+import {
+  cinematicConspiracyFullGameProfile,
+  evaluateCinematicConspiracyFullGame,
+} from "@evavo/adventure-design/cinematic-conspiracy-full-game";
 import { adventureFullGameUpgradePlan } from "@evavo/adventure-design/full-game-upgrade-plan";
 import { referenceProofDevelopmentStatusByLaneId } from "@evavo/adventure-design/reference-proof-development";
 import { adventureReferenceProofLanes } from "@evavo/adventure-design/reference-proof-lanes";
@@ -21,24 +26,86 @@ const labelForCapability = new Map(
   adventureCapabilityCatalog.map((capability) => [capability.id, capability.label] as const),
 );
 
-export const FullGameCapabilityApp = () => {
-  const [referenceIndex, setReferenceIndex] = useState(0);
-  const reference = adventureFullGameReferenceProfiles[referenceIndex] ?? adventureFullGameReferenceProfiles[0]!;
-  const readiness = useMemo(
-    () => evaluateAdventureFullGameReference(reference.id),
-    [reference],
-  );
-  const required = new Set(reference.required);
-  const coverage = currentAdventureCapabilityCoverage
+type FullGameReferenceView =
+  | {
+      readonly kind: "classic-vga";
+      readonly id: (typeof adventureFullGameReferenceProfiles)[number]["id"];
+      readonly label: string;
+      readonly family: string;
+      readonly required: readonly AdventureCapabilityId[];
+      readonly signature: readonly AdventureCapabilityId[];
+      readonly stressScenes: readonly string[];
+      readonly productionRules: readonly string[];
+    }
+  | {
+      readonly kind: "modern-cinematic";
+      readonly id: "broken-sword-templar-style";
+      readonly label: string;
+      readonly family: string;
+      readonly required: readonly AdventureCapabilityId[];
+      readonly signature: readonly AdventureCapabilityId[];
+      readonly stressScenes: readonly string[];
+      readonly productionRules: readonly string[];
+    };
+
+const referenceViews: readonly FullGameReferenceView[] = [
+  ...adventureFullGameReferenceProfiles.map(
+    (reference): FullGameReferenceView => ({
+      kind: "classic-vga",
+      id: reference.id,
+      label: reference.label,
+      family: reference.family,
+      required: reference.required,
+      signature: reference.signature,
+      stressScenes: reference.stressScenes,
+      productionRules: [],
+    }),
+  ),
+  {
+    kind: "modern-cinematic",
+    id: cinematicConspiracyFullGameProfile.id,
+    label: cinematicConspiracyFullGameProfile.label,
+    family: cinematicConspiracyFullGameProfile.family,
+    required: cinematicConspiracyFullGameProfile.required,
+    signature: cinematicConspiracyFullGameProfile.signature,
+    stressScenes: cinematicConspiracyFullGameProfile.stressScenes,
+    productionRules: cinematicConspiracyFullGameProfile.productionRules,
+  },
+] as const;
+
+const coverageFor = (required: ReadonlySet<AdventureCapabilityId>) =>
+  currentAdventureCapabilityCoverage
     .filter((entry) => required.has(entry.id))
     .sort((left, right) => {
       const status = statusOrder.indexOf(left.status) - statusOrder.indexOf(right.status);
       if (status !== 0) return status;
       return (labelForCapability.get(left.id) ?? left.id).localeCompare(labelForCapability.get(right.id) ?? right.id);
     });
-  const archetypes = adventureSceneArchetypes.filter((entry) => entry.referenceGames.includes(reference.id));
+
+export const FullGameCapabilityApp = () => {
+  const [referenceIndex, setReferenceIndex] = useState(0);
+  const reference = referenceViews[referenceIndex] ?? referenceViews[0]!;
+  const readiness = useMemo(
+    () =>
+      reference.kind === "modern-cinematic"
+        ? evaluateCinematicConspiracyFullGame()
+        : evaluateAdventureFullGameReference(reference.id),
+    [reference],
+  );
+  const required = new Set<AdventureCapabilityId>(reference.required);
+  const coverage = coverageFor(required);
+  const archetypes =
+    reference.kind === "modern-cinematic"
+      ? adventureSceneArchetypes.filter((entry) =>
+          entry.requiredCapabilities.some((capability) => required.has(capability)),
+        )
+      : adventureSceneArchetypes.filter((entry) => entry.referenceGames.includes(reference.id));
   const epics = adventureFullGameUpgradePlan
-    .filter((epic) => epic.unlocksReferenceGames.includes(reference.id))
+    .filter((epic) =>
+      reference.kind === "modern-cinematic"
+        ? epic.capabilities.some((capability) => required.has(capability))
+        : epic.unlocksReferenceGames.includes(reference.id),
+    )
     .sort((left, right) => left.priority - right.priority);
 
   return (
@@ -56,7 +123,7 @@ export const FullGameCapabilityApp = () => {
               setReferenceIndex(Number(event.currentTarget.value))
             }
           >
-            {adventureFullGameReferenceProfiles.map((candidate, index) => (
+            {referenceViews.map((candidate, index) => (
               <option key={candidate.id} value={index}>
                 {candidate.label}
               </option>
@@ -70,7 +137,9 @@ export const FullGameCapabilityApp = () => {
       </header>
 
       <section className="fgc-hero">
-        <span className="fgc-eyebrow">{reference.family.replaceAll("-", " ")}</span>
+        <span className="fgc-eyebrow">
+          {reference.kind === "modern-cinematic" ? "MODERN CINEMATIC" : "CLASSIC VGA"} · {reference.family.replaceAll("-", " ")}
+        </span>
         <h1>{reference.label}</h1>
         <p>
           A polished room is not enough. This view measures the persistent engine grammar and scene forms needed
@@ -133,6 +202,12 @@ export const FullGameCapabilityApp = () => {
               <span key={capabilityId}>{labelForCapability.get(capabilityId) ?? capabilityId}</span>
             ))}
           </div>
+          {reference.productionRules.length > 0 ? (
+            <div className="fgc-signature">
+              <span className="fgc-eyebrow">PRODUCTION RULES</span>
+              {reference.productionRules.map((rule) => <p key={rule}>{rule}</p>)}
+            </div>
+          ) : null}
         </section>
 
         <section className="fgc-panel fgc-roadmap">
