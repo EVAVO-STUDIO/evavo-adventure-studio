@@ -102,7 +102,7 @@ export const compileNinthReliquaryCreativeProofWorkOrders = (
 
   return {
     background: compileStaticAdventureCreativeWorkOrder({
-      workOrderId: `creative.ninth-reliquary.old-city-square.background.r${revision}`,
+      workOrderId: "creative.ninth-reliquary.old-city-square.background",
       projectId: "project.ninth-reliquary-proof",
       assetId: "asset.ninth-reliquary.old-city-square.background",
       taskKind: "background",
@@ -125,7 +125,7 @@ export const compileNinthReliquaryCreativeProofWorkOrders = (
       ],
     }),
     maraWalkEast: compileAnimationAdventureCreativeWorkOrder({
-      workOrderId: `creative.ninth-reliquary.protagonist.walk-east.r${revision}`,
+      workOrderId: "creative.ninth-reliquary.protagonist.walk-east",
       projectId: "project.ninth-reliquary-proof",
       assetId: "asset.ninth-reliquary.protagonist.walk-east",
       revision,
