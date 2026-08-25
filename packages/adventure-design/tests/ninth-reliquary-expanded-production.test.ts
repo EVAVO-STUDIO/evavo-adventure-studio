@@ -23,9 +23,7 @@ const authorities = Object.fromEntries(
 describe("expanded Ninth Reliquary production plan", () => {
   it("covers archive, chapel, second protagonist, train, hospice, danger and finale production", () => {
     const ids = new Set(ninthReliquaryExpandedAssetSpecs.map((spec) => spec.assetId));
-    expect(ids).toEqual(
-      expect.objectContaining ? ids : ids,
-    );
+    expect(ids.size).toBe(ninthReliquaryExpandedAssetSpecs.length);
     expect(ids.has("asset.ninth-reliquary.archive.background")).toBe(true);
     expect(ids.has("asset.ninth-reliquary.chapel.background")).toBe(true);
     expect(ids.has("asset.ninth-reliquary.ivo.model-sheet")).toBe(true);
