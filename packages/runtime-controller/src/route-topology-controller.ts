@@ -23,6 +23,7 @@ import {
   type AdventureTravelResult,
 } from "@evavo/adventure-scene-runtime/travel-map";
 import type { PackagedRuntimeControllerOptions } from "./packaged-controller.js";
+import { featureSaveCompanionOptions } from "./save-companions.js";
 import {
   createBasePackagedSessionController,
   type PackagedSessionController,
@@ -38,17 +39,6 @@ export interface AdventureRoutePackagedRuntimeController extends PackagedSession
   routeAtTerminal(): boolean;
   routeAtRequiredReconvergence(): boolean;
 }
-
-const preserveCompanions = (save: SaveGame) => ({
-  ...(save.interface.profiledCamera ? { profiledCamera: save.interface.profiledCamera } : {}),
-  ...(save.interface.sentence ? { sentence: save.interface.sentence } : {}),
-  ...(save.audio ? { audio: save.audio } : {}),
-  ...(save.investigation ? { investigation: save.investigation } : {}),
-  ...(save.itemCombinations ? { itemCombinations: save.itemCombinations } : {}),
-  ...(save.multiProtagonist ? { multiProtagonist: save.multiProtagonist } : {}),
-  ...(save.roomScripts ? { roomScripts: save.roomScripts } : {}),
-  ...(save.rpg ? { rpg: save.rpg } : {}),
-});
 
 export const createAdventureRoutePackagedRuntimeControllerWithFactory = (
   bundle: RuntimeBundle,
@@ -68,7 +58,7 @@ export const createAdventureRoutePackagedRuntimeControllerWithFactory = (
       selectedItemId: baseSave.interface.selectedItemId,
       statusText: baseSave.interface.statusText,
       parser: baseSave.interface.parser,
-      ...preserveCompanions(baseSave),
+      ...featureSaveCompanionOptions(baseSave),
       routeTopology: route,
     });
   };
@@ -88,7 +78,7 @@ export const createAdventureRoutePackagedRuntimeControllerWithFactory = (
       selectedItemId: baseSave.interface.selectedItemId,
       statusText: baseSave.interface.statusText,
       parser: baseSave.interface.parser,
-      ...preserveCompanions(baseSave),
+      ...featureSaveCompanionOptions(baseSave),
       routeTopology: route,
     });
     controller.restoreSaveGame(save);
