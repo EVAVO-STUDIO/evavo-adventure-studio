@@ -63,6 +63,7 @@ export const validateAdventureCreativeAcceptedDeliveryV3 = (
     order.authorities.modelSheetDigest,
     order.authorities.environmentLayoutDigest,
     order.authorities.xSheetDigest,
+    order.authorities.previousApprovedArtifactDigest,
     ...order.authorities.referenceDigests,
   ].filter((value): value is string => Boolean(value));
   const lineage = new Set(delivery.sourceLineageDigests);
