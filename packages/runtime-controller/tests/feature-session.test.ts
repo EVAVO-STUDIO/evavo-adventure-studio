@@ -11,6 +11,7 @@ describe("packaged feature session composition", () => {
     expect(describePackagedFeatureSession(base)).toEqual({
       sentence: false,
       roomScripts: false,
+      investigation: false,
       rpg: false,
       multiProtagonist: false,
       routeTopology: false,
@@ -18,13 +19,21 @@ describe("packaged feature session composition", () => {
     });
   });
 
-  it("orders SCUMM sentence, room scripts, RPG, protagonist state and routes from inner to outer", () => {
+  it("orders SCUMM sentence, room scripts, investigation, RPG, protagonist state and routes from inner to outer", () => {
     const bundle = {
       ...base,
       presentation: { interactionMode: "verb-list" },
       uiSkins: { manifestVersion: 1, projectId: "project.stack", defaultSkinId: "ui-skin.stack", skins: [] },
       bitmapFonts: { manifestVersion: 1, projectId: "project.stack", fonts: [] },
       roomScripts: { manifestVersion: 1, projectId: "project.stack", scripts: [] },
+      investigation: {
+        manifestVersion: 1,
+        projectId: "project.stack",
+        facts: [],
+        topics: [],
+        researchSources: [],
+        chapters: [{ id: "chapter.one", label: "One", order: 1, objectives: [] }],
+      },
       rpg: {
         manifestVersion: 1,
         projectId: "project.stack",
@@ -53,10 +62,19 @@ describe("packaged feature session composition", () => {
     expect(describePackagedFeatureSession(bundle)).toEqual({
       sentence: true,
       roomScripts: true,
+      investigation: true,
       rpg: true,
       multiProtagonist: true,
       routeTopology: true,
-      stack: ["base", "sentence", "room-scripts", "rpg", "multi-protagonist", "route-topology"],
+      stack: [
+        "base",
+        "sentence",
+        "room-scripts",
+        "investigation",
+        "rpg",
+        "multi-protagonist",
+        "route-topology",
+      ],
     });
   });
 });
