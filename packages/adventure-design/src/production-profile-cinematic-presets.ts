@@ -96,7 +96,7 @@ export const cinematicProductionProfiles: readonly AdventureProductionProfile[] 
     pixelMotionPolicy: "free",
     palette: {
       ...palette(
-        512,
+        256,
         ["#10141c", "#29313e", "#4f6572", "#8d735e", "#b85f52", "#e8d7bd", "#d9e5ea"],
         "Use deliberate cool/warm shadow families with clean cel separation; avoid muddy global grading.",
         "Highlights belong to named practical light, daylight or a motivated atmospheric source.",
