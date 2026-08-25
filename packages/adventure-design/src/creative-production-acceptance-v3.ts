@@ -5,6 +5,10 @@ import type {
   AdventureCreativeTaskKindV3,
   AdventureCreativeWorkOrderV3,
 } from "./creative-production-handoff-v3.js";
+import {
+  type AdventureCreativeMeasuredEvidenceV3,
+  validateAdventureCreativeMeasuredEvidenceV3,
+} from "./creative-production-evidence-v3.js";
 
 const animationKinds = new Set<AdventureCreativeTaskKindV3>([
   "animation-sequence",
@@ -75,12 +79,56 @@ export const validateAdventureCreativeAcceptedDeliveryV3 = (
   return issues;
 };
 
+export const validateAdventureCreativeProductionAcceptanceV3 = (
+  order: AdventureCreativeWorkOrderV3,
+  review: AdventureCreativeReviewV3,
+  delivery: AdventureCreativeAcceptedDeliveryV3,
+  evidence: AdventureCreativeMeasuredEvidenceV3 | null | undefined,
+): readonly AdventureCreativeHandoffIssueV3[] => {
+  const issues: AdventureCreativeHandoffIssueV3[] = [
+    ...validateAdventureCreativeAcceptedDeliveryV3(order, review, delivery),
+  ];
+  if (!evidence) {
+    issues.push({
+      code: "missing-measured-evidence",
+      message: "Production acceptance requires measured decoded alpha/frame/style evidence; digest-only evidence is not sufficient.",
+    });
+    return issues;
+  }
+  for (const measuredIssue of validateAdventureCreativeMeasuredEvidenceV3(order, evidence)) {
+    issues.push({
+      code: `measured-${measuredIssue.code}`,
+      message: measuredIssue.frameIds.length > 0
+        ? `${measuredIssue.message} Frames: ${measuredIssue.frameIds.join(", ")}.`
+        : measuredIssue.message,
+    });
+  }
+  if (evidence.artifactByteLength !== delivery.approvedByteLength) {
+    issues.push({
+      code: "measured-byte-length-mismatch",
+      message: `Measured byte length ${evidence.artifactByteLength} does not match accepted delivery byte length ${delivery.approvedByteLength}.`,
+    });
+  }
+  return issues;
+};
+
 export const assertAdventureCreativeAcceptedDeliveryV3 = (
   order: AdventureCreativeWorkOrderV3,
   review: AdventureCreativeReviewV3,
   delivery: AdventureCreativeAcceptedDeliveryV3,
 ): AdventureCreativeAcceptedDeliveryV3 => {
   const issues = validateAdventureCreativeAcceptedDeliveryV3(order, review, delivery);
+  if (issues.length > 0) throw new Error(issues.map((issue) => issue.message).join(" "));
+  return delivery;
+};
+
+export const assertAdventureCreativeProductionAcceptanceV3 = (
+  order: AdventureCreativeWorkOrderV3,
+  review: AdventureCreativeReviewV3,
+  delivery: AdventureCreativeAcceptedDeliveryV3,
+  evidence: AdventureCreativeMeasuredEvidenceV3,
+): AdventureCreativeAcceptedDeliveryV3 => {
+  const issues = validateAdventureCreativeProductionAcceptanceV3(order, review, delivery, evidence);
   if (issues.length > 0) throw new Error(issues.map((issue) => issue.message).join(" "));
   return delivery;
 };
