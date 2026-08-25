@@ -7,6 +7,7 @@ import type { MultiProtagonistState } from "@evavo/adventure-scene-runtime/multi
 import type { RuntimeRoomScriptState } from "@evavo/adventure-scene-runtime/room-scripts";
 import type { AdventureRouteTopologyState } from "@evavo/adventure-scene-runtime/route-topology";
 import type { AdventureRpgState } from "@evavo/adventure-scene-runtime/rpg";
+import type { AdventureRpgEconomyState } from "@evavo/adventure-scene-runtime/rpg-economy";
 import type { SpecializedAdventureModeSessionState } from "@evavo/adventure-scene-runtime/specialized-mode-session";
 import { validateSavedAudio } from "./audio-compatibility.js";
 import {
@@ -26,6 +27,7 @@ import type { SaveGameProfiledRuntimeCameraState } from "./profiled-camera.js";
 import { validateSavedRoomScripts } from "./room-script-compatibility.js";
 import { validateSavedRouteTopology } from "./route-topology-compatibility.js";
 import { validateSavedAdventureRpg } from "./rpg-compatibility.js";
+import { validateSavedAdventureRpgEconomy } from "./rpg-economy-compatibility.js";
 import type { SaveGameSentenceState } from "./sentence.js";
 import { validateSavedSentence } from "./sentence-compatibility.js";
 import { validateSavedSpecializedModes } from "./specialized-mode-compatibility.js";
@@ -53,6 +55,7 @@ export interface CreateSaveGameOptions {
   readonly roomScripts?: RuntimeRoomScriptState;
   readonly routeTopology?: AdventureRouteTopologyState;
   readonly rpg?: AdventureRpgState;
+  readonly rpgEconomy?: AdventureRpgEconomyState;
   readonly specializedModes?: SpecializedAdventureModeSessionState;
 }
 
@@ -69,6 +72,7 @@ const completeCompatibilityIssues = (
   ...validateSavedRoomScripts(bundle, save),
   ...validateSavedRouteTopology(bundle, save),
   ...validateSavedAdventureRpg(bundle, save),
+  ...validateSavedAdventureRpgEconomy(bundle, save),
   ...validateSavedSpecializedModes(bundle, save),
 ];
 
@@ -86,6 +90,7 @@ export const createSaveGame = (
     roomScripts,
     routeTopology,
     rpg,
+    rpgEconomy,
     specializedModes,
     sentence,
     ...interfaceState
@@ -107,6 +112,7 @@ export const createSaveGame = (
     ...(roomScripts ? { roomScripts } : {}),
     ...(routeTopology ? { routeTopology } : {}),
     ...(rpg ? { rpg } : {}),
+    ...(rpgEconomy ? { rpgEconomy } : {}),
     ...(specializedModes ? { specializedModes } : {}),
   });
   const save = saveGameSchema.parse({
