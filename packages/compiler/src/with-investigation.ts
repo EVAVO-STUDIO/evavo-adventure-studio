@@ -80,6 +80,23 @@ export const canonicaliseRuntimeInvestigationManifest = (
           })),
         }
       : {}),
+    ...(manifest.topicPanel
+      ? {
+          topicPanel: {
+            ...manifest.topicPanel,
+            dialogues: [...manifest.topicPanel.dialogues]
+              .sort((left, right) => left.dialogueId.localeCompare(right.dialogueId))
+              .map((dialogue) => ({
+                ...dialogue,
+                responses: [...dialogue.responses].sort(
+                  (left, right) =>
+                    left.topicId.localeCompare(right.topicId) ||
+                    left.dialogueChoiceId.localeCompare(right.dialogueChoiceId),
+                ),
+              })),
+          },
+        }
+      : {}),
   });
 };
 
