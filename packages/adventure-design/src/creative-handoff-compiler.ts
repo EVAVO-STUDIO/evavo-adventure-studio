@@ -18,11 +18,10 @@ export interface AdventureCreativeAuthority {
   readonly xSheetDigest?: string;
 }
 
-export interface AdventureStaticCreativeWorkOrderInput {
+interface AdventureCreativeBaseWorkOrderInput {
   readonly workOrderId: string;
   readonly projectId: Id<"project"> | string;
   readonly assetId: Id<"asset"> | string;
-  readonly taskKind: Extract<AdventureCreativeTaskKind, "background" | "foreground-plate" | "prop" | "ui-art">;
   readonly revision: number;
   readonly replacesRevision?: number;
   readonly nativeSize: { readonly width: number; readonly height: number };
@@ -34,15 +33,17 @@ export interface AdventureStaticCreativeWorkOrderInput {
   readonly rejectionRules?: readonly string[];
 }
 
-export interface AdventureAnimationCreativeWorkOrderInput {
-  readonly workOrderId: string;
-  readonly projectId: Id<"project"> | string;
-  readonly assetId: Id<"asset"> | string;
-  readonly revision: number;
-  readonly replacesRevision?: number;
-  readonly nativeSize: { readonly width: number; readonly height: number };
-  readonly alphaPolicy: AdventureCreativeAlphaPolicy;
-  readonly profile: AdventureProductionProfile;
+export interface AdventureStaticCreativeWorkOrderInput extends AdventureCreativeBaseWorkOrderInput {
+  readonly taskKind: Extract<AdventureCreativeTaskKind, "background" | "foreground-plate" | "prop" | "ui-art">;
+}
+
+export interface AdventureCharacterCreativeWorkOrderInput extends AdventureCreativeBaseWorkOrderInput {
+  readonly taskKind: Extract<AdventureCreativeTaskKind, "character-model-sheet" | "character-key-pose">;
+  readonly characterName: string;
+}
+
+export interface AdventureAnimationCreativeWorkOrderInput
+  extends Omit<AdventureCreativeBaseWorkOrderInput, "authority"> {
   readonly actor: Actor;
   readonly animationClipId: Id<"animation-clip">;
   readonly authority: AdventureCreativeAuthority & {
@@ -50,9 +51,6 @@ export interface AdventureAnimationCreativeWorkOrderInput {
     readonly xSheetDigest: string;
   };
   readonly roleByFrameId?: Readonly<Record<string, AdventureCreativeFramePlan["role"]>>;
-  readonly artDirection?: readonly string[];
-  readonly reviewChecklist?: readonly string[];
-  readonly rejectionRules?: readonly string[];
 }
 
 const stableUnique = (values: readonly string[]): readonly string[] =>
@@ -101,6 +99,27 @@ const assertValid = (order: AdventureCreativeWorkOrderV2): AdventureCreativeWork
   return order;
 };
 
+const commonStyle = (
+  profile: AdventureProductionProfile,
+  authority: AdventureCreativeAuthority,
+  extraInvariants: readonly string[] = [],
+) => ({
+  profileId: profile.id,
+  styleDigest: authority.styleDigest,
+  ...(authority.paletteDigest ? { paletteDigest: authority.paletteDigest } : {}),
+  ...(authority.modelSheetDigest ? { modelSheetDigest: authority.modelSheetDigest } : {}),
+  ...(authority.environmentLayoutDigest ? { environmentLayoutDigest: authority.environmentLayoutDigest } : {}),
+  referenceDigests: stableUnique(authority.referenceDigests ?? []),
+  invariants: stableUnique([...styleInvariants(profile), ...extraInvariants]),
+  forbiddenDrift: stableUnique(profile.prohibitions),
+});
+
+const commonIteration = (revision: number) => ({
+  maximumRevisionPasses: 6,
+  compareAgainstPreviousApproved: revision > 1,
+  requireIssueClosureEvidence: true,
+});
+
 export const compileStaticAdventureCreativeWorkOrder = (
   input: AdventureStaticCreativeWorkOrderInput,
 ): AdventureCreativeWorkOrderV2 =>
@@ -117,15 +136,7 @@ export const compileStaticAdventureCreativeWorkOrder = (
     nativeSize: input.nativeSize,
     alphaPolicy: input.alphaPolicy,
     preserveNativeCanvas: true,
-    style: {
-      profileId: input.profile.id,
-      styleDigest: input.authority.styleDigest,
-      ...(input.authority.paletteDigest ? { paletteDigest: input.authority.paletteDigest } : {}),
-      ...(input.authority.environmentLayoutDigest ? { environmentLayoutDigest: input.authority.environmentLayoutDigest } : {}),
-      referenceDigests: stableUnique(input.authority.referenceDigests ?? []),
-      invariants: stableUnique(styleInvariants(input.profile)),
-      forbiddenDrift: stableUnique(input.profile.prohibitions),
-    },
+    style: commonStyle(input.profile, input.authority),
     artDirection: stableUnique([
       input.profile.scene.stageLane,
       input.profile.scene.depthDoctrine,
@@ -134,11 +145,48 @@ export const compileStaticAdventureCreativeWorkOrder = (
     ]),
     reviewChecklist: stableUnique([...(commonReview(input.profile)), ...(input.reviewChecklist ?? [])]),
     rejectionRules: stableUnique([...(commonRejections(input.profile)), ...(input.rejectionRules ?? [])]),
-    iterationPolicy: {
-      maximumRevisionPasses: 6,
-      compareAgainstPreviousApproved: input.revision > 1,
-      requireIssueClosureEvidence: true,
-    },
+    iterationPolicy: commonIteration(input.revision),
+    transparencyPolicy: transparencyPolicy(input.alphaPolicy),
+  });
+
+export const compileCharacterAdventureCreativeWorkOrder = (
+  input: AdventureCharacterCreativeWorkOrderInput,
+): AdventureCreativeWorkOrderV2 =>
+  assertValid({
+    contractVersion: 2,
+    workOrderId: input.workOrderId,
+    projectId: input.projectId,
+    assetId: input.assetId,
+    destinationStudio: "cel-animation-studio",
+    taskKind: input.taskKind,
+    revision: input.revision,
+    ...(input.replacesRevision !== undefined ? { replacesRevision: input.replacesRevision } : {}),
+    sourceRevisionDigest: input.authority.sourceRevisionDigest,
+    nativeSize: input.nativeSize,
+    alphaPolicy: input.alphaPolicy,
+    preserveNativeCanvas: true,
+    style: commonStyle(input.profile, input.authority, [
+      input.profile.actors.performanceDoctrine,
+      input.profile.actors.portraitTreatment,
+    ]),
+    artDirection: stableUnique([
+      `${input.characterName}: ${input.profile.actors.silhouette}`,
+      input.profile.actors.costumeDoctrine,
+      input.profile.actors.performanceDoctrine,
+      ...(input.artDirection ?? []),
+    ]),
+    reviewChecklist: stableUnique([
+      ...commonReview(input.profile),
+      "Check front/profile/three-quarter construction against one shared head/body proportion system before animation exposure.",
+      "Check hands, footwear, costume seams, hair masses and facial landmarks as reusable construction anchors rather than decorative details.",
+      ...(input.reviewChecklist ?? []),
+    ]),
+    rejectionRules: stableUnique([
+      ...commonRejections(input.profile),
+      "Reject view-to-view identity, proportion, costume or facial-construction drift before any animation is approved.",
+      ...(input.rejectionRules ?? []),
+    ]),
+    iterationPolicy: commonIteration(input.revision),
     transparencyPolicy: transparencyPolicy(input.alphaPolicy),
   });
 
@@ -205,22 +253,10 @@ export const compileAnimationAdventureCreativeWorkOrder = (
     nativeSize: input.nativeSize,
     alphaPolicy: input.alphaPolicy,
     preserveNativeCanvas: true,
-    style: {
-      profileId: input.profile.id,
-      styleDigest: input.authority.styleDigest,
-      ...(input.authority.paletteDigest ? { paletteDigest: input.authority.paletteDigest } : {}),
-      modelSheetDigest: input.authority.modelSheetDigest,
-      referenceDigests: stableUnique(input.authority.referenceDigests ?? []),
-      invariants: stableUnique([
-        ...styleInvariants(input.profile),
-        input.profile.actors.performanceDoctrine,
-        input.profile.animation.transitionDoctrine,
-      ]),
-      forbiddenDrift: stableUnique([
-        ...input.profile.prohibitions,
-        "Do not regenerate frames independently; preserve identity, costume construction, body mass and line treatment across immediate neighbours.",
-      ]),
-    },
+    style: commonStyle(input.profile, input.authority, [
+      input.profile.actors.performanceDoctrine,
+      input.profile.animation.transitionDoctrine,
+    ]),
     framePlan,
     loop: clip.loop,
     artDirection: stableUnique([
@@ -243,11 +279,7 @@ export const compileAnimationAdventureCreativeWorkOrder = (
       "Reject foot skating, pivot drift, body-mass drift, face/costume redesign or inconsistent cel line/colour between neighbouring drawings.",
       ...(input.rejectionRules ?? []),
     ]),
-    iterationPolicy: {
-      maximumRevisionPasses: 6,
-      compareAgainstPreviousApproved: input.revision > 1,
-      requireIssueClosureEvidence: true,
-    },
+    iterationPolicy: commonIteration(input.revision),
     transparencyPolicy: transparencyPolicy(input.alphaPolicy),
     sequencePolicy: {
       independentFrameGenerationForbidden: true,
