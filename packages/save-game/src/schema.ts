@@ -16,6 +16,7 @@ import {
 import type { RuntimeRoomScriptState } from "@evavo/adventure-scene-runtime/room-scripts";
 import type { AdventureRouteTopologyState } from "@evavo/adventure-scene-runtime/route-topology";
 import type { AdventureRpgState } from "@evavo/adventure-scene-runtime/rpg";
+import type { SpecializedAdventureModeSessionState } from "@evavo/adventure-scene-runtime/specialized-mode-session";
 import { z } from "zod";
 import { saveGameInvestigationStateSchema } from "./investigation.js";
 import {
@@ -34,6 +35,7 @@ import {
   type SaveGameSentenceState,
   saveGameSentenceStateSchema,
 } from "./sentence.js";
+import { saveGameSpecializedModeSessionStateSchema } from "./specialized-modes.js";
 
 const fnvFingerprintSchema = z
   .string()
@@ -276,6 +278,7 @@ export interface SaveGamePayload {
   readonly roomScripts?: RuntimeRoomScriptState;
   readonly routeTopology?: AdventureRouteTopologyState;
   readonly rpg?: AdventureRpgState;
+  readonly specializedModes?: SpecializedAdventureModeSessionState;
 }
 
 const saveGamePayloadObjectSchema = z
@@ -293,6 +296,7 @@ const saveGamePayloadObjectSchema = z
     roomScripts: saveGameRoomScriptStateSchema.optional(),
     routeTopology: saveGameRouteTopologyStateSchema.optional(),
     rpg: saveGameAdventureRpgStateSchema.optional(),
+    specializedModes: saveGameSpecializedModeSessionStateSchema.optional(),
   })
   .strict();
 
