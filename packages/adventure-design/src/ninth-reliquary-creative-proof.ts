@@ -18,38 +18,43 @@ const profile = (): AdventureProductionProfile => {
   return match;
 };
 
+type WalkRole = "contact" | "passing" | "breakdown";
+
 const walkFrame = (
   index: number,
-  role: "contact" | "passing" | "extreme",
+  role: WalkRole,
+  exposureTicks: number,
   handX: number,
   event?: string,
 ) => ({
-  id: id<"sprite-frame">(`frame.ninth-reliquary.mara.walk-east.${String(index + 1).padStart(2, "0")}`),
-  assetId: id<"asset">("asset.ninth-reliquary.mara.walk-east"),
-  sourceRect: { x: index * 32, y: 0, width: 32, height: 64 },
-  sourceSize: { width: 32, height: 64 },
+  id: id<"sprite-frame">(`walk-east.${String(index + 1).padStart(2, "0")}`),
+  assetId: id<"asset">("asset.ninth-reliquary.protagonist.walk-east"),
+  sourceRect: { x: index * 96, y: 0, width: 96, height: 192 },
+  sourceSize: { width: 96, height: 192 },
   trimOffset: { x: 0, y: 0 },
-  pivot: { x: 16, y: 62 },
-  footPoint: { x: 16, y: 62 },
-  shadowAnchor: { x: 16, y: 61 },
+  pivot: { x: 48, y: 178 },
+  footPoint: { x: 48, y: 178 },
+  shadowAnchor: { x: 48, y: 180 },
   attachmentPoints: {
-    hand: { x: handX, y: 37 },
+    hand: { x: handX, y: 88 },
   },
-  durationTicks: 3,
+  durationTicks: exposureTicks,
   ...(event ? { events: [event] } : {}),
   mirrorEligible: true,
   role,
 });
 
 const frames = [
-  walkFrame(0, "contact", 21, "footfall-left"),
-  walkFrame(1, "passing", 20),
-  walkFrame(2, "extreme", 18),
-  walkFrame(3, "passing", 14),
-  walkFrame(4, "contact", 11, "footfall-right"),
-  walkFrame(5, "passing", 12),
-  walkFrame(6, "extreme", 15),
-  walkFrame(7, "passing", 19),
+  walkFrame(0, "contact", 3, 56, "footfall-left"),
+  walkFrame(1, "breakdown", 2, 55),
+  walkFrame(2, "passing", 2, 53),
+  walkFrame(3, "breakdown", 2, 50),
+  walkFrame(4, "contact", 3, 44, "footfall-right"),
+  walkFrame(5, "breakdown", 2, 42),
+  walkFrame(6, "passing", 2, 44),
+  walkFrame(7, "breakdown", 2, 49),
+  walkFrame(8, "contact", 3, 54, "footfall-left"),
+  walkFrame(9, "breakdown", 2, 57),
 ] as const;
 
 export const ninthReliquaryMaraActor: Actor = {
@@ -120,12 +125,12 @@ export const compileNinthReliquaryCreativeProofWorkOrders = (
       ],
     }),
     maraWalkEast: compileAnimationAdventureCreativeWorkOrder({
-      workOrderId: `creative.ninth-reliquary.mara.walk-east.r${revision}`,
+      workOrderId: `creative.ninth-reliquary.protagonist.walk-east.r${revision}`,
       projectId: "project.ninth-reliquary-proof",
-      assetId: "asset.ninth-reliquary.mara.walk-east",
+      assetId: "asset.ninth-reliquary.protagonist.walk-east",
       revision,
       ...(revision > 1 ? { replacesRevision: revision - 1 } : {}),
-      nativeSize: { width: 256, height: 64 },
+      nativeSize: { width: 960, height: 192 },
       alphaPolicy: "required",
       profile: productionProfile,
       actor: ninthReliquaryMaraActor,
@@ -139,10 +144,10 @@ export const compileNinthReliquaryCreativeProofWorkOrders = (
       artDirection: [
         "Mara is an original restoration researcher: observant, practical and physically grounded; modern cel/anime-adjacent construction without generic anime facial shorthand.",
         "Keep jacket seams, hair mass, nose/eye construction, limb lengths and hand scale locked to the approved model sheet.",
-        "Animate a deliberate grounded walk with clear planted contacts and restrained vertical bob appropriate to a cinematic investigation game.",
+        "Animate a deliberate grounded ten-drawing walk with clear planted contacts and restrained vertical bob appropriate to a cinematic investigation game.",
       ],
       reviewChecklist: [
-        "Flip frames at exact 3-tick exposure and verify the body does not pulse in width/height between drawings.",
+        "Flip the ten drawings at their exact approved 2/3-tick exposures and verify the body does not pulse in width/height between drawings.",
         "Review the strip on black, white, grey, green and magenta hostile backgrounds to prove real alpha and clean edge colour.",
       ],
       rejectionRules: [
