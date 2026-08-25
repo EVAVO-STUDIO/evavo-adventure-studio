@@ -42,31 +42,34 @@ describe("Adventure creative handoff compiler", () => {
     expect(proof.background.rejectionRules.join(" ")).toMatch(/generic anime|checkerboard|signage/iu);
   });
 
-  it("derives the exact eight-frame walk contract from runtime actor frames", () => {
+  it("derives the canonical ten-drawing walk contract from runtime actor frames", () => {
     const proof = compileNinthReliquaryCreativeProofWorkOrders(authority);
     const order = proof.maraWalkEast;
     expect(order.destinationStudio).toBe("cel-animation-studio");
     expect(order.taskKind).toBe("animation-sequence");
-    expect(order.framePlan).toHaveLength(8);
+    expect(order.nativeSize).toEqual({ width: 960, height: 192 });
+    expect(order.framePlan).toHaveLength(10);
     expect(order.framePlan?.map((frame) => frame.frameId)).toEqual(
       ninthReliquaryMaraActor.animations[0]?.frameIds,
     );
-    expect(order.framePlan?.map((frame) => frame.exposureTicks)).toEqual(new Array(8).fill(3));
+    expect(order.framePlan?.map((frame) => frame.exposureTicks)).toEqual([
+      3, 2, 2, 2, 3, 2, 2, 2, 3, 2,
+    ]);
     expect(order.framePlan?.[0]).toMatchObject({
       role: "contact",
-      sourceRect: { x: 0, y: 0, width: 32, height: 64 },
-      pivot: { x: 16, y: 62 },
-      footPoint: { x: 16, y: 62 },
-      shadowAnchor: { x: 16, y: 61 },
-      handAnchor: { x: 21, y: 37 },
+      sourceRect: { x: 0, y: 0, width: 96, height: 192 },
+      pivot: { x: 48, y: 178 },
+      footPoint: { x: 48, y: 178 },
+      shadowAnchor: { x: 48, y: 180 },
+      handAnchor: { x: 56, y: 88 },
     });
     expect(order.framePlan?.[0]?.requiredNeighbourFrameIds).toEqual([
-      "frame.ninth-reliquary.mara.walk-east.02",
-      "frame.ninth-reliquary.mara.walk-east.08",
+      "walk-east.02",
+      "walk-east.10",
     ]);
-    expect(order.framePlan?.[7]?.requiredNeighbourFrameIds).toEqual([
-      "frame.ninth-reliquary.mara.walk-east.01",
-      "frame.ninth-reliquary.mara.walk-east.07",
+    expect(order.framePlan?.[9]?.requiredNeighbourFrameIds).toEqual([
+      "walk-east.01",
+      "walk-east.09",
     ]);
     expect(order.sequencePolicy).toMatchObject({
       independentFrameGenerationForbidden: true,
@@ -94,9 +97,9 @@ describe("Adventure creative handoff compiler", () => {
     const animationOrder = compileAnimationAdventureCreativeWorkOrder({
       workOrderId: "creative.test.walk.r1",
       projectId: "project.test",
-      assetId: "asset.ninth-reliquary.mara.walk-east",
+      assetId: "asset.ninth-reliquary.protagonist.walk-east",
       revision: 1,
-      nativeSize: { width: 256, height: 64 },
+      nativeSize: { width: 960, height: 192 },
       alphaPolicy: "required",
       profile,
       actor: ninthReliquaryMaraActor,
