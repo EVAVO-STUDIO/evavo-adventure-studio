@@ -10,10 +10,8 @@ import {
   evaluateAdventureCreativePlanReadinessV3,
   type AdventureCreativePlanSessionV3,
 } from "./creative-production-session-v3.js";
-import {
-  createNinthReliquaryProductionPlan,
-  type IllustratedConspiracyProductionAuthority,
-} from "./illustrated-conspiracy-production.js";
+import type { IllustratedConspiracyProductionAuthority } from "./illustrated-conspiracy-production.js";
+import { createExpandedNinthReliquaryProductionPlan } from "./ninth-reliquary-expanded-production.js";
 import {
   evaluateNinthReliquaryFullGameReadiness,
   type AdventureOriginalProofReadiness,
@@ -41,7 +39,7 @@ export interface NinthReliquaryStrictProductionV3Readiness extends NinthReliquar
 export const createNinthReliquaryCreativeProductionSessionV3 = (
   authorityByAsset: Readonly<Record<string, IllustratedConspiracyProductionAuthority>>,
 ): AdventureCreativePlanSessionV3 =>
-  createAdventureCreativePlanSessionV3(createNinthReliquaryProductionPlan(authorityByAsset));
+  createAdventureCreativePlanSessionV3(createExpandedNinthReliquaryProductionPlan(authorityByAsset));
 
 export const evaluateNinthReliquaryProductionV3Readiness = (
   plan: AdventureCreativePlanSessionV3,
