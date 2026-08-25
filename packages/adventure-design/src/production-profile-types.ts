@@ -18,6 +18,7 @@ export type AdventureProductionProfileId =
   | "verb-panel-cartoon-vga"
   | "pulp-archaeology-vga"
   | "cinematic-pulp-vga"
+  | "cinematic-handdrawn-conspiracy"
   | "neo-noir-lowres";
 
 export type AdventureProductionFamily =
@@ -31,6 +32,7 @@ export type AdventureProductionFamily =
   | "verb-panel-comedy"
   | "verb-panel-pulp"
   | "cinematic-pulp"
+  | "cinematic-handdrawn"
   | "minimal-noir";
 
 export type AdventureInterfaceFamily =
