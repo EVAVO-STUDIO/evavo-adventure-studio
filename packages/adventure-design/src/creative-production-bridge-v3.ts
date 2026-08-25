@@ -3,7 +3,7 @@ import type {
   AdventureCreativeTaskKindV3,
   AdventureCreativeWorkOrderV3,
 } from "./creative-production-handoff-v3.js";
-import { validateAdventureCreativeWorkOrderV3 } from "./creative-production-handoff-v3.js";
+import { validateAdventureCreativeRepairSafetyV3 } from "./creative-production-repair-safety-v3.js";
 
 const artTaskKinds = new Set<AdventureCreativeTaskKindV3>([
   "background-layout",
@@ -86,8 +86,10 @@ const alphaAdmission = (order: AdventureCreativeWorkOrderV3): AdventureArtStudio
 };
 
 const assertValid = (order: AdventureCreativeWorkOrderV3): void => {
-  const issues = validateAdventureCreativeWorkOrderV3(order);
-  if (issues.length > 0) throw new Error(`Cannot bridge invalid creative work order: ${issues.map((issue) => issue.message).join(" ")}`);
+  const issues = validateAdventureCreativeRepairSafetyV3(order);
+  if (issues.length > 0) {
+    throw new Error(`Cannot bridge invalid creative work order: ${issues.map((issue) => issue.message).join(" ")}`);
+  }
 };
 
 export const compileArtStudioProductionRequestV3 = (
