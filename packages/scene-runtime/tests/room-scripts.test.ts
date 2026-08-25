@@ -151,4 +151,60 @@ describe("room scripts", () => {
     expect(result.world.story.currentSceneId).toBe("scene.cutaway");
     expect(result.state.activeCutaway).toBeNull();
   });
+
+  it("fires a cyclic ambient script exactly once per authored room-time interval", () => {
+    const ambientBundle = {
+      ...bundle,
+      roomScripts: {
+        manifestVersion: 1,
+        projectId: "project.cutaway",
+        scripts: [
+          {
+            id: "room-script.room.waiter-cycle",
+            sceneId: "scene.room",
+            trigger: { kind: "room-tick-cycle", startTick: 2, intervalTicks: 5 },
+            once: false,
+            actions: [{ kind: "set-flag", flag: "waiterMoved", value: true }],
+          },
+        ],
+      },
+    } as RuntimeBundle;
+    let world = baseWorld;
+    let state = createRuntimeRoomScriptState(world);
+
+    let result = advanceRuntimeRoomScripts(ambientBundle, world, state);
+    state = result.state;
+    expect(result.events).toHaveLength(0);
+
+    world = { ...world, story: { ...world.story, tick: 2 } } as never;
+    result = advanceRuntimeRoomScripts(ambientBundle, world, state);
+    state = result.state;
+    expect(result.events).toEqual(
+      expect.arrayContaining([
+        expect.objectContaining({
+          kind: "room-script-cycle-fired",
+          scriptId: "room-script.room.waiter-cycle",
+          cycleIndex: 0,
+        }),
+      ]),
+    );
+    expect(state.lastFiredCycleByScriptId["room-script.room.waiter-cycle"]).toBe(0);
+
+    result = advanceRuntimeRoomScripts(ambientBundle, result.world, state);
+    state = result.state;
+    expect(result.events).toHaveLength(0);
+
+    world = { ...result.world, story: { ...result.world.story, tick: 6 } } as never;
+    result = advanceRuntimeRoomScripts(ambientBundle, world, state);
+    state = result.state;
+    expect(result.events).toHaveLength(0);
+
+    world = { ...result.world, story: { ...result.world.story, tick: 7 } } as never;
+    result = advanceRuntimeRoomScripts(ambientBundle, world, state);
+    expect(result.events).toEqual(
+      expect.arrayContaining([
+        expect.objectContaining({ kind: "room-script-cycle-fired", cycleIndex: 1 }),
+      ]),
+    );
+  });
 });
