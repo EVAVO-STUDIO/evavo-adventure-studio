@@ -15,6 +15,7 @@
     "./investigation": { "types": "./dist/src/investigation.d.ts", "import": "./dist/src/investigation.js" },
     "./production-profiles": { "types": "./dist/src/production-profiles.d.ts", "import": "./dist/src/production-profiles.js" },
     "./production-showcases": { "types": "./dist/src/production-showcases.d.ts", "import": "./dist/src/production-showcases.js" },
+    "./creative-production": { "types": "./dist/src/creative-production.d.ts", "import": "./dist/src/creative-production.js" },
     "./reference-fidelity": { "types": "./dist/src/reference-fidelity.d.ts", "import": "./dist/src/reference-fidelity.js" },
     "./classic-design-repair": { "types": "./dist/src/classic-design-repair.d.ts", "import": "./dist/src/classic-design-repair.js" },
     "./reference-proof-lanes": { "types": "./dist/src/reference-proof-lanes.d.ts", "import": "./dist/src/reference-proof-lanes.js" },
