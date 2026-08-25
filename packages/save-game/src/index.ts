@@ -16,6 +16,8 @@ export * from "./route-topology-compatibility.js";
 export * from "./route-topology.js";
 export * from "./rpg-compatibility.js";
 export * from "./rpg.js";
+export * from "./rpg-economy-compatibility.js";
+export * from "./rpg-economy.js";
 export * from "./sentence-compatibility.js";
 export * from "./sentence.js";
 export * from "./specialized-mode-compatibility.js";
