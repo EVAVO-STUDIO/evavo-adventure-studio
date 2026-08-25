@@ -3,10 +3,8 @@ import type {
   PackagedRuntimeController,
   PackagedRuntimeControllerOptions,
 } from "./packaged-controller.js";
-import {
-  createMultiProtagonistPackagedRuntimeControllerWithFactory,
-  type MultiProtagonistPackagedRuntimeController,
-} from "./multi-protagonist-controller.js";
+import type { MultiProtagonistPackagedRuntimeController } from "./multi-protagonist-controller.js";
+import { createMultiProtagonistSwitcherPackagedRuntimeControllerWithFactory } from "./multi-protagonist-switcher-controller.js";
 import { createRoomScriptPackagedRuntimeControllerWithFactory } from "./room-script-controller.js";
 import {
   createAdventureRoutePackagedRuntimeControllerWithFactory,
@@ -119,7 +117,7 @@ const rpgFactory = (inner: PackagedSessionControllerFactory): PackagedSessionCon
 const multiProtagonistFactory = (inner: PackagedSessionControllerFactory): PackagedSessionControllerFactory =>
   (bundle, options = {}) => {
     const { requestedActorInstanceId: _ignored, ...multiOptions } = options;
-    return createMultiProtagonistPackagedRuntimeControllerWithFactory(bundle, multiOptions, inner);
+    return createMultiProtagonistSwitcherPackagedRuntimeControllerWithFactory(bundle, multiOptions, inner);
   };
 
 const routeFactory = (inner: PackagedSessionControllerFactory): PackagedSessionControllerFactory =>
