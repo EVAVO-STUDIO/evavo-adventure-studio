@@ -14,7 +14,6 @@ import { pointInPolygon } from "@evavo/adventure-scene";
 import type { InteractiveRuntimeWorldState } from "./commands.js";
 
 export type SpecializedAdventureModeKind =
-  | "travel-map"
   | "vehicle"
   | "action"
   | "quick-response"
