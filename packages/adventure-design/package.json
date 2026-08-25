@@ -19,6 +19,7 @@
     "./creative-handoff-v2": { "types": "./dist/src/creative-handoff-v2.d.ts", "import": "./dist/src/creative-handoff-v2.js" },
     "./creative-handoff-v3": { "types": "./dist/src/creative-production-handoff-v3.d.ts", "import": "./dist/src/creative-production-handoff-v3.js" },
     "./creative-production-bridge-v3": { "types": "./dist/src/creative-production-bridge-v3.d.ts", "import": "./dist/src/creative-production-bridge-v3.js" },
+    "./creative-production-orchestrator-v3": { "types": "./dist/src/creative-production-orchestrator-v3.d.ts", "import": "./dist/src/creative-production-orchestrator-v3.js" },
     "./creative-handoff-compiler": { "types": "./dist/src/creative-handoff-compiler.d.ts", "import": "./dist/src/creative-handoff-compiler.js" },
     "./creative-handoff-acceptance": { "types": "./dist/src/creative-handoff-acceptance.d.ts", "import": "./dist/src/creative-handoff-acceptance.js" },
     "./creative-production-quality-v3": { "types": "./dist/src/creative-production-quality-v3.d.ts", "import": "./dist/src/creative-production-quality-v3.js" },
