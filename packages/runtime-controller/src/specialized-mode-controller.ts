@@ -14,6 +14,7 @@ import {
 } from "@evavo/adventure-scene-runtime/specialized-mode-session";
 import { nativeScreenPointToWorld } from "./input.js";
 import type { PackagedRuntimeControllerOptions } from "./packaged-controller.js";
+import { featureSaveCompanionOptions } from "./save-companions.js";
 import {
   createBasePackagedSessionController,
   type PackagedSessionController,
@@ -25,18 +26,6 @@ export interface SpecializedModePackagedRuntimeController extends PackagedSessio
   activeSpecializedModeId(): string | null;
   startSpecializedMode(modeId: string): void;
 }
-
-const preserveCompanions = (save: SaveGame) => ({
-  ...(save.interface.profiledCamera ? { profiledCamera: save.interface.profiledCamera } : {}),
-  ...(save.interface.sentence ? { sentence: save.interface.sentence } : {}),
-  ...(save.audio ? { audio: save.audio } : {}),
-  ...(save.investigation ? { investigation: save.investigation } : {}),
-  ...(save.itemCombinations ? { itemCombinations: save.itemCombinations } : {}),
-  ...(save.multiProtagonist ? { multiProtagonist: save.multiProtagonist } : {}),
-  ...(save.roomScripts ? { roomScripts: save.roomScripts } : {}),
-  ...(save.routeTopology ? { routeTopology: save.routeTopology } : {}),
-  ...(save.rpg ? { rpg: save.rpg } : {}),
-});
 
 export const createSpecializedModePackagedRuntimeControllerWithFactory = (
   bundle: RuntimeBundle,
@@ -59,7 +48,7 @@ export const createSpecializedModePackagedRuntimeControllerWithFactory = (
       selectedItemId: baseSave.interface.selectedItemId,
       statusText: baseSave.interface.statusText,
       parser: baseSave.interface.parser,
-      ...preserveCompanions(baseSave),
+      ...featureSaveCompanionOptions(baseSave),
       specializedModes: specialized,
     });
     controller.restoreSaveGame(save);
@@ -128,7 +117,7 @@ export const createSpecializedModePackagedRuntimeControllerWithFactory = (
       selectedItemId: baseSave.interface.selectedItemId,
       statusText: baseSave.interface.statusText,
       parser: baseSave.interface.parser,
-      ...preserveCompanions(baseSave),
+      ...featureSaveCompanionOptions(baseSave),
       specializedModes: specialized,
     });
   };
