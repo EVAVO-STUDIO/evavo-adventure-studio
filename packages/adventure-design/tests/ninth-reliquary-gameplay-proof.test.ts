@@ -20,13 +20,10 @@ const authorities = {
 };
 
 describe("The Ninth Reliquary whole-game proof", () => {
-  it("covers three acts and twelve distinct gameplay scene archetypes/stress scenes", () => {
+  it("covers three acts and twelve gameplay stress scenes across the required archetypes", () => {
     expect(ninthReliquaryGameplayProof.acts).toHaveLength(3);
     expect(ninthReliquaryGameplayProof.scenes).toHaveLength(12);
     expect(validateNinthReliquaryGameplayProof()).toEqual([]);
-    expect(new Set(ninthReliquaryGameplayProof.scenes.map((scene) => scene.archetype))).toEqual(
-      expect.objectContaining ? expect.any(Set) : new Set(),
-    );
     expect(ninthReliquaryGameplayProof.scenes.map((scene) => scene.archetype)).toEqual(
       expect.arrayContaining([
         "scrolling-exterior",
