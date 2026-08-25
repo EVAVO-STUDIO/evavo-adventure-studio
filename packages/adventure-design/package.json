@@ -4,102 +4,34 @@
   "private": true,
   "type": "module",
   "exports": {
-    ".": {
-      "types": "./dist/src/index.d.ts",
-      "import": "./dist/src/index.js"
-    },
-    "./editor": {
-      "types": "./dist/src/editor.d.ts",
-      "import": "./dist/src/editor.js"
-    },
-    "./showcases": {
-      "types": "./dist/src/showcases.d.ts",
-      "import": "./dist/src/showcases.js"
-    },
-    "./authenticity": {
-      "types": "./dist/src/authenticity.d.ts",
-      "import": "./dist/src/authenticity.js"
-    },
-    "./compiled-evidence": {
-      "types": "./dist/src/compiled-evidence.d.ts",
-      "import": "./dist/src/compiled-evidence.js"
-    },
-    "./scene-readability": {
-      "types": "./dist/src/scene-readability.d.ts",
-      "import": "./dist/src/scene-readability.js"
-    },
-    "./scene-staging": {
-      "types": "./dist/src/scene-staging.d.ts",
-      "import": "./dist/src/scene-staging.js"
-    },
-    "./progression": {
-      "types": "./dist/src/progression.d.ts",
-      "import": "./dist/src/progression.js"
-    },
-    "./investigation": {
-      "types": "./dist/src/investigation.d.ts",
-      "import": "./dist/src/investigation.js"
-    },
-    "./production-profiles": {
-      "types": "./dist/src/production-profiles.d.ts",
-      "import": "./dist/src/production-profiles.js"
-    },
-    "./production-showcases": {
-      "types": "./dist/src/production-showcases.d.ts",
-      "import": "./dist/src/production-showcases.js"
-    },
-    "./reference-fidelity": {
-      "types": "./dist/src/reference-fidelity.d.ts",
-      "import": "./dist/src/reference-fidelity.js"
-    },
-    "./classic-design-repair": {
-      "types": "./dist/src/classic-design-repair.d.ts",
-      "import": "./dist/src/classic-design-repair.js"
-    },
-    "./reference-proof-lanes": {
-      "types": "./dist/src/reference-proof-lanes.d.ts",
-      "import": "./dist/src/reference-proof-lanes.js"
-    },
-    "./reference-proof-readiness": {
-      "types": "./dist/src/reference-proof-readiness.d.ts",
-      "import": "./dist/src/reference-proof-readiness.js"
-    },
-    "./full-game-capabilities": {
-      "types": "./dist/src/full-game-capabilities.d.ts",
-      "import": "./dist/src/full-game-capabilities.js"
-    },
-    "./full-game-reference-policy": {
-      "types": "./dist/src/full-game-reference-policy.d.ts",
-      "import": "./dist/src/full-game-reference-policy.js"
-    },
-    "./scene-archetypes": {
-      "types": "./dist/src/scene-archetypes.d.ts",
-      "import": "./dist/src/scene-archetypes.js"
-    },
-    "./full-game-upgrade-plan": {
-      "types": "./dist/src/full-game-upgrade-plan.d.ts",
-      "import": "./dist/src/full-game-upgrade-plan.js"
-    },
-    "./dynamix-cinematic": {
-      "types": "./dist/src/dynamix-cinematic.d.ts",
-      "import": "./dist/src/dynamix-cinematic.js"
-    },
-    "./classic-game-creator": {
-      "types": "./dist/src/classic-game-creator.d.ts",
-      "import": "./dist/src/classic-game-creator.js"
-    },
-    "./classic-experience": {
-      "types": "./dist/src/classic-experience.d.ts",
-      "import": "./dist/src/classic-experience.js"
-    },
-    "./red-ledger-runtime": {
-      "types": "./dist/src/red-ledger-runtime.d.ts",
-      "import": "./dist/src/red-ledger-runtime.js"
-    }
+    ".": { "types": "./dist/src/index.d.ts", "import": "./dist/src/index.js" },
+    "./editor": { "types": "./dist/src/editor.d.ts", "import": "./dist/src/editor.js" },
+    "./showcases": { "types": "./dist/src/showcases.d.ts", "import": "./dist/src/showcases.js" },
+    "./authenticity": { "types": "./dist/src/authenticity.d.ts", "import": "./dist/src/authenticity.js" },
+    "./compiled-evidence": { "types": "./dist/src/compiled-evidence.d.ts", "import": "./dist/src/compiled-evidence.js" },
+    "./scene-readability": { "types": "./dist/src/scene-readability.d.ts", "import": "./dist/src/scene-readability.js" },
+    "./scene-staging": { "types": "./dist/src/scene-staging.d.ts", "import": "./dist/src/scene-staging.js" },
+    "./progression": { "types": "./dist/src/progression.d.ts", "import": "./dist/src/progression.js" },
+    "./investigation": { "types": "./dist/src/investigation.d.ts", "import": "./dist/src/investigation.js" },
+    "./production-profiles": { "types": "./dist/src/production-profiles.d.ts", "import": "./dist/src/production-profiles.js" },
+    "./production-showcases": { "types": "./dist/src/production-showcases.d.ts", "import": "./dist/src/production-showcases.js" },
+    "./reference-fidelity": { "types": "./dist/src/reference-fidelity.d.ts", "import": "./dist/src/reference-fidelity.js" },
+    "./classic-design-repair": { "types": "./dist/src/classic-design-repair.d.ts", "import": "./dist/src/classic-design-repair.js" },
+    "./reference-proof-lanes": { "types": "./dist/src/reference-proof-lanes.d.ts", "import": "./dist/src/reference-proof-lanes.js" },
+    "./reference-proof-readiness": { "types": "./dist/src/reference-proof-readiness.d.ts", "import": "./dist/src/reference-proof-readiness.js" },
+    "./open-case-gameplay-proof": { "types": "./dist/src/open-case-gameplay-proof.d.ts", "import": "./dist/src/open-case-gameplay-proof.js" },
+    "./after-hours-gameplay-proof": { "types": "./dist/src/after-hours-gameplay-proof.d.ts", "import": "./dist/src/after-hours-gameplay-proof.js" },
+    "./cold-meridian-gameplay-proof": { "types": "./dist/src/cold-meridian-gameplay-proof.d.ts", "import": "./dist/src/cold-meridian-gameplay-proof.js" },
+    "./full-game-capabilities": { "types": "./dist/src/full-game-capabilities.d.ts", "import": "./dist/src/full-game-capabilities.js" },
+    "./full-game-reference-policy": { "types": "./dist/src/full-game-reference-policy.d.ts", "import": "./dist/src/full-game-reference-policy.js" },
+    "./scene-archetypes": { "types": "./dist/src/scene-archetypes.d.ts", "import": "./dist/src/scene-archetypes.js" },
+    "./full-game-upgrade-plan": { "types": "./dist/src/full-game-upgrade-plan.d.ts", "import": "./dist/src/full-game-upgrade-plan.js" },
+    "./dynamix-cinematic": { "types": "./dist/src/dynamix-cinematic.d.ts", "import": "./dist/src/dynamix-cinematic.js" },
+    "./classic-game-creator": { "types": "./dist/src/classic-game-creator.d.ts", "import": "./dist/src/classic-game-creator.js" },
+    "./classic-experience": { "types": "./dist/src/classic-experience.d.ts", "import": "./dist/src/classic-experience.js" },
+    "./red-ledger-runtime": { "types": "./dist/src/red-ledger-runtime.d.ts", "import": "./dist/src/red-ledger-runtime.js" }
   },
-  "files": [
-    "dist"
-  ],
+  "files": ["dist"],
   "scripts": {
     "build": "tsc -b",
     "typecheck": "tsc -b --pretty false"
