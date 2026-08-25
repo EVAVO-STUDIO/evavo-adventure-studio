@@ -11,6 +11,7 @@ export * from "./creative-production-session-v3.js";
 export * from "./creative-production-v3-migration.js";
 export * from "./dynamix-cinematic.js";
 export * from "./illustrated-conspiracy-production.js";
+export * from "./ninth-reliquary-cross-studio-readiness-v3.js";
 export * from "./ninth-reliquary-expanded-production.js";
 export * from "./original-full-game-proofs.js";
 export * from "./parse.js";
