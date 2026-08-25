@@ -3,6 +3,10 @@ import type {
   PackagedRuntimeController,
   PackagedRuntimeControllerOptions,
 } from "./packaged-controller.js";
+import {
+  createInvestigationPackagedSessionControllerWithFactory,
+  type InvestigationPackagedSessionController,
+} from "./investigation-session-controller.js";
 import type { MultiProtagonistPackagedRuntimeController } from "./multi-protagonist-controller.js";
 import { createMultiProtagonistSwitcherPackagedRuntimeControllerWithFactory } from "./multi-protagonist-switcher-controller.js";
 import { createRoomScriptPackagedRuntimeControllerWithFactory } from "./room-script-controller.js";
@@ -20,6 +24,18 @@ import {
   type PackagedSessionController,
   type PackagedSessionControllerFactory,
 } from "./session-controller.js";
+
+type OptionalInvestigationController = Partial<Pick<
+  InvestigationPackagedSessionController,
+  | "investigationState"
+  | "investigationChapterReadiness"
+  | "investigationPresence"
+  | "discoverInvestigationFacts"
+  | "useInvestigationResearchSource"
+  | "useInvestigationTopic"
+  | "setInvestigationFlag"
+  | "advanceInvestigationChapter"
+>>;
 
 type OptionalRpgController = Partial<Pick<
   AdventureRpgPackagedRuntimeController,
@@ -52,6 +68,7 @@ type OptionalRouteController = Partial<Pick<
 
 export interface PackagedFeatureSessionController
   extends PackagedSessionController,
+    OptionalInvestigationController,
     OptionalRpgController,
     OptionalRouteController {
   activeProtagonistId?(): ReturnType<MultiProtagonistPackagedRuntimeController["activeProtagonistId"]>;
@@ -61,6 +78,7 @@ export interface PackagedFeatureSessionController
 
 export interface PackagedFeatureRuntimeController
   extends PackagedRuntimeController,
+    OptionalInvestigationController,
     OptionalRpgController,
     OptionalRouteController {
   activeProtagonistId?(): ReturnType<MultiProtagonistPackagedRuntimeController["activeProtagonistId"]>;
@@ -71,6 +89,7 @@ export interface PackagedFeatureRuntimeController
 export interface PackagedFeatureSessionDescription {
   readonly sentence: boolean;
   readonly roomScripts: boolean;
+  readonly investigation: boolean;
   readonly rpg: boolean;
   readonly multiProtagonist: boolean;
   readonly routeTopology: boolean;
@@ -85,12 +104,14 @@ export const describePackagedFeatureSession = (
     bundle.uiSkins !== undefined &&
     bundle.bitmapFonts !== undefined;
   const roomScripts = bundle.roomScripts !== undefined;
+  const investigation = bundle.investigation !== undefined;
   const rpg = bundle.rpg !== undefined;
   const multiProtagonist = bundle.multiProtagonist !== undefined;
   const routeTopology = bundle.routeTopology !== undefined;
   return {
     sentence,
     roomScripts,
+    investigation,
     rpg,
     multiProtagonist,
     routeTopology,
@@ -98,6 +119,7 @@ export const describePackagedFeatureSession = (
       "base",
       ...(sentence ? ["sentence"] : []),
       ...(roomScripts ? ["room-scripts"] : []),
+      ...(investigation ? ["investigation"] : []),
       ...(rpg ? ["rpg"] : []),
       ...(multiProtagonist ? ["multi-protagonist"] : []),
       ...(routeTopology ? ["route-topology"] : []),
@@ -110,6 +132,10 @@ const sentenceFactory = (inner: PackagedSessionControllerFactory): PackagedSessi
 
 const roomScriptFactory = (inner: PackagedSessionControllerFactory): PackagedSessionControllerFactory =>
   (bundle, options = {}) => createRoomScriptPackagedRuntimeControllerWithFactory(bundle, options, inner);
+
+const investigationFactory = (inner: PackagedSessionControllerFactory): PackagedSessionControllerFactory =>
+  (bundle, options = {}) =>
+    createInvestigationPackagedSessionControllerWithFactory(bundle, options, inner);
 
 const rpgFactory = (inner: PackagedSessionControllerFactory): PackagedSessionControllerFactory =>
   (bundle, options = {}) => createAdventureRpgPackagedRuntimeControllerWithFactory(bundle, options, inner);
@@ -131,11 +157,56 @@ export const createPackagedFeatureSessionController = (
   let inner: PackagedSessionControllerFactory = createBasePackagedSessionController;
   if (description.sentence) inner = sentenceFactory(inner);
   if (description.roomScripts) inner = roomScriptFactory(inner);
+  if (description.investigation) inner = investigationFactory(inner);
   if (description.rpg) inner = rpgFactory(inner);
   if (description.multiProtagonist) inner = multiProtagonistFactory(inner);
   if (description.routeTopology) inner = routeFactory(inner);
   return inner(bundle, options) as PackagedFeatureSessionController;
 };
+
+const investigationFeatureApi = (
+  session: PackagedFeatureSessionController,
+): OptionalInvestigationController => ({
+  ...(session.investigationState
+    ? { investigationState: () => session.investigationState?.() ?? null }
+    : {}),
+  ...(session.investigationChapterReadiness
+    ? { investigationChapterReadiness: () => session.investigationChapterReadiness?.() ?? null }
+    : {}),
+  ...(session.investigationPresence
+    ? { investigationPresence: () => session.investigationPresence?.() ?? [] }
+    : {}),
+  ...(session.discoverInvestigationFacts
+    ? {
+        discoverInvestigationFacts: (factIds, discovery) =>
+          session.discoverInvestigationFacts?.(factIds, discovery) ?? null,
+      }
+    : {}),
+  ...(session.useInvestigationResearchSource
+    ? {
+        useInvestigationResearchSource: (sourceId) =>
+          session.useInvestigationResearchSource?.(sourceId) ?? null,
+      }
+    : {}),
+  ...(session.useInvestigationTopic
+    ? {
+        useInvestigationTopic: (topicId, speakerId) =>
+          session.useInvestigationTopic?.(topicId, speakerId) ?? null,
+      }
+    : {}),
+  ...(session.setInvestigationFlag
+    ? {
+        setInvestigationFlag: (flag, value) =>
+          session.setInvestigationFlag?.(flag, value) ?? null,
+      }
+    : {}),
+  ...(session.advanceInvestigationChapter
+    ? {
+        advanceInvestigationChapter: () =>
+          session.advanceInvestigationChapter?.() ?? null,
+      }
+    : {}),
+});
 
 const rpgFeatureApi = (session: PackagedFeatureSessionController): OptionalRpgController => ({
   ...(session.rpgState ? { rpgState: () => session.rpgState?.() as ReturnType<AdventureRpgPackagedRuntimeController["rpgState"]> } : {}),
@@ -188,6 +259,7 @@ export const createPackagedFeatureRuntimeController = (
     cameraState: () => session.cameraState(),
     parserState: () => session.parserState(),
     drainSceneAudioCueIds: () => session.drainSceneAudioCueIds(),
+    ...investigationFeatureApi(session),
     ...rpgFeatureApi(session),
     ...routeFeatureApi(session),
     ...(session.activeProtagonistId
