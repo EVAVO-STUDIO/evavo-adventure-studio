@@ -18,6 +18,8 @@
     "./creative-production": { "types": "./dist/src/creative-production.d.ts", "import": "./dist/src/creative-production.js" },
     "./creative-handoff-v2": { "types": "./dist/src/creative-handoff-v2.d.ts", "import": "./dist/src/creative-handoff-v2.js" },
     "./creative-handoff-compiler": { "types": "./dist/src/creative-handoff-compiler.d.ts", "import": "./dist/src/creative-handoff-compiler.js" },
+    "./creative-handoff-acceptance": { "types": "./dist/src/creative-handoff-acceptance.d.ts", "import": "./dist/src/creative-handoff-acceptance.js" },
+    "./ninth-reliquary-creative-proof": { "types": "./dist/src/ninth-reliquary-creative-proof.d.ts", "import": "./dist/src/ninth-reliquary-creative-proof.js" },
     "./reference-fidelity": { "types": "./dist/src/reference-fidelity.d.ts", "import": "./dist/src/reference-fidelity.js" },
     "./classic-design-repair": { "types": "./dist/src/classic-design-repair.d.ts", "import": "./dist/src/classic-design-repair.js" },
     "./reference-proof-lanes": { "types": "./dist/src/reference-proof-lanes.d.ts", "import": "./dist/src/reference-proof-lanes.js" },
