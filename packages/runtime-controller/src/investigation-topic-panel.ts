@@ -103,6 +103,11 @@ const activePanelDialogue = (
   return { panel, mapping, graph, view };
 };
 
+export const investigationTopicPanelDialogueActive = (
+  bundle: RuntimeBundle,
+  world: InteractiveRuntimeWorldState,
+): boolean => activePanelDialogue(bundle, world) !== null;
+
 export const validateInvestigationTopicPanelRuntime = (bundle: RuntimeBundle): void => {
   const panel = bundle.investigation?.topicPanel;
   if (!panel) return;
@@ -192,6 +197,18 @@ export const hitTestInvestigationTopicPanel = (
 ): RuntimeInvestigationTopicPanelEntry | null =>
   investigationTopicPanelEntries(bundle, world, investigation).find((entry) => contains(entry.rect, point)) ?? null;
 
+export const investigationTopicPanelOwnsPoint = (
+  bundle: RuntimeBundle,
+  world: InteractiveRuntimeWorldState,
+  point: Point,
+): boolean => {
+  const active = activePanelDialogue(bundle, world);
+  if (!active) return false;
+  if (contains(active.panel.region, point)) return true;
+  const skin = bundle.uiSkins ? uiSkinById(bundle.uiSkins) : null;
+  return skin?.dialogueChoices ? contains(skin.dialogueChoices.region.rect, point) : false;
+};
+
 const suppressGenericDialogueChoices = (frame: ResolvedFrame): ResolvedFrame => ({
   ...frame,
   nodes: frame.nodes.filter((node) => !String(node.id).startsWith("runtime.ui.dialogue")),
@@ -203,9 +220,11 @@ export const appendInvestigationTopicPanel = (
   world: InteractiveRuntimeWorldState,
   investigation: RuntimeInvestigationState | null,
 ): ResolvedFrame => {
-  const entries = investigationTopicPanelEntries(bundle, world, investigation);
-  if (entries.length === 0) return frame;
+  if (!investigationTopicPanelDialogueActive(bundle, world)) return frame;
   validateInvestigationTopicPanelRuntime(bundle);
+  const entries = investigationTopicPanelEntries(bundle, world, investigation);
+  const withoutChoices = suppressGenericDialogueChoices(frame);
+  if (entries.length === 0) return withoutChoices;
   const skin = uiSkinById(bundle.uiSkins!);
   const fontStyle = skin.fonts.dialogue ?? skin.fonts.status;
   const font = bundle.bitmapFonts!.fonts.find((candidate) => candidate.id === fontStyle.fontId);
@@ -247,6 +266,5 @@ export const appendInvestigationTopicPanel = (
     };
     nodes.push(text);
   }
-  const withoutChoices = suppressGenericDialogueChoices(frame);
   return { ...withoutChoices, nodes: [...withoutChoices.nodes, ...nodes] };
 };
