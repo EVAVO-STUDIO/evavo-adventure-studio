@@ -1,5 +1,11 @@
 import { describe, expect, it } from "vitest";
 import {
+  ADVENTURE_CREATIVE_CONFORMANCE_V3_FINGERPRINT,
+  adventureCreativeConformanceAnimationOrderV3,
+  adventureCreativeConformanceFingerprintV3,
+  adventureCreativeConformanceStaticOrderV3,
+} from "../src/creative-production-conformance-v3.js";
+import {
   nextAdventureCreativeRepairOrderV3,
   validateAdventureCreativeReviewV3,
   validateAdventureCreativeWorkOrderV3,
@@ -86,6 +92,14 @@ const order = (): AdventureCreativeWorkOrderV3 => ({
 });
 
 describe("creative production handoff v3", () => {
+  it("keeps the shared Art/Cel conformance vector stable and valid", () => {
+    expect(adventureCreativeConformanceFingerprintV3()).toBe(
+      ADVENTURE_CREATIVE_CONFORMANCE_V3_FINGERPRINT,
+    );
+    expect(validateAdventureCreativeWorkOrderV3(adventureCreativeConformanceStaticOrderV3)).toEqual([]);
+    expect(validateAdventureCreativeWorkOrderV3(adventureCreativeConformanceAnimationOrderV3)).toEqual([]);
+  });
+
   it("accepts a strict animation work order", () => {
     expect(validateAdventureCreativeWorkOrderV3(order())).toEqual([]);
   });
