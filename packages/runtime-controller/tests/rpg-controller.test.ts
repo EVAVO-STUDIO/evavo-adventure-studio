@@ -5,6 +5,10 @@ import type { PackagedSessionControllerFactory } from "../src/session-controller
 
 const bundle = {
   projectId: "project.rpg-controller",
+  inventoryItems: [
+    { id: "item.broadsword", name: "Broadsword", description: "A balanced steel sword." },
+    { id: "item.leather", name: "Leather armour", description: "Light protective armour." },
+  ],
   rpg: {
     manifestVersion: 1,
     projectId: "project.rpg-controller",
@@ -68,26 +72,112 @@ const bundle = {
         dodgePractice: 1,
       },
     ],
+    economy: {
+      manifestVersion: 1,
+      projectId: "project.rpg-controller",
+      currencies: [{ id: "silver", label: "Silver", startingBalance: 100 }],
+      equipmentSlots: [
+        { id: "weapon", label: "Weapon" },
+        { id: "body", label: "Body" },
+      ],
+      equipment: [
+        {
+          id: "equipment.broadsword",
+          itemId: "item.broadsword",
+          slotId: "weapon",
+          classTagsAny: ["martial"],
+          modifiers: { attack: 8 },
+        },
+        {
+          id: "equipment.leather",
+          itemId: "item.leather",
+          slotId: "body",
+          classTagsAny: [],
+          modifiers: { defense: 3 },
+        },
+      ],
+      shops: [
+        {
+          id: "shop.smith",
+          label: "Smith",
+          stock: [
+            {
+              itemId: "item.broadsword",
+              currencyId: "silver",
+              buyPrice: 40,
+              sellPrice: 20,
+              quantity: 1,
+            },
+            {
+              itemId: "item.leather",
+              currencyId: "silver",
+              buyPrice: 30,
+              sellPrice: 15,
+              quantity: null,
+            },
+          ],
+        },
+      ],
+    },
   },
 } as unknown as RuntimeBundle;
 
-const unusedFactory: PackagedSessionControllerFactory = () =>
-  ({
+const world = {
+  story: {
+    schemaVersion: 1,
+    projectId: "project.rpg-controller",
+    tick: 0,
+    currentSceneId: "scene.shop",
+    currentEntranceId: "entrance.shop",
+    flags: {},
+    variables: {},
+    inventory: [],
+    awardedScoreIds: [],
+    consumedInteractionIds: [],
+    consumedDialogueChoiceIds: [],
+    activeDialogue: null,
+    activeSequences: [],
+    objectStates: {},
+    randomStreams: { main: 1 },
+    score: 0,
+  },
+  actorInstances: {},
+  movements: {},
+  pendingObjectCommands: {},
+  activeInteractionChoreographies: {},
+  activeEntryChoreographies: {},
+};
+
+const unusedFactory: PackagedSessionControllerFactory = () => {
+  let currentWorld = world as never;
+  return {
     selection: { kind: "none", reason: "no-walkable-actor", candidates: [] } as never,
     controlledActorInstanceId: () => null,
-    worldState: () => ({}) as never,
+    worldState: () => currentWorld,
     createFrame: () => ({}) as never,
     setPointer: () => undefined,
     setPressed: () => undefined,
     activate: () => undefined,
     handleKey: () => false,
-    createSaveGame: () => ({}) as never,
-    restoreSaveGame: () => 0,
+    createSaveGame: () => ({
+      interface: {
+        controlledActorInstanceId: null,
+        selectedVerbId: null,
+        selectedItemId: null,
+        statusText: "",
+        parser: { text: "", history: [] },
+      },
+    }) as never,
+    restoreSaveGame: (save: unknown) => {
+      currentWorld = (save as { world: never }).world;
+      return 0;
+    },
     statusText: () => "",
     cameraState: () => null,
     parserState: () => ({ text: "", history: [] }) as never,
     drainSceneAudioCueIds: () => [],
-  });
+  };
+};
 
 describe("RPG packaged session controller", () => {
   it("supports class selection, practice, checks, time, resources and import snapshots", () => {
@@ -115,6 +205,36 @@ describe("RPG packaged session controller", () => {
     expect(controller.rpgState()).toMatchObject({ day: 2, minuteOfDay: 420 });
     expect(controller.rpgState().resources.stamina).toBe(80);
     expect(controller.createRpgImportSnapshot("proof-one", ["hero", "hero"]).tags).toEqual(["hero"]);
+  });
+
+  it("supports authored currency, finite stock and class-restricted equipment", () => {
+    const fighter = createAdventureRpgPackagedRuntimeControllerWithFactory(
+      bundle,
+      { rpgClassId: "fighter" },
+      unusedFactory,
+    );
+    expect(fighter.rpgEconomyState()?.balances.silver).toBe(100);
+    expect(fighter.buyRpgItem("shop.smith", "item.broadsword").kind).toBe("success");
+    expect(fighter.worldState().story.inventory).toContain("item.broadsword");
+    expect(fighter.rpgEconomyState()?.balances.silver).toBe(60);
+    expect(fighter.buyRpgItem("shop.smith", "item.broadsword")).toMatchObject({
+      kind: "failure",
+      reason: "out-of-stock",
+    });
+    expect(fighter.equipRpgItem("item.broadsword").kind).toBe("success");
+    expect(fighter.rpgEconomyState()?.equippedBySlot.weapon).toBe("item.broadsword");
+    expect(fighter.rpgEquipmentModifiers()).toEqual({ attack: 8 });
+
+    const thief = createAdventureRpgPackagedRuntimeControllerWithFactory(
+      bundle,
+      { rpgClassId: "thief" },
+      unusedFactory,
+    );
+    expect(thief.buyRpgItem("shop.smith", "item.broadsword").kind).toBe("success");
+    expect(thief.equipRpgItem("item.broadsword")).toMatchObject({
+      kind: "failure",
+      reason: "class-restricted",
+    });
   });
 
   it("runs authored combat by encounter id and treats active fights as save boundaries", () => {
