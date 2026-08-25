@@ -1,3 +1,4 @@
+import { chooseDialogueOption } from "@evavo/adventure-dialogue";
 import type { RuntimeBundle } from "@evavo/adventure-runtime-bundle";
 import {
   createSaveGame as createRuntimeSaveGame,
@@ -22,7 +23,13 @@ import {
   useRuntimeInvestigationResearchSource,
   useRuntimeInvestigationTopic,
 } from "@evavo/adventure-scene-runtime/investigation-runtime";
+import { applyRuntimeNarrativeRequestEvents } from "@evavo/adventure-scene-runtime/narrative";
 import { applyConsumedRuntimeInvestigationBindings } from "./investigation-bindings-runtime.js";
+import {
+  appendInvestigationTopicPanel,
+  hitTestInvestigationTopicPanel,
+  validateInvestigationTopicPanelRuntime,
+} from "./investigation-topic-panel.js";
 import type { PackagedRuntimeControllerOptions } from "./packaged-controller.js";
 import {
   createBasePackagedSessionController,
@@ -69,6 +76,7 @@ export const createInvestigationPackagedSessionControllerWithFactory = (
   options: PackagedRuntimeControllerOptions = {},
   innerFactory: PackagedSessionControllerFactory = createBasePackagedSessionController,
 ): InvestigationPackagedSessionController => {
+  validateInvestigationTopicPanelRuntime(bundle);
   const inner = innerFactory(bundle, options);
   let investigation = createRuntimeInvestigationState(bundle);
 
@@ -114,6 +122,21 @@ export const createInvestigationPackagedSessionControllerWithFactory = (
     });
   };
 
+  const restoreInnerWorld = (world: InteractiveRuntimeWorldState): void => {
+    const baseSave = inner.createSaveGame();
+    inner.restoreSaveGame(
+      createRuntimeSaveGame(bundle, world, {
+        controlledActorInstanceId: baseSave.interface.controlledActorInstanceId,
+        selectedVerbId: baseSave.interface.selectedVerbId,
+        selectedItemId: baseSave.interface.selectedItemId,
+        statusText: baseSave.interface.statusText,
+        parser: baseSave.interface.parser,
+        ...preservedCompanions(baseSave),
+        ...(investigation ? { investigation } : {}),
+      }),
+    );
+  };
+
   const restoreSaveGame = (input: unknown): number => {
     const save = loadRuntimeSaveGame(bundle, input);
     const tick = inner.restoreSaveGame(save);
@@ -121,7 +144,45 @@ export const createInvestigationPackagedSessionControllerWithFactory = (
     return tick;
   };
 
+  const executeTopicPanelChoice = (position: { readonly x: number; readonly y: number }): boolean => {
+    const selected = hitTestInvestigationTopicPanel(
+      bundle,
+      inner.worldState(),
+      investigation,
+      position,
+    );
+    if (!selected || !investigation) return false;
+    const graph = bundle.dialogues.find((dialogue) => dialogue.id === selected.dialogueId);
+    if (!graph) return true;
+    const previousWorld = inner.worldState();
+    const operation = chooseDialogueOption(
+      previousWorld.story,
+      graph,
+      selected.dialogueChoiceId,
+    );
+    if (operation.kind === "rejected") return true;
+    const narrative = applyRuntimeNarrativeRequestEvents(
+      bundle,
+      { ...previousWorld, story: operation.transition.state },
+      operation.transition.events,
+    );
+    const nextWorld = narrative.state as InteractiveRuntimeWorldState;
+    applyNewSemanticBindings(previousWorld, nextWorld);
+    investigation = withObjectiveAwards(
+      bundle,
+      useRuntimeInvestigationTopic(
+        bundle,
+        investigation,
+        selected.topicId,
+        selected.speakerId,
+      ),
+    );
+    restoreInnerWorld(nextWorld);
+    return true;
+  };
+
   const activate: PackagedSessionController["activate"] = (position) => {
+    if (executeTopicPanelChoice(position)) return;
     const previousWorld = inner.worldState();
     inner.activate(position);
     applyNewSemanticBindings(previousWorld, inner.worldState());
@@ -138,7 +199,12 @@ export const createInvestigationPackagedSessionControllerWithFactory = (
     const previousWorld = inner.worldState();
     const frame = inner.createFrame(tick);
     applyNewSemanticBindings(previousWorld, inner.worldState());
-    return frame;
+    return appendInvestigationTopicPanel(
+      frame,
+      bundle,
+      inner.worldState(),
+      investigation,
+    );
   };
 
   return {
