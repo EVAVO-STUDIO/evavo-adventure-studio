@@ -12,6 +12,8 @@
     "./profiled-camera": { "types": "./dist/src/profiled-camera.d.ts", "import": "./dist/src/profiled-camera.js" },
     "./investigation-controller": { "types": "./dist/src/investigation-controller.d.ts", "import": "./dist/src/investigation-controller.js" },
     "./multi-protagonist-controller": { "types": "./dist/src/multi-protagonist-controller.d.ts", "import": "./dist/src/multi-protagonist-controller.js" },
+    "./multi-protagonist-switcher-controller": { "types": "./dist/src/multi-protagonist-switcher-controller.d.ts", "import": "./dist/src/multi-protagonist-switcher-controller.js" },
+    "./protagonist-switcher": { "types": "./dist/src/protagonist-switcher.d.ts", "import": "./dist/src/protagonist-switcher.js" },
     "./multi-protagonist-projection": { "types": "./dist/src/multi-protagonist-projection.d.ts", "import": "./dist/src/multi-protagonist-projection.js" },
     "./multi-protagonist-actor": { "types": "./dist/src/multi-protagonist-actor.d.ts", "import": "./dist/src/multi-protagonist-actor.js" },
     "./sentence-controller": { "types": "./dist/src/sentence-controller.d.ts", "import": "./dist/src/sentence-controller.js" },
