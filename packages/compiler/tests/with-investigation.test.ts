@@ -69,10 +69,32 @@ const manifest = (): RuntimeInvestigationManifest => ({
       present: true,
     },
   ],
+  topicPanel: {
+    region: { x: 8, y: 150, width: 304, height: 42 },
+    gap: 1,
+    maximumVisibleTopics: 8,
+    dialogues: [
+      {
+        dialogueId: "dialogue.case.b" as never,
+        speakerId: "actor.case.b" as never,
+        responses: [
+          { topicId: "topic.case.b", dialogueChoiceId: "dialogue-choice.case.b" as never },
+          { topicId: "topic.case.a", dialogueChoiceId: "dialogue-choice.case.a" as never },
+        ],
+      },
+      {
+        dialogueId: "dialogue.case.a" as never,
+        speakerId: "actor.case.a" as never,
+        responses: [
+          { topicId: "topic.case.b", dialogueChoiceId: "dialogue-choice.case.ab" as never },
+        ],
+      },
+    ],
+  },
 });
 
 describe("investigation compiler attachment", () => {
-  it("canonicalises investigation arrays and nested references deterministically", () => {
+  it("canonicalises investigation arrays, panel mappings and nested references deterministically", () => {
     const first = canonicaliseRuntimeInvestigationManifest(manifest());
     const reversedInput = manifest();
     const second = canonicaliseRuntimeInvestigationManifest({
@@ -85,12 +107,29 @@ describe("investigation compiler attachment", () => {
         objectives: [...chapter.objectives].reverse(),
       })),
       presenceVariants: [...(reversedInput.presenceVariants ?? [])].reverse(),
+      topicPanel: reversedInput.topicPanel
+        ? {
+            ...reversedInput.topicPanel,
+            dialogues: [...reversedInput.topicPanel.dialogues].reverse().map((dialogue) => ({
+              ...dialogue,
+              responses: [...dialogue.responses].reverse(),
+            })),
+          }
+        : undefined,
     });
     expect(second).toEqual(first);
     expect(first.facts.map((entry) => entry.id)).toEqual(["fact.case.a", "fact.case.b"]);
     expect(first.chapters.map((entry) => entry.id)).toEqual([
       "chapter.case.day-1",
       "chapter.case.day-2",
+    ]);
+    expect(first.topicPanel?.dialogues.map((entry) => entry.dialogueId)).toEqual([
+      "dialogue.case.a",
+      "dialogue.case.b",
+    ]);
+    expect(first.topicPanel?.dialogues[1]?.responses.map((entry) => entry.topicId)).toEqual([
+      "topic.case.a",
+      "topic.case.b",
     ]);
   });
 
