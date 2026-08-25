@@ -26,6 +26,7 @@
     "./specialized-mode-session": { "types": "./dist/src/specialized-mode-session.d.ts", "import": "./dist/src/specialized-mode-session.js" },
     "./quick-response": { "types": "./dist/src/quick-response.d.ts", "import": "./dist/src/quick-response.js" },
     "./rpg": { "types": "./dist/src/rpg.d.ts", "import": "./dist/src/rpg.js" },
+    "./rpg-world": { "types": "./dist/src/rpg-world.d.ts", "import": "./dist/src/rpg-world.js" },
     "./rpg-projection": { "types": "./dist/src/rpg-projection.d.ts", "import": "./dist/src/rpg-projection.js" },
     "./rpg-puzzles": { "types": "./dist/src/rpg-puzzles.d.ts", "import": "./dist/src/rpg-puzzles.js" },
     "./rpg-combat": { "types": "./dist/src/rpg-combat.d.ts", "import": "./dist/src/rpg-combat.js" },
