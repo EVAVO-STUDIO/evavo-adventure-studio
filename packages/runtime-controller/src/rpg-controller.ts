@@ -1,5 +1,9 @@
 import type { RuntimeBundle, RuntimeAdventureRpgCombatEncounter } from "@evavo/adventure-runtime-bundle";
 import {
+  RuntimeAdventureRpgEconomyValidationError,
+  validateRuntimeAdventureRpgEconomy,
+} from "@evavo/adventure-runtime-bundle/rpg-economy";
+import {
   createSaveGame as createRuntimeSaveGame,
   loadSaveGame as loadRuntimeSaveGame,
   type SaveGame,
@@ -21,6 +25,16 @@ import {
   type AdventureRpgScheduleWindow,
   type AdventureRpgState,
 } from "@evavo/adventure-scene-runtime/rpg";
+import {
+  adventureRpgEquipmentModifiers,
+  buyAdventureRpgItem,
+  createAdventureRpgEconomyState,
+  equipAdventureRpgItem,
+  sellAdventureRpgItem,
+  unequipAdventureRpgSlot,
+  type AdventureRpgEconomyResult,
+  type AdventureRpgEconomyState,
+} from "@evavo/adventure-scene-runtime/rpg-economy";
 import {
   advanceAdventureRpgBoundCombat,
   createAdventureRpgBoundCombatState,
@@ -51,6 +65,12 @@ export interface AdventureRpgSessionOptions extends PackagedRuntimeControllerOpt
 
 export interface AdventureRpgPackagedRuntimeController extends PackagedSessionController {
   rpgState(): AdventureRpgState;
+  rpgEconomyState(): AdventureRpgEconomyState | null;
+  buyRpgItem(shopId: string, itemId: string): AdventureRpgEconomyResult;
+  sellRpgItem(shopId: string, itemId: string): AdventureRpgEconomyResult;
+  equipRpgItem(itemId: string): AdventureRpgEconomyResult;
+  unequipRpgSlot(slotId: string): void;
+  rpgEquipmentModifiers(): Readonly<Record<string, number>>;
   practiceSkill(skillId: string, amount?: number): AdventureRpgPracticeResult;
   resolveSkillCheck(check: AdventureRpgCheck): AdventureRpgCheckResult;
   resolveRpgPuzzle(puzzleId: string, solutionId: string): AdventureRpgPuzzleResolution;
@@ -74,6 +94,7 @@ const preserveCompanions = (save: SaveGame) => ({
   ...(save.itemCombinations ? { itemCombinations: save.itemCombinations } : {}),
   ...(save.multiProtagonist ? { multiProtagonist: save.multiProtagonist } : {}),
   ...(save.roomScripts ? { roomScripts: save.roomScripts } : {}),
+  ...(save.rpgEconomy ? { rpgEconomy: save.rpgEconomy } : {}),
 });
 
 const combatBinding = (encounter: RuntimeAdventureRpgCombatEncounter): AdventureRpgCombatBinding => ({
@@ -92,6 +113,15 @@ export const createAdventureRpgPackagedRuntimeControllerWithFactory = (
   if (!defaultClassId) throw new Error("RPG manifest contains no playable class.");
   const controller = innerFactory(bundle, baseOptions);
   let rpg = createAdventureRpgState(manifest, defaultClassId);
+  const economyManifest = manifest.economy ?? null;
+  if (economyManifest) {
+    const economyIssues = validateRuntimeAdventureRpgEconomy(
+      economyManifest,
+      new Set(bundle.inventoryItems.map((item) => item.id as string)),
+    );
+    if (economyIssues.length > 0) throw new RuntimeAdventureRpgEconomyValidationError(economyIssues);
+  }
+  let economy = economyManifest ? createAdventureRpgEconomyState(economyManifest) : null;
   let combat: { readonly encounter: RuntimeAdventureRpgCombatEncounter; readonly state: AdventureRpgBoundCombatState } | null = null;
 
   const createSaveGame = (): SaveGame => {
@@ -107,6 +137,7 @@ export const createAdventureRpgPackagedRuntimeControllerWithFactory = (
       parser: baseSave.interface.parser,
       ...preserveCompanions(baseSave),
       rpg,
+      ...(economy ? { rpgEconomy: economy } : {}),
     });
   };
 
@@ -114,6 +145,9 @@ export const createAdventureRpgPackagedRuntimeControllerWithFactory = (
     const save = loadRuntimeSaveGame(bundle, input);
     const tick = controller.restoreSaveGame(save);
     rpg = save.rpg ?? createAdventureRpgState(manifest, defaultClassId);
+    economy = economyManifest
+      ? (save.rpgEconomy ?? createAdventureRpgEconomyState(economyManifest))
+      : null;
     combat = null;
     return tick;
   };
@@ -132,8 +166,25 @@ export const createAdventureRpgPackagedRuntimeControllerWithFactory = (
       parser: baseSave.interface.parser,
       ...preserveCompanions(baseSave),
       rpg,
+      ...(economy ? { rpgEconomy: economy } : {}),
     });
     controller.restoreSaveGame(save);
+  };
+
+  const applyEconomyResult = (result: AdventureRpgEconomyResult): AdventureRpgEconomyResult => {
+    if (result.kind !== "success") return result;
+    economy = result.economy;
+    if (result.world !== controller.worldState()) {
+      replaceStoryAndRpg(result.world.story, rpg);
+    }
+    return result;
+  };
+
+  const requireEconomy = () => {
+    if (!economyManifest || !economy) {
+      throw new Error(`Runtime bundle '${bundle.projectId}' has no RPG economy manifest.`);
+    }
+    return { manifest: economyManifest, state: economy };
   };
 
   const resolveRpgPuzzle = (
@@ -205,9 +256,39 @@ export const createAdventureRpgPackagedRuntimeControllerWithFactory = (
     return phase;
   };
 
+  const classTags = (): readonly string[] =>
+    manifest.classes.find((entry) => entry.id === rpg.classId)?.tags ?? [];
+
   return {
     selection: controller.selection,
     rpgState: () => rpg,
+    rpgEconomyState: () => economy,
+    buyRpgItem: (shopId, itemId) => {
+      const current = requireEconomy();
+      return applyEconomyResult(
+        buyAdventureRpgItem(current.manifest, controller.worldState(), current.state, shopId, itemId as never),
+      );
+    },
+    sellRpgItem: (shopId, itemId) => {
+      const current = requireEconomy();
+      return applyEconomyResult(
+        sellAdventureRpgItem(current.manifest, controller.worldState(), current.state, shopId, itemId as never),
+      );
+    },
+    equipRpgItem: (itemId) => {
+      const current = requireEconomy();
+      return applyEconomyResult(
+        equipAdventureRpgItem(current.manifest, controller.worldState(), current.state, itemId as never, classTags()),
+      );
+    },
+    unequipRpgSlot: (slotId) => {
+      const current = requireEconomy();
+      economy = unequipAdventureRpgSlot(current.state, slotId);
+    },
+    rpgEquipmentModifiers: () => {
+      const current = requireEconomy();
+      return adventureRpgEquipmentModifiers(current.manifest, current.state);
+    },
     practiceSkill: (skillId, amount) => {
       const result = practiceAdventureRpgSkill(manifest, rpg, skillId, amount);
       rpg = result.state;
