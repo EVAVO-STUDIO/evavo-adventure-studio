@@ -13,6 +13,7 @@
     "./route-topology": { "types": "./dist/src/route-topology.d.ts", "import": "./dist/src/route-topology.js" },
     "./route-topology-analysis": { "types": "./dist/src/route-topology-analysis.d.ts", "import": "./dist/src/route-topology-analysis.js" },
     "./rpg": { "types": "./dist/src/rpg.d.ts", "import": "./dist/src/rpg.js" },
+    "./rpg-economy": { "types": "./dist/src/rpg-economy.d.ts", "import": "./dist/src/rpg-economy.js" },
     "./rpg-puzzles": { "types": "./dist/src/rpg-puzzles.d.ts", "import": "./dist/src/rpg-puzzles.js" },
     "./room-scripts": { "types": "./dist/src/room-scripts.d.ts", "import": "./dist/src/room-scripts.js" },
     "./ui-validation": { "types": "./dist/src/ui-validation.d.ts", "import": "./dist/src/ui-validation.js" }
