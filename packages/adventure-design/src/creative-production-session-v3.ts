@@ -1,6 +1,6 @@
 import {
-  assertAdventureCreativeAcceptedDeliveryV3,
-} from "./creative-production-acceptance-v3.js";
+  admitAdventureCreativeDeliveryV3 as admitStrictAdventureCreativeDeliveryV3,
+} from "./creative-production-admission-v3.js";
 import {
   nextAdventureCreativeRepairOrderV3,
   validateAdventureCreativeReviewV3,
@@ -10,12 +10,17 @@ import {
   type AdventureCreativeReviewV3,
   type AdventureCreativeWorkOrderV3,
 } from "./creative-production-handoff-v3.js";
+import {
+  decideAdventureCreativeIterationV3,
+} from "./creative-production-orchestrator-v3.js";
+import type { AdventureCreativeStrictQualityEvidenceV3 } from "./creative-production-quality-v3.js";
 
 export type AdventureCreativeSessionV3Status =
   | "awaiting-candidate"
   | "awaiting-review"
   | "repair-required"
   | "review-required"
+  | "awaiting-strict-quality"
   | "awaiting-delivery"
   | "accepted"
   | "rejected";
@@ -24,6 +29,7 @@ export interface AdventureCreativeSessionRevisionV3 {
   readonly workOrder: AdventureCreativeWorkOrderV3;
   readonly candidateArtifactDigest?: string;
   readonly review?: AdventureCreativeReviewV3;
+  readonly strictQuality?: AdventureCreativeStrictQualityEvidenceV3;
   readonly delivery?: AdventureCreativeAcceptedDeliveryV3;
 }
 
@@ -35,6 +41,7 @@ export interface AdventureCreativeProductionSessionV3 {
   readonly status: AdventureCreativeSessionV3Status;
   readonly revisions: readonly AdventureCreativeSessionRevisionV3[];
   readonly acceptedDelivery?: AdventureCreativeAcceptedDeliveryV3;
+  readonly rejectionReasons?: readonly string[];
 }
 
 const currentRevision = (
@@ -96,7 +103,7 @@ export const applyAdventureCreativeReviewV3 = (
   if (issues.length > 0) throw new Error(issues.map((issue) => issue.message).join(" "));
   const status: AdventureCreativeSessionV3Status =
     review.disposition === "accepted"
-      ? "awaiting-delivery"
+      ? "awaiting-strict-quality"
       : review.disposition === "repair-required"
         ? "repair-required"
         : review.disposition === "review-required"
@@ -107,11 +114,62 @@ export const applyAdventureCreativeReviewV3 = (
   return {
     ...session,
     status,
+    ...(status === "rejected" ? { rejectionReasons: ["Sibling studio rejected the candidate revision."] } : {}),
     revisions: [
       ...session.revisions.slice(0, -1),
       { ...current, review },
     ],
   };
+};
+
+export const applyAdventureCreativeStrictQualityV3 = (
+  session: AdventureCreativeProductionSessionV3,
+  quality: AdventureCreativeStrictQualityEvidenceV3,
+): AdventureCreativeProductionSessionV3 => {
+  if (session.status !== "awaiting-strict-quality") {
+    throw new Error(`Creative production v3 session cannot receive strict quality evidence while '${session.status}'.`);
+  }
+  const current = currentRevision(session);
+  if (!current.review) throw new Error("Creative revision has no accepted sibling review.");
+  if (quality.candidateArtifactDigest !== current.candidateArtifactDigest) {
+    throw new Error("Strict quality evidence does not target the submitted candidate artifact.");
+  }
+  const decision = decideAdventureCreativeIterationV3(current.workOrder, current.review, quality);
+  const completedCurrent: AdventureCreativeSessionRevisionV3 = { ...current, strictQuality: quality };
+  switch (decision.kind) {
+    case "deliver":
+      return {
+        ...session,
+        status: "awaiting-delivery",
+        revisions: [...session.revisions.slice(0, -1), completedCurrent],
+        rejectionReasons: undefined,
+      };
+    case "targeted-repair":
+      return {
+        ...session,
+        status: "awaiting-candidate",
+        revisions: [
+          ...session.revisions.slice(0, -1),
+          completedCurrent,
+          { workOrder: decision.nextWorkOrder },
+        ],
+        rejectionReasons: undefined,
+      };
+    case "human-review":
+      return {
+        ...session,
+        status: "review-required",
+        revisions: [...session.revisions.slice(0, -1), completedCurrent],
+        rejectionReasons: undefined,
+      };
+    case "reject":
+      return {
+        ...session,
+        status: "rejected",
+        revisions: [...session.revisions.slice(0, -1), completedCurrent],
+        rejectionReasons: decision.reasons,
+      };
+  }
 };
 
 export const prepareAdventureCreativeRepairRevisionV3 = (
@@ -127,6 +185,7 @@ export const prepareAdventureCreativeRepairRevisionV3 = (
     ...session,
     status: "awaiting-candidate",
     revisions: [...session.revisions, { workOrder }],
+    rejectionReasons: undefined,
   };
 };
 
@@ -138,16 +197,20 @@ export const admitAdventureCreativeDeliveryV3 = (
     throw new Error(`Creative production v3 session cannot accept delivery while '${session.status}'.`);
   }
   const current = currentRevision(session);
-  if (!current.review) throw new Error("Creative revision has no accepted review.");
-  const accepted = assertAdventureCreativeAcceptedDeliveryV3(
+  if (!current.review || !current.strictQuality) {
+    throw new Error("Creative revision has not completed sibling review plus strict Adventure Studio quality review.");
+  }
+  const accepted = admitStrictAdventureCreativeDeliveryV3(
     current.workOrder,
     current.review,
+    current.strictQuality,
     delivery,
   );
   return {
     ...session,
     status: "accepted",
     acceptedDelivery: accepted,
+    rejectionReasons: undefined,
     revisions: [
       ...session.revisions.slice(0, -1),
       { ...current, delivery: accepted },
@@ -197,6 +260,7 @@ export interface AdventureCreativePlanReadinessV3 {
   readonly reviewRequiredAssets: number;
   readonly awaitingCandidateAssets: number;
   readonly awaitingReviewAssets: number;
+  readonly awaitingStrictQualityAssets: number;
   readonly awaitingDeliveryAssets: number;
   readonly rejectedAssets: number;
   readonly ready: boolean;
@@ -221,6 +285,7 @@ export const evaluateAdventureCreativePlanReadinessV3 = (
     reviewRequiredAssets: count("review-required"),
     awaitingCandidateAssets: count("awaiting-candidate"),
     awaitingReviewAssets: count("awaiting-review"),
+    awaitingStrictQualityAssets: count("awaiting-strict-quality"),
     awaitingDeliveryAssets: count("awaiting-delivery"),
     rejectedAssets: count("rejected"),
     ready: missingAssetIds.length === 0,
