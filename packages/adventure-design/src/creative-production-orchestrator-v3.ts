@@ -1,4 +1,5 @@
 import {
+  type AdventureCreativeIssueCodeV3,
   type AdventureCreativeReviewV3,
   type AdventureCreativeWorkOrderV3,
   nextAdventureCreativeRepairOrderV3,
@@ -39,6 +40,65 @@ export type AdventureCreativeIterationDecisionV3 =
 const messages = (issues: readonly { readonly message: string }[]): readonly string[] =>
   [...new Set(issues.map((issue) => issue.message))].sort((left, right) => left.localeCompare(right));
 
+const issueCodeForStrictQuality = (code: string): AdventureCreativeIssueCodeV3 => {
+  if (code.includes("alpha") || code.includes("transparent") || code.includes("checkerboard")) {
+    return "missing-real-alpha";
+  }
+  if (code.includes("anchor")) return "anchor-drift";
+  if (code.includes("exposure") || code.includes("frame-order") || code.includes("total-exposure")) {
+    return "exposure-timing-mismatch";
+  }
+  if (code.includes("neighbour") || code.includes("loop-closure")) {
+    return "neighbour-continuity-mismatch";
+  }
+  if (code.includes("model") || code.includes("silhouette") || code.includes("identity")) {
+    return "identity-drift";
+  }
+  if (code.includes("palette")) return "palette-drift";
+  if (code.includes("authority")) return "reference-authority-mismatch";
+  return "style-drift";
+};
+
+const quotedFrameIds = (
+  message: string,
+  knownFrameIds: ReadonlySet<string>,
+): readonly string[] => {
+  const matches = [...message.matchAll(/'([^']+)'/gu)].map((match) => match[1]).filter(Boolean) as string[];
+  return [...new Set(matches.filter((candidate) => knownFrameIds.has(candidate)))].sort((left, right) =>
+    left.localeCompare(right),
+  );
+};
+
+const strictRepairOrder = (
+  workOrder: AdventureCreativeWorkOrderV3,
+  qualityIssues: readonly { readonly code: string; readonly message: string }[],
+): AdventureCreativeWorkOrderV3 => {
+  if (workOrder.revision >= workOrder.iterationPolicy.maximumRevisionPasses) {
+    throw new Error(
+      `Maximum revision passes (${workOrder.iterationPolicy.maximumRevisionPasses}) reached for '${workOrder.workOrderId}'.`,
+    );
+  }
+  const frameIds = (workOrder.framePlan ?? []).map((frame) => frame.frameId);
+  const knownFrameIds = new Set(frameIds);
+  return {
+    ...workOrder,
+    revision: workOrder.revision + 1,
+    replacesRevision: workOrder.revision,
+    requestedRepairs: qualityIssues.map((issue, index) => {
+      const targets = quotedFrameIds(issue.message, knownFrameIds);
+      return {
+        issueId: `strict.${workOrder.revision}.${index + 1}`,
+        issueCode: issueCodeForStrictQuality(issue.code),
+        targetFrameIds: targets,
+        repairInstruction: issue.message,
+        preserveFrameIds: frameIds.filter((frameId) => !targets.includes(frameId)),
+        preserveRegions: [],
+        allowRegenerateWholeAsset: false,
+      };
+    }),
+  };
+};
+
 export const decideAdventureCreativeIterationV3 = (
   workOrder: AdventureCreativeWorkOrderV3,
   review: AdventureCreativeReviewV3,
@@ -55,6 +115,17 @@ export const decideAdventureCreativeIterationV3 = (
   }
   if (reviewIssues.length > 0) {
     if (review.disposition === "repair-required") {
+      if (workOrder.revision >= workOrder.iterationPolicy.maximumRevisionPasses) {
+        return {
+          kind: "reject",
+          workOrder,
+          review,
+          reasons: [
+            ...messages(reviewIssues),
+            `Maximum revision passes (${workOrder.iterationPolicy.maximumRevisionPasses}) reached.`,
+          ],
+        };
+      }
       return {
         kind: "targeted-repair",
         workOrder,
@@ -71,6 +142,14 @@ export const decideAdventureCreativeIterationV3 = (
     };
   }
   if (review.disposition === "repair-required") {
+    if (workOrder.revision >= workOrder.iterationPolicy.maximumRevisionPasses) {
+      return {
+        kind: "reject",
+        workOrder,
+        review,
+        reasons: [`Maximum revision passes (${workOrder.iterationPolicy.maximumRevisionPasses}) reached.`],
+      };
+    }
     return {
       kind: "targeted-repair",
       workOrder,
@@ -95,34 +174,22 @@ export const decideAdventureCreativeIterationV3 = (
   }
   const qualityIssues = validateAdventureCreativeStrictQualityV3(workOrder, review, quality);
   if (qualityIssues.length > 0) {
+    if (workOrder.revision >= workOrder.iterationPolicy.maximumRevisionPasses) {
+      return {
+        kind: "reject",
+        workOrder,
+        review,
+        reasons: [
+          ...messages(qualityIssues),
+          `Maximum revision passes (${workOrder.iterationPolicy.maximumRevisionPasses}) reached.`,
+        ],
+      };
+    }
     return {
       kind: "targeted-repair",
       workOrder,
       review,
-      nextWorkOrder: {
-        ...workOrder,
-        revision: workOrder.revision + 1,
-        replacesRevision: workOrder.revision,
-        requestedRepairs: qualityIssues.map((issue, index) => ({
-          issueId: `strict.${workOrder.revision}.${index + 1}`,
-          issueCode: issue.code.includes("alpha")
-            ? "missing-real-alpha"
-            : issue.code.includes("anchor")
-              ? "anchor-drift"
-              : issue.code.includes("exposure") || issue.code.includes("frame-order")
-                ? "exposure-timing-mismatch"
-                : issue.code.includes("neighbour")
-                  ? "neighbour-continuity-mismatch"
-                  : issue.code.includes("model") || issue.code.includes("silhouette")
-                    ? "identity-drift"
-                    : "style-drift",
-          targetFrameIds: [],
-          repairInstruction: issue.message,
-          preserveFrameIds: (workOrder.framePlan ?? []).map((frame) => frame.frameId),
-          preserveRegions: [],
-          allowRegenerateWholeAsset: false,
-        })),
-      },
+      nextWorkOrder: strictRepairOrder(workOrder, qualityIssues),
       reviewIssues: messages(qualityIssues),
     };
   }
