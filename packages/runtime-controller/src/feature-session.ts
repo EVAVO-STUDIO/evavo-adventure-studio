@@ -24,6 +24,10 @@ import {
   type PackagedSessionController,
   type PackagedSessionControllerFactory,
 } from "./session-controller.js";
+import {
+  createSpecializedModePackagedRuntimeControllerWithFactory,
+  type SpecializedModePackagedRuntimeController,
+} from "./specialized-mode-controller.js";
 
 type OptionalInvestigationController = Partial<Pick<
   InvestigationPackagedSessionController,
@@ -66,11 +70,19 @@ type OptionalRouteController = Partial<Pick<
   | "routeAtRequiredReconvergence"
 >>;
 
+type OptionalSpecializedModeController = Partial<Pick<
+  SpecializedModePackagedRuntimeController,
+  | "specializedModeState"
+  | "activeSpecializedModeId"
+  | "startSpecializedMode"
+>>;
+
 export interface PackagedFeatureSessionController
   extends PackagedSessionController,
     OptionalInvestigationController,
     OptionalRpgController,
-    OptionalRouteController {
+    OptionalRouteController,
+    OptionalSpecializedModeController {
   activeProtagonistId?(): ReturnType<MultiProtagonistPackagedRuntimeController["activeProtagonistId"]>;
   multiProtagonistState?(): ReturnType<MultiProtagonistPackagedRuntimeController["multiProtagonistState"]>;
   switchProtagonist?(protagonistId: Parameters<MultiProtagonistPackagedRuntimeController["switchProtagonist"]>[0]): void;
@@ -80,7 +92,8 @@ export interface PackagedFeatureRuntimeController
   extends PackagedRuntimeController,
     OptionalInvestigationController,
     OptionalRpgController,
-    OptionalRouteController {
+    OptionalRouteController,
+    OptionalSpecializedModeController {
   activeProtagonistId?(): ReturnType<MultiProtagonistPackagedRuntimeController["activeProtagonistId"]>;
   multiProtagonistState?(): ReturnType<MultiProtagonistPackagedRuntimeController["multiProtagonistState"]>;
   switchProtagonist?(protagonistId: Parameters<MultiProtagonistPackagedRuntimeController["switchProtagonist"]>[0]): void;
@@ -93,6 +106,7 @@ export interface PackagedFeatureSessionDescription {
   readonly rpg: boolean;
   readonly multiProtagonist: boolean;
   readonly routeTopology: boolean;
+  readonly specializedModes: boolean;
   readonly stack: readonly string[];
 }
 
@@ -108,6 +122,7 @@ export const describePackagedFeatureSession = (
   const rpg = bundle.rpg !== undefined;
   const multiProtagonist = bundle.multiProtagonist !== undefined;
   const routeTopology = bundle.routeTopology !== undefined;
+  const specializedModes = bundle.specializedModes !== undefined;
   return {
     sentence,
     roomScripts,
@@ -115,6 +130,7 @@ export const describePackagedFeatureSession = (
     rpg,
     multiProtagonist,
     routeTopology,
+    specializedModes,
     stack: [
       "base",
       ...(sentence ? ["sentence"] : []),
@@ -123,6 +139,7 @@ export const describePackagedFeatureSession = (
       ...(rpg ? ["rpg"] : []),
       ...(multiProtagonist ? ["multi-protagonist"] : []),
       ...(routeTopology ? ["route-topology"] : []),
+      ...(specializedModes ? ["specialized-modes"] : []),
     ],
   };
 };
@@ -149,6 +166,9 @@ const multiProtagonistFactory = (inner: PackagedSessionControllerFactory): Packa
 const routeFactory = (inner: PackagedSessionControllerFactory): PackagedSessionControllerFactory =>
   (bundle, options = {}) => createAdventureRoutePackagedRuntimeControllerWithFactory(bundle, options, inner);
 
+const specializedModeFactory = (inner: PackagedSessionControllerFactory): PackagedSessionControllerFactory =>
+  (bundle, options = {}) => createSpecializedModePackagedRuntimeControllerWithFactory(bundle, options, inner);
+
 export const createPackagedFeatureSessionController = (
   bundle: RuntimeBundle,
   options: PackagedRuntimeControllerOptions = {},
@@ -161,6 +181,7 @@ export const createPackagedFeatureSessionController = (
   if (description.rpg) inner = rpgFactory(inner);
   if (description.multiProtagonist) inner = multiProtagonistFactory(inner);
   if (description.routeTopology) inner = routeFactory(inner);
+  if (description.specializedModes) inner = specializedModeFactory(inner);
   return inner(bundle, options) as PackagedFeatureSessionController;
 };
 
@@ -235,6 +256,20 @@ const routeFeatureApi = (session: PackagedFeatureSessionController): OptionalRou
   ...(session.routeAtRequiredReconvergence ? { routeAtRequiredReconvergence: () => session.routeAtRequiredReconvergence?.() ?? false } : {}),
 });
 
+const specializedModeFeatureApi = (
+  session: PackagedFeatureSessionController,
+): OptionalSpecializedModeController => ({
+  ...(session.specializedModeState
+    ? { specializedModeState: () => session.specializedModeState?.() as ReturnType<SpecializedModePackagedRuntimeController["specializedModeState"]> }
+    : {}),
+  ...(session.activeSpecializedModeId
+    ? { activeSpecializedModeId: () => session.activeSpecializedModeId?.() ?? null }
+    : {}),
+  ...(session.startSpecializedMode
+    ? { startSpecializedMode: (modeId: string) => session.startSpecializedMode?.(modeId) }
+    : {}),
+});
+
 export const createPackagedFeatureRuntimeController = (
   bundle: RuntimeBundle,
   options: PackagedRuntimeControllerOptions = {},
@@ -262,6 +297,7 @@ export const createPackagedFeatureRuntimeController = (
     ...investigationFeatureApi(session),
     ...rpgFeatureApi(session),
     ...routeFeatureApi(session),
+    ...specializedModeFeatureApi(session),
     ...(session.activeProtagonistId
       ? { activeProtagonistId: () => session.activeProtagonistId?.() as ReturnType<MultiProtagonistPackagedRuntimeController["activeProtagonistId"]> }
       : {}),
