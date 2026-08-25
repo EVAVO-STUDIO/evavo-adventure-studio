@@ -14,6 +14,7 @@ export type AdventureRpgEconomyFailureReason =
   | "item-unavailable"
   | "out-of-stock"
   | "insufficient-funds"
+  | "item-already-owned"
   | "item-not-owned"
   | "item-not-equipment"
   | "class-restricted"
@@ -49,16 +50,13 @@ export const createAdventureRpgEconomyState = (
 const addInventoryItem = (
   world: InteractiveRuntimeWorldState,
   itemId: Id<"item">,
-): InteractiveRuntimeWorldState =>
-  world.story.inventory.includes(itemId)
-    ? world
-    : {
-        ...world,
-        story: {
-          ...world.story,
-          inventory: [...world.story.inventory, itemId].sort((left, right) => left.localeCompare(right)),
-        },
-      };
+): InteractiveRuntimeWorldState => ({
+  ...world,
+  story: {
+    ...world.story,
+    inventory: [...world.story.inventory, itemId].sort((left, right) => left.localeCompare(right)),
+  },
+});
 
 const removeInventoryItem = (
   world: InteractiveRuntimeWorldState,
@@ -110,6 +108,9 @@ export const buyAdventureRpgItem = (
   const stock = stockFor(manifest, shopId, itemId);
   if (!stock || !stockAvailable(manifest, world, shopId, itemId)) {
     return { kind: "failure", reason: "item-unavailable", world, economy };
+  }
+  if (world.story.inventory.includes(itemId)) {
+    return { kind: "failure", reason: "item-already-owned", world, economy };
   }
   const remaining = economy.stockByShopItem[stockKey(shopId, itemId)];
   if (remaining === 0) return { kind: "failure", reason: "out-of-stock", world, economy };
