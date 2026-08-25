@@ -23,6 +23,8 @@
     "./reference-proof-development": { "types": "./dist/src/reference-proof-development.d.ts", "import": "./dist/src/reference-proof-development.js" },
     "./open-case-gameplay-proof": { "types": "./dist/src/open-case-gameplay-proof.d.ts", "import": "./dist/src/open-case-gameplay-proof.js" },
     "./open-case-investigation-proof": { "types": "./dist/src/open-case-investigation-proof.d.ts", "import": "./dist/src/open-case-investigation-proof.js" },
+    "./open-case-runtime-source": { "types": "./dist/src/open-case-runtime-source.d.ts", "import": "./dist/src/open-case-runtime-source.js" },
+    "./open-case-runtime-readiness": { "types": "./dist/src/open-case-runtime-readiness.d.ts", "import": "./dist/src/open-case-runtime-readiness.js" },
     "./after-hours-gameplay-proof": { "types": "./dist/src/after-hours-gameplay-proof.d.ts", "import": "./dist/src/after-hours-gameplay-proof.js" },
     "./cold-meridian-gameplay-proof": { "types": "./dist/src/cold-meridian-gameplay-proof.d.ts", "import": "./dist/src/cold-meridian-gameplay-proof.js" },
     "./full-game-capabilities": { "types": "./dist/src/full-game-capabilities.d.ts", "import": "./dist/src/full-game-capabilities.js" },
