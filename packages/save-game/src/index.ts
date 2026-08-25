@@ -18,4 +18,6 @@ export * from "./rpg-compatibility.js";
 export * from "./rpg.js";
 export * from "./sentence-compatibility.js";
 export * from "./sentence.js";
+export * from "./specialized-mode-compatibility.js";
+export * from "./specialized-modes.js";
 export * from "./schema.js";
