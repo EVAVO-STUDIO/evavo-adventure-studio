@@ -28,6 +28,7 @@ import { applyConsumedRuntimeInvestigationBindings } from "./investigation-bindi
 import {
   appendInvestigationTopicPanel,
   hitTestInvestigationTopicPanel,
+  investigationTopicPanelOwnsPoint,
   validateInvestigationTopicPanelRuntime,
 } from "./investigation-topic-panel.js";
 import type { PackagedRuntimeControllerOptions } from "./packaged-controller.js";
@@ -183,6 +184,7 @@ export const createInvestigationPackagedSessionControllerWithFactory = (
 
   const activate: PackagedSessionController["activate"] = (position) => {
     if (executeTopicPanelChoice(position)) return;
+    if (investigationTopicPanelOwnsPoint(bundle, inner.worldState(), position)) return;
     const previousWorld = inner.worldState();
     inner.activate(position);
     applyNewSemanticBindings(previousWorld, inner.worldState());
