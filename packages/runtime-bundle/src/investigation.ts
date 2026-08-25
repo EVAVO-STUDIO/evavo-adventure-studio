@@ -1,4 +1,4 @@
-import { idSchema } from "@evavo/adventure-project-schema";
+import { idSchema, rectangleSchema } from "@evavo/adventure-project-schema";
 import { z } from "zod";
 
 const investigationFactIdSchema = z.string().regex(/^fact\.[A-Za-z0-9._-]+$/u);
@@ -76,6 +76,31 @@ export const runtimeInvestigationPresenceVariantSchema = z
   })
   .strict();
 
+export const runtimeInvestigationTopicResponseSchema = z
+  .object({
+    topicId: investigationTopicIdSchema,
+    dialogueChoiceId: idSchema("dialogue-choice"),
+  })
+  .strict();
+
+export const runtimeInvestigationTopicDialogueSchema = z
+  .object({
+    dialogueId: idSchema("dialogue"),
+    speakerId: idSchema("actor"),
+    responses: z.array(runtimeInvestigationTopicResponseSchema).min(1),
+  })
+  .strict();
+
+export const runtimeInvestigationTopicPanelSchema = z
+  .object({
+    region: rectangleSchema,
+    gap: z.number().int().min(0).max(16).default(1),
+    maximumVisibleTopics: z.number().int().min(1).max(16).default(8),
+    dialogues: z.array(runtimeInvestigationTopicDialogueSchema).min(1),
+  })
+  .strict();
+export type RuntimeInvestigationTopicPanel = z.infer<typeof runtimeInvestigationTopicPanelSchema>;
+
 export const runtimeInvestigationManifestSchema = z
   .object({
     manifestVersion: z.literal(1),
@@ -85,6 +110,7 @@ export const runtimeInvestigationManifestSchema = z
     researchSources: z.array(runtimeInvestigationResearchSourceSchema),
     chapters: z.array(runtimeInvestigationChapterSchema).min(1),
     presenceVariants: z.array(runtimeInvestigationPresenceVariantSchema).optional(),
+    topicPanel: runtimeInvestigationTopicPanelSchema.optional(),
   })
   .strict();
 
@@ -197,6 +223,40 @@ export const validateRuntimeInvestigation = (
       if (!chapters.has(chapterId)) addUnknown("unknown-chapter", `presenceVariants[${variantIndex}].chapterIds[${index}]`, "chapter", chapterId);
     });
   });
+  if (manifest.topicPanel) {
+    const seenDialogues = new Set<string>();
+    manifest.topicPanel.dialogues.forEach((dialogue, dialogueIndex) => {
+      if (seenDialogues.has(dialogue.dialogueId)) {
+        issues.push({
+          severity: "error",
+          code: "duplicate-id",
+          path: `topicPanel.dialogues[${dialogueIndex}].dialogueId`,
+          message: `Topic-panel dialogue '${dialogue.dialogueId}' is duplicated.`,
+        });
+      }
+      seenDialogues.add(dialogue.dialogueId);
+      const seenTopics = new Set<string>();
+      dialogue.responses.forEach((response, responseIndex) => {
+        if (!topics.has(response.topicId)) {
+          addUnknown(
+            "unknown-topic",
+            `topicPanel.dialogues[${dialogueIndex}].responses[${responseIndex}].topicId`,
+            "topic",
+            response.topicId,
+          );
+        }
+        if (seenTopics.has(response.topicId)) {
+          issues.push({
+            severity: "error",
+            code: "duplicate-id",
+            path: `topicPanel.dialogues[${dialogueIndex}].responses[${responseIndex}].topicId`,
+            message: `Topic-panel topic '${response.topicId}' is duplicated for dialogue '${dialogue.dialogueId}'.`,
+          });
+        }
+        seenTopics.add(response.topicId);
+      });
+    });
+  }
 
   return issues.sort((left, right) => left.path.localeCompare(right.path) || left.code.localeCompare(right.code));
 };
