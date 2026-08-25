@@ -21,6 +21,7 @@ const requiredLineage = (order: AdventureCreativeWorkOrderV3): readonly string[]
     order.authorities.modelSheetDigest,
     order.authorities.environmentLayoutDigest,
     order.authorities.xSheetDigest,
+    order.authorities.previousApprovedArtifactDigest,
     ...order.authorities.referenceDigests,
   ]
     .filter((value): value is string => Boolean(value?.trim()))
