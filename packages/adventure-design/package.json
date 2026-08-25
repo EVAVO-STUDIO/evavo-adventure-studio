@@ -28,6 +28,7 @@
     "./ninth-reliquary-creative-proof": { "types": "./dist/src/ninth-reliquary-creative-proof.d.ts", "import": "./dist/src/ninth-reliquary-creative-proof.js" },
     "./ninth-reliquary-creative-proof-v3": { "types": "./dist/src/ninth-reliquary-creative-proof-v3.d.ts", "import": "./dist/src/ninth-reliquary-creative-proof-v3.js" },
     "./ninth-reliquary-full-game-proof": { "types": "./dist/src/ninth-reliquary-full-game-proof.d.ts", "import": "./dist/src/ninth-reliquary-full-game-proof.js" },
+    "./ninth-reliquary-production-package-v3": { "types": "./dist/src/ninth-reliquary-production-package-v3.d.ts", "import": "./dist/src/ninth-reliquary-production-package-v3.js" },
     "./reference-fidelity": { "types": "./dist/src/reference-fidelity.d.ts", "import": "./dist/src/reference-fidelity.js" },
     "./classic-design-repair": { "types": "./dist/src/classic-design-repair.d.ts", "import": "./dist/src/classic-design-repair.js" },
     "./reference-proof-lanes": { "types": "./dist/src/reference-proof-lanes.d.ts", "import": "./dist/src/reference-proof-lanes.js" },
