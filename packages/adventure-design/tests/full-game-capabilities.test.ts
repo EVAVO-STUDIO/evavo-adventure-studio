@@ -43,6 +43,56 @@ describe("full-game adventure capability matrix", () => {
     expect(coverage.get("panoramic-exterior")?.status).toBe("partial");
   });
 
+  it("promotes only governed SCUMM, investigation, route and multi-character proofs", () => {
+    const coverage = new Map(currentAdventureCapabilityCoverage.map((entry) => [entry.id, entry] as const));
+    for (const capabilityId of [
+      "verb-sentence-grammar",
+      "item-on-item",
+      "room-cutaways",
+      "multi-protagonist-switching",
+      "branching-route-topology",
+      "topic-dialogue",
+      "dialogue-fact-unlocks",
+      "alternate-puzzle-solutions",
+    ] as const) {
+      expect(coverage.get(capabilityId)?.status, capabilityId).toBe("proofed");
+    }
+    expect(coverage.get("chapter-day-progression")?.status).toBe("implemented");
+    expect(coverage.get("research-investigation-loop")?.status).toBe("implemented");
+  });
+
+  it("promotes only the Quest for Glory systems exercised by the whole-loop stress", () => {
+    const coverage = new Map(currentAdventureCapabilityCoverage.map((entry) => [entry.id, entry] as const));
+    for (const capabilityId of [
+      "time-of-day-clock",
+      "character-stats",
+      "skills-and-practice",
+      "character-classes",
+      "skill-gated-solutions",
+      "health-stamina-mana",
+      "real-time-combat",
+    ] as const) {
+      expect(coverage.get(capabilityId)?.status, capabilityId).toBe("proofed");
+    }
+    expect(coverage.get("character-import-export")?.status).toBe("implemented");
+    expect(coverage.get("npc-schedules")?.status).toBe("partial");
+    expect(coverage.get("equipment-money")?.status).toBe("missing");
+  });
+
+  it("keeps visually/specially distinct unproved modes below proofed status", () => {
+    const coverage = new Map(currentAdventureCapabilityCoverage.map((entry) => [entry.id, entry] as const));
+    for (const capabilityId of [
+      "travel-map",
+      "vehicle-scene",
+      "cinematic-insets",
+      "action-minigame",
+      "quick-response-sequence",
+      "full-game-evidence",
+    ] as const) {
+      expect(coverage.get(capabilityId)?.status, capabilityId).not.toBe("proofed");
+    }
+  });
+
   it("keeps Sierra investigation requirements distinct from Sierra storybook requirements", () => {
     const kingsQuest = adventureReferenceGameCapabilities.find((profile) => profile.id === "kings-quest-v")!;
     const gabrielKnight = adventureReferenceGameCapabilities.find(
