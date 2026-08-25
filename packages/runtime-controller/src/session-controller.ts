@@ -27,6 +27,8 @@ export interface PackagedSessionController {
   parserState(): ParserBufferState;
   drainSceneAudioCueIds(): readonly string[];
   itemCombinationUsedRecipeIds?(): readonly string[];
+  activeSpecializedModeId?(): string | null;
+  startSpecializedMode?(modeId: string): void;
 }
 
 export type PackagedSessionControllerFactory = (
