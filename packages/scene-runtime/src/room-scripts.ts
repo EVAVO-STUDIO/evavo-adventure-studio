@@ -23,6 +23,7 @@ export interface RuntimeRoomScriptState {
   readonly enteredAtTick: number;
   readonly visitedSceneIds: readonly Id<"scene">[];
   readonly firedScriptIds: readonly string[];
+  readonly lastFiredCycleByScriptId: Readonly<Record<string, number>>;
   readonly previousConsumedInteractionIds: readonly Id<"interaction">[];
   readonly previousConsumedDialogueChoiceIds: readonly Id<"dialogue-choice">[];
   readonly activeCutaway: ActiveRuntimeRoomCutaway | null;
@@ -31,6 +32,11 @@ export interface RuntimeRoomScriptState {
 
 export type RuntimeRoomScriptEvent =
   | { readonly kind: "room-script-fired"; readonly scriptId: string }
+  | {
+      readonly kind: "room-script-cycle-fired";
+      readonly scriptId: string;
+      readonly cycleIndex: number;
+    }
   | {
       readonly kind: "room-cutaway-started";
       readonly scriptId: string;
@@ -61,11 +67,23 @@ export const createRuntimeRoomScriptState = (
   enteredAtTick: world.story.tick,
   visitedSceneIds: [],
   firedScriptIds: [],
+  lastFiredCycleByScriptId: {},
   previousConsumedInteractionIds: [...world.story.consumedInteractionIds],
   previousConsumedDialogueChoiceIds: [...world.story.consumedDialogueChoiceIds],
   activeCutaway: null,
   pendingSceneEnter: true,
 });
+
+const roomCycleIndex = (
+  script: RuntimeRoomScript,
+  world: InteractiveRuntimeWorldState,
+  state: RuntimeRoomScriptState,
+): number | null => {
+  if (script.trigger.kind !== "room-tick-cycle") return null;
+  const roomTicks = world.story.tick - state.enteredAtTick;
+  if (roomTicks < script.trigger.startTick) return null;
+  return Math.floor((roomTicks - script.trigger.startTick) / script.trigger.intervalTicks);
+};
 
 const scriptTriggered = (
   script: RuntimeRoomScript,
@@ -89,6 +107,10 @@ const scriptTriggered = (
       return newChoices.has(script.trigger.choiceId);
     case "after-room-ticks":
       return world.story.tick - state.enteredAtTick >= script.trigger.ticks;
+    case "room-tick-cycle": {
+      const cycle = roomCycleIndex(script, world, state);
+      return cycle !== null && cycle > (state.lastFiredCycleByScriptId[script.id] ?? -1);
+    }
     case "condition":
       return evaluateCondition(script.trigger.condition, world.story);
   }
@@ -103,6 +125,10 @@ const applyScript = (
   const scriptEvents: RuntimeRoomScriptEvent[] = [
     { kind: "room-script-fired", scriptId: script.id },
   ];
+  const cycle = roomCycleIndex(script, world, state);
+  if (cycle !== null) {
+    scriptEvents.push({ kind: "room-script-cycle-fired", scriptId: script.id, cycleIndex: cycle });
+  }
   const actionTransition = applyActions(world.story, script.actions);
   let nextWorld: InteractiveRuntimeWorldState = { ...world, story: actionTransition.state };
   const runtimeEvents: RuntimeEvent[] = [...actionTransition.events];
@@ -111,6 +137,14 @@ const applyScript = (
     firedScriptIds: script.once
       ? uniqueSorted([...state.firedScriptIds, script.id])
       : state.firedScriptIds,
+    ...(cycle === null
+      ? {}
+      : {
+          lastFiredCycleByScriptId: {
+            ...state.lastFiredCycleByScriptId,
+            [script.id]: cycle,
+          },
+        }),
   };
 
   if (script.cutaway) {
@@ -136,6 +170,7 @@ const applyScript = (
       sceneId: script.cutaway.sceneId,
       enteredAtTick: nextWorld.story.tick,
       visitedSceneIds: uniqueSorted([...nextState.visitedSceneIds, script.cutaway.sceneId]),
+      lastFiredCycleByScriptId: {},
       activeCutaway: script.cutaway.returnToPreviousLocation
         ? {
             scriptId: script.id,
@@ -194,6 +229,7 @@ const maybeReturnCutaway = (
       sceneId: cutaway.returnSceneId,
       enteredAtTick: returned.state.tick,
       visitedSceneIds: uniqueSorted([...state.visitedSceneIds, cutaway.returnSceneId]),
+      lastFiredCycleByScriptId: {},
       previousConsumedInteractionIds: [...returned.state.consumedInteractionIds],
       previousConsumedDialogueChoiceIds: [...returned.state.consumedDialogueChoiceIds],
       activeCutaway: null,
@@ -227,6 +263,7 @@ export const advanceRuntimeRoomScripts = (
         sceneId: world.story.currentSceneId,
         enteredAtTick: sceneChanged ? world.story.tick : state.enteredAtTick,
         visitedSceneIds: uniqueSorted([...state.visitedSceneIds, world.story.currentSceneId]),
+        lastFiredCycleByScriptId: sceneChanged ? {} : state.lastFiredCycleByScriptId,
         pendingSceneEnter: false,
       }
     : state;
