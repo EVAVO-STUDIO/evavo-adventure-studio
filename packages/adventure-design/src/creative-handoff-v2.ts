@@ -223,6 +223,9 @@ export const validateAdventureCreativeReviewResultV2 = (
         issues.push({ code: "review-policy-missing", path: "review.reviewedFrameIds", message: `Accepted animation is missing review evidence for frame '${frameId}'.` });
       }
     }
+    if (!result.styleEvidenceDigest) {
+      issues.push({ code: "review-policy-missing", path: "review.styleEvidenceDigest", message: "Accepted creative work requires retained style/identity consistency evidence." });
+    }
     if (order.alphaPolicy !== "opaque" && !result.alphaEvidenceDigest) {
       issues.push({ code: "alpha-policy", path: "review.alphaEvidenceDigest", message: "Accepted transparent work requires retained alpha evidence." });
     }
