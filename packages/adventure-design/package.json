@@ -52,6 +52,10 @@
       "types": "./dist/src/reference-fidelity.d.ts",
       "import": "./dist/src/reference-fidelity.js"
     },
+    "./classic-design-repair": {
+      "types": "./dist/src/classic-design-repair.d.ts",
+      "import": "./dist/src/classic-design-repair.js"
+    },
     "./full-game-capabilities": {
       "types": "./dist/src/full-game-capabilities.d.ts",
       "import": "./dist/src/full-game-capabilities.js"
