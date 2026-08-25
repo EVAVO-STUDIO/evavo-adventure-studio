@@ -159,6 +159,8 @@ export interface AdventureCreativeReviewV3 {
   readonly alphaEvidenceDigest?: string;
   readonly sequenceEvidenceDigest?: string;
   readonly styleEvidenceDigest?: string;
+  readonly modelSheetEvidenceDigest?: string;
+  readonly xSheetEvidenceDigest?: string;
   readonly reviewerEvidenceDigest: string;
 }
 
@@ -226,10 +228,16 @@ export const validateAdventureCreativeReviewV3 = (
   const issues: AdventureCreativeHandoffIssueV3[] = [];
   if (review.reviewVersion !== 3 || review.workOrderId !== order.workOrderId || review.revision !== order.revision) issues.push({ code: "review-authority-mismatch", message: "Review must target the exact v3 work order revision." });
   if (!nonEmpty(review.candidateArtifactDigest) || !nonEmpty(review.reviewerEvidenceDigest)) issues.push({ code: "missing-review-evidence", message: "Candidate and reviewer evidence digests are required." });
-  const openBlocking = review.issues.filter((issue) => issue.severity === "blocking" && !review.closedIssueIds.includes(issue.issueId));
-  if (review.disposition === "accepted" && openBlocking.length > 0) issues.push({ code: "accepted-with-blockers", message: "An accepted review cannot retain open blocking issues." });
+  const open = review.issues.filter((issue) => !review.closedIssueIds.includes(issue.issueId));
+  if (review.disposition === "accepted" && open.length > 0) {
+    issues.push({ code: "accepted-with-open-issues", message: "An accepted review cannot retain unresolved blocking, major or minor issues." });
+  }
   if (review.disposition === "accepted" && order.alphaPolicy !== "opaque" && !review.alphaEvidenceDigest) issues.push({ code: "missing-alpha-evidence", message: "Transparent accepted work requires alpha evidence." });
-  if (review.disposition === "accepted" && animationKinds.has(order.taskKind) && !review.sequenceEvidenceDigest) issues.push({ code: "missing-sequence-evidence", message: "Accepted animation requires sequence evidence." });
+  if (review.disposition === "accepted" && animationKinds.has(order.taskKind)) {
+    if (!review.sequenceEvidenceDigest) issues.push({ code: "missing-sequence-evidence", message: "Accepted animation requires sequence evidence." });
+    if (!review.modelSheetEvidenceDigest) issues.push({ code: "missing-model-sheet-evidence", message: "Accepted animation requires model-sheet conformance evidence." });
+    if (!review.xSheetEvidenceDigest) issues.push({ code: "missing-x-sheet-evidence", message: "Accepted animation requires X-sheet conformance evidence." });
+  }
   return issues;
 };
 
@@ -246,6 +254,10 @@ export const nextAdventureCreativeRepairOrderV3 = (
     throw new Error(`Maximum revision passes (${order.iterationPolicy.maximumRevisionPasses}) reached.`);
   }
   const open = review.issues.filter((issue) => !review.closedIssueIds.includes(issue.issueId));
+  const repairTargetFrameIds = new Set(open.flatMap((issue) => issue.frameIds));
+  const protectedFrameIds = (order.framePlan ?? [])
+    .map((frame) => frame.frameId)
+    .filter((frameId) => !repairTargetFrameIds.has(frameId));
   return {
     ...order,
     revision: order.revision + 1,
@@ -260,7 +272,7 @@ export const nextAdventureCreativeRepairOrderV3 = (
       targetFrameIds: issue.frameIds,
       ...(issue.region ? { targetRegion: issue.region } : {}),
       repairInstruction: issue.suggestedRepair,
-      preserveFrameIds: (order.framePlan ?? []).map((frame) => frame.frameId).filter((frameId) => !issue.frameIds.includes(frameId)),
+      preserveFrameIds: protectedFrameIds,
       preserveRegions: [],
       allowRegenerateWholeAsset: false,
     })),
