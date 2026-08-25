@@ -16,6 +16,7 @@ import {
 import type { RuntimeRoomScriptState } from "@evavo/adventure-scene-runtime/room-scripts";
 import type { AdventureRouteTopologyState } from "@evavo/adventure-scene-runtime/route-topology";
 import type { AdventureRpgState } from "@evavo/adventure-scene-runtime/rpg";
+import type { AdventureRpgEconomyState } from "@evavo/adventure-scene-runtime/rpg-economy";
 import type { SpecializedAdventureModeSessionState } from "@evavo/adventure-scene-runtime/specialized-mode-session";
 import { z } from "zod";
 import { saveGameInvestigationStateSchema } from "./investigation.js";
@@ -31,6 +32,7 @@ import {
 import { saveGameRoomScriptStateSchema } from "./room-scripts.js";
 import { saveGameRouteTopologyStateSchema } from "./route-topology.js";
 import { saveGameAdventureRpgStateSchema } from "./rpg.js";
+import { saveGameAdventureRpgEconomyStateSchema } from "./rpg-economy.js";
 import {
   type SaveGameSentenceState,
   saveGameSentenceStateSchema,
@@ -278,6 +280,7 @@ export interface SaveGamePayload {
   readonly roomScripts?: RuntimeRoomScriptState;
   readonly routeTopology?: AdventureRouteTopologyState;
   readonly rpg?: AdventureRpgState;
+  readonly rpgEconomy?: AdventureRpgEconomyState;
   readonly specializedModes?: SpecializedAdventureModeSessionState;
 }
 
@@ -296,6 +299,7 @@ const saveGamePayloadObjectSchema = z
     roomScripts: saveGameRoomScriptStateSchema.optional(),
     routeTopology: saveGameRouteTopologyStateSchema.optional(),
     rpg: saveGameAdventureRpgStateSchema.optional(),
+    rpgEconomy: saveGameAdventureRpgEconomyStateSchema.optional(),
     specializedModes: saveGameSpecializedModeSessionStateSchema.optional(),
   })
   .strict();
