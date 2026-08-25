@@ -87,6 +87,11 @@ import {
   validateRuntimeAdventureRpgPuzzles,
 } from "./rpg-puzzles.js";
 import {
+  RuntimeAdventureRpgWorldValidationError,
+  runtimeAdventureRpgWorldManifestSchema,
+  validateRuntimeAdventureRpgWorld,
+} from "./rpg-world.js";
+import {
   RuntimeAdventureRpgValidationError,
   runtimeAdventureRpgManifestSchema,
   validateRuntimeAdventureRpg,
@@ -175,6 +180,7 @@ export const runtimeBundleSchema = z
     routeTopology: runtimeAdventureRouteTopologyManifestSchema.optional(),
     rpg: runtimeAdventureRpgManifestSchema.optional(),
     rpgPuzzles: runtimeAdventureRpgPuzzleManifestSchema.optional(),
+    rpgWorld: runtimeAdventureRpgWorldManifestSchema.optional(),
     specializedModes: runtimeSpecializedAdventureModeManifestSchema.optional(),
   })
   .strict()
@@ -194,6 +200,7 @@ export const runtimeBundleSchema = z
       ["routeTopology", bundle.routeTopology],
       ["rpg", bundle.rpg],
       ["rpgPuzzles", bundle.rpgPuzzles],
+      ["rpgWorld", bundle.rpgWorld],
       ["specializedModes", bundle.specializedModes],
     ] as const;
     for (const [key, value] of projectScoped) {
@@ -404,6 +411,28 @@ export const parseRuntimeBundle = (input: unknown): RuntimeBundle => {
     });
     if (puzzleIssues.length > 0) throw new RuntimeAdventureRpgPuzzleValidationError(puzzleIssues);
   }
+  if (bundle.rpgWorld) {
+    if (!bundle.rpg) {
+      throw new RuntimeAdventureRpgWorldValidationError([
+        {
+          severity: "error",
+          code: "unknown-class",
+          path: "rpgWorld",
+          message: "RPG world economy and schedules require an RPG manifest.",
+        },
+      ]);
+    }
+    const rpgWorldIssues = validateRuntimeAdventureRpgWorld(bundle.rpgWorld, {
+      itemIds: new Set(bundle.inventoryItems.map((item) => item.id as string)),
+      actorIds: new Set(bundle.actors.map((actor) => actor.id as string)),
+      entrancesByScene: runtimeEntrancesByScene(bundle),
+      classIds: new Set(bundle.rpg.classes.map((entry) => entry.id)),
+      statIds: new Set(bundle.rpg.stats.map((entry) => entry.id)),
+      skillIds: new Set(bundle.rpg.skills.map((entry) => entry.id)),
+      resourceIds: new Set(bundle.rpg.resources.map((entry) => entry.id)),
+    });
+    if (rpgWorldIssues.length > 0) throw new RuntimeAdventureRpgWorldValidationError(rpgWorldIssues);
+  }
   if (bundle.specializedModes) {
     const interactions = allRuntimeInteractions(bundle);
     const dialogueChoices = allRuntimeDialogueChoices(bundle);
@@ -435,6 +464,7 @@ export * from "./palette-map-validation.js";
 export * from "./room-scripts.js";
 export * from "./route-topology.js";
 export * from "./rpg-puzzles.js";
+export * from "./rpg-world.js";
 export * from "./rpg.js";
 export * from "./specialized-modes.js";
 export * from "./ui-validation.js";
