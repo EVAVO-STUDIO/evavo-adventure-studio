@@ -24,7 +24,6 @@ const walkFrame = (
   index: number,
   role: WalkRole,
   exposureTicks: number,
-  handX: number,
   event?: string,
 ) => ({
   id: id<"sprite-frame">(`walk-east.${String(index + 1).padStart(2, "0")}`),
@@ -36,7 +35,7 @@ const walkFrame = (
   footPoint: { x: 48, y: 178 },
   shadowAnchor: { x: 48, y: 180 },
   attachmentPoints: {
-    hand: { x: handX, y: 88 },
+    hand: { x: 56, y: 88 },
   },
   durationTicks: exposureTicks,
   ...(event ? { events: [event] } : {}),
@@ -45,16 +44,16 @@ const walkFrame = (
 });
 
 const frames = [
-  walkFrame(0, "contact", 3, 56, "footfall-left"),
-  walkFrame(1, "breakdown", 2, 55),
-  walkFrame(2, "passing", 2, 53),
-  walkFrame(3, "breakdown", 2, 50),
-  walkFrame(4, "contact", 3, 44, "footfall-right"),
-  walkFrame(5, "breakdown", 2, 42),
-  walkFrame(6, "passing", 2, 44),
-  walkFrame(7, "breakdown", 2, 49),
-  walkFrame(8, "contact", 3, 54, "footfall-left"),
-  walkFrame(9, "breakdown", 2, 57),
+  walkFrame(0, "contact", 3, "footfall-left"),
+  walkFrame(1, "breakdown", 2),
+  walkFrame(2, "passing", 2),
+  walkFrame(3, "breakdown", 2),
+  walkFrame(4, "contact", 3, "footfall-right"),
+  walkFrame(5, "breakdown", 2),
+  walkFrame(6, "passing", 2),
+  walkFrame(7, "breakdown", 2),
+  walkFrame(8, "contact", 3, "footfall-left"),
+  walkFrame(9, "breakdown", 2),
 ] as const;
 
 export const ninthReliquaryMaraActor: Actor = {
