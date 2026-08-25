@@ -10,6 +10,7 @@ import { AudioApp } from "./AudioApp.js";
 import { ClassicExperienceApp } from "./ClassicExperienceApp.js";
 import { ClassicGameCreatorApp } from "./ClassicGameCreatorApp.js";
 import { CompatibilityLabApp } from "./CompatibilityLabApp.js";
+import { CreativeProductionApp } from "./CreativeProductionApp.js";
 import { DialogueApp } from "./DialogueApp.js";
 import { DynamixCinematicLabApp } from "./DynamixCinematicLabApp.js";
 import { StudioErrorBoundary } from "./ErrorBoundary.js";
@@ -49,6 +50,7 @@ const application: ReactNode =
   : workspace === "profiles" ? <ProductionProfilesApp />
   : workspace === "full-game" ? <FullGameCapabilityApp />
   : workspace === "investigation" ? <InvestigationApp />
+  : workspace === "creative-production" ? <CreativeProductionApp />
   : workspace === "progression" ? <ProgressionApp />
   : workspace === "staging" ? <SceneStagingApp />
   : workspace === "composition" ? <SceneReadabilityApp />
@@ -82,6 +84,7 @@ const workspaces = [
   { id: "profiles", href: "/?workspace=profiles", label: "Profiles" },
   { id: "full-game", href: "/?workspace=full-game", label: "Full Game" },
   { id: "investigation", href: "/?workspace=investigation", label: "Investigation" },
+  { id: "creative-production", href: "/?workspace=creative-production", label: "Creative" },
   { id: "showcases", href: "/?workspace=showcases", label: "Showcases" },
   { id: "feel", href: "/?workspace=feel", label: "Feel" },
   { id: "design", href: "/?workspace=design", label: "Design" },
