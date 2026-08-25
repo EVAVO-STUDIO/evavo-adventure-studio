@@ -11,6 +11,7 @@ import {
 } from "@evavo/adventure-runtime-controller/feature-session";
 import type { PackagedRuntimeControllerOptions } from "@evavo/adventure-runtime-controller";
 import { advanceProfiledRuntimeCamera } from "@evavo/adventure-runtime-controller/profiled-camera";
+import { featureSaveCompanionOptions } from "@evavo/adventure-runtime-controller/save-companions";
 import {
   createSaveGame as createRuntimeSaveGame,
   loadSaveGame as loadRuntimeSaveGame,
@@ -167,17 +168,6 @@ const speechCueForActiveDialogue = (
   return null;
 };
 
-const companionOptions = (save: SaveGame) => ({
-  ...(save.interface.sentence ? { sentence: save.interface.sentence } : {}),
-  ...(save.investigation ? { investigation: save.investigation } : {}),
-  ...(save.itemCombinations ? { itemCombinations: save.itemCombinations } : {}),
-  ...(save.multiProtagonist ? { multiProtagonist: save.multiProtagonist } : {}),
-  ...(save.roomScripts ? { roomScripts: save.roomScripts } : {}),
-  ...(save.routeTopology ? { routeTopology: save.routeTopology } : {}),
-  ...(save.rpg ? { rpg: save.rpg } : {}),
-  ...(save.specializedModes ? { specializedModes: save.specializedModes } : {}),
-});
-
 const internalWorldReplacementSave = (
   bundle: RuntimeBundle,
   world: InteractiveRuntimeWorldState,
@@ -190,8 +180,8 @@ const internalWorldReplacementSave = (
     selectedItemId: interfaceState.selectedItemId,
     statusText: interfaceState.statusText,
     parser: interfaceState.parser,
+    ...featureSaveCompanionOptions(sourceSave),
     ...(interfaceState.profiledCamera ? { profiledCamera: interfaceState.profiledCamera } : {}),
-    ...companionOptions(sourceSave),
   });
 
 export const createAudioPackagedRuntimeController = (
@@ -430,8 +420,7 @@ export const createAudioPackagedRuntimeController = (
       selectedItemId: inner.interface.selectedItemId,
       statusText: inner.interface.statusText,
       parser: inner.interface.parser,
-      ...(inner.interface.profiledCamera ? { profiledCamera: inner.interface.profiledCamera } : {}),
-      ...companionOptions(inner),
+      ...featureSaveCompanionOptions(inner),
       ...(audio ? { audio } : {}),
     });
   };
@@ -492,8 +481,15 @@ export const createAudioPackagedRuntimeController = (
         }
       : {}),
     ...(controller.rpgState ? { rpgState: () => controller.rpgState?.() as ReturnType<NonNullable<PackagedFeatureRuntimeController["rpgState"]>> } : {}),
+    ...(controller.rpgEconomyState ? { rpgEconomyState: () => controller.rpgEconomyState?.() ?? null } : {}),
+    ...(controller.buyRpgItem ? { buyRpgItem: (shopId: string, itemId: string) => aroundMutation(() => controller.buyRpgItem?.(shopId, itemId)) as ReturnType<NonNullable<PackagedFeatureRuntimeController["buyRpgItem"]>> } : {}),
+    ...(controller.sellRpgItem ? { sellRpgItem: (shopId: string, itemId: string) => aroundMutation(() => controller.sellRpgItem?.(shopId, itemId)) as ReturnType<NonNullable<PackagedFeatureRuntimeController["sellRpgItem"]>> } : {}),
+    ...(controller.equipRpgItem ? { equipRpgItem: (itemId: string) => aroundMutation(() => controller.equipRpgItem?.(itemId)) as ReturnType<NonNullable<PackagedFeatureRuntimeController["equipRpgItem"]>> } : {}),
+    ...(controller.unequipRpgSlot ? { unequipRpgSlot: (slotId: string) => aroundMutation(() => controller.unequipRpgSlot?.(slotId)) } : {}),
+    ...(controller.rpgEquipmentModifiers ? { rpgEquipmentModifiers: () => controller.rpgEquipmentModifiers?.() ?? {} } : {}),
     ...(controller.practiceSkill ? { practiceSkill: (skillId: string, amount?: number) => aroundMutation(() => controller.practiceSkill?.(skillId, amount)) as ReturnType<NonNullable<PackagedFeatureRuntimeController["practiceSkill"]>> } : {}),
     ...(controller.resolveSkillCheck ? { resolveSkillCheck: (check: Parameters<NonNullable<PackagedFeatureRuntimeController["resolveSkillCheck"]>>[0]) => aroundMutation(() => controller.resolveSkillCheck?.(check)) as ReturnType<NonNullable<PackagedFeatureRuntimeController["resolveSkillCheck"]>> } : {}),
+    ...(controller.resolveRpgPuzzle ? { resolveRpgPuzzle: (puzzleId: string, solutionId: string) => aroundMutation(() => controller.resolveRpgPuzzle?.(puzzleId, solutionId)) as ReturnType<NonNullable<PackagedFeatureRuntimeController["resolveRpgPuzzle"]>> } : {}),
     ...(controller.advanceRpgTime ? { advanceRpgTime: (minutes: number) => aroundMutation(() => controller.advanceRpgTime?.(minutes)) } : {}),
     ...(controller.restRpg ? { restRpg: (rule: Parameters<NonNullable<PackagedFeatureRuntimeController["restRpg"]>>[0]) => aroundMutation(() => controller.restRpg?.(rule)) } : {}),
     ...(controller.adjustResource ? { adjustResource: (resourceId: string, delta: number) => aroundMutation(() => controller.adjustResource?.(resourceId, delta)) } : {}),
