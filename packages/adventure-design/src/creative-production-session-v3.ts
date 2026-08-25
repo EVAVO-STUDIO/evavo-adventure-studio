@@ -142,7 +142,6 @@ export const applyAdventureCreativeStrictQualityV3 = (
         ...session,
         status: "awaiting-delivery",
         revisions: [...session.revisions.slice(0, -1), completedCurrent],
-        rejectionReasons: undefined,
       };
     case "targeted-repair":
       return {
@@ -153,14 +152,12 @@ export const applyAdventureCreativeStrictQualityV3 = (
           completedCurrent,
           { workOrder: decision.nextWorkOrder },
         ],
-        rejectionReasons: undefined,
       };
     case "human-review":
       return {
         ...session,
         status: "review-required",
         revisions: [...session.revisions.slice(0, -1), completedCurrent],
-        rejectionReasons: undefined,
       };
     case "reject":
       return {
@@ -185,7 +182,6 @@ export const prepareAdventureCreativeRepairRevisionV3 = (
     ...session,
     status: "awaiting-candidate",
     revisions: [...session.revisions, { workOrder }],
-    rejectionReasons: undefined,
   };
 };
 
@@ -210,7 +206,6 @@ export const admitAdventureCreativeDeliveryV3 = (
     ...session,
     status: "accepted",
     acceptedDelivery: accepted,
-    rejectionReasons: undefined,
     revisions: [
       ...session.revisions.slice(0, -1),
       { ...current, delivery: accepted },
