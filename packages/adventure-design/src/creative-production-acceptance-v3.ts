@@ -5,6 +5,7 @@ import type {
   AdventureCreativeTaskKindV3,
   AdventureCreativeWorkOrderV3,
 } from "./creative-production-handoff-v3.js";
+import { validateAdventureCreativeReviewV3 } from "./creative-production-handoff-v3.js";
 import {
   type AdventureCreativeMeasuredEvidenceV3,
   validateAdventureCreativeMeasuredEvidenceV3,
@@ -23,7 +24,9 @@ export const validateAdventureCreativeAcceptedDeliveryV3 = (
   review: AdventureCreativeReviewV3,
   delivery: AdventureCreativeAcceptedDeliveryV3,
 ): readonly AdventureCreativeHandoffIssueV3[] => {
-  const issues: AdventureCreativeHandoffIssueV3[] = [];
+  const issues: AdventureCreativeHandoffIssueV3[] = [
+    ...validateAdventureCreativeReviewV3(order, review),
+  ];
   if (review.disposition !== "accepted") {
     issues.push({ code: "review-not-accepted", message: "Only an accepted review may produce an Adventure Studio delivery." });
   }
