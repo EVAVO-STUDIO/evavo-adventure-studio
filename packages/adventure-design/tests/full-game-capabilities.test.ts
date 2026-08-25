@@ -23,6 +23,7 @@ describe("full-game adventure capability matrix", () => {
       "heart-of-china",
       "rise-of-the-dragon",
       "indiana-jones-fate-of-atlantis",
+      "broken-sword-shadow-of-the-templars",
     ]);
   });
 
@@ -88,6 +89,8 @@ describe("full-game adventure capability matrix", () => {
       "action-minigame",
       "quick-response-sequence",
       "full-game-evidence",
+      "handdrawn-cel-production",
+      "cross-studio-creative-handoff",
     ] as const) {
       expect(coverage.get(capabilityId)?.status, capabilityId).not.toBe("proofed");
     }
@@ -173,6 +176,33 @@ describe("full-game adventure capability matrix", () => {
         "branching-route-topology",
         "alternate-puzzle-solutions",
         "travel-map",
+      ]),
+    );
+  });
+
+  it("models Broken Sword as a modern hand-drawn reference without inheriting VGA-only requirements", () => {
+    const brokenSword = adventureReferenceGameCapabilities.find(
+      (profile) => profile.id === "broken-sword-shadow-of-the-templars",
+    )!;
+    expect(brokenSword.family).toBe("revolution-handdrawn");
+    expect(brokenSword.required).not.toContain("native-vga-audit");
+    expect(brokenSword.required).toEqual(
+      expect.arrayContaining([
+        "context-interface",
+        "topic-dialogue",
+        "research-investigation-loop",
+        "room-cutaways",
+        "handdrawn-cel-production",
+        "cross-studio-creative-handoff",
+      ]),
+    );
+    const readiness = evaluateAdventureReferenceGameReadiness(brokenSword.id);
+    expect(readiness.ready).toBe(false);
+    expect(readiness.gaps.map((gap) => gap.id)).toEqual(
+      expect.arrayContaining([
+        "handdrawn-cel-production",
+        "cross-studio-creative-handoff",
+        "full-game-evidence",
       ]),
     );
   });
