@@ -4,9 +4,10 @@ import {
   type AdventureCreativeReviewV3,
   type AdventureCreativeWorkOrderV3,
 } from "./creative-production-handoff-v3.js";
-import type {
-  AdventureCreativeFrameEvidenceV3,
-  AdventureCreativeStrictQualityEvidenceV3,
+import {
+  validateAdventureCreativeStrictQualityV3,
+  type AdventureCreativeFrameEvidenceV3,
+  type AdventureCreativeStrictQualityEvidenceV3,
 } from "./creative-production-quality-v3.js";
 
 export interface AdventureCreativeAutomatedReviewV3 {
@@ -231,11 +232,11 @@ export const createAdventureCreativeAutomatedReviewV3 = (
     }
   }
 
-  const disposition: AdventureCreativeReviewV3["disposition"] =
+  let disposition: AdventureCreativeReviewV3["disposition"] =
     issues.some((entry) => entry.severity === "blocking" || entry.severity === "major")
       ? "repair-required"
       : "accepted";
-  const review: AdventureCreativeReviewV3 = {
+  let review: AdventureCreativeReviewV3 = {
     reviewVersion: 3,
     workOrderId: order.workOrderId,
     revision: order.revision,
@@ -248,6 +249,28 @@ export const createAdventureCreativeAutomatedReviewV3 = (
     styleEvidenceDigest: evidence.styleEvidenceDigest,
     reviewerEvidenceDigest,
   };
+
+  const strictIssues = validateAdventureCreativeStrictQualityV3(order, review, evidence);
+  const knownMessages = new Set(issues.map((entry) => entry.message));
+  for (const strict of strictIssues) {
+    if (knownMessages.has(strict.message)) continue;
+    issues.push(
+      reviewIssue(
+        order,
+        `strict-${strict.code}`,
+        "blocking",
+        strict.message,
+        [],
+        [evidence.candidateArtifactDigest],
+      ),
+    );
+    knownMessages.add(strict.message);
+  }
+  if (issues.some((entry) => entry.severity === "blocking" || entry.severity === "major")) {
+    disposition = "repair-required";
+    review = { ...review, disposition, issues };
+  }
+
   const repairOrder = disposition === "repair-required"
     ? nextAdventureCreativeRepairOrderV3(order, review)
     : null;
