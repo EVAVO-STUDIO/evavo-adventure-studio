@@ -1,5 +1,6 @@
 import { idSchema } from "@evavo/adventure-project-schema";
 import { z } from "zod";
+import { runtimeAdventureRpgEconomyManifestSchema } from "./rpg-economy.js";
 
 const rpgIdSchema = z.string().regex(/^[A-Za-z0-9][A-Za-z0-9._-]*$/u);
 
@@ -82,6 +83,7 @@ export const runtimeAdventureRpgManifestSchema = z.object({
   minutesPerDay: z.number().int().positive(),
   startMinuteOfDay: z.number().int().nonnegative(),
   combatEncounters: z.array(runtimeAdventureRpgCombatEncounterSchema).default([]),
+  economy: runtimeAdventureRpgEconomyManifestSchema.optional(),
 }).strict();
 export type RuntimeAdventureRpgManifest = z.infer<typeof runtimeAdventureRpgManifestSchema>;
 
