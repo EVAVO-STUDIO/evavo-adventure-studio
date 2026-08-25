@@ -33,6 +33,8 @@
     "./rpg": { "types": "./dist/src/with-rpg.d.ts", "import": "./dist/src/with-rpg.js" },
     "./with-rpg-puzzles": { "types": "./dist/src/with-rpg-puzzles.d.ts", "import": "./dist/src/with-rpg-puzzles.js" },
     "./rpg-puzzles": { "types": "./dist/src/with-rpg-puzzles.d.ts", "import": "./dist/src/with-rpg-puzzles.js" },
+    "./with-specialized-modes": { "types": "./dist/src/with-specialized-modes.d.ts", "import": "./dist/src/with-specialized-modes.js" },
+    "./specialized-modes": { "types": "./dist/src/with-specialized-modes.d.ts", "import": "./dist/src/with-specialized-modes.js" },
     "./with-localisation": { "types": "./dist/src/with-localisation.d.ts", "import": "./dist/src/with-localisation.js" },
     "./with-opening": { "types": "./dist/src/with-opening.d.ts", "import": "./dist/src/with-opening.js" },
     "./with-play-feel": { "types": "./dist/src/with-play-feel.d.ts", "import": "./dist/src/with-play-feel.js" }
