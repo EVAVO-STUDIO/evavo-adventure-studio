@@ -1,6 +1,5 @@
 import type {
   AdventureCreativeHandoffIssueV3,
-  AdventureCreativeProductionSessionV3,
   AdventureCreativeReviewV3,
   AdventureCreativeWorkOrderV3,
 } from "./creative-production-handoff-v3.js";
