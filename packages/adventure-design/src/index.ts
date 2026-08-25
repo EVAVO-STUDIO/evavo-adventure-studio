@@ -4,6 +4,7 @@ export * from "./creative-production-handoff-v3.js";
 export * from "./creative-production-protocol-v3.js";
 export * from "./dynamix-cinematic.js";
 export * from "./illustrated-conspiracy-production.js";
+export * from "./original-full-game-proofs.js";
 export * from "./parse.js";
 export * from "./production-profiles.js";
 export * from "./production-showcases.js";
