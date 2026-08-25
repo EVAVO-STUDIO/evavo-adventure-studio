@@ -2,41 +2,76 @@ import { createHash } from "node:crypto";
 import { mkdir, readFile, writeFile } from "node:fs/promises";
 import { resolve } from "node:path";
 import {
-  createNinthReliquaryFinalizedProductionPackage,
-  ninthReliquaryProductionBlueprint,
-  ninthReliquaryProductionProfile,
-} from "../packages/adventure-design/dist/src/ninth-reliquary-production-package.js";
+  createNinthReliquaryFinalizedProductionPackageV3,
+  ninthReliquaryProductionBlueprintV3,
+} from "../packages/adventure-design/dist/src/ninth-reliquary-production-package-v3.js";
+import { ninthReliquaryProductionProfile } from "../packages/adventure-design/dist/src/ninth-reliquary-production-package.js";
 import { ninthReliquaryGameplayProof } from "../packages/adventure-design/dist/src/ninth-reliquary-gameplay-proof.js";
 
 const outputDirectory = resolve(process.cwd(), process.argv[2] ?? "artifacts/ninth-reliquary-production");
 const authorityPath = process.argv[3] ? resolve(process.cwd(), process.argv[3]) : null;
 await mkdir(outputDirectory, { recursive: true });
 
+const requiredAuthorityKeys = [
+  "sourceRevisionDigest",
+  "visualStandardDigest",
+  "styleBankDigest",
+  "paletteDigest",
+  "environmentLayoutDigest",
+  "protagonistModelSheetDigest",
+  "protagonistWalkXSheetDigest",
+  "environmentalReferenceDigests",
+  "characterReferenceDigests",
+];
+
+const validateAuthorities = (authorities) => {
+  const missing = requiredAuthorityKeys.filter((key) => {
+    const value = authorities?.[key];
+    return Array.isArray(value) ? value.length === 0 : typeof value !== "string" || value.trim().length === 0;
+  });
+  if (missing.length > 0) {
+    throw new Error(
+      `Ninth Reliquary v3 authority file is incomplete. Missing/empty: ${missing.join(", ")}.`,
+    );
+  }
+};
+
 const files = new Map();
-files.set("ninth-reliquary.production-blueprint.json", ninthReliquaryProductionBlueprint());
+files.set("ninth-reliquary.production-blueprint.v3.json", ninthReliquaryProductionBlueprintV3());
 files.set("ninth-reliquary.production-profile.json", ninthReliquaryProductionProfile());
 files.set("ninth-reliquary.gameplay-proof.json", ninthReliquaryGameplayProof);
 
 if (authorityPath) {
   const authorities = JSON.parse(await readFile(authorityPath, "utf8"));
-  const finalized = createNinthReliquaryFinalizedProductionPackage(authorities);
-  files.set("ninth-reliquary.art-studio.work-orders.json", {
-    contractVersion: 1,
-    destinationStudio: "art-studio",
-    workOrders: finalized.artStudioWorkOrders,
+  validateAuthorities(authorities);
+  const finalized = createNinthReliquaryFinalizedProductionPackageV3(authorities);
+  files.set("ninth-reliquary.creative-work-orders.v3.json", {
+    contractVersion: 3,
+    projectKey: "ninth-reliquary",
+    workOrders: finalized.workOrders,
   });
-  files.set("ninth-reliquary.cel-animation-studio.work-orders.json", {
-    contractVersion: 1,
+  files.set("ninth-reliquary.art-studio.production-requests.v3.json", {
+    requestVersion: 3,
+    destinationStudio: "art-studio",
+    requests: finalized.artStudioRequests.map((entry) => entry.request),
+  });
+  files.set("ninth-reliquary.cel-animation-studio.production-requests.v3.json", {
+    requestVersion: 3,
     destinationStudio: "cel-animation-studio",
-    workOrders: finalized.celAnimationStudioWorkOrders,
+    requests: finalized.celAnimationStudioRequests.map((entry) => entry.request),
+  });
+  files.set("ninth-reliquary.creative-evidence-requirements.v3.json", {
+    evidencePolicyVersion: 3,
+    requirements: finalized.evidenceRequirements,
   });
 } else {
-  files.set("ninth-reliquary.authority-required.json", {
-    manifestVersion: 1,
+  files.set("ninth-reliquary.authority-required.v3.json", {
+    manifestVersion: 3,
     finalizedWorkOrdersEmitted: false,
     message:
-      "Provide an approved authority JSON file as the second exporter argument before finalized Art Studio / Cel Animation Studio work orders can be emitted.",
-    requiredAuthorities: ninthReliquaryProductionBlueprint().authorityRequirements,
+      "Provide an approved v3 authority JSON file as the second exporter argument before Art Studio / Cel Animation Studio production requests can be emitted.",
+    requiredAuthorityKeys,
+    requiredAuthorities: ninthReliquaryProductionBlueprintV3().authorityRequirements,
   });
 }
 
@@ -57,7 +92,8 @@ await writeFile(
   resolve(outputDirectory, summaryFile),
   `${JSON.stringify(
     {
-      manifestVersion: 1,
+      manifestVersion: 3,
+      creativeProtocolVersion: 3,
       authoritiesSupplied: Boolean(authorityPath),
       authorityPath,
       files: summary,
