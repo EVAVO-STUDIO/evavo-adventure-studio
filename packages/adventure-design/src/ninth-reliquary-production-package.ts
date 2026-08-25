@@ -4,12 +4,15 @@ import {
   createNinthReliquaryCreativeWorkOrders,
   type NinthReliquaryCreativeAuthorities,
 } from "./ninth-reliquary-creative-production.js";
+import { compileNinthReliquaryCreativeProofWorkOrders } from "./ninth-reliquary-creative-proof.js";
 
 export interface NinthReliquaryAuthorityRequirement {
   readonly id:
     | "source-revision"
     | "visual-standard"
     | "style-bank"
+    | "palette-authority"
+    | "environment-layout"
     | "protagonist-model-sheet"
     | "protagonist-walk-x-sheet"
     | "environment-references"
@@ -20,7 +23,7 @@ export interface NinthReliquaryAuthorityRequirement {
 }
 
 export interface NinthReliquaryProductionBlueprint {
-  readonly blueprintVersion: 1;
+  readonly blueprintVersion: 2;
   readonly projectKey: "ninth-reliquary";
   readonly productionProfileId: "cinematic-handdrawn-conspiracy";
   readonly authorityRequirements: readonly NinthReliquaryAuthorityRequirement[];
@@ -53,6 +56,18 @@ const authorityRequirements: readonly NinthReliquaryAuthorityRequirement[] = [
     owner: "art-studio",
     requiredState: "approved style/reference bank digest",
     purpose: "Keeps generated or repaired assets on one controlled visual language across locations and revisions.",
+  },
+  {
+    id: "palette-authority",
+    owner: "art-studio",
+    requiredState: "approved palette/colour-role authority digest",
+    purpose: "Separates actual colour-role authority from the broader style/reference bank and makes palette drift independently reviewable.",
+  },
+  {
+    id: "environment-layout",
+    owner: "adventure-studio",
+    requiredState: "approved native scene/layout authority digest",
+    purpose: "Locks exits, actor staging lanes, focal geometry and background/foreground alignment before final environment paint.",
   },
   {
     id: "protagonist-model-sheet",
@@ -120,7 +135,7 @@ const workOrderPlan: NinthReliquaryProductionBlueprint["workOrderPlan"] = [
 ] as const;
 
 export const ninthReliquaryProductionBlueprint = (): NinthReliquaryProductionBlueprint => ({
-  blueprintVersion: 1,
+  blueprintVersion: 2,
   projectKey: "ninth-reliquary",
   productionProfileId: "cinematic-handdrawn-conspiracy",
   authorityRequirements,
@@ -157,5 +172,51 @@ export const createNinthReliquaryFinalizedProductionPackage = (
     celAnimationStudioWorkOrders: orders.filter(
       (order) => order.destinationStudio === "cel-animation-studio",
     ),
+  };
+};
+
+export interface NinthReliquaryCreativeAuthoritiesV2 extends NinthReliquaryCreativeAuthorities {
+  readonly paletteDigest: string;
+  readonly environmentLayoutDigest: string;
+}
+
+export interface NinthReliquaryFinalizedProductionPackageV2 {
+  readonly packageVersion: 2;
+  readonly blueprint: NinthReliquaryProductionBlueprint;
+  readonly profile: ReturnType<typeof ninthReliquaryProductionProfile>;
+  readonly gameplayProof: typeof ninthReliquaryGameplayProof;
+  readonly legacy: NinthReliquaryFinalizedProductionPackage;
+  readonly artStudioWorkOrdersV2: readonly ReturnType<typeof compileNinthReliquaryCreativeProofWorkOrders>[keyof ReturnType<typeof compileNinthReliquaryCreativeProofWorkOrders>][];
+  readonly celAnimationStudioWorkOrdersV2: readonly ReturnType<typeof compileNinthReliquaryCreativeProofWorkOrders>[keyof ReturnType<typeof compileNinthReliquaryCreativeProofWorkOrders>][];
+}
+
+export const createNinthReliquaryFinalizedProductionPackageV2 = (
+  authorities: NinthReliquaryCreativeAuthoritiesV2,
+  revision = 1,
+): NinthReliquaryFinalizedProductionPackageV2 => {
+  const legacy = createNinthReliquaryFinalizedProductionPackage(authorities);
+  const v2 = compileNinthReliquaryCreativeProofWorkOrders(
+    {
+      projectId: authorities.projectId,
+      sourceRevisionDigest: authorities.sourceRevisionDigest,
+      styleDigest: authorities.visualStandardDigest,
+      paletteDigest: authorities.paletteDigest,
+      environmentLayoutDigest: authorities.environmentLayoutDigest,
+      modelSheetDigest: authorities.protagonistModelSheetDigest,
+      xSheetDigest: authorities.protagonistWalkXSheetDigest,
+      environmentReferenceDigests: authorities.environmentalReferenceDigests,
+      characterReferenceDigests: authorities.characterReferenceDigests,
+    },
+    revision,
+  );
+  const orders = [v2.background, v2.foregroundAwning, v2.maraModelSheet, v2.maraWalkEast];
+  return {
+    packageVersion: 2,
+    blueprint: ninthReliquaryProductionBlueprint(),
+    profile: ninthReliquaryProductionProfile(),
+    gameplayProof: ninthReliquaryGameplayProof,
+    legacy,
+    artStudioWorkOrdersV2: orders.filter((order) => order.destinationStudio === "art-studio"),
+    celAnimationStudioWorkOrdersV2: orders.filter((order) => order.destinationStudio === "cel-animation-studio"),
   };
 };
