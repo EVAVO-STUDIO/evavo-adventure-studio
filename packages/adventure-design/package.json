@@ -56,6 +56,10 @@
       "types": "./dist/src/classic-design-repair.d.ts",
       "import": "./dist/src/classic-design-repair.js"
     },
+    "./reference-proof-lanes": {
+      "types": "./dist/src/reference-proof-lanes.d.ts",
+      "import": "./dist/src/reference-proof-lanes.js"
+    },
     "./full-game-capabilities": {
       "types": "./dist/src/full-game-capabilities.d.ts",
       "import": "./dist/src/full-game-capabilities.js"
