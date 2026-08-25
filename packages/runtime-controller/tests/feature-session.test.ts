@@ -15,11 +15,12 @@ describe("packaged feature session composition", () => {
       rpg: false,
       multiProtagonist: false,
       routeTopology: false,
+      specializedModes: false,
       stack: ["base"],
     });
   });
 
-  it("orders SCUMM sentence, room scripts, investigation, RPG, protagonist state and routes from inner to outer", () => {
+  it("orders sentence, room, investigation, RPG, protagonist, route and specialized modes from inner to outer", () => {
     const bundle = {
       ...base,
       presentation: { interactionMode: "verb-list" },
@@ -58,6 +59,11 @@ describe("packaged feature session composition", () => {
         nodes: [{ id: "route-node.start", label: "Start", terminal: true, tags: [] }],
         edges: [],
       },
+      specializedModes: {
+        manifestVersion: 1,
+        projectId: "project.stack",
+        modes: [],
+      },
     } as unknown as RuntimeBundle;
     expect(describePackagedFeatureSession(bundle)).toEqual({
       sentence: true,
@@ -66,6 +72,7 @@ describe("packaged feature session composition", () => {
       rpg: true,
       multiProtagonist: true,
       routeTopology: true,
+      specializedModes: true,
       stack: [
         "base",
         "sentence",
@@ -74,6 +81,7 @@ describe("packaged feature session composition", () => {
         "rpg",
         "multi-protagonist",
         "route-topology",
+        "specialized-modes",
       ],
     });
   });
