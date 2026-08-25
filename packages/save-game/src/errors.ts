@@ -72,7 +72,12 @@ export type SaveGameCompatibilityIssueCode =
   | "rpg-skill-missing"
   | "rpg-resource-missing"
   | "rpg-time-invalid"
-  | "rpg-value-invalid";
+  | "rpg-value-invalid"
+  | "specialized-mode-state-without-runtime-manifest"
+  | "specialized-mode-id-missing"
+  | "specialized-mode-state-missing"
+  | "specialized-mode-kind-mismatch"
+  | "specialized-mode-return-location-invalid";
 
 export interface SaveGameCompatibilityIssue {
   readonly severity: "error";
