@@ -1,9 +1,6 @@
-import type {
-  CreativeProductionRequestV3,
-  CreativeTransparencyModeV3,
-} from "./creative-production-handoff-v3.js";
+import type { AdventureCreativeWorkOrderV3 } from "./creative-production-handoff-v3.js";
 
-export interface CreativeAlphaEvidenceV3 {
+export interface AdventureCreativeAlphaEvidenceV3 {
   readonly width: number;
   readonly height: number;
   readonly hasAlphaChannel: boolean;
@@ -14,12 +11,12 @@ export interface CreativeAlphaEvidenceV3 {
   readonly maximumAlpha: number;
   readonly checkerboardDetected: boolean;
   readonly checkerboardScore: number;
-  readonly matteContaminationPixels: number;
-  readonly backgroundBleedPixels: number;
-  readonly edgeContaminationPixels: number;
+  readonly matteResiduePixels: number;
+  readonly alphaHaloPixels: number;
+  readonly transparentRgbContaminationPixels: number;
 }
 
-export interface CreativeFrameGeometryEvidenceV3 {
+export interface AdventureCreativeMeasuredFrameV3 {
   readonly frameId: string;
   readonly width: number;
   readonly height: number;
@@ -27,257 +24,232 @@ export interface CreativeFrameGeometryEvidenceV3 {
   readonly trimY: number;
   readonly trimWidth: number;
   readonly trimHeight: number;
-  readonly durationTicks: number;
-  readonly anchors: Readonly<Record<string, { readonly x: number; readonly y: number }>>;
+  readonly exposureTicks: number;
+  readonly pivot?: { readonly x: number; readonly y: number };
+  readonly footPoint?: { readonly x: number; readonly y: number };
+  readonly handAnchors: Readonly<Record<string, { readonly x: number; readonly y: number }>>;
+  readonly shadowAnchor?: { readonly x: number; readonly y: number };
   readonly contactStable: boolean;
-  readonly alpha: CreativeAlphaEvidenceV3;
+  readonly alpha: AdventureCreativeAlphaEvidenceV3;
 }
 
-export interface CreativeAnimationEvidenceV3 {
+export interface AdventureCreativeSequenceEvidenceV3 {
   readonly actualFrameIds: readonly string[];
   readonly duplicateFrameIds: readonly string[];
   readonly missingFrameIds: readonly string[];
   readonly unexpectedFrameIds: readonly string[];
-  readonly frames: readonly CreativeFrameGeometryEvidenceV3[];
+  readonly frames: readonly AdventureCreativeMeasuredFrameV3[];
   readonly maximumObservedTrimJitterPixels: number;
-  readonly maximumObservedAnchorDriftPixels: Readonly<Record<string, number>>;
+  readonly maximumObservedAnchorDriftPixels: number;
   readonly loopClosureDeltaPixels: number;
+  readonly neighbourContinuityScore: number;
+  readonly modelSheetConformanceScore: number;
+  readonly xSheetConformanceScore: number;
   readonly styleConsistencyScore: number;
   readonly proportionConsistencyScore: number;
   readonly paletteConsistencyScore: number;
 }
 
-export interface CreativeMeasuredDeliveryEvidenceV3 {
+export interface AdventureCreativeMeasuredEvidenceV3 {
   readonly evidenceVersion: 3;
+  readonly workOrderId: string;
+  readonly revision: number;
   readonly artifactWidth: number;
   readonly artifactHeight: number;
-  readonly alpha: CreativeAlphaEvidenceV3;
-  readonly animation?: CreativeAnimationEvidenceV3;
-  readonly styleLockId: string;
-  readonly styleGuideHash: string;
-  readonly paletteContractHash: string;
-  readonly measuredAtRevision: number;
+  readonly artifactByteLength: number;
+  readonly alpha: AdventureCreativeAlphaEvidenceV3;
+  readonly sequence?: AdventureCreativeSequenceEvidenceV3;
+  readonly styleDigest: string;
+  readonly paletteDigest?: string;
+  readonly modelSheetDigest?: string;
+  readonly xSheetDigest?: string;
+  readonly protectedInvariantDigests: Readonly<Record<string, string>>;
 }
 
-export type CreativeEvidenceIssueCodeV3 =
+export type AdventureCreativeEvidenceIssueCodeV3 =
+  | "authority-mismatch"
   | "dimension-mismatch"
   | "missing-alpha-channel"
   | "missing-zero-alpha"
-  | "partial-alpha-forbidden"
-  | "fake-checkerboard-transparency"
-  | "matte-contamination"
-  | "background-bleed"
-  | "edge-contamination"
-  | "animation-evidence-missing"
+  | "soft-alpha-when-binary-required"
+  | "fake-transparency-checkerboard"
+  | "matte-residue"
+  | "alpha-halo"
+  | "transparent-rgb-contamination"
+  | "sequence-evidence-missing"
   | "frame-missing"
   | "frame-duplicate"
   | "frame-unexpected"
   | "frame-order-mismatch"
-  | "frame-duration-mismatch"
-  | "frame-dimension-mismatch"
-  | "contact-frame-unstable"
-  | "anchor-track-missing"
-  | "anchor-drift"
+  | "exposure-timing-mismatch"
+  | "frame-geometry-mismatch"
+  | "anchor-mismatch"
+  | "contact-instability"
   | "trim-jitter"
   | "loop-closure"
-  | "style-lock-mismatch"
-  | "style-guide-mismatch"
-  | "palette-contract-mismatch"
-  | "style-consistency"
-  | "proportion-consistency"
-  | "palette-consistency";
+  | "neighbour-continuity"
+  | "model-sheet-conformance"
+  | "x-sheet-conformance"
+  | "style-drift"
+  | "proportion-drift"
+  | "palette-drift"
+  | "protected-invariant-missing";
 
-export interface CreativeEvidenceIssueV3 {
-  readonly code: CreativeEvidenceIssueCodeV3;
-  readonly severity: "error" | "warning";
+export interface AdventureCreativeEvidenceIssueV3 {
+  readonly code: AdventureCreativeEvidenceIssueCodeV3;
+  readonly severity: "blocking" | "major" | "minor";
   readonly path: string;
   readonly message: string;
-  readonly frameIds?: readonly string[];
+  readonly frameIds: readonly string[];
 }
 
-const acceptsPartialAlpha = (mode: CreativeTransparencyModeV3): boolean =>
-  mode === "controlled-soft-alpha";
+const animationKinds = new Set<AdventureCreativeWorkOrderV3["taskKind"]>([
+  "animation-sequence",
+  "cutscene-shot",
+  "effects-sequence",
+]);
 
-const expectedDimensions = (request: CreativeProductionRequestV3): { width: number; height: number } | null => {
-  const output = request.output;
-  if (!output) return null;
-  if ("width" in output && "height" in output) return { width: output.width, height: output.height };
-  return null;
-};
-
-const push = (
-  issues: CreativeEvidenceIssueV3[],
-  code: CreativeEvidenceIssueCodeV3,
+const issue = (
+  issues: AdventureCreativeEvidenceIssueV3[],
+  code: AdventureCreativeEvidenceIssueCodeV3,
   path: string,
   message: string,
-  frameIds?: readonly string[],
+  frameIds: readonly string[] = [],
 ): void => {
-  issues.push({ code, severity: "error", path, message, ...(frameIds ? { frameIds } : {}) });
+  issues.push({ code, severity: "blocking", path, message, frameIds });
 };
 
-export const validateCreativeMeasuredEvidenceV3 = (
-  request: CreativeProductionRequestV3,
-  evidence: CreativeMeasuredDeliveryEvidenceV3,
-): readonly CreativeEvidenceIssueV3[] => {
-  const issues: CreativeEvidenceIssueV3[] = [];
-  const expected = expectedDimensions(request);
-  if (expected && (evidence.artifactWidth !== expected.width || evidence.artifactHeight !== expected.height)) {
-    push(
+const pointMatches = (
+  expected: { readonly x: number; readonly y: number } | undefined,
+  actual: { readonly x: number; readonly y: number } | undefined,
+  tolerance = 0,
+): boolean => {
+  if (!expected && !actual) return true;
+  if (!expected || !actual) return false;
+  return Math.abs(expected.x - actual.x) <= tolerance && Math.abs(expected.y - actual.y) <= tolerance;
+};
+
+export const validateAdventureCreativeMeasuredEvidenceV3 = (
+  order: AdventureCreativeWorkOrderV3,
+  evidence: AdventureCreativeMeasuredEvidenceV3,
+): readonly AdventureCreativeEvidenceIssueV3[] => {
+  const issues: AdventureCreativeEvidenceIssueV3[] = [];
+  if (evidence.evidenceVersion !== 3 || evidence.workOrderId !== order.workOrderId || evidence.revision !== order.revision) {
+    issue(issues, "authority-mismatch", "evidence", "Measured evidence must target the exact v3 work-order revision.");
+  }
+  if (evidence.artifactWidth !== order.nativeSize.width || evidence.artifactHeight !== order.nativeSize.height) {
+    issue(
       issues,
       "dimension-mismatch",
       "artifact",
-      `Measured artifact is ${evidence.artifactWidth}×${evidence.artifactHeight}; expected ${expected.width}×${expected.height}.`,
+      `Measured artifact is ${evidence.artifactWidth}×${evidence.artifactHeight}; expected ${order.nativeSize.width}×${order.nativeSize.height}.`,
     );
+  }
+  if (evidence.styleDigest !== order.authorities.styleDigest) {
+    issue(issues, "style-drift", "styleDigest", "Measured style authority does not match the immutable work-order style digest.");
+  }
+  if (order.authorities.paletteDigest && evidence.paletteDigest !== order.authorities.paletteDigest) {
+    issue(issues, "palette-drift", "paletteDigest", "Measured palette authority does not match the requested palette digest.");
+  }
+  if (order.authorities.modelSheetDigest && evidence.modelSheetDigest !== order.authorities.modelSheetDigest) {
+    issue(issues, "model-sheet-conformance", "modelSheetDigest", "Measured model-sheet authority does not match the approved model sheet.");
+  }
+  if (order.authorities.xSheetDigest && evidence.xSheetDigest !== order.authorities.xSheetDigest) {
+    issue(issues, "x-sheet-conformance", "xSheetDigest", "Measured X-sheet authority does not match the approved X-sheet.");
+  }
+  for (const invariant of order.invariants) {
+    if (!evidence.protectedInvariantDigests[invariant]) {
+      issue(issues, "protected-invariant-missing", `protectedInvariantDigests.${invariant}`, `Protected invariant '${invariant}' has no retained evidence digest.`);
+    }
   }
 
   const alpha = evidence.alpha;
-  const transparency = request.transparency;
-  if (transparency.acceptance.alphaChannelRequired && !alpha.hasAlphaChannel) {
-    push(issues, "missing-alpha-channel", "alpha", "Delivery has no real alpha channel.");
+  const alphaRequired = order.alphaPolicy !== "opaque";
+  if (alphaRequired && order.transparencyPolicy.decodedAlphaRequired && !alpha.hasAlphaChannel) {
+    issue(issues, "missing-alpha-channel", "alpha.hasAlphaChannel", "Delivery has no decoded alpha channel.");
   }
-  if (transparency.acceptance.zeroAlphaRequired && alpha.zeroAlphaPixels <= 0) {
-    push(
-      issues,
-      "missing-zero-alpha",
-      "alpha.zeroAlphaPixels",
-      "Transparent-background delivery contains no fully transparent pixels.",
-    );
+  if (alphaRequired && order.transparencyPolicy.transparentCanvasEdgeRequired && alpha.zeroAlphaPixels <= 0) {
+    issue(issues, "missing-zero-alpha", "alpha.zeroAlphaPixels", "Transparent delivery contains no fully transparent pixels.");
   }
-  if (!acceptsPartialAlpha(transparency.mode) && alpha.partialAlphaPixels > 0) {
-    push(
-      issues,
-      "partial-alpha-forbidden",
-      "alpha.partialAlphaPixels",
-      `${alpha.partialAlphaPixels} partially transparent pixels violate '${transparency.mode}' alpha policy.`,
-    );
+  if ((order.alphaPolicy === "binary" || order.alphaPolicy === "required") && alpha.partialAlphaPixels > 0) {
+    issue(issues, "soft-alpha-when-binary-required", "alpha.partialAlphaPixels", `${alpha.partialAlphaPixels} partially transparent pixels violate binary-alpha delivery.`);
   }
-  if (transparency.acceptance.checkerboardBakeDetectionRequired && alpha.checkerboardDetected) {
-    push(
-      issues,
-      "fake-checkerboard-transparency",
-      "alpha.checkerboardDetected",
-      "Checkerboard pixels are baked into the image instead of represented by alpha transparency.",
-    );
+  if (order.transparencyPolicy.checkerboardForbidden && alpha.checkerboardDetected) {
+    issue(issues, "fake-transparency-checkerboard", "alpha.checkerboardDetected", "Checkerboard pixels are baked into the image. This is fake transparency and is never accepted.");
   }
-  if (transparency.acceptance.matteContaminationDetection && alpha.matteContaminationPixels > 0) {
-    push(
-      issues,
-      "matte-contamination",
-      "alpha.matteContaminationPixels",
-      `${alpha.matteContaminationPixels} pixels contain matte contamination at transparent boundaries.`,
-    );
+  if (order.transparencyPolicy.matteResidueForbidden && alpha.matteResiduePixels > 0) {
+    issue(issues, "matte-residue", "alpha.matteResiduePixels", `${alpha.matteResiduePixels} pixels contain matte residue.`);
   }
-  if (transparency.acceptance.backgroundBleedDetection && alpha.backgroundBleedPixels > 0) {
-    push(
-      issues,
-      "background-bleed",
-      "alpha.backgroundBleedPixels",
-      `${alpha.backgroundBleedPixels} pixels contain source-background bleed.`,
-    );
+  if (order.transparencyPolicy.haloFringeForbidden && alpha.alphaHaloPixels > 0) {
+    issue(issues, "alpha-halo", "alpha.alphaHaloPixels", `${alpha.alphaHaloPixels} pixels contain an alpha halo/fringe.`);
   }
-  if (alpha.edgeContaminationPixels > 0) {
-    push(
-      issues,
-      "edge-contamination",
-      "alpha.edgeContaminationPixels",
-      `${alpha.edgeContaminationPixels} edge pixels are contaminated and require cleanup.`,
-    );
+  if (order.transparencyPolicy.transparentRgbContaminationForbidden && alpha.transparentRgbContaminationPixels > 0) {
+    issue(issues, "transparent-rgb-contamination", "alpha.transparentRgbContaminationPixels", `${alpha.transparentRgbContaminationPixels} fully transparent pixels retain contaminated RGB.`);
   }
 
-  if (evidence.styleLockId !== request.style.styleLockId) {
-    push(issues, "style-lock-mismatch", "styleLockId", "Delivery style-lock ID does not match the request.");
-  }
-  if (evidence.styleGuideHash !== request.style.styleGuideHash) {
-    push(issues, "style-guide-mismatch", "styleGuideHash", "Delivery style-guide hash does not match the request.");
-  }
-  if (evidence.paletteContractHash !== request.style.paletteContractHash) {
-    push(issues, "palette-contract-mismatch", "paletteContractHash", "Delivery palette contract does not match the request.");
-  }
-
-  const animationRequest = request.animation;
-  if (!animationRequest) return issues;
-  const animation = evidence.animation;
-  if (!animation) {
-    push(issues, "animation-evidence-missing", "animation", "Animation request requires measured frame evidence.");
+  if (!animationKinds.has(order.taskKind)) return issues;
+  const plan = order.framePlan ?? [];
+  const sequence = evidence.sequence;
+  if (!sequence) {
+    issue(issues, "sequence-evidence-missing", "sequence", "Animation delivery requires measured sequence evidence.");
     return issues;
   }
-
-  if (animation.missingFrameIds.length > 0) {
-    push(issues, "frame-missing", "animation.missingFrameIds", "Required animation frames are missing.", animation.missingFrameIds);
-  }
-  if (animation.duplicateFrameIds.length > 0) {
-    push(issues, "frame-duplicate", "animation.duplicateFrameIds", "Animation contains duplicate frame IDs.", animation.duplicateFrameIds);
-  }
-  if (animation.unexpectedFrameIds.length > 0) {
-    push(issues, "frame-unexpected", "animation.unexpectedFrameIds", "Animation contains unexpected frame IDs.", animation.unexpectedFrameIds);
-  }
-  if (animation.actualFrameIds.join("\u0000") !== animationRequest.frameOrder.join("\u0000")) {
-    push(issues, "frame-order-mismatch", "animation.actualFrameIds", "Measured frame order does not match the authored frame order.");
+  if (sequence.missingFrameIds.length > 0) issue(issues, "frame-missing", "sequence.missingFrameIds", "Required frames are missing.", sequence.missingFrameIds);
+  if (sequence.duplicateFrameIds.length > 0) issue(issues, "frame-duplicate", "sequence.duplicateFrameIds", "Duplicate frame IDs were delivered.", sequence.duplicateFrameIds);
+  if (sequence.unexpectedFrameIds.length > 0) issue(issues, "frame-unexpected", "sequence.unexpectedFrameIds", "Unexpected frames were delivered.", sequence.unexpectedFrameIds);
+  const expectedOrder = plan.map((frame) => frame.frameId);
+  if (sequence.actualFrameIds.join("\u0000") !== expectedOrder.join("\u0000")) {
+    issue(issues, "frame-order-mismatch", "sequence.actualFrameIds", "Delivered frame order does not match the authored X-sheet/frame plan.");
   }
 
-  const measuredFrames = new Map(animation.frames.map((frame) => [frame.frameId, frame] as const));
-  for (const timing of animationRequest.timings) {
-    const frame = measuredFrames.get(timing.frameId);
+  const measured = new Map(sequence.frames.map((frame) => [frame.frameId, frame] as const));
+  for (const expected of plan) {
+    const frame = measured.get(expected.frameId);
     if (!frame) continue;
-    if (frame.durationTicks !== timing.durationTicks) {
-      push(
-        issues,
-        "frame-duration-mismatch",
-        `animation.frames.${timing.frameId}.durationTicks`,
-        `Frame '${timing.frameId}' measured ${frame.durationTicks} ticks; expected ${timing.durationTicks}.`,
-        [timing.frameId],
-      );
+    if (frame.exposureTicks !== expected.exposureTicks) {
+      issue(issues, "exposure-timing-mismatch", `sequence.frames.${expected.frameId}.exposureTicks`, `Frame '${expected.frameId}' exposure is ${frame.exposureTicks} ticks; expected ${expected.exposureTicks}.`, [expected.frameId]);
+    }
+    if (expected.sourceRect && (frame.trimX !== expected.sourceRect.x || frame.trimY !== expected.sourceRect.y || frame.trimWidth !== expected.sourceRect.width || frame.trimHeight !== expected.sourceRect.height)) {
+      issue(issues, "frame-geometry-mismatch", `sequence.frames.${expected.frameId}`, `Frame '${expected.frameId}' trim/source geometry does not match the authored frame plan.`, [expected.frameId]);
+    }
+    if (!pointMatches(expected.pivot, frame.pivot)) {
+      issue(issues, "anchor-mismatch", `sequence.frames.${expected.frameId}.pivot`, `Frame '${expected.frameId}' pivot does not match its approved anchor.`, [expected.frameId]);
+    }
+    if (!pointMatches(expected.footPoint, frame.footPoint)) {
+      issue(issues, "anchor-mismatch", `sequence.frames.${expected.frameId}.footPoint`, `Frame '${expected.frameId}' foot point does not match its approved contact anchor.`, [expected.frameId]);
+    }
+    for (const [anchorId, anchorPoint] of Object.entries(expected.handAnchors ?? {})) {
+      if (!pointMatches(anchorPoint, frame.handAnchors[anchorId])) {
+        issue(issues, "anchor-mismatch", `sequence.frames.${expected.frameId}.handAnchors.${anchorId}`, `Frame '${expected.frameId}' hand anchor '${anchorId}' drifted from the approved plan.`, [expected.frameId]);
+      }
+    }
+    if (!pointMatches(expected.shadowAnchor, frame.shadowAnchor)) {
+      issue(issues, "anchor-mismatch", `sequence.frames.${expected.frameId}.shadowAnchor`, `Frame '${expected.frameId}' shadow anchor drifted from the approved plan.`, [expected.frameId]);
+    }
+    if (expected.role === "contact" && !frame.contactStable) {
+      issue(issues, "contact-instability", `sequence.frames.${expected.frameId}.contactStable`, `Contact frame '${expected.frameId}' does not preserve planted contact.`, [expected.frameId]);
     }
   }
-  for (const frameId of animationRequest.contactFrameIds) {
-    const frame = measuredFrames.get(frameId);
-    if (frame && !frame.contactStable) {
-      push(
-        issues,
-        "contact-frame-unstable",
-        `animation.frames.${frameId}.contactStable`,
-        `Contact frame '${frameId}' does not preserve planted contact.`,
-        [frameId],
-      );
-    }
+  if (sequence.maximumObservedTrimJitterPixels > 1) {
+    issue(issues, "trim-jitter", "sequence.maximumObservedTrimJitterPixels", `Measured trim jitter is ${sequence.maximumObservedTrimJitterPixels}px; animation masters must remain spatially stable.`);
   }
-  for (const track of animationRequest.anchorTracks) {
-    const observed = animation.maximumObservedAnchorDriftPixels[track.anchorId];
-    if (observed === undefined) {
-      push(issues, "anchor-track-missing", `animation.anchor.${track.anchorId}`, `Anchor '${track.anchorId}' has no measured drift evidence.`);
-    } else if (observed > animationRequest.maxAnchorDriftPixels) {
-      push(
-        issues,
-        "anchor-drift",
-        `animation.anchor.${track.anchorId}`,
-        `Anchor '${track.anchorId}' drifts ${observed}px; allowed maximum is ${animationRequest.maxAnchorDriftPixels}px.`,
-      );
-    }
+  if (sequence.maximumObservedAnchorDriftPixels > 1) {
+    issue(issues, "anchor-mismatch", "sequence.maximumObservedAnchorDriftPixels", `Measured anchor drift is ${sequence.maximumObservedAnchorDriftPixels}px; approved anchors must remain stable.`);
   }
-  if (animation.maximumObservedTrimJitterPixels > animationRequest.maxTrimJitterPixels) {
-    push(
-      issues,
-      "trim-jitter",
-      "animation.maximumObservedTrimJitterPixels",
-      `Measured trim jitter ${animation.maximumObservedTrimJitterPixels}px exceeds ${animationRequest.maxTrimJitterPixels}px.`,
-    );
+  if (order.sequencePolicy?.loopClosureReviewRequired && sequence.loopClosureDeltaPixels > 1) {
+    issue(issues, "loop-closure", "sequence.loopClosureDeltaPixels", `Loop closure delta is ${sequence.loopClosureDeltaPixels}px.`);
   }
-  if (animationRequest.loop && animation.loopClosureDeltaPixels > animationRequest.maxAnchorDriftPixels) {
-    push(
-      issues,
-      "loop-closure",
-      "animation.loopClosureDeltaPixels",
-      `Loop closure delta ${animation.loopClosureDeltaPixels}px exceeds ${animationRequest.maxAnchorDriftPixels}px.`,
-    );
+  if (order.sequencePolicy?.immediateNeighbourReviewRequired && sequence.neighbourContinuityScore < 0.95) {
+    issue(issues, "neighbour-continuity", "sequence.neighbourContinuityScore", "Immediate-neighbour continuity score is below 0.95.");
   }
-  if (animation.styleConsistencyScore < 0.9) {
-    push(issues, "style-consistency", "animation.styleConsistencyScore", "Animation style consistency score is below 0.90.");
+  if (order.sequencePolicy?.modelSheetConformanceRequired && sequence.modelSheetConformanceScore < 0.95) {
+    issue(issues, "model-sheet-conformance", "sequence.modelSheetConformanceScore", "Model-sheet conformance score is below 0.95.");
   }
-  if (animation.proportionConsistencyScore < 0.9) {
-    push(issues, "proportion-consistency", "animation.proportionConsistencyScore", "Animation proportion consistency score is below 0.90.");
+  if (order.sequencePolicy?.xSheetConformanceRequired && sequence.xSheetConformanceScore < 0.95) {
+    issue(issues, "x-sheet-conformance", "sequence.xSheetConformanceScore", "X-sheet conformance score is below 0.95.");
   }
-  if (animation.paletteConsistencyScore < 0.9) {
-    push(issues, "palette-consistency", "animation.paletteConsistencyScore", "Animation palette consistency score is below 0.90.");
-  }
+  if (sequence.styleConsistencyScore < 0.95) issue(issues, "style-drift", "sequence.styleConsistencyScore", "Frame-to-frame style consistency score is below 0.95.");
+  if (sequence.proportionConsistencyScore < 0.95) issue(issues, "proportion-drift", "sequence.proportionConsistencyScore", "Frame-to-frame proportion consistency score is below 0.95.");
+  if (sequence.paletteConsistencyScore < 0.95) issue(issues, "palette-drift", "sequence.paletteConsistencyScore", "Frame-to-frame palette consistency score is below 0.95.");
   return issues;
 };
