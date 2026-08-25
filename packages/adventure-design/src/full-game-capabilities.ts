@@ -381,13 +381,28 @@ export const currentAdventureCapabilityCoverage: readonly AdventureCapabilityCov
       "preferred-approach",
       "verb-icon-interface",
       "context-interface",
+      "verb-sentence-grammar",
       "inventory",
       "item-on-object",
+      "item-on-item",
       "conditional-hotspots",
+      "alternate-puzzle-solutions",
       "score",
       "failure-retry",
       "in-scene-dialogue",
+      "topic-dialogue",
+      "dialogue-fact-unlocks",
+      "branching-route-topology",
+      "time-of-day-clock",
+      "character-stats",
+      "skills-and-practice",
+      "character-classes",
+      "skill-gated-solutions",
+      "health-stamina-mana",
+      "real-time-combat",
       "cutscene-sequences",
+      "room-cutaways",
+      "multi-protagonist-switching",
       "deterministic-save-replay",
       "indexed-palette-lighting",
       "native-vga-audit",
@@ -398,30 +413,45 @@ export const currentAdventureCapabilityCoverage: readonly AdventureCapabilityCov
       "branching-dialogue",
       "portrait-dialogue",
       "room-state-variants",
+      "chapter-day-progression",
+      "research-investigation-loop",
       "global-progression-graph",
+      "character-import-export",
       "localisation",
     ]);
     const partial = new Set<AdventureCapabilityId>([
       "panoramic-exterior",
+      "day-night-room-variants",
       "closeup-puzzle-view",
-      "item-on-item",
-      "alternate-puzzle-solutions",
       "timed-puzzle",
-      "topic-dialogue",
-      "dialogue-fact-unlocks",
-      "chapter-day-progression",
-      "research-investigation-loop",
       "travel-map",
       "vehicle-scene",
-      "branching-route-topology",
-      "room-cutaways",
+      "npc-schedules",
       "cinematic-insets",
       "quick-response-sequence",
       "full-game-evidence",
     ]);
-    if (proofed.has(id)) return { id, status: "proofed", evidence: "Existing runtime/editor proof and regression coverage." };
-    if (implemented.has(id)) return { id, status: "implemented", evidence: "Core contracts/editor/runtime support exist, but no full stress proof yet." };
-    if (partial.has(id)) return { id, status: "partial", evidence: "Some primitives exist, but the complete gameplay grammar is not yet first-class/proofed." };
+    if (proofed.has(id)) {
+      return {
+        id,
+        status: "proofed",
+        evidence: "Governed end-to-end runtime/session stress proof exists for this capability.",
+      };
+    }
+    if (implemented.has(id)) {
+      return {
+        id,
+        status: "implemented",
+        evidence: "First-class contracts/runtime/save support exist, but the complete production stress proof is still pending.",
+      };
+    }
+    if (partial.has(id)) {
+      return {
+        id,
+        status: "partial",
+        evidence: "Adjacent primitives exist, but the complete gameplay/presentation grammar is not yet proven.",
+      };
+    }
     return { id, status: "missing", evidence: "No first-class end-to-end capability proof exists yet." };
   },
 );
