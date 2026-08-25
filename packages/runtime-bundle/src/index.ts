@@ -92,6 +92,11 @@ import {
   validateRuntimeAdventureRpg,
 } from "./rpg.js";
 import {
+  RuntimeSpecializedAdventureModeValidationError,
+  runtimeSpecializedAdventureModeManifestSchema,
+  validateRuntimeSpecializedAdventureModes,
+} from "./specialized-modes.js";
+import {
   RuntimeUiSkinValidationError,
   validateRuntimeUiSkins,
 } from "./ui-validation.js";
@@ -170,6 +175,7 @@ export const runtimeBundleSchema = z
     routeTopology: runtimeAdventureRouteTopologyManifestSchema.optional(),
     rpg: runtimeAdventureRpgManifestSchema.optional(),
     rpgPuzzles: runtimeAdventureRpgPuzzleManifestSchema.optional(),
+    specializedModes: runtimeSpecializedAdventureModeManifestSchema.optional(),
   })
   .strict()
   .superRefine((bundle, context) => {
@@ -188,6 +194,7 @@ export const runtimeBundleSchema = z
       ["routeTopology", bundle.routeTopology],
       ["rpg", bundle.rpg],
       ["rpgPuzzles", bundle.rpgPuzzles],
+      ["specializedModes", bundle.specializedModes],
     ] as const;
     for (const [key, value] of projectScoped) {
       if (value && value.projectId !== bundle.projectId) {
@@ -397,6 +404,18 @@ export const parseRuntimeBundle = (input: unknown): RuntimeBundle => {
     });
     if (puzzleIssues.length > 0) throw new RuntimeAdventureRpgPuzzleValidationError(puzzleIssues);
   }
+  if (bundle.specializedModes) {
+    const interactions = allRuntimeInteractions(bundle);
+    const dialogueChoices = allRuntimeDialogueChoices(bundle);
+    const specializedModeIssues = validateRuntimeSpecializedAdventureModes(bundle.specializedModes, {
+      entrancesByScene: runtimeEntrancesByScene(bundle),
+      interactionIds: new Set(interactions.map((interaction) => interaction.id as string)),
+      oneShotInteractionIds: new Set(interactions.filter((interaction) => interaction.once === true).map((interaction) => interaction.id as string)),
+      dialogueChoiceIds: new Set(dialogueChoices.map((choice) => choice.id as string)),
+      oneShotDialogueChoiceIds: new Set(dialogueChoices.filter((choice) => choice.once === true).map((choice) => choice.id as string)),
+    });
+    if (specializedModeIssues.length > 0) throw new RuntimeSpecializedAdventureModeValidationError(specializedModeIssues);
+  }
   if (bundle.bitmapFonts) registerBitmapFontsForAssetCollection(bundle.assets, bundle.bitmapFonts);
   return bundle;
 };
@@ -417,5 +436,6 @@ export * from "./room-scripts.js";
 export * from "./route-topology.js";
 export * from "./rpg-puzzles.js";
 export * from "./rpg.js";
+export * from "./specialized-modes.js";
 export * from "./ui-validation.js";
 export * from "./validation.js";
