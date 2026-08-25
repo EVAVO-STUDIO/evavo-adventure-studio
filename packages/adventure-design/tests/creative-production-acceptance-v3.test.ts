@@ -76,6 +76,8 @@ const review: AdventureCreativeReviewV3 = {
   alphaEvidenceDigest: "sha256:alpha",
   sequenceEvidenceDigest: "sha256:sequence",
   styleEvidenceDigest: "sha256:style-review",
+  modelSheetEvidenceDigest: "sha256:model-review",
+  xSheetEvidenceDigest: "sha256:xsheet-review",
   reviewerEvidenceDigest: "sha256:review",
 };
 
@@ -121,6 +123,20 @@ describe("creative delivery acceptance v3", () => {
       expect.arrayContaining([
         expect.objectContaining({ code: "alpha-evidence-mismatch" }),
         expect.objectContaining({ code: "sequence-evidence-mismatch" }),
+      ]),
+    );
+  });
+
+  it("rejects an accepted animation review without model-sheet and X-sheet evidence", () => {
+    const invalidReview: AdventureCreativeReviewV3 = {
+      ...review,
+      modelSheetEvidenceDigest: undefined,
+      xSheetEvidenceDigest: undefined,
+    };
+    expect(validateAdventureCreativeAcceptedDeliveryV3(order, invalidReview, delivery())).toEqual(
+      expect.arrayContaining([
+        expect.objectContaining({ code: "missing-model-sheet-evidence" }),
+        expect.objectContaining({ code: "missing-x-sheet-evidence" }),
       ]),
     );
   });
