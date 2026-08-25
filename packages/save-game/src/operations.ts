@@ -7,6 +7,7 @@ import type { MultiProtagonistState } from "@evavo/adventure-scene-runtime/multi
 import type { RuntimeRoomScriptState } from "@evavo/adventure-scene-runtime/room-scripts";
 import type { AdventureRouteTopologyState } from "@evavo/adventure-scene-runtime/route-topology";
 import type { AdventureRpgState } from "@evavo/adventure-scene-runtime/rpg";
+import type { SpecializedAdventureModeSessionState } from "@evavo/adventure-scene-runtime/specialized-mode-session";
 import { validateSavedAudio } from "./audio-compatibility.js";
 import {
   canonicalSaveGameJson,
@@ -27,6 +28,7 @@ import { validateSavedRouteTopology } from "./route-topology-compatibility.js";
 import { validateSavedAdventureRpg } from "./rpg-compatibility.js";
 import type { SaveGameSentenceState } from "./sentence.js";
 import { validateSavedSentence } from "./sentence-compatibility.js";
+import { validateSavedSpecializedModes } from "./specialized-mode-compatibility.js";
 import {
   type SaveGame,
   saveGamePayloadSchema,
@@ -51,6 +53,7 @@ export interface CreateSaveGameOptions {
   readonly roomScripts?: RuntimeRoomScriptState;
   readonly routeTopology?: AdventureRouteTopologyState;
   readonly rpg?: AdventureRpgState;
+  readonly specializedModes?: SpecializedAdventureModeSessionState;
 }
 
 const completeCompatibilityIssues = (
@@ -66,6 +69,7 @@ const completeCompatibilityIssues = (
   ...validateSavedRoomScripts(bundle, save),
   ...validateSavedRouteTopology(bundle, save),
   ...validateSavedAdventureRpg(bundle, save),
+  ...validateSavedSpecializedModes(bundle, save),
 ];
 
 export const createSaveGame = (
@@ -82,6 +86,7 @@ export const createSaveGame = (
     roomScripts,
     routeTopology,
     rpg,
+    specializedModes,
     sentence,
     ...interfaceState
   } = options;
@@ -102,6 +107,7 @@ export const createSaveGame = (
     ...(roomScripts ? { roomScripts } : {}),
     ...(routeTopology ? { routeTopology } : {}),
     ...(rpg ? { rpg } : {}),
+    ...(specializedModes ? { specializedModes } : {}),
   });
   const save = saveGameSchema.parse({
     ...payload,
