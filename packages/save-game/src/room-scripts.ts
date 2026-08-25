@@ -17,8 +17,12 @@ export const saveGameRoomScriptStateSchema = z
     enteredAtTick: z.number().int().nonnegative(),
     visitedSceneIds: z.array(idSchema("scene")),
     firedScriptIds: z.array(z.string().regex(/^room-script\.[A-Za-z0-9._-]+$/u)),
+    lastFiredCycleByScriptId: z
+      .record(z.string().regex(/^room-script\.[A-Za-z0-9._-]+$/u), z.number().int().nonnegative())
+      .default({}),
     previousConsumedInteractionIds: z.array(idSchema("interaction")),
     previousConsumedDialogueChoiceIds: z.array(idSchema("dialogue-choice")),
     activeCutaway: activeCutawaySchema.nullable(),
+    pendingSceneEnter: z.boolean().default(false),
   })
   .strict() as z.ZodType<RuntimeRoomScriptState>;
