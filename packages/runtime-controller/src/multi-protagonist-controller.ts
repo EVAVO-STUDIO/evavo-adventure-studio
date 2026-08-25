@@ -20,6 +20,7 @@ import {
 import type { PackagedRuntimeControllerOptions } from "./packaged-controller.js";
 import type { AdventureRpgPackagedRuntimeController } from "./rpg-controller.js";
 import { controlledActorRequestFromSave } from "./input.js";
+import { featureSaveCompanionOptions } from "./save-companions.js";
 import {
   createBasePackagedSessionController,
   type PackagedSessionController,
@@ -29,8 +30,15 @@ import {
 type OptionalRpgController = Partial<Pick<
   AdventureRpgPackagedRuntimeController,
   | "rpgState"
+  | "rpgEconomyState"
+  | "buyRpgItem"
+  | "sellRpgItem"
+  | "equipRpgItem"
+  | "unequipRpgSlot"
+  | "rpgEquipmentModifiers"
   | "practiceSkill"
   | "resolveSkillCheck"
+  | "resolveRpgPuzzle"
   | "advanceRpgTime"
   | "restRpg"
   | "adjustResource"
@@ -57,23 +65,20 @@ const initialCompanion = (bundle: RuntimeBundle): MultiProtagonistState => {
   return createMultiProtagonistState(manifest.protagonists, manifest.activeProtagonistId);
 };
 
-const companionOptions = (save: SaveGame) => ({
-  ...(save.interface.profiledCamera ? { profiledCamera: save.interface.profiledCamera } : {}),
-  ...(save.interface.sentence ? { sentence: save.interface.sentence } : {}),
-  ...(save.audio ? { audio: save.audio } : {}),
-  ...(save.investigation ? { investigation: save.investigation } : {}),
-  ...(save.itemCombinations ? { itemCombinations: save.itemCombinations } : {}),
-  ...(save.roomScripts ? { roomScripts: save.roomScripts } : {}),
-  ...(save.rpg ? { rpg: save.rpg } : {}),
-});
-
 const rpgApi = (getController: () => PackagedSessionController): OptionalRpgController => {
   const initial = getController() as PackagedSessionController & OptionalRpgController;
   const current = () => getController() as PackagedSessionController & OptionalRpgController;
   return {
     ...(initial.rpgState ? { rpgState: () => current().rpgState?.() as ReturnType<AdventureRpgPackagedRuntimeController["rpgState"]> } : {}),
+    ...(initial.rpgEconomyState ? { rpgEconomyState: () => current().rpgEconomyState?.() ?? null } : {}),
+    ...(initial.buyRpgItem ? { buyRpgItem: (shopId: string, itemId: string) => current().buyRpgItem?.(shopId, itemId) as ReturnType<AdventureRpgPackagedRuntimeController["buyRpgItem"]> } : {}),
+    ...(initial.sellRpgItem ? { sellRpgItem: (shopId: string, itemId: string) => current().sellRpgItem?.(shopId, itemId) as ReturnType<AdventureRpgPackagedRuntimeController["sellRpgItem"]> } : {}),
+    ...(initial.equipRpgItem ? { equipRpgItem: (itemId: string) => current().equipRpgItem?.(itemId) as ReturnType<AdventureRpgPackagedRuntimeController["equipRpgItem"]> } : {}),
+    ...(initial.unequipRpgSlot ? { unequipRpgSlot: (slotId: string) => current().unequipRpgSlot?.(slotId) } : {}),
+    ...(initial.rpgEquipmentModifiers ? { rpgEquipmentModifiers: () => current().rpgEquipmentModifiers?.() ?? {} } : {}),
     ...(initial.practiceSkill ? { practiceSkill: (skillId: string, amount?: number) => current().practiceSkill?.(skillId, amount) as ReturnType<AdventureRpgPackagedRuntimeController["practiceSkill"]> } : {}),
     ...(initial.resolveSkillCheck ? { resolveSkillCheck: (check) => current().resolveSkillCheck?.(check) as ReturnType<AdventureRpgPackagedRuntimeController["resolveSkillCheck"]> } : {}),
+    ...(initial.resolveRpgPuzzle ? { resolveRpgPuzzle: (puzzleId: string, solutionId: string) => current().resolveRpgPuzzle?.(puzzleId, solutionId) as ReturnType<AdventureRpgPackagedRuntimeController["resolveRpgPuzzle"]> } : {}),
     ...(initial.advanceRpgTime ? { advanceRpgTime: (minutes: number) => current().advanceRpgTime?.(minutes) } : {}),
     ...(initial.restRpg ? { restRpg: (rule) => current().restRpg?.(rule) } : {}),
     ...(initial.adjustResource ? { adjustResource: (resourceId: string, delta: number) => current().adjustResource?.(resourceId, delta) } : {}),
@@ -115,7 +120,7 @@ export const createMultiProtagonistPackagedRuntimeControllerWithFactory = (
       selectedItemId: null,
       statusText: `CONTROL • ${protagonistId}`,
       parser: baseSave.interface.parser,
-      ...companionOptions(baseSave),
+      ...featureSaveCompanionOptions(baseSave),
       multiProtagonist: companion,
     });
     next.restoreSaveGame(projectedSave);
@@ -168,7 +173,7 @@ export const createMultiProtagonistPackagedRuntimeControllerWithFactory = (
       selectedItemId: baseSave.interface.selectedItemId,
       statusText: baseSave.interface.statusText,
       parser: baseSave.interface.parser,
-      ...companionOptions(baseSave),
+      ...featureSaveCompanionOptions(baseSave),
       multiProtagonist: companion,
     });
   };
@@ -186,7 +191,7 @@ export const createMultiProtagonistPackagedRuntimeControllerWithFactory = (
         selectedItemId: save.interface.selectedItemId,
         statusText: save.interface.statusText,
         parser: save.interface.parser,
-        ...companionOptions(save),
+        ...featureSaveCompanionOptions(save),
         multiProtagonist: companion,
       }),
     );
