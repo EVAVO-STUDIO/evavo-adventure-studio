@@ -1,0 +1,15 @@
+{
+  "schemaVersion": 1,
+  "kind": "evavo-repository-task-manifest",
+  "repository": "EVAVO-STUDIO/evavo-adventure-studio",
+  "tasks": {
+    "local-fabric-quick": {
+      "runtime": "node-script",
+      "entry": "scripts/verify-toolchain-version.mjs",
+      "arguments": [],
+      "network": "disabled",
+      "timeoutSeconds": 180,
+      "description": "Verify Adventure Studio's pinned local Node/pnpm toolchain without network access or full game validation."
+    }
+  }
+}
