@@ -44,6 +44,12 @@ type OptionalInvestigationController = Partial<Pick<
 type OptionalRpgController = Partial<Pick<
   AdventureRpgPackagedRuntimeController,
   | "rpgState"
+  | "rpgEconomyState"
+  | "buyRpgItem"
+  | "sellRpgItem"
+  | "equipRpgItem"
+  | "unequipRpgSlot"
+  | "rpgEquipmentModifiers"
   | "practiceSkill"
   | "resolveSkillCheck"
   | "resolveRpgPuzzle"
@@ -231,6 +237,12 @@ const investigationFeatureApi = (
 
 const rpgFeatureApi = (session: PackagedFeatureSessionController): OptionalRpgController => ({
   ...(session.rpgState ? { rpgState: () => session.rpgState?.() as ReturnType<AdventureRpgPackagedRuntimeController["rpgState"]> } : {}),
+  ...(session.rpgEconomyState ? { rpgEconomyState: () => session.rpgEconomyState?.() ?? null } : {}),
+  ...(session.buyRpgItem ? { buyRpgItem: (shopId: string, itemId: string) => session.buyRpgItem?.(shopId, itemId) as ReturnType<AdventureRpgPackagedRuntimeController["buyRpgItem"]> } : {}),
+  ...(session.sellRpgItem ? { sellRpgItem: (shopId: string, itemId: string) => session.sellRpgItem?.(shopId, itemId) as ReturnType<AdventureRpgPackagedRuntimeController["sellRpgItem"]> } : {}),
+  ...(session.equipRpgItem ? { equipRpgItem: (itemId: string) => session.equipRpgItem?.(itemId) as ReturnType<AdventureRpgPackagedRuntimeController["equipRpgItem"]> } : {}),
+  ...(session.unequipRpgSlot ? { unequipRpgSlot: (slotId: string) => session.unequipRpgSlot?.(slotId) } : {}),
+  ...(session.rpgEquipmentModifiers ? { rpgEquipmentModifiers: () => session.rpgEquipmentModifiers?.() ?? {} } : {}),
   ...(session.practiceSkill ? { practiceSkill: (skillId: string, amount?: number) => session.practiceSkill?.(skillId, amount) as ReturnType<AdventureRpgPackagedRuntimeController["practiceSkill"]> } : {}),
   ...(session.resolveSkillCheck ? { resolveSkillCheck: (check) => session.resolveSkillCheck?.(check) as ReturnType<AdventureRpgPackagedRuntimeController["resolveSkillCheck"]> } : {}),
   ...(session.resolveRpgPuzzle ? { resolveRpgPuzzle: (puzzleId: string, solutionId: string) => session.resolveRpgPuzzle?.(puzzleId, solutionId) as ReturnType<AdventureRpgPackagedRuntimeController["resolveRpgPuzzle"]> } : {}),
