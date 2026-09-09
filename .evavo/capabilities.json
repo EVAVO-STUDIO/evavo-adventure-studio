@@ -1,0 +1,98 @@
+{
+  "contractVersion": "evavo_repository_capabilities_v1",
+  "repository": "EVAVO-STUDIO/evavo-adventure-studio",
+  "authority": "adventure-studio",
+  "summary": "EVAVO's deterministic engine, visual authoring environment and production toolchain for original authentic 1990s-style point-and-click adventure games. Adventure Studio owns profile-driven classic-adventure presentation, canonical project/runtime schemas, scene staging, navigation/depth/occlusion/hotspot grammar, interaction models, dialogue/inventory/puzzles/scoring/cutscenes, deterministic play feel/audio/saves/replays, progression integrity, visual production tooling and reproducible browser/Windows exports while preserving separate specialist authorities for upstream art/audio/dialogue and broader portfolio/game-design governance.",
+  "capabilities": [
+    {
+      "id": "adventure.project.compile",
+      "title": "Compile deterministic adventure projects",
+      "description": "Validate human-readable project schemas and migrations and compile stable source projects into deterministic runtime bundles with reproducible identities and replaceable editor/renderer/platform clients.",
+      "interfaces": ["cli", "library", "automation", "web-app"],
+      "effects": ["read", "compute", "write", "execute"],
+      "tags": ["adventure", "project", "compiler", "deterministic", "runtime-bundle"],
+      "requires": ["Valid Adventure Studio project", "Pinned Node/pnpm toolchain"]
+    },
+    {
+      "id": "adventure.profile.direct",
+      "title": "Direct classic-adventure production profiles",
+      "description": "Apply original production families that bind canvas, palette, scene grammar, actor performance, interface, puzzle, audio, splash and showcase direction, with reference-fidelity packs used as evidence rather than copied commercial content.",
+      "interfaces": ["library", "web-app", "cli"],
+      "effects": ["read", "compute", "write"],
+      "tags": ["adventure", "1990s", "profiles", "authenticity", "art-direction"],
+      "requires": ["Declared production profile", "Original/non-infringing project content"]
+    },
+    {
+      "id": "adventure.scene.author",
+      "title": "Author native adventure scenes and staging",
+      "description": "Author rooms in one native coordinate truth with walk/control/depth/occlusion/hotspot/approach/actor/surface/light/entry data, footprint clearance, preferred lanes, perspective, entry choreography and multi-plane foreground priority.",
+      "interfaces": ["web-app", "library", "cli"],
+      "effects": ["read", "compute", "write"],
+      "tags": ["adventure", "scene", "staging", "walkmesh", "occlusion", "hotspots"],
+      "requires": ["Canonical Adventure Studio scene/project"]
+    },
+    {
+      "id": "adventure.runtime.interaction",
+      "title": "Run classic adventure interaction systems",
+      "description": "Execute deterministic navigation, verbs/context cursors, inventory, dialogue, conditions, flags, scoring, object interactions, cutscenes and scene transitions across supported parser/icon/verb/coin/two-button/context interaction models.",
+      "interfaces": ["library", "web-app", "desktop", "testing"],
+      "effects": ["read", "compute", "execute", "write"],
+      "tags": ["adventure", "runtime", "verbs", "inventory", "dialogue", "cutscenes"],
+      "requires": ["Compiled deterministic adventure bundle"]
+    },
+    {
+      "id": "adventure.progression.validate",
+      "title": "Explore progression and detect recoverability risks",
+      "description": "Run bounded canonical-state exploration through object interactions, inventory, dialogue and sequence outcomes to prove routes, expose unreachable objectives and identify soft-lock/recoverability risks.",
+      "interfaces": ["cli", "library", "testing", "automation"],
+      "effects": ["read", "compute", "execute", "write"],
+      "tags": ["adventure", "progression", "puzzles", "soft-lock", "validation"],
+      "requires": ["Canonical project/runtime state graph"]
+    },
+    {
+      "id": "adventure.playfeel.simulate",
+      "title": "Simulate deterministic classic-adventure play feel",
+      "description": "Apply authored acceleration, braking, cornering, footfall phase, camera response, command buffering and fixed-step frame pacing so play feel is profile-specific and independent of display cadence.",
+      "interfaces": ["library", "web-app", "testing"],
+      "effects": ["read", "compute", "execute"],
+      "tags": ["adventure", "play-feel", "movement", "frame-timing", "camera"],
+      "requires": ["Compiled play-feel profile", "Deterministic runtime clock"]
+    },
+    {
+      "id": "adventure.audio.direct",
+      "title": "Bind deterministic adventure audio production",
+      "description": "Coordinate authored buses, voice limits, cue loop points, fades, ducking, room soundscapes, cinematic cues, speech bindings and performance markers against the fixed-tick runtime/save contract while Audio Studio remains upstream audio production authority.",
+      "interfaces": ["library", "web-app", "testing"],
+      "effects": ["read", "compute", "write", "execute"],
+      "tags": ["adventure", "audio", "soundscape", "speech", "cinematic"],
+      "requires": ["Admitted audio assets/cues", "Adventure audio profile"]
+    },
+    {
+      "id": "adventure.save-replay",
+      "title": "Produce deterministic saves and replays",
+      "description": "Persist and restore deterministic adventure state and record/export replay commands so debugging, playtesting and regression analysis can reproduce exact progression behavior.",
+      "interfaces": ["library", "web-app", "desktop", "testing"],
+      "effects": ["read", "compute", "write", "execute"],
+      "tags": ["adventure", "save", "replay", "deterministic", "playtest"],
+      "requires": ["Compatible compiled project/runtime schema"]
+    },
+    {
+      "id": "adventure.visual-studio.author",
+      "title": "Use the visual adventure production studio",
+      "description": "Author/review scene composition, Scene Director overlays, geometry, objects, animation, art direction, bitmap fonts, localization, interface skins, audio, dialogue, timelines, playtest artifacts and validation through the shared canonical project.",
+      "interfaces": ["web-app"],
+      "effects": ["read", "compute", "write", "execute"],
+      "tags": ["adventure", "studio", "authoring", "scene-director", "production"],
+      "requires": ["Adventure Studio project workspace"]
+    },
+    {
+      "id": "adventure.validation.execute",
+      "title": "Run Adventure Studio authenticity and runtime validation",
+      "description": "Validate project contracts, native dimensions, indexed pixels, binary alpha, bitmap fonts, interface geometry, staging, progression, replays and compiled exports without treating technical validity as creative approval or game release.",
+      "interfaces": ["cli", "testing", "automation"],
+      "effects": ["read", "compute", "execute", "write"],
+      "tags": ["adventure", "validation", "authenticity", "runtime", "evidence"],
+      "requires": ["Repository dependencies", "Current compiled project evidence"]
+    }
+  ]
+}
