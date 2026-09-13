@@ -1,0 +1,213 @@
+import type { Actor, Id } from "@evavo/adventure-project-schema";
+import {
+  compileAnimationAdventureCreativeWorkOrder,
+  compileCharacterAdventureCreativeWorkOrder,
+  compileStaticAdventureCreativeWorkOrder,
+  type AdventureCreativeAuthority,
+} from "./creative-handoff-compiler.js";
+import type { AdventureCreativeWorkOrderV2 } from "./creative-handoff-v2.js";
+import { adventureProductionProfiles } from "./production-profile-presets.js";
+import type { AdventureProductionProfile } from "./production-profile-types.js";
+
+const id = <T extends string>(value: string): Id<T> => value as Id<T>;
+
+const profile = (): AdventureProductionProfile => {
+  const match = adventureProductionProfiles.find(
+    (candidate) => candidate.id === "cinematic-handdrawn-conspiracy",
+  );
+  if (!match) throw new Error("Cinematic Hand-Drawn Conspiracy profile is unavailable.");
+  return match;
+};
+
+type WalkRole = "contact" | "passing" | "breakdown";
+
+const walkFrame = (
+  index: number,
+  role: WalkRole,
+  exposureTicks: number,
+  event?: string,
+) => ({
+  id: id<"sprite-frame">(`walk-east.${String(index + 1).padStart(2, "0")}`),
+  assetId: id<"asset">("asset.ninth-reliquary.protagonist.walk-east"),
+  sourceRect: { x: index * 96, y: 0, width: 96, height: 192 },
+  sourceSize: { width: 96, height: 192 },
+  trimOffset: { x: 0, y: 0 },
+  pivot: { x: 48, y: 178 },
+  footPoint: { x: 48, y: 178 },
+  shadowAnchor: { x: 48, y: 180 },
+  attachmentPoints: {
+    hand: { x: 56, y: 88 },
+  },
+  durationTicks: exposureTicks,
+  ...(event ? { events: [event] } : {}),
+  mirrorEligible: true,
+  role,
+});
+
+const frames = [
+  walkFrame(0, "contact", 3, "footfall-left"),
+  walkFrame(1, "breakdown", 2),
+  walkFrame(2, "passing", 2),
+  walkFrame(3, "breakdown", 2),
+  walkFrame(4, "contact", 3, "footfall-right"),
+  walkFrame(5, "breakdown", 2),
+  walkFrame(6, "passing", 2),
+  walkFrame(7, "breakdown", 2),
+  walkFrame(8, "contact", 3, "footfall-left"),
+  walkFrame(9, "breakdown", 2),
+] as const;
+
+export const ninthReliquaryMaraActor: Actor = {
+  id: id<"actor">("actor.ninth-reliquary.mara"),
+  name: "Mara Venn",
+  frames: frames.map(({ role: _role, ...frame }) => frame),
+  animations: [
+    {
+      id: id<"animation-clip">("animation.ninth-reliquary.mara.walk-east"),
+      state: "walk",
+      facing: "east",
+      frameIds: frames.map((frame) => frame.id),
+      loop: true,
+      interruptible: true,
+    },
+  ],
+};
+
+export interface NinthReliquaryCreativeProofAuthority {
+  readonly projectId?: Id<"project"> | string;
+  readonly sourceRevisionDigest: string;
+  readonly styleDigest: string;
+  readonly paletteDigest: string;
+  readonly environmentLayoutDigest: string;
+  readonly modelSheetDigest: string;
+  readonly xSheetDigest: string;
+  readonly referenceDigests?: readonly string[];
+  readonly environmentReferenceDigests?: readonly string[];
+  readonly characterReferenceDigests?: readonly string[];
+}
+
+export interface NinthReliquaryCreativeProofWorkOrders {
+  readonly background: AdventureCreativeWorkOrderV2;
+  readonly foregroundAwning: AdventureCreativeWorkOrderV2;
+  readonly maraModelSheet: AdventureCreativeWorkOrderV2;
+  readonly maraWalkEast: AdventureCreativeWorkOrderV2;
+}
+
+export const compileNinthReliquaryCreativeProofWorkOrders = (
+  authority: NinthReliquaryCreativeProofAuthority,
+  revision = 1,
+): NinthReliquaryCreativeProofWorkOrders => {
+  const productionProfile = profile();
+  const projectId = authority.projectId ?? "project.ninth-reliquary-proof";
+  const fallbackReferences = authority.referenceDigests ?? [];
+  const environmentReferences = authority.environmentReferenceDigests ?? fallbackReferences;
+  const characterReferences = authority.characterReferenceDigests ?? fallbackReferences;
+  const common = {
+    sourceRevisionDigest: authority.sourceRevisionDigest,
+    styleDigest: authority.styleDigest,
+    paletteDigest: authority.paletteDigest,
+  } satisfies AdventureCreativeAuthority;
+
+  return {
+    background: compileStaticAdventureCreativeWorkOrder({
+      workOrderId: "creative.ninth-reliquary.old-city-square.background",
+      projectId,
+      assetId: "asset.ninth-reliquary.old-city-square.background",
+      taskKind: "background",
+      revision,
+      ...(revision > 1 ? { replacesRevision: revision - 1 } : {}),
+      nativeSize: { width: 640, height: 360 },
+      alphaPolicy: "opaque",
+      profile: productionProfile,
+      authority: {
+        ...common,
+        environmentLayoutDigest: authority.environmentLayoutDigest,
+        referenceDigests: environmentReferences,
+      },
+      artDirection: [
+        "Original rain-cleared European old-city square and café; recognisable geography, readable exits and clue-bearing architecture.",
+        "Modern hand-painted/cel production with anime-adjacent shape economy, but natural architectural perspective and no imitation of a named adventure game frame.",
+        "Reserve clean foreground separations for later occlusion plates rather than baking characters into the environment.",
+      ],
+      rejectionRules: [
+        "Reject invented text/signage gibberish, repeated façade motifs, impossible windows, merged furniture or generic generated-city substitutions.",
+      ],
+    }),
+    foregroundAwning: compileStaticAdventureCreativeWorkOrder({
+      workOrderId: "creative.ninth-reliquary.old-city-square.foreground-awning",
+      projectId,
+      assetId: "asset.ninth-reliquary.old-city-square.foreground-awning",
+      taskKind: "foreground-plate",
+      revision,
+      ...(revision > 1 ? { replacesRevision: revision - 1 } : {}),
+      nativeSize: { width: 640, height: 360 },
+      alphaPolicy: "required",
+      profile: productionProfile,
+      authority: {
+        ...common,
+        environmentLayoutDigest: authority.environmentLayoutDigest,
+        referenceDigests: environmentReferences,
+      },
+      artDirection: [
+        "Separate only the café awning, hanging sign and near-frame masonry needed for authored occlusion; all other pixels must remain genuinely transparent.",
+        "Match perspective, edge colour, light direction and material language to the approved square background authority.",
+      ],
+      rejectionRules: [
+        "Reject duplicated background paint, opaque canvas corners, checkerboard pixels, matte residue or halos around the awning/sign silhouette.",
+      ],
+    }),
+    maraModelSheet: compileCharacterAdventureCreativeWorkOrder({
+      workOrderId: "creative.ninth-reliquary.protagonist.model-sheet",
+      projectId,
+      assetId: "asset.ninth-reliquary.protagonist.model-sheet",
+      taskKind: "character-model-sheet",
+      characterName: "Mara Venn",
+      revision,
+      ...(revision > 1 ? { replacesRevision: revision - 1 } : {}),
+      nativeSize: { width: 1024, height: 768 },
+      alphaPolicy: "opaque",
+      profile: productionProfile,
+      authority: {
+        ...common,
+        referenceDigests: characterReferences,
+      },
+      artDirection: [
+        "Original adult restoration researcher with practical contemporary European clothing and natural proportion.",
+        "Anime-adjacent economy means clean intentional shape/line construction and expressive pose clarity, not generic large-eye facial shorthand.",
+        "Lock head shape, hair mass, facial landmarks, hands, footwear, bag silhouette and costume seams across front/profile/three-quarter/back views.",
+      ],
+    }),
+    maraWalkEast: compileAnimationAdventureCreativeWorkOrder({
+      workOrderId: "creative.ninth-reliquary.protagonist.walk-east",
+      projectId,
+      assetId: "asset.ninth-reliquary.protagonist.walk-east",
+      revision,
+      ...(revision > 1 ? { replacesRevision: revision - 1 } : {}),
+      nativeSize: { width: 960, height: 192 },
+      alphaPolicy: "required",
+      profile: productionProfile,
+      actor: ninthReliquaryMaraActor,
+      animationClipId: id<"animation-clip">("animation.ninth-reliquary.mara.walk-east"),
+      authority: {
+        ...common,
+        modelSheetDigest: authority.modelSheetDigest,
+        xSheetDigest: authority.xSheetDigest,
+        referenceDigests: characterReferences,
+      },
+      roleByFrameId: Object.fromEntries(frames.map((frame) => [frame.id, frame.role])),
+      artDirection: [
+        "Mara is observant, practical and physically grounded; modern cel/anime-adjacent construction without generic anime facial shorthand.",
+        "Keep jacket seams, hair mass, nose/eye construction, limb lengths and hand scale locked to the approved model sheet.",
+        "Animate the canonical grounded ten-drawing walk with clear planted contacts and restrained vertical bob.",
+      ],
+      reviewChecklist: [
+        "Flip the ten drawings at their exact approved 2/3-tick exposures and verify the body does not pulse in width/height between drawings.",
+        "Review the strip on black, white, grey, green and magenta hostile backgrounds to prove real alpha and clean edge colour.",
+      ],
+      rejectionRules: [
+        "Reject a contact sheet pasted over an opaque/checkerboard background; each cel must have genuine decoded alpha.",
+        "Reject regenerated-looking face, hair, jacket or hand construction in any one frame even if the pose is individually attractive.",
+      ],
+    }),
+  };
+};

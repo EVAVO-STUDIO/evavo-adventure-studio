@@ -1,11 +1,11 @@
 import { mkdtemp, rm, writeFile } from "node:fs/promises";
 import { tmpdir } from "node:os";
 import { join } from "node:path";
-import { afterEach, describe, expect, it } from "vitest";
-import { assetBuildManifestSchema } from "@evavo/adventure-asset-contract";
 import { createArtDirectionManifest } from "@evavo/adventure-art-direction";
 import { artVisualEvidenceManifestSchema } from "@evavo/adventure-art-direction/evidence";
+import { assetBuildManifestSchema } from "@evavo/adventure-asset-contract";
 import { parseAdventureProject } from "@evavo/adventure-project-schema";
+import { afterEach, describe, expect, it } from "vitest";
 import { loadArtInputs } from "../src/art-inputs.js";
 
 const temporaryDirectories: string[] = [];
@@ -65,9 +65,7 @@ const assetManifest = assetBuildManifestSchema.parse({
     {
       assetId: "asset.office",
       kind: "image",
-      sourceFiles: [
-        { path: "art/office.png", sha256: hash, byteLength: 10 },
-      ],
+      sourceFiles: [{ path: "art/office.png", sha256: hash, byteLength: 10 }],
       outputFiles: [
         {
           role: "primary",
@@ -90,10 +88,7 @@ const assetManifest = assetBuildManifestSchema.parse({
 
 const artDirection = createArtDirectionManifest(project, "vga-256-320x200");
 
-const visualEvidence = (
-  colourCount = 128,
-  alphaMode: "opaque" | "binary" | "full" = "opaque",
-) =>
+const visualEvidence = (colourCount = 128, alphaMode: "opaque" | "binary" | "full" = "opaque") =>
   artVisualEvidenceManifestSchema.parse({
     manifestVersion: 1,
     projectId: project.id,
@@ -131,21 +126,14 @@ const fixture = async (
 
 afterEach(async () => {
   await Promise.all(
-    temporaryDirectories.splice(0).map((directory) =>
-      rm(directory, { recursive: true, force: true }),
-    ),
+    temporaryDirectories.splice(0).map((directory) => rm(directory, { recursive: true, force: true })),
   );
 });
 
 describe("CLI art inputs", () => {
   it("loads a clean policy and proof sidecar", async () => {
     const files = await fixture();
-    const loaded = await loadArtInputs(
-      files.artPath,
-      files.evidencePath,
-      project,
-      assetManifest,
-    );
+    const loaded = await loadArtInputs(files.artPath, files.evidencePath, project, assetManifest);
 
     expect(loaded.manifest?.profile.preset).toBe("vga-256-320x200");
     expect(loaded.visualEvidence?.assets).toHaveLength(1);
@@ -156,34 +144,17 @@ describe("CLI art inputs", () => {
 
   it("reports blocking pixel-proof diagnostics", async () => {
     const files = await fixture(visualEvidence(300, "binary"));
-    const loaded = await loadArtInputs(
-      files.artPath,
-      files.evidencePath,
-      project,
-      assetManifest,
-    );
+    const loaded = await loadArtInputs(files.artPath, files.evidencePath, project, assetManifest);
 
     expect(loaded.diagnostics.map((entry) => entry.code)).toEqual(
-      expect.arrayContaining([
-        "visual-evidence-colour-budget-exceeded",
-        "visual-evidence-alpha-mismatch",
-      ]),
+      expect.arrayContaining(["visual-evidence-colour-budget-exceeded", "visual-evidence-alpha-mismatch"]),
     );
-    expect(
-      loaded.diagnostics.every(
-        (entry) => entry.source === "art-evidence-semantics",
-      ),
-    ).toBe(true);
+    expect(loaded.diagnostics.every((entry) => entry.source === "art-evidence-semantics")).toBe(true);
   });
 
   it("validates policy without requiring compiled evidence", async () => {
     const files = await fixture();
-    const loaded = await loadArtInputs(
-      files.artPath,
-      null,
-      project,
-      null,
-    );
+    const loaded = await loadArtInputs(files.artPath, null, project, null);
 
     expect(loaded.visualEvidence).toBeNull();
     expect(loaded.diagnostics).toEqual([]);

@@ -1,18 +1,11 @@
 import type { RuntimeBundle } from "@evavo/adventure-runtime-bundle";
 import type { InteractiveRuntimeWorldState } from "@evavo/adventure-scene-runtime/commands";
-import {
-  validateProfiledNavigationMovementCompatibility,
-} from "@evavo/adventure-scene-runtime/profiled-movement";
-import {
-  addSaveGameIssue,
-  type SaveGameCompatibilityIssue,
-} from "./errors.js";
+import { validateProfiledNavigationMovementCompatibility } from "@evavo/adventure-scene-runtime/profiled-movement";
+import { addSaveGameIssue, type SaveGameCompatibilityIssue } from "./errors.js";
 import { validateSaveGameProfiledCamera } from "./profiled-camera.js";
 import type { SaveGame } from "./schema.js";
 
-type SceneComposition = NonNullable<
-  RuntimeBundle["sceneInstances"]
->["scenes"][number];
+type SceneComposition = NonNullable<RuntimeBundle["sceneInstances"]>["scenes"][number];
 type SceneActorInstance = SceneComposition["actorInstances"][number];
 type SceneObjectInstance = SceneComposition["objectInstances"][number];
 
@@ -35,9 +28,7 @@ export const authoredObjectInstances = (bundle: RuntimeBundle) =>
 const samePoint = (
   left: { readonly x: number; readonly y: number },
   right: { readonly x: number; readonly y: number },
-): boolean =>
-  Math.abs(left.x - right.x) <= 1e-7 &&
-  Math.abs(left.y - right.y) <= 1e-7;
+): boolean => Math.abs(left.x - right.x) <= 1e-7 && Math.abs(left.y - right.y) <= 1e-7;
 
 export const validateSavedMovement = (
   bundle: RuntimeBundle,
@@ -89,10 +80,7 @@ export const validateSavedMovement = (
     );
   }
   const actorState = save.world.actorInstances[movement.actorInstanceId];
-  if (
-    actorState &&
-    !samePoint(actorState.position, movement.profiled.extension.motion.position)
-  ) {
+  if (actorState && !samePoint(actorState.position, movement.profiled.extension.motion.position)) {
     addSaveGameIssue(
       issues,
       "invalid-profiled-movement",
@@ -114,11 +102,6 @@ export const validateSavedCamera = (
     world: save.world as InteractiveRuntimeWorldState,
     state,
   })) {
-    addSaveGameIssue(
-      issues,
-      "invalid-profiled-camera",
-      cameraIssue.path,
-      cameraIssue.message,
-    );
+    addSaveGameIssue(issues, "invalid-profiled-camera", cameraIssue.path, cameraIssue.message);
   }
 };

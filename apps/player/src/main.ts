@@ -1,183 +1,67 @@
-import {
-  advanceFixedStepClock,
-  createFixedStepClock,
-} from "@evavo/adventure-core/fixed-step";
+import { advanceFixedStepClock, createFixedStepClock } from "@evavo/adventure-core/fixed-step";
 import type { Id, Point } from "@evavo/adventure-project-schema";
-import type {
-  NativeCanvas,
-  RenderLayer,
-  ResolvedFrame,
-  SolidRectangleRenderNode,
-} from "@evavo/adventure-render-contract";
+import type { GameLifecycleOutcome } from "@evavo/adventure-project-schema/lifecycle";
+import {
+  canonicalPlayerSystemText,
+  type PlayerSystemTextResolver,
+} from "@evavo/adventure-project-schema/localisation";
+import type { NativeCanvas, ResolvedFrame } from "@evavo/adventure-render-contract";
 import { PixiWebGLRenderer } from "@evavo/adventure-renderer-pixi";
 import { PixiAssetTextureStore } from "@evavo/adventure-renderer-pixi/texture-store";
-import type { ReplayEvent, ReplayLog } from "@evavo/adventure-replay";
+import type { ReplayLog } from "@evavo/adventure-replay";
+import type { RuntimeBundle } from "@evavo/adventure-runtime-bundle";
+import type { SaveGame } from "@evavo/adventure-save-game";
+import { requestedRuntimeBundleFromSearch } from "./built-in-demos.js";
+import { classicFrontEndSkipped, runClassicFrontEnd } from "./classic-front-end.js";
+import { mapClientPointToNative, requestedActorFromSearch } from "./input.js";
+import { createLaboratoryFrame } from "./laboratory-frame.js";
+import { resolveActiveGameLifecycleOutcome } from "./lifecycle-outcome.js";
+import { runGameLifecycleScreen } from "./lifecycle-screen.js";
 import {
-  mapClientPointToNative,
-  requestedActorFromSearch,
-} from "./input.js";
+  configuredOpeningSequenceId,
+  requestedNewGameOpeningSequenceId,
+} from "./opening-sequence.js";
 import {
   createPackagedRuntimeController,
   type PackagedRuntimeController,
 } from "./packaged-controller.js";
-import {
-  parserKeyInputFromKeyboardEvent,
-  type ParserKeyInput,
-} from "./parser.js";
-import {
-  createPlayerReplayRecorder,
-  type ReplayRecordingStatus,
-} from "./replay-recorder.js";
-import { createPackagedRuntimeRenderer } from "./runtime-renderer.js";
+import { type ParserKeyInput, parserKeyInputFromKeyboardEvent } from "./parser.js";
+import { createPlayerReplayRecorder, type ReplayRecordingStatus } from "./replay-recorder.js";
+import { createPlayerStatusRail } from "./player-status-rail.js";
+import { createPlayerSystemText } from "./player-system-localisation.js";
 import { loadRuntimeBundle } from "./runtime-loader.js";
+import { createPackagedRuntimeRenderer } from "./runtime-renderer.js";
 import {
   hasSaveGameSlot,
+  listSaveGameSlots,
   readSaveGameSlot,
+  type SaveGameSlotSnapshot,
   writeSaveGameSlot,
 } from "./save-storage.js";
+import { runClassicSystemMenu } from "./system-menu.js";
 import "./style.css";
-
-const id = <T extends string>(value: string): Id<T> => value as Id<T>;
-
-const rectangle = (
-  nodeId: string,
-  layer: RenderLayer,
-  x: number,
-  y: number,
-  width: number,
-  height: number,
-  color: number,
-  zOffset = 0,
-): SolidRectangleRenderNode => ({
-  kind: "solid-rectangle",
-  id: id<"render-node">(nodeId),
-  order: {
-    layer,
-    elevation: 0,
-    baselineY: y + height,
-    zOffset,
-    stableId: nodeId,
-  },
-  transform: {
-    position: { x, y },
-    pivot: { x: 0, y: 0 },
-    scale: { x: 1, y: 1 },
-    rotationRadians: 0,
-  },
-  opacity: 1,
-  visible: true,
-  size: { width, height },
-  color,
-});
-
-const createLaboratoryFrame = (tick: number): ResolvedFrame => {
-  const lampOn = Math.floor(tick / 20) % 2 === 0;
-  const cursorX = 156 + (Math.floor(tick / 12) % 5);
-  const cityLight = Math.floor(tick / 8) % 3;
-
-  return {
-    frameVersion: 1,
-    tick,
-    canvas: {
-      width: 320,
-      height: 200,
-      clearColor: [0, 0, 0, 255],
-    },
-    camera: {
-      position: { x: 0, y: 0 },
-      viewport: { width: 320, height: 200 },
-      shakeOffset: { x: 0, y: 0 },
-    },
-    nodes: [
-      rectangle("room.wall", "background", 0, 0, 320, 132, 0x26253a),
-      rectangle("room.shadow-band", "background", 0, 0, 320, 18, 0x171724),
-      rectangle("room.floor", "background", 0, 132, 320, 40, 0x171520),
-      rectangle("room.floor-line.1", "background", 0, 143, 320, 1, 0x343043),
-      rectangle("room.floor-line.2", "background", 0, 158, 320, 1, 0x0c0b12),
-      rectangle("window.recess", "background", 228, 22, 72, 82, 0x0a0911),
-      rectangle("window.sky", "background", 233, 27, 62, 72, 0x091727),
-      rectangle("window.frame.vertical", "rear-ambient", 263, 27, 3, 72, 0x454157),
-      rectangle("window.frame.horizontal", "rear-ambient", 233, 61, 62, 3, 0x454157),
-      rectangle(
-        "window.city-light.1",
-        "rear-ambient",
-        242,
-        76,
-        3,
-        3,
-        cityLight === 0 ? 0xf4c26a : 0x574a39,
-      ),
-      rectangle(
-        "window.city-light.2",
-        "rear-ambient",
-        282,
-        45,
-        2,
-        3,
-        cityLight === 1 ? 0xd65b6f : 0x4a2630,
-      ),
-      rectangle(
-        "window.city-light.3",
-        "rear-ambient",
-        251,
-        39,
-        2,
-        2,
-        cityLight === 2 ? 0x79b9d1 : 0x263b45,
-      ),
-      rectangle("desk.body", "world", 92, 101, 132, 48, 0x493a35),
-      rectangle("desk.top", "world", 86, 96, 144, 8, 0x765a48),
-      rectangle("desk.drawer", "world", 111, 110, 82, 17, 0x30272a),
-      rectangle("desk.drawer-edge", "world", 111, 126, 82, 2, 0x84644e),
-      rectangle("desk.handle", "world", 147, 116, 12, 3, 0xc8a36d),
-      rectangle("desk.leg.left", "world", 98, 145, 12, 24, 0x2f2528),
-      rectangle("desk.leg.right", "world", 206, 145, 12, 24, 0x2f2528),
-      rectangle("lamp.base", "world", 196, 91, 18, 5, 0x17141a),
-      rectangle("lamp.stem", "world", 203, 66, 3, 26, 0xaaa0a2),
-      rectangle("lamp.shade", "world", 194, 59, 21, 9, 0x7d1f35),
-      rectangle(
-        "lamp.glow",
-        "effects",
-        184,
-        69,
-        41,
-        2,
-        lampOn ? 0xffc86b : 0x493923,
-      ),
-      rectangle("actor.shadow", "world", 37, 158, 38, 5, 0x0b0a0f),
-      rectangle("actor.legs.left", "world", 47, 132, 8, 28, 0x12121a),
-      rectangle("actor.legs.right", "world", 59, 132, 8, 28, 0x12121a),
-      rectangle("actor.coat", "world", 42, 91, 31, 47, 0x202433),
-      rectangle("actor.shirt", "world", 52, 95, 12, 22, 0xd2d0c8),
-      rectangle("actor.tie", "world", 57, 99, 3, 18, 0x8f2037),
-      rectangle("actor.head", "world", 49, 71, 18, 21, 0xbd8f73),
-      rectangle("actor.hair", "world", 48, 68, 20, 7, 0x16131a),
-      rectangle("actor.hat.brim", "world", 44, 67, 29, 3, 0x252937),
-      rectangle("actor.hat.crown", "world", 49, 58, 20, 10, 0x303545),
-      rectangle("ui.panel", "interface", 0, 172, 320, 28, 0x08090e),
-      rectangle("ui.rule", "interface", 0, 172, 320, 2, 0xff244e),
-      rectangle("ui.verb.look", "interface", 10, 180, 28, 11, 0x272b38),
-      rectangle("ui.verb.use", "interface", 43, 180, 28, 11, 0x272b38),
-      rectangle("ui.inventory", "interface", 245, 178, 64, 15, 0x12151f),
-      rectangle("ui.inventory.key", "interface", 268, 182, 15, 4, 0xc9a465),
-      rectangle("ui.inventory.key-tooth", "interface", 280, 186, 4, 3, 0xc9a465),
-      rectangle("cursor.horizontal", "cursor", cursorX - 4, 103, 9, 1, 0xff244e),
-      rectangle("cursor.vertical", "cursor", cursorX, 99, 1, 9, 0xff244e),
-    ],
-  };
-};
 
 interface PlayerInputController {
   setPointer(position: Point | null): void;
   setPressed(pressed: boolean): void;
   activate(position: Point): void;
   handleKey?(input: ParserKeyInput): boolean;
+  activeBlockingSequenceId?(): Id<"sequence"> | null;
+  skipNarrativeSequence?(
+    sequenceId: Id<"sequence">,
+  ): { readonly kind: "skipped" | "rejected"; readonly reason?: string };
 }
 
 interface PlayerPersistence {
   saveQuickSlot(): void;
   loadQuickSlot(): number;
   hasQuickSlot(): boolean;
+  saveSlot(slot: number): void;
+  loadSlot(slot: number): number;
+  listSlots(): readonly SaveGameSlotSnapshot[];
+  captureRetryCheckpoint?(): void;
+  restoreRetryCheckpoint?(): number;
+  hasRetryCheckpoint?(): boolean;
 }
 
 interface PlayerReplayControls {
@@ -199,23 +83,31 @@ interface MountedPlayer {
   readonly persistence?: PlayerPersistence;
   readonly replay?: PlayerReplayControls;
   readonly statusText?: () => string;
+  readonly activeLifecycleOutcome?: () => GameLifecycleOutcome | null;
+  readonly text?: PlayerSystemTextResolver;
+  readonly bundle?: RuntimeBundle;
   readonly disposeAdditional?: () => Promise<void>;
 }
 
-const updateStatus = (text: string): void => {
-  const status = document.querySelector<HTMLElement>(
-    ".player-status span:last-child",
-  );
-  if (status) status.textContent = text;
-};
+interface PackagedPlayerSession {
+  readonly player: MountedPlayer;
+  readonly initialTick: number;
+}
 
-const errorText = (prefix: string, error: unknown): string =>
-  `${prefix} • ${error instanceof Error ? error.message : String(error)}`;
+let activeSystemText: PlayerSystemTextResolver = canonicalPlayerSystemText;
+
+const errorStatusHoldMilliseconds = 4200;
+
+const statusRail = createPlayerStatusRail((text) => {
+  const status = document.querySelector<HTMLElement>(".player-status > span:nth-of-type(2)");
+  if (status) status.textContent = text;
+});
+
+const errorMessage = (error: unknown): string =>
+  error instanceof Error ? error.message : String(error);
 
 const downloadText = (fileName: string, text: string): void => {
-  const url = URL.createObjectURL(
-    new Blob([text], { type: "application/json;charset=utf-8" }),
-  );
+  const url = URL.createObjectURL(new Blob([text], { type: "application/json;charset=utf-8" }));
   const link = document.createElement("a");
   link.href = url;
   link.download = fileName;
@@ -244,22 +136,40 @@ const nativePointer = (
   );
 };
 
+const restartCurrentRuntime = (): void => {
+  const url = new URL(window.location.href);
+  url.searchParams.set("shell", "skip");
+  window.location.assign(url.href);
+};
+
 const mountPlayer = async (
   host: HTMLElement,
   player: MountedPlayer,
+  initialLogicalTick = 0,
 ): Promise<void> => {
-  const initialFrame = player.createFrame(0);
+  if (!Number.isSafeInteger(initialLogicalTick) || initialLogicalTick < 0) {
+    throw new RangeError("Player initial logical tick must be a non-negative safe integer.");
+  }
+  const text = player.text ?? canonicalPlayerSystemText;
+  const initialFrame = player.createFrame(initialLogicalTick);
   await player.renderer.initialize(
     { target: host, devicePixelRatio: window.devicePixelRatio },
     initialFrame.canvas,
   );
-  if (player.statusText) updateStatus(player.statusText());
+  if (player.statusText) statusRail.replace(player.statusText());
 
   let clock = createFixedStepClock();
-  let logicalTick = 0;
+  let logicalTick = initialLogicalTick;
   let previousTime = performance.now();
   let animationFrame = 0;
   let disposed = false;
+  let systemMenuActive = false;
+  let lifecycleActive = false;
+  let presentedLifecycleOutcomeId: string | null = null;
+
+  const blockingSequenceId = (): Id<"sequence"> | null =>
+    player.input?.activeBlockingSequenceId?.() ?? null;
+  const modalActive = (): boolean => systemMenuActive || lifecycleActive;
 
   const resize = (): void => {
     const bounds = host.getBoundingClientRect();
@@ -272,28 +182,39 @@ const mountPlayer = async (
   resize();
 
   const onPointerMove = (event: PointerEvent): void => {
+    if (modalActive() || blockingSequenceId()) return;
     player.input?.setPointer(nativePointer(host, initialFrame.canvas, event));
   };
   const onPointerLeave = (): void => {
+    if (modalActive() || blockingSequenceId()) return;
     player.input?.setPointer(null);
     player.input?.setPressed(false);
   };
   const onPointerDown = (event: PointerEvent): void => {
-    if (!player.input || event.button !== 0) return;
+    if (modalActive() || !player.input || event.button !== 0) return;
+    if (blockingSequenceId()) {
+      event.preventDefault();
+      return;
+    }
     const point = nativePointer(host, initialFrame.canvas, event);
     player.input.setPointer(point);
     player.input.setPressed(true);
     if (point) {
+      player.persistence?.captureRetryCheckpoint?.();
       player.replay?.recordActivation(logicalTick, point);
       player.input.activate(point);
     }
-    if (player.statusText) updateStatus(player.statusText());
+    if (player.statusText) statusRail.replace(player.statusText());
     event.preventDefault();
   };
   const onPointerUp = (event: PointerEvent): void => {
-    if (event.button === 0) player.input?.setPressed(false);
+    if (!modalActive() && !blockingSequenceId() && event.button === 0) {
+      player.input?.setPressed(false);
+    }
   };
-  const onPointerCancel = (): void => player.input?.setPressed(false);
+  const onPointerCancel = (): void => {
+    if (!modalActive() && !blockingSequenceId()) player.input?.setPressed(false);
+  };
   const onContextMenu = (event: MouseEvent): void => {
     if (player.input) event.preventDefault();
   };
@@ -306,9 +227,13 @@ const mountPlayer = async (
       clock = createFixedStepClock();
       previousTime = performance.now();
       player.renderer.render(player.createFrame(logicalTick));
-      updateStatus("GAME RESTORED");
+      presentedLifecycleOutcomeId = null;
+      statusRail.announce(text("status.gameRestored"));
     } catch (error) {
-      updateStatus(errorText("LOAD FAILED", error));
+      statusRail.announce(
+        text("status.loadFailed", { error: errorMessage(error) }),
+        errorStatusHoldMilliseconds,
+      );
     }
   };
 
@@ -316,9 +241,12 @@ const mountPlayer = async (
     if (!player.persistence) return;
     try {
       player.persistence.saveQuickSlot();
-      updateStatus("GAME SAVED");
+      statusRail.announce(text("status.gameSaved"));
     } catch (error) {
-      updateStatus(errorText("SAVE FAILED", error));
+      statusRail.announce(
+        text("status.saveFailed", { error: errorMessage(error) }),
+        errorStatusHoldMilliseconds,
+      );
     }
   };
 
@@ -327,13 +255,20 @@ const mountPlayer = async (
     try {
       if (player.replay.status().recording) {
         const replay = player.replay.finish();
-        updateStatus(`REPLAY RECORDED • ${replay.events.length} EVENTS`);
+        const count = replay.events.length;
+        const eventLabel = text(
+          count === 1 ? "status.replayEventSingular" : "status.replayEventPlural",
+        );
+        statusRail.announce(text("status.replayRecorded", { count, eventLabel }));
       } else {
         player.replay.start();
-        updateStatus("REPLAY RECORDING");
+        statusRail.announce(text("status.replayRecording"));
       }
     } catch (error) {
-      updateStatus(errorText("REPLAY FAILED", error));
+      statusRail.announce(
+        text("status.replayFailed", { error: errorMessage(error) }),
+        errorStatusHoldMilliseconds,
+      );
     }
   };
 
@@ -341,51 +276,168 @@ const mountPlayer = async (
     if (!player.replay) return;
     const json = player.replay.latestReplayJson();
     if (!json) {
-      updateStatus("NO COMPLETED REPLAY TO EXPORT");
+      statusRail.announce(text("status.noCompletedReplay"));
       return;
     }
     downloadText(player.replay.fileName, json);
-    updateStatus("REPLAY EXPORTED");
+    statusRail.announce(text("status.replayExported"));
+  };
+
+  const openLifecycleOutcome = (outcome: GameLifecycleOutcome): void => {
+    if (lifecycleActive || systemMenuActive || !player.persistence || !player.bundle) return;
+    lifecycleActive = true;
+    presentedLifecycleOutcomeId = outcome.id;
+    player.input?.setPressed(false);
+    player.input?.setPointer(null);
+    player.replay?.cancel();
+    statusRail.replace(outcome.title);
+    const retryAvailable = player.persistence.hasRetryCheckpoint?.() === true;
+
+    void runGameLifecycleScreen(host, {
+      bundle: player.bundle,
+      outcome,
+      snapshots: player.persistence.listSlots,
+      loadSlot: (slot) => player.persistence?.loadSlot(slot) ?? logicalTick,
+      ...(retryAvailable && player.persistence.restoreRetryCheckpoint
+        ? { quickRetry: player.persistence.restoreRetryCheckpoint }
+        : {}),
+    })
+      .then((result) => {
+        if (result.kind === "title") {
+          window.location.reload();
+          return;
+        }
+        if (result.kind === "restart") {
+          restartCurrentRuntime();
+          return;
+        }
+        lifecycleActive = false;
+        logicalTick = result.tick;
+        clock = createFixedStepClock();
+        previousTime = performance.now();
+        player.renderer.render(player.createFrame(logicalTick));
+        presentedLifecycleOutcomeId = null;
+        statusRail.announce(
+          result.kind === "retry"
+            ? text("status.gameRestored")
+            : result.slot === 0
+              ? text("status.quickSaveRestored")
+              : text("status.saveSlotRestored", { slot: result.slot }),
+        );
+        host.focus();
+      })
+      .catch((error: unknown) => {
+        console.error(error);
+        lifecycleActive = false;
+        presentedLifecycleOutcomeId = null;
+        clock = createFixedStepClock();
+        previousTime = performance.now();
+        statusRail.announce(errorMessage(error), errorStatusHoldMilliseconds);
+        host.focus();
+      });
+  };
+
+  const openSystemMenu = (): void => {
+    if (
+      modalActive() ||
+      blockingSequenceId() ||
+      !player.persistence ||
+      !player.bundle
+    ) {
+      return;
+    }
+    systemMenuActive = true;
+    player.input?.setPressed(false);
+    player.input?.setPointer(null);
+    statusRail.replace(text("status.gamePaused"));
+
+    void runClassicSystemMenu(host, {
+      bundle: player.bundle,
+      snapshots: player.persistence.listSlots,
+      saveSlot: player.persistence.saveSlot,
+      loadSlot: (slot) => {
+        player.replay?.cancel();
+        return player.persistence?.loadSlot(slot) ?? logicalTick;
+      },
+      text,
+    })
+      .then((result) => {
+        if (result.kind === "return-to-title") {
+          window.location.reload();
+          return;
+        }
+        systemMenuActive = false;
+        if (result.kind === "loaded") {
+          logicalTick = result.tick;
+          player.renderer.render(player.createFrame(logicalTick));
+          presentedLifecycleOutcomeId = null;
+          statusRail.announce(
+            result.slot === 0
+              ? text("status.quickSaveRestored")
+              : text("status.saveSlotRestored", { slot: result.slot }),
+          );
+        } else {
+          statusRail.announce(text("status.gameResumed"));
+        }
+        clock = createFixedStepClock();
+        previousTime = performance.now();
+        host.focus();
+      })
+      .catch((error: unknown) => {
+        console.error(error);
+        systemMenuActive = false;
+        clock = createFixedStepClock();
+        previousTime = performance.now();
+        statusRail.announce(
+          text("status.systemMenuFailed", { error: errorMessage(error) }),
+          errorStatusHoldMilliseconds,
+        );
+        host.focus();
+      });
   };
 
   const onKeyDown = (event: KeyboardEvent): void => {
+    if (modalActive()) return;
+
+    const sequenceId = blockingSequenceId();
+    if (sequenceId) {
+      if (event.key === "Escape" && player.input?.skipNarrativeSequence) {
+        const result = player.input.skipNarrativeSequence(sequenceId);
+        statusRail.announce(
+          text(
+            result.kind === "skipped"
+              ? "status.cutsceneSkipped"
+              : "status.cutsceneCannotSkip",
+          ),
+        );
+      }
+      event.preventDefault();
+      return;
+    }
+
+    if (player.persistence && event.key === "Escape") {
+      openSystemMenu();
+      event.preventDefault();
+      return;
+    }
+
     const commandModifier = event.ctrlKey || event.metaKey;
-    if (
-      player.persistence &&
-      commandModifier &&
-      event.shiftKey &&
-      event.code === "KeyS"
-    ) {
+    if (player.persistence && commandModifier && event.shiftKey && event.code === "KeyS") {
       saveQuickSlot();
       event.preventDefault();
       return;
     }
-    if (
-      player.persistence &&
-      commandModifier &&
-      event.shiftKey &&
-      event.code === "KeyL"
-    ) {
+    if (player.persistence && commandModifier && event.shiftKey && event.code === "KeyL") {
       restoreQuickSlot();
       event.preventDefault();
       return;
     }
-    if (
-      player.replay &&
-      commandModifier &&
-      event.shiftKey &&
-      event.code === "KeyR"
-    ) {
+    if (player.replay && commandModifier && event.shiftKey && event.code === "KeyR") {
       toggleReplayRecording();
       event.preventDefault();
       return;
     }
-    if (
-      player.replay &&
-      commandModifier &&
-      event.shiftKey &&
-      event.code === "KeyE"
-    ) {
+    if (player.replay && commandModifier && event.shiftKey && event.code === "KeyE") {
       exportLatestReplay();
       event.preventDefault();
       return;
@@ -394,7 +446,7 @@ const mountPlayer = async (
     const input = parserKeyInputFromKeyboardEvent(event);
     if (!input || !player.input?.handleKey?.(input)) return;
     player.replay?.recordParserInput(logicalTick, input);
-    if (player.statusText) updateStatus(player.statusText());
+    if (player.statusText) statusRail.replace(player.statusText());
     event.preventDefault();
   };
 
@@ -412,6 +464,11 @@ const mountPlayer = async (
 
   const renderLoop = (now: number): void => {
     if (disposed) return;
+    if (modalActive()) {
+      previousTime = now;
+      animationFrame = requestAnimationFrame(renderLoop);
+      return;
+    }
     const advanced = advanceFixedStepClock(clock, now - previousTime, {
       ticksPerSecond: player.ticksPerSecond,
       maxCatchUpTicks: 4,
@@ -421,11 +478,19 @@ const mountPlayer = async (
     logicalTick += advanced.ticksToRun;
     previousTime = now;
     player.renderer.render(player.createFrame(logicalTick));
-    if (player.statusText) updateStatus(player.statusText());
+    if (player.statusText) statusRail.refresh(player.statusText());
+    const outcome = player.activeLifecycleOutcome?.() ?? null;
+    if (outcome && outcome.id !== presentedLifecycleOutcomeId) {
+      openLifecycleOutcome(outcome);
+    } else if (!outcome) {
+      presentedLifecycleOutcomeId = null;
+    }
     animationFrame = requestAnimationFrame(renderLoop);
   };
 
   player.renderer.render(initialFrame);
+  const initialOutcome = player.activeLifecycleOutcome?.() ?? null;
+  if (initialOutcome) openLifecycleOutcome(initialOutcome);
   animationFrame = requestAnimationFrame(renderLoop);
 
   window.addEventListener(
@@ -451,29 +516,58 @@ const mountPlayer = async (
 };
 
 const packagedPlayer = async (
+  bundle: RuntimeBundle,
   bundleUrl: string,
   requestedActorInstanceId: string | null,
-): Promise<MountedPlayer> => {
-  const bundle = await loadRuntimeBundle(bundleUrl);
+  text: PlayerSystemTextResolver,
+  initialSave?: SaveGame,
+  initialSequenceId?: Id<"sequence"> | null,
+  restartSequenceId?: Id<"sequence"> | null,
+): Promise<PackagedPlayerSession> => {
   const textures = new PixiAssetTextureStore({ aliasNamespace: bundle.projectId });
   await textures.loadRuntimeAssets(bundle.assets, bundleUrl);
-  const controller: PackagedRuntimeController = createPackagedRuntimeController(
-    bundle,
-    { requestedActorInstanceId },
-  );
+  const controller: PackagedRuntimeController = createPackagedRuntimeController(bundle, {
+    requestedActorInstanceId,
+    text,
+    ...(initialSequenceId ? { initialSequenceId } : {}),
+    ...(restartSequenceId ? { restartSequenceId } : {}),
+  });
+  const initialTick = initialSave
+    ? controller.restoreSaveGame(initialSave)
+    : controller.worldState().story.tick;
   const recorder = createPlayerReplayRecorder(bundle);
+  const retryEnabled =
+    bundle.lifecycle?.outcomes.some(
+      (outcome) => outcome.kind === "failure" && outcome.menu.allowQuickRetry,
+    ) === true;
+  let retryCheckpoint: SaveGame | null = null;
   const persistence: PlayerPersistence = {
     saveQuickSlot: () =>
+      writeSaveGameSlot(window.localStorage, bundle, controller.createSaveGame()),
+    loadQuickSlot: () => controller.restoreSaveGame(readSaveGameSlot(window.localStorage, bundle)),
+    hasQuickSlot: () => hasSaveGameSlot(window.localStorage, bundle),
+    saveSlot: (slot) =>
       writeSaveGameSlot(
         window.localStorage,
         bundle,
         controller.createSaveGame(),
+        slot,
       ),
-    loadQuickSlot: () =>
-      controller.restoreSaveGame(
-        readSaveGameSlot(window.localStorage, bundle),
-      ),
-    hasQuickSlot: () => hasSaveGameSlot(window.localStorage, bundle),
+    loadSlot: (slot) =>
+      controller.restoreSaveGame(readSaveGameSlot(window.localStorage, bundle, slot)),
+    listSlots: () => listSaveGameSlots(window.localStorage, bundle, 10),
+    ...(retryEnabled
+      ? {
+          captureRetryCheckpoint: () => {
+            retryCheckpoint = controller.createSaveGame();
+          },
+          restoreRetryCheckpoint: () => {
+            if (!retryCheckpoint) throw new Error("No retry checkpoint is available.");
+            return controller.restoreSaveGame(retryCheckpoint);
+          },
+          hasRetryCheckpoint: () => retryCheckpoint !== null,
+        }
+      : {}),
   };
   const replay: PlayerReplayControls = {
     start: () => recorder.start(controller.createSaveGame()),
@@ -487,14 +581,21 @@ const packagedPlayer = async (
   };
 
   return {
-    renderer: createPackagedRuntimeRenderer(bundle, textures),
-    ticksPerSecond: bundle.presentation.logicalTicksPerSecond,
-    createFrame: controller.createFrame,
-    input: controller,
-    persistence,
-    replay,
-    statusText: controller.statusText,
-    disposeAdditional: () => textures.dispose(),
+    initialTick,
+    player: {
+      renderer: createPackagedRuntimeRenderer(bundle, textures),
+      ticksPerSecond: bundle.presentation.logicalTicksPerSecond,
+      createFrame: controller.createFrame,
+      input: controller,
+      persistence,
+      replay,
+      statusText: controller.statusText,
+      activeLifecycleOutcome: () =>
+        resolveActiveGameLifecycleOutcome(bundle, controller.worldState().story),
+      text,
+      bundle,
+      disposeAdditional: () => textures.dispose(),
+    },
   };
 };
 
@@ -504,39 +605,104 @@ const laboratoryPlayer = (): MountedPlayer => ({
   }),
   ticksPerSecond: 60,
   createFrame: createLaboratoryFrame,
+  text: canonicalPlayerSystemText,
 });
 
 const boot = async (): Promise<void> => {
   const host = document.querySelector<HTMLElement>("#player-host");
   if (!host) throw new Error("Player host element was not found.");
 
-  const bundleParameter = new URLSearchParams(window.location.search).get(
-    "bundle",
-  );
+  const bundleParameter = requestedRuntimeBundleFromSearch(window.location.search);
   if (!bundleParameter) {
-    host.dataset.mode = "rendering-lab";
+    host.dataset["mode"] = "rendering-lab";
     await mountPlayer(host, laboratoryPlayer());
     return;
   }
 
   const bundleUrl = new URL(bundleParameter, window.location.href).href;
-  host.dataset.mode = "runtime-bundle";
-  host.textContent = "Loading runtime bundle…";
-  const player = await packagedPlayer(
+  host.dataset["mode"] = "runtime-loading";
+  host.textContent = activeSystemText("loading.runtimeBundle");
+  statusRail.replace(activeSystemText("status.loadingGameData"));
+  const bundle = await loadRuntimeBundle(bundleUrl);
+  activeSystemText = createPlayerSystemText(bundle);
+  const text = activeSystemText;
+  host.textContent = "";
+
+  let initialSave: SaveGame | undefined;
+  if (!classicFrontEndSkipped(window.location.search)) {
+    statusRail.replace(text("status.titleScreen"));
+    const snapshots = (): readonly SaveGameSlotSnapshot[] =>
+      listSaveGameSlots(window.localStorage, bundle, 10);
+    let request = await runClassicFrontEnd(host, {
+      title: bundle.title,
+      snapshots,
+      ...(bundle.frontEnd ? { frontEnd: bundle.frontEnd } : {}),
+    });
+    while (request.kind === "load") {
+      try {
+        initialSave = readSaveGameSlot(window.localStorage, bundle, request.slot);
+        break;
+      } catch (error) {
+        request = await runClassicFrontEnd(host, {
+          title: bundle.title,
+          snapshots,
+          skipSplash: true,
+          ...(bundle.frontEnd ? { frontEnd: bundle.frontEnd } : {}),
+          notice:
+            request.slot === 0
+              ? text("status.quickSaveUnavailable", { error: errorMessage(error) })
+              : text("status.saveSlotUnavailable", {
+                  slot: request.slot,
+                  error: errorMessage(error),
+                }),
+        });
+      }
+    }
+  }
+
+  const restartSequenceId = configuredOpeningSequenceId(
+    bundle,
+    window.location.search,
+  );
+  const initialSequenceId = requestedNewGameOpeningSequenceId(
+    bundle,
+    window.location.search,
+    initialSave !== undefined,
+  );
+  host.dataset["mode"] = "runtime-loading";
+  host.textContent = text("loading.game");
+  statusRail.replace(
+    text(
+      initialSave
+        ? "status.restoringGame"
+        : initialSequenceId
+          ? "status.startingOpening"
+          : "status.startingNewGame",
+    ),
+  );
+  const session = await packagedPlayer(
+    bundle,
     bundleUrl,
     requestedActorFromSearch(window.location.search),
+    text,
+    initialSave,
+    initialSequenceId,
+    restartSequenceId,
   );
   host.textContent = "";
-  host.setAttribute("aria-label", "Native adventure game canvas");
-  await mountPlayer(host, player);
+  host.dataset["mode"] = "runtime-bundle";
+  host.setAttribute("aria-label", text("aria.gameCanvas"));
+  await mountPlayer(host, session.player, session.initialTick);
 };
 
 void boot().catch((error: unknown) => {
   console.error(error);
   const host = document.querySelector<HTMLElement>("#player-host");
   if (host) {
-    host.dataset.mode = "error";
-    host.textContent =
-      error instanceof Error ? error.message : "The player could not start.";
+    host.dataset["mode"] = "error";
+    host.textContent = activeSystemText("error.playerCouldNotStart", {
+      error: errorMessage(error),
+    });
+    statusRail.replace(activeSystemText("status.playerCouldNotStart"));
   }
 });

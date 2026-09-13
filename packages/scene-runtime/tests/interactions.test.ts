@@ -1,10 +1,7 @@
-import { describe, expect, it } from "vitest";
 import type { Id } from "@evavo/adventure-project-schema";
 import { parseRuntimeBundle } from "@evavo/adventure-runtime-bundle";
-import {
-  createInitialRuntimeWorldState,
-  resolveRuntimeSceneFrame,
-} from "../src/index.js";
+import { describe, expect, it } from "vitest";
+import { createInitialRuntimeWorldState, resolveRuntimeSceneFrame } from "../src/index.js";
 import {
   executeSceneObjectCommand,
   hitTestSceneObject,
@@ -14,12 +11,7 @@ import {
 const hash = "0".repeat(64);
 const id = <T extends string>(value: string) => value as Id<T>;
 
-const imageAsset = (
-  assetId: string,
-  runtimePath: string,
-  width: number,
-  height: number,
-) => ({
+const imageAsset = (assetId: string, runtimePath: string, width: number, height: number) => ({
   assetId,
   kind: "image" as const,
   outputFiles: [
@@ -226,11 +218,7 @@ describe("stateful object interactions", () => {
   });
 
   it("returns the visually topmost overlapping object", () => {
-    const target = hitTestSceneObject(
-      bundle,
-      createInitialRuntimeWorldState(bundle),
-      { x: 100, y: 103 },
-    );
+    const target = hitTestSceneObject(bundle, createInitialRuntimeWorldState(bundle), { x: 100, y: 103 });
 
     expect(target?.objectInstanceId).toBe("object.office.note");
   });
@@ -246,9 +234,7 @@ describe("stateful object interactions", () => {
 
     expect(result.kind).toBe("fallback");
     if (result.kind === "fallback") {
-      expect(result.execution.resolution.text).toBe(
-        "The cabinet is firmly shut.",
-      );
+      expect(result.execution.resolution.text).toBe("The cabinet is firmly shut.");
     }
     expect(result.state).toBe(world);
   });
@@ -263,18 +249,14 @@ describe("stateful object interactions", () => {
     });
 
     expect(result.kind).toBe("executed");
-    expect(result.state.story.objectStates["object.office.cabinet"]).toBe(
-      "object-state.cabinet.open",
-    );
+    expect(result.state.story.objectStates["object.office.cabinet"]).toBe("object-state.cabinet.open");
     expect(
       resolveSceneObjectHotspots(bundle, result.state).find(
         (target) => target.objectInstanceId === "object.office.cabinet",
       )?.stateId,
     ).toBe("object-state.cabinet.open");
     expect(resolveRuntimeSceneFrame(bundle, result.state).nodes).toEqual(
-      expect.arrayContaining([
-        expect.objectContaining({ id: "render.object.object.office.cabinet" }),
-      ]),
+      expect.arrayContaining([expect.objectContaining({ id: "render.object.object.office.cabinet" })]),
     );
   });
 });

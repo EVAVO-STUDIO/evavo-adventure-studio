@@ -45,9 +45,7 @@ describe("animation workspace", () => {
 
   it("advances the playhead using authored clip duration", () => {
     let state = createAnimationWorkspace(studioProject.actors);
-    expect(selectedAnimationClip(state)?.id).toBe(
-      "animation.detective.idle-east",
-    );
+    expect(selectedAnimationClip(state)?.id).toBe("animation.detective.idle-east");
 
     state = animationWorkspaceReducer(state, { type: "toggle-playing" });
     state = animationWorkspaceReducer(state, {

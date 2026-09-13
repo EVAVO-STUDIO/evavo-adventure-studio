@@ -3,7 +3,10 @@ import { z } from "zod";
 export type Id<T extends string> = string & { readonly __id: T };
 
 export const idSchema = <T extends string>(_kind: T) =>
-  z.string().min(1).transform((value) => value as Id<T>);
+  z
+    .string()
+    .min(1)
+    .transform((value) => value as Id<T>);
 
 export const scalarSchema = z.union([z.string(), z.number().finite(), z.boolean()]);
 export type Scalar = z.infer<typeof scalarSchema>;
@@ -204,16 +207,7 @@ export const hotspotSchema = z
     shape: polygonSchema,
     walkTo: pointSchema.optional(),
     faceDirection: z
-      .enum([
-        "north",
-        "north-east",
-        "east",
-        "south-east",
-        "south",
-        "south-west",
-        "west",
-        "north-west",
-      ])
+      .enum(["north", "north-east", "east", "south-east", "south", "south-west", "west", "north-west"])
       .optional(),
     cursor: z.string().min(1).optional(),
     interactions: z.array(interactionSchema),
@@ -361,13 +355,7 @@ export const dialogueGraphSchema = z
   .strict();
 export type DialogueGraph = z.infer<typeof dialogueGraphSchema>;
 
-const easingSchema = z.enum([
-  "step",
-  "linear",
-  "ease-in",
-  "ease-out",
-  "ease-in-out",
-]);
+const easingSchema = z.enum(["step", "linear", "ease-in", "ease-out", "ease-in-out"]);
 
 export const sequenceCueSchema = z.discriminatedUnion("kind", [
   z

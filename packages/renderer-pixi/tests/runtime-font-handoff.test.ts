@@ -1,8 +1,8 @@
-import { describe, expect, it } from "vitest";
+import type { RuntimeAssetRecord } from "@evavo/adventure-asset-contract/runtime-asset";
 import { bitmapFontManifestSchema } from "@evavo/adventure-bitmap-font";
 import { registerBitmapFontsForAssetCollection } from "@evavo/adventure-bitmap-font/runtime-registry";
 import type { Id } from "@evavo/adventure-project-schema";
-import type { RuntimeAssetRecord } from "@evavo/adventure-asset-contract/runtime-asset";
+import { describe, expect, it } from "vitest";
 import { PixiAssetTextureStore } from "../src/texture-store.js";
 
 const id = <T extends string>(value: string): Id<T> => value as Id<T>;
@@ -45,10 +45,7 @@ describe("runtime bitmap font handoff", () => {
     expect(
       store
         .getBitmapFontResolver()
-        ?.getFont(
-          id<"bitmap-font">("bitmap-font.dialogue"),
-          id<"asset">("asset.font.dialogue"),
-        )?.name,
+        ?.getFont(id<"bitmap-font">("bitmap-font.dialogue"), id<"asset">("asset.font.dialogue"))?.name,
     ).toBe("Dialogue");
     await store.dispose();
     expect(store.getBitmapFontResolver()).toBeNull();

@@ -4,10 +4,10 @@ import { describe, expect, it } from "vitest";
 import {
   createSaveGame,
   loadSaveGame,
-  serializeSaveGame,
-  validateSaveGameCompatibility,
   type SaveGame,
   type SaveGameProfiledRuntimeCameraState,
+  serializeSaveGame,
+  validateSaveGameCompatibility,
 } from "../src/index.js";
 
 const hash = "0".repeat(64);
@@ -120,10 +120,7 @@ describe("profiled camera save state", () => {
       ...interfaceState,
       profiledCamera: camera,
     });
-    const loaded = loadSaveGame(
-      bundle,
-      JSON.parse(serializeSaveGame(save)) as unknown,
-    );
+    const loaded = loadSaveGame(bundle, JSON.parse(serializeSaveGame(save)) as unknown);
 
     expect(loaded.interface.profiledCamera).toEqual(camera);
   });
@@ -183,5 +180,4 @@ describe("profiled camera save state", () => {
   });
 });
 
-const parsedSave = (save: SaveGame): unknown =>
-  JSON.parse(serializeSaveGame(save)) as unknown;
+const parsedSave = (save: SaveGame): unknown => JSON.parse(serializeSaveGame(save)) as unknown;

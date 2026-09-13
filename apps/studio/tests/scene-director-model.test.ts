@@ -1,0 +1,169 @@
+import { validateSceneStagingManifest } from "@evavo/adventure-scene-instances/staging-validation";
+import { describe, expect, it } from "vitest";
+import { studioProject, studioSceneInstances } from "../src/fixture.js";
+import {
+  nightShiftCompleteInstances,
+  nightShiftCompleteProject,
+  nightShiftCompleteStaging,
+} from "../src/night-shift-complete-proof.js";
+import {
+  nightShiftDirectorInstances,
+  nightShiftDirectorProject,
+  nightShiftDirectorStaging,
+} from "../src/night-shift-director-fixture.js";
+import {
+  nightShiftDirectorPaletteMaps,
+  redLedgerDirectorPaletteMaps,
+} from "../src/scene-director-palette-maps.js";
+import { sceneDirectorSamples } from "../src/scene-director-samples.js";
+import { studioSceneStaging } from "../src/scene-staging-fixture.js";
+import {
+  createSceneDirectorOverlay,
+  sceneDirectorModeSummary,
+} from "../src/scene-director-model.js";
+
+describe("Scene Director overlay model", () => {
+  it("joins project, scene instances and staging into one native-scene contract", () => {
+    const overlay = createSceneDirectorOverlay(
+      studioProject,
+      studioSceneInstances,
+      studioSceneStaging,
+      studioProject.startSceneId,
+      redLedgerDirectorPaletteMaps,
+    );
+
+    expect(overlay.sceneName).toBe("Rain Office");
+    expect(overlay.nativeSize).toEqual({ width: 320, height: 200 });
+    expect(overlay.navigationAreas).toHaveLength(2);
+    expect(overlay.portals).toHaveLength(1);
+    expect(overlay.actors).toHaveLength(2);
+    expect(overlay.actors.find((actor) => actor.actorId === "actor.detective")?.footprint).toMatchObject({
+      width: 12,
+      depth: 7,
+      clearance: 2,
+    });
+    expect(overlay.objects.flatMap((object) => object.approachSlots)).toHaveLength(2);
+    expect(overlay.staging?.preferredWalkLanes).toHaveLength(1);
+    expect(overlay.staging?.surfaceZones[0]?.surface).toBe("carpet");
+    expect(overlay.staging?.navigationScaleOverrides).toHaveLength(2);
+    expect(overlay.staging?.navigationStateModifiers[0]?.objectId).toBe("object.office.door");
+    expect(overlay.staging?.entryChoreographies[0]?.spawnPosition).toEqual({ x: 24, y: 174 });
+    expect(overlay.staging?.paletteLightZones[0]?.blendMode).toBe("ordered-dither");
+    expect(overlay.lightZones[0]).toMatchObject({
+      bindingStatus: "missing-palette-asset",
+      map: {
+        id: "palette-map.office-lamp-warm",
+        paletteAssetId: "asset.palette.red-ledger.actor-lighting",
+        paletteOffset: 64,
+      },
+    });
+  });
+
+  it("summarises mode-specific authored evidence and unresolved palette assets", () => {
+    const overlay = createSceneDirectorOverlay(
+      studioProject,
+      studioSceneInstances,
+      studioSceneStaging,
+      studioProject.startSceneId,
+      redLedgerDirectorPaletteMaps,
+    );
+
+    expect(sceneDirectorModeSummary(overlay, "approach")).toMatchObject({ count: 2 });
+    expect(sceneDirectorModeSummary(overlay, "actors")).toMatchObject({ count: 2 });
+    expect(sceneDirectorModeSummary(overlay, "light")).toMatchObject({
+      count: 1,
+      note: expect.stringContaining("1 palette-light binding"),
+    });
+    expect(sceneDirectorModeSummary(overlay, "entry")).toMatchObject({ count: 1 });
+  });
+
+  it("ships Red Ledger and complete three-room Night Shift as distinct production-proof samples", () => {
+    expect(sceneDirectorSamples.map((sample) => sample.id)).toEqual([
+      "red-ledger",
+      "night-shift",
+    ]);
+    expect(sceneDirectorSamples.map((sample) => sample.productionLanguage)).toEqual([
+      "Gothic investigation VGA",
+      "Early procedural icon VGA",
+    ]);
+    expect(sceneDirectorSamples.every((sample) => sample.paletteMaps.projectId === sample.project.id)).toBe(
+      true,
+    );
+    const nightShift = sceneDirectorSamples.find((sample) => sample.id === "night-shift")!;
+    expect(nightShift.project.title).toBe("Night Shift — Three-Room Playable Proof");
+    expect(nightShift.project.scenes).toHaveLength(3);
+    expect(
+      nightShift.sceneInstances.objectDefinitions.some(
+        (definition) => definition.id === "object-definition.night-shift.briefing",
+      ),
+    ).toBe(true);
+    expect(
+      nightShift.sceneInstances.objectDefinitions.some(
+        (definition) => definition.id === "object-definition.night-shift.diner-server",
+      ),
+    ).toBe(true);
+  });
+
+  it("resolves the complete Night Shift station as a fully staged procedural room", () => {
+    const overlay = createSceneDirectorOverlay(
+      nightShiftCompleteProject,
+      nightShiftCompleteInstances,
+      nightShiftCompleteStaging,
+      nightShiftCompleteProject.startSceneId,
+      nightShiftDirectorPaletteMaps,
+    );
+
+    expect(overlay.sceneName).toBe("Municipal briefing room");
+    expect(overlay.nativeSize).toEqual({ width: 320, height: 200 });
+    expect(overlay.navigationAreas).toHaveLength(2);
+    expect(overlay.portals).toHaveLength(1);
+    expect(overlay.actors).toHaveLength(2);
+    expect(
+      overlay.actors.find((actor) => actor.actorId === "actor.night-shift.officer")?.footprint,
+    ).toMatchObject({ width: 10, depth: 6, clearance: 2 });
+    expect(overlay.objects).toHaveLength(4);
+    expect(overlay.objects.flatMap((object) => object.approachSlots)).toHaveLength(4);
+    expect(overlay.objects.flatMap((object) => object.comfortRegions)).toHaveLength(3);
+    expect(
+      overlay.objects.find((object) => object.instanceId === "object.night-shift.briefing")?.approachSlots[0]?.id,
+    ).toBe("approach-slot.night-shift.briefing.front");
+  });
+
+  it("resolves the diner as a different staged visual grammar inside the same production proof", () => {
+    const overlay = createSceneDirectorOverlay(
+      nightShiftCompleteProject,
+      nightShiftCompleteInstances,
+      nightShiftCompleteStaging,
+      "scene.night-shift.diner" as never,
+      nightShiftDirectorPaletteMaps,
+    );
+    expect(overlay.sceneName).toBe("Late diner");
+    expect(overlay.actors).toHaveLength(2);
+    expect(overlay.objects).toHaveLength(3);
+    expect(overlay.objects.flatMap((object) => object.approachSlots)).toHaveLength(3);
+    expect(overlay.staging?.occlusionPlanes[0]?.id).toBe("occlusion-plane.night-shift.diner.counter");
+    expect(overlay.lightZones[0]).toMatchObject({
+      bindingStatus: "missing-palette-asset",
+      map: {
+        id: "palette-map.night-shift.diner-warm",
+        paletteOffset: 96,
+      },
+    });
+  });
+
+  it("keeps the lower-level Night Shift geometry fixture semantically valid", () => {
+    expect(
+      validateSceneStagingManifest(
+        {
+          projectId: nightShiftDirectorProject.id,
+          scenes: nightShiftDirectorProject.scenes,
+          actors: nightShiftDirectorProject.actors,
+          assets: nightShiftDirectorProject.assets,
+          sequences: nightShiftDirectorProject.sequences,
+          sceneInstances: nightShiftDirectorInstances,
+        },
+        nightShiftDirectorStaging,
+      ),
+    ).toEqual([]);
+  });
+});

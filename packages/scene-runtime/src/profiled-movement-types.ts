@@ -26,9 +26,7 @@ export type ProfiledNavigationFallbackReason =
   | "zero-length-segment"
   | "non-geometric-portal";
 
-export type ProfiledNavigationRejectionReason =
-  | "logical-tick-rate-mismatch"
-  | "invalid-profile";
+export type ProfiledNavigationRejectionReason = "logical-tick-rate-mismatch" | "invalid-profile";
 
 export type BeginProfiledNavigationMovementResult =
   | {

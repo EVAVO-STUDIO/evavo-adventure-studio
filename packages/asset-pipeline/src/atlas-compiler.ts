@@ -1,21 +1,8 @@
-import type {
-  Id,
-  Point,
-  Rectangle,
-  Size,
-} from "@evavo/adventure-project-schema";
+import type { Id, Point, Rectangle, Size } from "@evavo/adventure-project-schema";
 import sharp from "sharp";
+import { type AtlasPackOptions, type AtlasPageLayout, composeAtlasPage, packAtlas } from "./atlas.js";
 import type { ImageOutputRecipe } from "./index.js";
-import {
-  composeAtlasPage,
-  packAtlas,
-  type AtlasPackOptions,
-  type AtlasPageLayout,
-} from "./atlas.js";
-import {
-  normalizeTransparentRgb,
-  type RgbaImage,
-} from "./rgba.js";
+import { normalizeTransparentRgb, type RgbaImage } from "./rgba.js";
 
 export interface AtlasSourceFrame {
   readonly id: Id<"sprite-frame">;
@@ -80,9 +67,7 @@ const canonicalize = (value: unknown): unknown => {
   if (value && typeof value === "object") {
     const source = value as Readonly<Record<string, unknown>>;
     const result: Record<string, unknown> = {};
-    for (const key of Object.keys(source).sort((left, right) =>
-      left.localeCompare(right),
-    )) {
+    for (const key of Object.keys(source).sort((left, right) => left.localeCompare(right))) {
       const child = source[key];
       if (child !== undefined) {
         result[key] = canonicalize(child);
@@ -105,42 +90,24 @@ const sha256Hex = async (bytes: Uint8Array): Promise<string> => {
   if (!globalThis.crypto?.subtle) {
     throw new Error("Web Crypto SHA-256 support is required by the atlas compiler.");
   }
-  const digest = await globalThis.crypto.subtle.digest(
-    "SHA-256",
-    new Uint8Array(bytes),
-  );
-  return [...new Uint8Array(digest)]
-    .map((value) => value.toString(16).padStart(2, "0"))
-    .join("");
+  const digest = await globalThis.crypto.subtle.digest("SHA-256", new Uint8Array(bytes));
+  return [...new Uint8Array(digest)].map((value) => value.toString(16).padStart(2, "0")).join("");
 };
 
-const normalizeOutput = (
-  output: ImageOutputRecipe | undefined,
-): ImageOutputRecipe => {
+const normalizeOutput = (output: ImageOutputRecipe | undefined): ImageOutputRecipe => {
   const resolved = output ?? { mode: "rgba-png" as const };
   if (resolved.mode === "indexed-png") {
-    if (
-      !Number.isInteger(resolved.colours) ||
-      resolved.colours < 2 ||
-      resolved.colours > 256
-    ) {
+    if (!Number.isInteger(resolved.colours) || resolved.colours < 2 || resolved.colours > 256) {
       throw new RangeError("Atlas indexed PNG colour limit must be from 2 to 256.");
     }
-    if (
-      !Number.isFinite(resolved.dither) ||
-      resolved.dither < 0 ||
-      resolved.dither > 1
-    ) {
+    if (!Number.isFinite(resolved.dither) || resolved.dither < 0 || resolved.dither > 1) {
       throw new RangeError("Atlas indexed PNG dither must be from 0 to 1.");
     }
   }
   return resolved;
 };
 
-const encodePng = async (
-  image: RgbaImage,
-  output: ImageOutputRecipe,
-): Promise<Uint8Array> => {
+const encodePng = async (image: RgbaImage, output: ImageOutputRecipe): Promise<Uint8Array> => {
   const normalized = normalizeTransparentRgb(image);
   const pipeline = sharp(new Uint8Array(normalized.data), {
     raw: {
@@ -200,9 +167,7 @@ const assertSourceFrames = (frames: readonly AtlasSourceFrame[]): void => {
       frame.trimOffset.x < 0 ||
       frame.trimOffset.y < 0
     ) {
-      throw new RangeError(
-        `Atlas source frame '${frame.id}' does not fit its original geometry.`,
-      );
+      throw new RangeError(`Atlas source frame '${frame.id}' does not fit its original geometry.`);
     }
   }
 };
@@ -242,12 +207,8 @@ export const compileAtlas = async (
   assertSourceFrames(sourceFrames);
   const output = normalizeOutput(options.output);
   const prefix = normalizePagePrefix(options.pageNamePrefix);
-  const frames = new Map(
-    sourceFrames.map((frame) => [frame.id as string, frame]),
-  );
-  const images = new Map(
-    sourceFrames.map((frame) => [frame.id as string, frame.image]),
-  );
+  const frames = new Map(sourceFrames.map((frame) => [frame.id as string, frame]));
+  const images = new Map(sourceFrames.map((frame) => [frame.id as string, frame.image]));
   const layouts = packAtlas(
     sourceFrames.map((frame) => ({
       id: frame.id,
@@ -295,9 +256,7 @@ export const compileAtlas = async (
     ...manifestWithoutHash,
     sha256: semanticSha256,
   };
-  const manifestData = new TextEncoder().encode(
-    `${canonicalAtlasStringify(manifest)}\n`,
-  );
+  const manifestData = new TextEncoder().encode(`${canonicalAtlasStringify(manifest)}\n`);
 
   return {
     pages,

@@ -1,11 +1,11 @@
 import type { BitmapFontManifest } from "@evavo/adventure-bitmap-font";
 import type { AdventureProject, Id } from "@evavo/adventure-project-schema";
 import {
-  uiSkinManifestSchema,
-  validateUiSkinManifest,
   type UiSkin,
   type UiSkinManifest,
   type UiVerb,
+  uiSkinManifestSchema,
+  validateUiSkinManifest,
 } from "@evavo/adventure-ui-skin";
 
 export class UiSkinEditorCommandError extends Error {
@@ -18,11 +18,7 @@ export class UiSkinEditorCommandError extends Error {
     | "invalid-document";
   readonly path: string;
 
-  constructor(
-    code: UiSkinEditorCommandError["code"],
-    path: string,
-    message: string,
-  ) {
+  constructor(code: UiSkinEditorCommandError["code"], path: string, message: string) {
     super(message);
     this.name = "UiSkinEditorCommandError";
     this.code = code;
@@ -87,9 +83,7 @@ const canonicalize = (value: unknown): unknown => {
   if (value && typeof value === "object") {
     const source = value as Readonly<Record<string, unknown>>;
     const output: Record<string, unknown> = {};
-    for (const key of Object.keys(source).sort((left, right) =>
-      left.localeCompare(right),
-    )) {
+    for (const key of Object.keys(source).sort((left, right) => left.localeCompare(right))) {
       const child = source[key];
       if (child !== undefined) output[key] = canonicalize(child);
     }
@@ -106,12 +100,7 @@ export const canonicalUiSkinEditorJson = (value: unknown): string => {
   return output;
 };
 
-const insertAt = <T>(
-  values: readonly T[],
-  index: number,
-  value: T,
-  path: string,
-): T[] => {
+const insertAt = <T>(values: readonly T[], index: number, value: T, path: string): T[] => {
   if (!Number.isSafeInteger(index) || index < 0 || index > values.length) {
     throw new UiSkinEditorCommandError(
       "invalid-index",
@@ -119,11 +108,7 @@ const insertAt = <T>(
       `Insert index ${index} is outside 0 to ${values.length}.`,
     );
   }
-  return [
-    ...values.slice(0, index).map(cloneJson),
-    cloneJson(value),
-    ...values.slice(index).map(cloneJson),
-  ];
+  return [...values.slice(0, index).map(cloneJson), cloneJson(value), ...values.slice(index).map(cloneJson)];
 };
 
 const removeAt = <T>(values: readonly T[], index: number): T[] => [
@@ -154,10 +139,7 @@ const findSkin = (
   return { index, skin };
 };
 
-const findVerb = (
-  skin: UiSkin,
-  verbId: Id<"ui-verb">,
-): { readonly index: number; readonly verb: UiVerb } => {
+const findVerb = (skin: UiSkin, verbId: Id<"ui-verb">): { readonly index: number; readonly verb: UiVerb } => {
   const index = skin.verbs.findIndex((verb) => verb.id === verbId);
   if (index < 0) {
     throw new UiSkinEditorCommandError(
@@ -171,20 +153,12 @@ const findVerb = (
   return { index, verb };
 };
 
-const updateSkin = (
-  manifest: UiSkinManifest,
-  index: number,
-  skin: UiSkin,
-): UiSkinManifest => ({
+const updateSkin = (manifest: UiSkinManifest, index: number, skin: UiSkin): UiSkinManifest => ({
   ...manifest,
   skins: replaceAt(manifest.skins, index, skin),
 });
 
-const assertStableIdentity = (
-  expected: string,
-  actual: string,
-  path: string,
-): void => {
+const assertStableIdentity = (expected: string, actual: string, path: string): void => {
   if (expected !== actual) {
     throw new UiSkinEditorCommandError(
       "identity-change",
@@ -334,9 +308,7 @@ const validateDocument = (
       error instanceof Error ? error.message : "Interface skin schema validation failed.",
     );
   }
-  const errors = validateUiSkinManifest(project, fonts, parsed).filter(
-    (issue) => issue.severity === "error",
-  );
+  const errors = validateUiSkinManifest(project, fonts, parsed).filter((issue) => issue.severity === "error");
   if (errors.length > 0) {
     const first = errors[0];
     throw new UiSkinEditorCommandError(
@@ -374,11 +346,8 @@ export const createUiSkinEditorDocument = (
   };
 };
 
-export const isUiSkinEditorDocumentDirty = (
-  document: UiSkinEditorDocumentState,
-): boolean =>
-  canonicalUiSkinEditorJson(document.manifest) !==
-  canonicalUiSkinEditorJson(document.savedManifest);
+export const isUiSkinEditorDocumentDirty = (document: UiSkinEditorDocumentState): boolean =>
+  canonicalUiSkinEditorJson(document.manifest) !== canonicalUiSkinEditorJson(document.savedManifest);
 
 export const createUiSkinEditorHistory = (
   project: Pick<AdventureProject, "id" | "presentation" | "assets">,
@@ -399,12 +368,7 @@ const applyToDocument = (
   readonly document: UiSkinEditorDocumentState;
   readonly inverse: UiSkinEditorCommand;
 } => {
-  const applied = applyUiSkinEditorCommand(
-    project,
-    fonts,
-    document.manifest,
-    command,
-  );
+  const applied = applyUiSkinEditorCommand(project, fonts, document.manifest, command);
   return {
     document: {
       ...document,
@@ -424,10 +388,7 @@ export const executeUiSkinEditorCommand = (
   const applied = applyToDocument(project, fonts, history.document, command);
   return {
     document: applied.document,
-    undoStack: [
-      ...history.undoStack,
-      { undo: applied.inverse, redo: cloneJson(command) },
-    ],
+    undoStack: [...history.undoStack, { undo: applied.inverse, redo: cloneJson(command) }],
     redoStack: [],
   };
 };

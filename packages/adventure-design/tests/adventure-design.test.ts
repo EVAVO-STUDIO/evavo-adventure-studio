@@ -1,13 +1,5 @@
 import { describe, expect, it } from "vitest";
 import {
-  AdventureDesignParseError,
-  AdventurePuzzleCycleError,
-  adventurePuzzleDependencyOrder,
-  parseAdventureDesignDocument,
-  validateAdventureDesignAgainstProject,
-  validateAdventureDesignDocument,
-} from "../src/index.js";
-import {
   AdventureDesignCommandError,
   adventureDesignHistoryIsDirty,
   applyAdventureDesignCommand,
@@ -18,9 +10,14 @@ import {
   undoAdventureDesignCommand,
 } from "../src/editor.js";
 import {
-  showcaseAdventureDesigns,
-  showcaseProjectShells,
-} from "../src/showcases.js";
+  AdventureDesignParseError,
+  AdventurePuzzleCycleError,
+  adventurePuzzleDependencyOrder,
+  parseAdventureDesignDocument,
+  validateAdventureDesignAgainstProject,
+  validateAdventureDesignDocument,
+} from "../src/index.js";
+import { showcaseAdventureDesigns, showcaseProjectShells } from "../src/showcases.js";
 
 const forbiddenCommercialTokens = [
   "king's quest",
@@ -41,16 +38,12 @@ describe("adventure design showcases", () => {
     for (const document of showcaseAdventureDesigns) {
       expect(parseAdventureDesignDocument(document)).toEqual(document);
       expect(validateAdventureDesignDocument(document)).toEqual([]);
-      expect(adventurePuzzleDependencyOrder(document)).toHaveLength(
-        document.puzzles.length,
-      );
+      expect(adventurePuzzleDependencyOrder(document)).toHaveLength(document.puzzles.length);
     }
   });
 
   it("keeps example content original rather than copying commercial games", () => {
-    const serialized = JSON.stringify(showcaseAdventureDesigns).toLocaleLowerCase(
-      "en-US",
-    );
+    const serialized = JSON.stringify(showcaseAdventureDesigns).toLocaleLowerCase("en-US");
     for (const token of forbiddenCommercialTokens) {
       expect(serialized).not.toContain(token);
     }
@@ -91,15 +84,9 @@ describe("adventure design showcases", () => {
     });
     const issues = validateAdventureDesignDocument(broken);
     expect(issues.map((issue) => issue.code)).toEqual(
-      expect.arrayContaining([
-        "puzzle-self-dependency",
-        "puzzle-cycle",
-        "backwards-puzzle",
-      ]),
+      expect.arrayContaining(["puzzle-self-dependency", "puzzle-cycle", "backwards-puzzle"]),
     );
-    expect(() => adventurePuzzleDependencyOrder(broken)).toThrow(
-      AdventurePuzzleCycleError,
-    );
+    expect(() => adventurePuzzleDependencyOrder(broken)).toThrow(AdventurePuzzleCycleError);
   });
 
   it("requires watched and skipped cinematics to converge", () => {
@@ -114,9 +101,9 @@ describe("adventure design showcases", () => {
         },
       ],
     });
-    expect(
-      validateAdventureDesignDocument(broken).map((issue) => issue.code),
-    ).toContain("skippable-cutscene-without-final-state");
+    expect(validateAdventureDesignDocument(broken).map((issue) => issue.code)).toContain(
+      "skippable-cutscene-without-final-state",
+    );
   });
 
   it("detects nested ID collisions and malformed hint ladders", () => {
@@ -138,20 +125,13 @@ describe("adventure design showcases", () => {
       cutscenes: [
         {
           ...cutscene,
-          shots: [
-            cutscene.shots[0]!,
-            { ...cutscene.shots[1]!, id: cutscene.shots[0]!.id },
-          ],
+          shots: [cutscene.shots[0]!, { ...cutscene.shots[1]!, id: cutscene.shots[0]!.id }],
         },
       ],
     });
 
     expect(validateAdventureDesignDocument(broken).map((issue) => issue.code)).toEqual(
-      expect.arrayContaining([
-        "duplicate-id",
-        "hint-level-duplicate",
-        "hint-level-gap",
-      ]),
+      expect.arrayContaining(["duplicate-id", "hint-level-duplicate", "hint-level-gap"]),
     );
   });
 
@@ -176,11 +156,9 @@ describe("adventure design showcases", () => {
       ],
     });
 
-    expect(
-      validateAdventureDesignAgainstProject(project, broken).map(
-        (issue) => issue.code,
-      ),
-    ).toEqual(expect.arrayContaining(["missing-item", "missing-entrance"]));
+    expect(validateAdventureDesignAgainstProject(project, broken).map((issue) => issue.code)).toEqual(
+      expect.arrayContaining(["missing-item", "missing-entrance"]),
+    );
   });
 });
 
@@ -236,9 +214,7 @@ describe("adventure design editor history", () => {
     ] as const;
 
     for (const command of commands) {
-      expect(() => applyAdventureDesignCommand(source, command)).toThrow(
-        AdventureDesignCommandError,
-      );
+      expect(() => applyAdventureDesignCommand(source, command)).toThrow(AdventureDesignCommandError);
     }
   });
 

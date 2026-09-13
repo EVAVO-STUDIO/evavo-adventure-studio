@@ -1,9 +1,6 @@
 import type { EditorDocumentState } from "@evavo/adventure-editor-core";
 import type { Id } from "@evavo/adventure-project-schema";
-import {
-  parseSceneInstanceManifest,
-  type SceneInstanceManifest,
-} from "@evavo/adventure-scene-instances";
+import { parseSceneInstanceManifest, type SceneInstanceManifest } from "@evavo/adventure-scene-instances";
 
 export interface StudioRecoveryStorage {
   getItem(key: string): string | null;
@@ -59,9 +56,7 @@ export const createStudioRecoverySnapshot = (
     projectId,
     operationRevision: document.operationRevision,
     savedAt,
-    manifest: parseSceneInstanceManifest(
-      JSON.parse(JSON.stringify(document.manifest)) as unknown,
-    ),
+    manifest: parseSceneInstanceManifest(JSON.parse(JSON.stringify(document.manifest)) as unknown),
   };
 };
 
@@ -69,10 +64,7 @@ export const saveStudioRecoverySnapshot = (
   storage: StudioRecoveryStorage,
   snapshot: StudioRecoverySnapshot,
 ): void => {
-  storage.setItem(
-    studioRecoveryKey(snapshot.projectId),
-    JSON.stringify(snapshot),
-  );
+  storage.setItem(studioRecoveryKey(snapshot.projectId), JSON.stringify(snapshot));
 };
 
 export const loadStudioRecoverySnapshot = (
@@ -103,38 +95,34 @@ export const loadStudioRecoverySnapshot = (
     };
   }
   const candidate = input as Readonly<Record<string, unknown>>;
-  if (candidate.snapshotVersion !== 1) {
+  const snapshotVersion = candidate["snapshotVersion"];
+  const candidateProjectId = candidate["projectId"];
+  const operationRevision = candidate["operationRevision"];
+  const savedAt = candidate["savedAt"];
+  const manifestInput = candidate["manifest"];
+
+  if (snapshotVersion !== 1) {
     return {
       kind: "invalid",
       reason: "invalid-version",
-      message: `Unsupported recovery snapshot version '${String(
-        candidate.snapshotVersion,
-      )}'.`,
+      message: `Unsupported recovery snapshot version '${String(snapshotVersion)}'.`,
     };
   }
-  if (candidate.projectId !== projectId) {
+  if (candidateProjectId !== projectId) {
     return {
       kind: "invalid",
       reason: "project-mismatch",
-      message: `Recovery snapshot project '${String(
-        candidate.projectId,
-      )}' does not match '${projectId}'.`,
+      message: `Recovery snapshot project '${String(candidateProjectId)}' does not match '${projectId}'.`,
     };
   }
-  if (
-    !Number.isSafeInteger(candidate.operationRevision) ||
-    Number(candidate.operationRevision) < 0
-  ) {
+  if (!Number.isSafeInteger(operationRevision) || Number(operationRevision) < 0) {
     return {
       kind: "invalid",
       reason: "invalid-revision",
       message: "Recovery snapshot revision is invalid.",
     };
   }
-  if (
-    typeof candidate.savedAt !== "string" ||
-    Number.isNaN(Date.parse(candidate.savedAt))
-  ) {
+  if (typeof savedAt !== "string" || Number.isNaN(Date.parse(savedAt))) {
     return {
       kind: "invalid",
       reason: "invalid-date",
@@ -144,15 +132,12 @@ export const loadStudioRecoverySnapshot = (
 
   let manifest: SceneInstanceManifest;
   try {
-    manifest = parseSceneInstanceManifest(candidate.manifest);
+    manifest = parseSceneInstanceManifest(manifestInput);
   } catch (error) {
     return {
       kind: "invalid",
       reason: "invalid-manifest",
-      message:
-        error instanceof Error
-          ? error.message
-          : "Recovery scene composition is invalid.",
+      message: error instanceof Error ? error.message : "Recovery scene composition is invalid.",
     };
   }
 
@@ -161,8 +146,8 @@ export const loadStudioRecoverySnapshot = (
     snapshot: {
       snapshotVersion: 1,
       projectId,
-      operationRevision: Number(candidate.operationRevision),
-      savedAt: candidate.savedAt,
+      operationRevision: Number(operationRevision),
+      savedAt: savedAt,
       manifest,
     },
   };

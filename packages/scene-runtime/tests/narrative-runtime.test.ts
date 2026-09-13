@@ -1,17 +1,14 @@
-import { describe, expect, it } from "vitest";
 import type { RuntimeEvent, RuntimeState } from "@evavo/adventure-core";
 import type { Id } from "@evavo/adventure-project-schema";
 import type { RuntimeBundle } from "@evavo/adventure-runtime-bundle";
+import { describe, expect, it } from "vitest";
+import { applyDialogueRequestEvents, chooseActiveRuntimeDialogueOption } from "../src/dialogue.js";
 import {
-  applyDialogueRequestEvents,
-  chooseActiveRuntimeDialogueOption,
-} from "../src/dialogue.js";
-import { advanceInteractiveRuntimeWorld } from "../src/runtime-commands.js";
-import {
-  RuntimeNarrativeRequestError,
   advanceRuntimeNarrativeSequences,
   applyRuntimeNarrativeRequestEvents,
+  RuntimeNarrativeRequestError,
 } from "../src/narrative.js";
+import { advanceInteractiveRuntimeWorld } from "../src/runtime-commands.js";
 
 const id = <T extends string>(value: string): Id<T> => value as Id<T>;
 
@@ -54,6 +51,7 @@ const routeSequence = {
       },
     ],
   },
+  cueCount: 1,
   tracks: [
     {
       id: id<"sequence-track">("sequence-track.route.story"),
@@ -99,6 +97,7 @@ const witnessDialogue = {
       exitActions: [],
     },
   ],
+  nodeIndex: { "dialogue-node.witness": 0 },
 };
 
 const narrativeBundle = {
@@ -113,11 +112,9 @@ const requestSequence = (): RuntimeEvent => ({
 
 describe("runtime narrative request execution", () => {
   it("starts requested sequences and applies tick-zero story actions", () => {
-    const result = applyRuntimeNarrativeRequestEvents(
-      narrativeBundle,
-      { story: story() },
-      [requestSequence()],
-    );
+    const result = applyRuntimeNarrativeRequestEvents(narrativeBundle, { story: story() }, [
+      requestSequence(),
+    ]);
 
     expect(result.state.story.activeSequences).toHaveLength(1);
     expect(result.state.story.flags["route.revealed"]).toBe(true);
@@ -132,68 +129,44 @@ describe("runtime narrative request execution", () => {
   });
 
   it("advances active sequences and applies completion state", () => {
-    const started = applyRuntimeNarrativeRequestEvents(
-      narrativeBundle,
-      { story: story() },
-      [requestSequence()],
-    );
-    const advanced = advanceRuntimeNarrativeSequences(
-      narrativeBundle,
-      started.state,
-      2,
-    );
+    const started = applyRuntimeNarrativeRequestEvents(narrativeBundle, { story: story() }, [
+      requestSequence(),
+    ]);
+    const advanced = advanceRuntimeNarrativeSequences(narrativeBundle, started.state, 2);
 
     expect(advanced.state.story.activeSequences).toEqual([]);
     expect(advanced.state.story.currentSceneId).toBe("scene.quay");
     expect(advanced.events.map((event) => event.kind)).toEqual(
-      expect.arrayContaining([
-        "scene-change-requested",
-        "sequence-completed",
-      ]),
+      expect.arrayContaining(["scene-change-requested", "sequence-completed"]),
     );
   });
 
-
   it("preserves authored ordering across mixed narrative requests", () => {
-    const result = applyDialogueRequestEvents(
-      narrativeBundle,
-      { story: story() },
-      [
-        requestSequence(),
-        {
-          kind: "dialogue-requested",
-          dialogueId: witnessDialogue.id,
-          nodeId: null,
-        },
-      ],
-    );
+    const result = applyDialogueRequestEvents(narrativeBundle, { story: story() }, [
+      requestSequence(),
+      {
+        kind: "dialogue-requested",
+        dialogueId: witnessDialogue.id,
+        nodeId: null,
+      },
+    ]);
     const kinds = result.events.map((event) => event.kind);
 
-    expect(kinds.indexOf("sequence-started")).toBeLessThan(
-      kinds.indexOf("dialogue-node-entered"),
-    );
+    expect(kinds.indexOf("sequence-started")).toBeLessThan(kinds.indexOf("dialogue-node-entered"));
     expect(result.state.story.activeSequences).toHaveLength(1);
-    expect(result.state.story.activeDialogue?.dialogueId).toBe(
-      witnessDialogue.id,
-    );
+    expect(result.state.story.activeDialogue?.dialogueId).toBe(witnessDialogue.id);
   });
 
   it("keeps dialogue-only callers compatible when no sequence is requested", () => {
-    const result = applyDialogueRequestEvents(
-      { dialogues: [witnessDialogue] },
-      { story: story() },
-      [
-        {
-          kind: "dialogue-requested",
-          dialogueId: witnessDialogue.id,
-          nodeId: null,
-        },
-      ],
-    );
+    const result = applyDialogueRequestEvents({ dialogues: [witnessDialogue] }, { story: story() }, [
+      {
+        kind: "dialogue-requested",
+        dialogueId: witnessDialogue.id,
+        nodeId: null,
+      },
+    ]);
 
-    expect(result.state.story.activeDialogue?.dialogueId).toBe(
-      witnessDialogue.id,
-    );
+    expect(result.state.story.activeDialogue?.dialogueId).toBe(witnessDialogue.id);
   });
 
   it("starts sequence requests emitted by dialogue choices", () => {
@@ -214,17 +187,13 @@ describe("runtime narrative request execution", () => {
       throw new Error(`Dialogue choice was rejected: ${result.detail}`);
     }
     expect(result.state.story.activeSequences).toHaveLength(1);
-    expect(result.events.map((event) => event.kind)).toContain(
-      "sequence-started",
-    );
+    expect(result.events.map((event) => event.kind)).toContain("sequence-started");
   });
 
   it("freezes movement during blocking playback and clears it on scene change", () => {
-    const started = applyRuntimeNarrativeRequestEvents(
-      narrativeBundle,
-      { story: story() },
-      [requestSequence()],
-    );
+    const started = applyRuntimeNarrativeRequestEvents(narrativeBundle, { story: story() }, [
+      requestSequence(),
+    ]);
     const bundle = {
       ...narrativeBundle,
       presentation: {
@@ -236,7 +205,15 @@ describe("runtime narrative request execution", () => {
     } as unknown as RuntimeBundle;
     const movement = {
       actorInstanceId: id<"actor-instance">("actor-instance.detective"),
-      route: { points: [], segments: [], distance: 10 },
+      route: {
+        points: [],
+        segments: [],
+        distance: 10,
+        startAreaId: id<"navigation-area">("navigation.office"),
+        endAreaId: id<"navigation-area">("navigation.office"),
+        snappedStart: false,
+        snappedEnd: false,
+      },
       nextSegmentIndex: 0,
       distanceAlongSegment: 0,
       speedPixelsPerSecond: 48,
@@ -278,6 +255,7 @@ describe("runtime narrative request execution", () => {
           exitActions: [],
         },
       ],
+      nodeIndex: { "node.a": 0 },
     };
     const dialogueB = {
       id: id<"dialogue">("dialogue.b"),
@@ -297,6 +275,7 @@ describe("runtime narrative request execution", () => {
           exitActions: [],
         },
       ],
+      nodeIndex: { "node.b": 0 },
     };
     const bundle = {
       dialogues: [dialogueA, dialogueB],
@@ -321,11 +300,9 @@ describe("runtime narrative request execution", () => {
 
   it("rejects missing narrative targets instead of silently dropping them", () => {
     expect(() =>
-      applyRuntimeNarrativeRequestEvents(
-        { dialogues: [], sequences: [] },
-        { story: story() },
-        [requestSequence()],
-      ),
+      applyRuntimeNarrativeRequestEvents({ dialogues: [], sequences: [] }, { story: story() }, [
+        requestSequence(),
+      ]),
     ).toThrow(/does not exist/);
   });
 });

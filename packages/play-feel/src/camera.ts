@@ -13,13 +13,8 @@ const clamp = (value: number, minimum: number, maximum: number): number =>
 const finitePoint = (point: AdventureNativePoint): boolean =>
   Number.isFinite(point.x) && Number.isFinite(point.y);
 
-const quantize = (
-  point: AdventureNativePoint,
-  profile: AdventurePlayFeelProfile,
-): AdventureNativePoint =>
-  profile.camera.quantization === "native-pixel"
-    ? { x: Math.round(point.x), y: Math.round(point.y) }
-    : point;
+const quantize = (point: AdventureNativePoint, profile: AdventurePlayFeelProfile): AdventureNativePoint =>
+  profile.camera.quantization === "native-pixel" ? { x: Math.round(point.x), y: Math.round(point.y) } : point;
 
 const clampCamera = (
   point: AdventureNativePoint,
@@ -85,7 +80,7 @@ const desiredCameraPosition = (
     profile.camera.mode === "fixed"
       ? state.unquantizedPosition
       : profile.camera.mode === "shot-led"
-        ? target.shotPosition ?? state.unquantizedPosition
+        ? (target.shotPosition ?? state.unquantizedPosition)
         : deadZoneDesired(state, target, viewport, profile);
   return clampCamera(raw, viewport, world);
 };
@@ -149,27 +144,13 @@ const advanceOneTick = (
     throw new RangeError("Camera viewport and world dimensions must be positive and finite.");
   }
   const desired = desiredCameraPosition(state, target, viewport, world, profile);
-  const x = advanceAxis(
-    state.unquantizedPosition.x,
-    state.velocityPixelsPerSecond.x,
-    desired.x,
-    profile,
-  );
-  const y = advanceAxis(
-    state.unquantizedPosition.y,
-    state.velocityPixelsPerSecond.y,
-    desired.y,
-    profile,
-  );
+  const x = advanceAxis(state.unquantizedPosition.x, state.velocityPixelsPerSecond.x, desired.x, profile);
+  const y = advanceAxis(state.unquantizedPosition.y, state.velocityPixelsPerSecond.y, desired.y, profile);
   const distance = Math.hypot(desired.x - x.position, desired.y - y.position);
   const settledTicks = distance < 0.05 ? state.settledTicks + 1 : 0;
   const snap = settledTicks >= profile.camera.settleTicks;
-  const unquantizedPosition = snap
-    ? desired
-    : clampCamera({ x: x.position, y: y.position }, viewport, world);
-  const velocityPixelsPerSecond = snap
-    ? { x: 0, y: 0 }
-    : { x: x.velocity, y: y.velocity };
+  const unquantizedPosition = snap ? desired : clampCamera({ x: x.position, y: y.position }, viewport, world);
+  const velocityPixelsPerSecond = snap ? { x: 0, y: 0 } : { x: x.velocity, y: y.velocity };
   const next: AdventureCameraState = {
     stateVersion: 1,
     tick: state.tick + 1,
@@ -181,8 +162,7 @@ const advanceOneTick = (
   return {
     state: next,
     desiredPosition: desired,
-    moved:
-      next.position.x !== state.position.x || next.position.y !== state.position.y,
+    moved: next.position.x !== state.position.x || next.position.y !== state.position.y,
   };
 };
 
@@ -215,11 +195,7 @@ export const interpolateAdventureCameraPresentation = (
   interpolationAlpha: number,
   profile: AdventurePlayFeelProfile,
 ): AdventureNativePoint => {
-  if (
-    !Number.isFinite(interpolationAlpha) ||
-    interpolationAlpha < 0 ||
-    interpolationAlpha > 1
-  ) {
+  if (!Number.isFinite(interpolationAlpha) || interpolationAlpha < 0 || interpolationAlpha > 1) {
     throw new RangeError("Camera interpolation alpha must be from 0 to 1.");
   }
   if (profile.presentation.renderInterpolation === "none") {
@@ -229,12 +205,10 @@ export const interpolateAdventureCameraPresentation = (
     {
       x:
         previous.unquantizedPosition.x +
-        (current.unquantizedPosition.x - previous.unquantizedPosition.x) *
-          interpolationAlpha,
+        (current.unquantizedPosition.x - previous.unquantizedPosition.x) * interpolationAlpha,
       y:
         previous.unquantizedPosition.y +
-        (current.unquantizedPosition.y - previous.unquantizedPosition.y) *
-          interpolationAlpha,
+        (current.unquantizedPosition.y - previous.unquantizedPosition.y) * interpolationAlpha,
     },
     profile,
   );

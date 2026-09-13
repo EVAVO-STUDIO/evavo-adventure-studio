@@ -1,13 +1,18 @@
 import type { Point } from "@evavo/adventure-project-schema";
 import {
   createReplayLog,
-  serializeReplayLog,
   type ReplayEvent,
   type ReplayLog,
+  serializeReplayLog,
 } from "@evavo/adventure-replay";
 import type { RuntimeBundle } from "@evavo/adventure-runtime-bundle";
 import { loadSaveGame, type SaveGame } from "@evavo/adventure-save-game";
 import type { ParserKeyInput } from "./parser.js";
+import {
+  canonicalRuntimeTickFromPlayerTick,
+  PLAYER_RUNTIME_RESTORED_EVENT,
+  type PlayerRuntimeRestoredDetail,
+} from "./runtime-events.js";
 
 export class ReplayRecordingStateError extends Error {
   constructor(message: string) {
@@ -35,13 +40,28 @@ export interface PlayerReplayRecorder {
   status(): ReplayRecordingStatus;
 }
 
-export const createPlayerReplayRecorder = (
-  bundle: RuntimeBundle,
-): PlayerReplayRecorder => {
+export const createPlayerReplayRecorder = (bundle: RuntimeBundle): PlayerReplayRecorder => {
   let initialSave: SaveGame | null = null;
   let events: ReplayEvent[] = [];
   let nextSequence = 0;
   let latest: ReplayLog | null = null;
+  let playerTickOffset = 0;
+
+  const cancelRecording = (): void => {
+    initialSave = null;
+    events = [];
+    nextSequence = 0;
+  };
+
+  const onRuntimeRestored = (event: Event): void => {
+    cancelRecording();
+    const detail = (event as CustomEvent<PlayerRuntimeRestoredDetail>).detail;
+    playerTickOffset = detail?.tickOffset ?? 0;
+  };
+
+  if (typeof window !== "undefined") {
+    window.addEventListener(PLAYER_RUNTIME_RESTORED_EVENT, onRuntimeRestored);
+  }
 
   const ensureRecording = (): SaveGame => {
     if (!initialSave) {
@@ -67,6 +87,9 @@ export const createPlayerReplayRecorder = (
     nextSequence += 1;
   };
 
+  const runtimeTick = (playerTick: number): number =>
+    canonicalRuntimeTickFromPlayerTick(playerTick, playerTickOffset);
+
   return {
     start: (save) => {
       if (initialSave) {
@@ -76,16 +99,12 @@ export const createPlayerReplayRecorder = (
       events = [];
       nextSequence = 0;
     },
-    cancel: () => {
-      initialSave = null;
-      events = [];
-      nextSequence = 0;
-    },
+    cancel: cancelRecording,
     recordActivation: (tick, position) => {
       if (!initialSave) return;
       append({
         kind: "activate",
-        tick,
+        tick: runtimeTick(tick),
         sequence: nextSequence,
         position,
       });
@@ -94,7 +113,7 @@ export const createPlayerReplayRecorder = (
       if (!initialSave) return;
       append({
         kind: "parser-key",
-        tick,
+        tick: runtimeTick(tick),
         sequence: nextSequence,
         input,
       });
@@ -108,9 +127,7 @@ export const createPlayerReplayRecorder = (
         expectedFinalSaveFingerprint: finalSave.saveFingerprint,
       });
       latest = replay;
-      initialSave = null;
-      events = [];
-      nextSequence = 0;
+      cancelRecording();
       return replay;
     },
     latestReplay: () => latest,

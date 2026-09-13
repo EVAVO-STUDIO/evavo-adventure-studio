@@ -1,7 +1,13 @@
 import type { RuntimeEvent, RuntimeState } from "@evavo/adventure-core";
 import { beginDialogue } from "@evavo/adventure-dialogue";
+import type { Id } from "@evavo/adventure-project-schema";
 import type { RuntimeBundle } from "@evavo/adventure-runtime-bundle";
-import { advanceSequence, startSequence } from "@evavo/adventure-sequence";
+import {
+  advanceSequence,
+  skipSequence,
+  startSequence,
+  type SequenceRejectionReason,
+} from "@evavo/adventure-sequence";
 
 export interface RuntimeNarrativeWorld {
   readonly story: RuntimeState;
@@ -28,11 +34,7 @@ export class RuntimeNarrativeRequestError extends Error {
   readonly code: RuntimeNarrativeRequestErrorCode;
   readonly requestId: string | null;
 
-  constructor(
-    code: RuntimeNarrativeRequestErrorCode,
-    message: string,
-    requestId: string | null = null,
-  ) {
+  constructor(code: RuntimeNarrativeRequestErrorCode, message: string, requestId: string | null = null) {
     super(message);
     this.name = "RuntimeNarrativeRequestError";
     this.code = code;
@@ -66,22 +68,19 @@ const narrativeRequests = (
 ): NarrativeRequestEvent[] =>
   events.filter(
     (event): event is NarrativeRequestEvent =>
-      event.kind === "sequence-requested" ||
-      (policy === "all" && event.kind === "dialogue-requested"),
+      event.kind === "sequence-requested" || (policy === "all" && event.kind === "dialogue-requested"),
   );
 
-const nestedNarrativeRequests = (
-  events: readonly RuntimeEvent[],
-): NarrativeRequestEvent[] =>
+const nestedNarrativeRequests = (events: readonly RuntimeEvent[]): NarrativeRequestEvent[] =>
   events.filter(
     (event): event is NarrativeRequestEvent =>
       event.kind === "dialogue-requested" || event.kind === "sequence-requested",
   );
 
-const withStory = <T extends RuntimeNarrativeWorld>(
-  state: T,
-  story: RuntimeState,
-): T => ({ ...state, story });
+const withStory = <T extends RuntimeNarrativeWorld>(state: T, story: RuntimeState): T => ({
+  ...state,
+  story,
+});
 
 const applyNarrativeRequests = <T extends RuntimeNarrativeWorld>(
   bundle: Pick<RuntimeBundle, "dialogues" | "sequences">,
@@ -108,9 +107,7 @@ const applyNarrativeRequests = <T extends RuntimeNarrativeWorld>(
     }
 
     if (request.kind === "dialogue-requested") {
-      const graph = bundle.dialogues.find(
-        (candidate) => candidate.id === request.dialogueId,
-      );
+      const graph = bundle.dialogues.find((candidate) => candidate.id === request.dialogueId);
       if (!graph) {
         throw new RuntimeNarrativeRequestError(
           "missing-dialogue",
@@ -118,11 +115,7 @@ const applyNarrativeRequests = <T extends RuntimeNarrativeWorld>(
           request.dialogueId,
         );
       }
-      const operation = beginDialogue(
-        nextState.story,
-        graph,
-        request.nodeId,
-      );
+      const operation = beginDialogue(nextState.story, graph, request.nodeId);
       if (operation.kind === "rejected") {
         throw new RuntimeNarrativeRequestError(
           "dialogue-rejected",
@@ -136,9 +129,7 @@ const applyNarrativeRequests = <T extends RuntimeNarrativeWorld>(
       continue;
     }
 
-    const sequence = bundle.sequences.find(
-      (candidate) => candidate.id === request.sequenceId,
-    );
+    const sequence = bundle.sequences.find((candidate) => candidate.id === request.sequenceId);
     if (!sequence) {
       throw new RuntimeNarrativeRequestError(
         "missing-sequence",
@@ -162,38 +153,92 @@ const applyNarrativeRequests = <T extends RuntimeNarrativeWorld>(
   return { state: nextState, events: emitted };
 };
 
-export const applyRuntimeNarrativeRequestEvents = <
-  T extends RuntimeNarrativeWorld,
->(
+export const applyRuntimeNarrativeRequestEvents = <T extends RuntimeNarrativeWorld>(
   bundle: Pick<RuntimeBundle, "dialogues" | "sequences">,
   state: T,
   events: readonly RuntimeEvent[],
   options: RuntimeNarrativeOptions = {},
-): RuntimeNarrativeTransition<T> =>
-  applyNarrativeRequests(bundle, state, events, "all", options);
+): RuntimeNarrativeTransition<T> => applyNarrativeRequests(bundle, state, events, "all", options);
 
-export const applyRuntimeSequenceRequestEvents = <
-  T extends RuntimeNarrativeWorld,
->(
+export const applyRuntimeSequenceRequestEvents = <T extends RuntimeNarrativeWorld>(
   bundle: Pick<RuntimeBundle, "dialogues" | "sequences">,
   state: T,
   events: readonly RuntimeEvent[],
   options: RuntimeNarrativeOptions = {},
-): RuntimeNarrativeTransition<T> =>
-  applyNarrativeRequests(bundle, state, events, "sequence-only", options);
+): RuntimeNarrativeTransition<T> => applyNarrativeRequests(bundle, state, events, "sequence-only", options);
 
-export const advanceRuntimeNarrativeSequences = <
-  T extends RuntimeNarrativeWorld,
->(
+export const startRuntimeNarrativeSequence = <T extends RuntimeNarrativeWorld>(
+  bundle: Pick<RuntimeBundle, "dialogues" | "sequences">,
+  state: T,
+  sequenceId: Id<"sequence">,
+  options: RuntimeNarrativeOptions = {},
+): RuntimeNarrativeTransition<T> =>
+  applyRuntimeNarrativeRequestEvents(
+    bundle,
+    state,
+    [{ kind: "sequence-requested", sequenceId }],
+    options,
+  );
+
+export type RuntimeNarrativeSequenceSkipResult<T extends RuntimeNarrativeWorld> =
+  | {
+      readonly kind: "skipped";
+      readonly state: T;
+      readonly events: readonly RuntimeEvent[];
+    }
+  | {
+      readonly kind: "rejected";
+      readonly reason: SequenceRejectionReason;
+      readonly state: T;
+      readonly events: readonly RuntimeEvent[];
+    };
+
+export const skipRuntimeNarrativeSequence = <T extends RuntimeNarrativeWorld>(
+  bundle: Pick<RuntimeBundle, "dialogues" | "sequences">,
+  state: T,
+  sequenceId: Id<"sequence">,
+  options: RuntimeNarrativeOptions = {},
+): RuntimeNarrativeSequenceSkipResult<T> => {
+  const sequence = bundle.sequences.find((candidate) => candidate.id === sequenceId);
+  if (!sequence) {
+    throw new RuntimeNarrativeRequestError(
+      "missing-sequence",
+      `Requested sequence '${sequenceId}' does not exist.`,
+      sequenceId,
+    );
+  }
+
+  const operation = skipSequence(state.story, sequence);
+  if (operation.kind === "rejected") {
+    return {
+      kind: "rejected",
+      reason: operation.reason,
+      state,
+      events: [],
+    };
+  }
+
+  const requests = applyRuntimeNarrativeRequestEvents(
+    bundle,
+    withStory(state, operation.transition.state),
+    operation.transition.events,
+    options,
+  );
+  return {
+    kind: "skipped",
+    state: requests.state,
+    events: requests.events,
+  };
+};
+
+export const advanceRuntimeNarrativeSequences = <T extends RuntimeNarrativeWorld>(
   bundle: Pick<RuntimeBundle, "dialogues" | "sequences">,
   state: T,
   ticks: number,
   options: RuntimeNarrativeOptions = {},
 ): RuntimeNarrativeTransition<T> => {
   if (!Number.isSafeInteger(ticks) || ticks < 0) {
-    throw new RangeError(
-      "Narrative sequence advancement must be a non-negative safe integer.",
-    );
+    throw new RangeError("Narrative sequence advancement must be a non-negative safe integer.");
   }
 
   let nextState = state;
@@ -203,16 +248,10 @@ export const advanceRuntimeNarrativeSequences = <
       .map((active) => active.sequenceId)
       .sort((left, right) => left.localeCompare(right));
     for (const sequenceId of activeIds) {
-      if (
-        !nextState.story.activeSequences.some(
-          (active) => active.sequenceId === sequenceId,
-        )
-      ) {
+      if (!nextState.story.activeSequences.some((active) => active.sequenceId === sequenceId)) {
         continue;
       }
-      const sequence = bundle.sequences.find(
-        (candidate) => candidate.id === sequenceId,
-      );
+      const sequence = bundle.sequences.find((candidate) => candidate.id === sequenceId);
       if (!sequence) {
         throw new RuntimeNarrativeRequestError(
           "missing-sequence",

@@ -5,8 +5,7 @@ export const redLedgerShowcase = showcase({
   profileId: "gothic-investigation-vga",
   title: "The Red Ledger",
   genre: "urban folklore investigation",
-  logline:
-    "A municipal archivist follows an impossible debt through a rain-bound harbour city.",
+  logline: "A municipal archivist follows an impossible debt through a rain-bound harbour city.",
   motif: "rain-bookshop",
   titleTreatment:
     "Muted painted lettering emerges through rain-dark shelving and one vermilion account mark.",
@@ -45,8 +44,26 @@ export const redLedgerShowcase = showcase({
       108,
       "The ink is newer than the paper.",
       [
-        actor("actor.red-ledger.archivist", "player", 84, 166, 56, "right", "notebook inspection", "Coat, notebook and lamp-side face remain separate from the shelves."),
-        actor("actor.red-ledger.clerk", "npc", 238, 154, 52, "left", "guarded counter pose", "Hands stay visible above the counter to carry suspicion."),
+        actor(
+          "actor.red-ledger.archivist",
+          "player",
+          84,
+          166,
+          56,
+          "right",
+          "notebook inspection",
+          "Coat, notebook and lamp-side face remain separate from the shelves.",
+        ),
+        actor(
+          "actor.red-ledger.clerk",
+          "npc",
+          238,
+          154,
+          52,
+          "left",
+          "guarded counter pose",
+          "Hands stay visible above the counter to carry suspicion.",
+        ),
       ],
       [
         prop("prop.red-ledger.account", "clue", 192, 118, 38, 18, "red account", "disturbed"),
@@ -69,8 +86,26 @@ export const redLedgerShowcase = showcase({
       112,
       "Ask about: ACCOUNT DATE · RIVER CHAPEL · MISSING WITNESS",
       [
-        actor("actor.red-ledger.archivist-close", "player", 80, 166, 78, "right", "measured question", "Notebook edge and eye line remain readable under cool light."),
-        actor("actor.red-ledger.clerk-close", "npc", 238, 164, 80, "left", "withheld answer", "A hand over the ledger changes as testimony narrows."),
+        actor(
+          "actor.red-ledger.archivist-close",
+          "player",
+          80,
+          166,
+          78,
+          "right",
+          "measured question",
+          "Notebook edge and eye line remain readable under cool light.",
+        ),
+        actor(
+          "actor.red-ledger.clerk-close",
+          "npc",
+          238,
+          164,
+          80,
+          "left",
+          "withheld answer",
+          "A hand over the ledger changes as testimony narrows.",
+        ),
       ],
       [
         prop("prop.red-ledger.topic-account", "clue", 126, 64, 54, 18, "account date", "active"),
@@ -92,7 +127,16 @@ export const redLedgerShowcase = showcase({
       118,
       "CONTRADICTION: OFFICE BUILT AFTER RECORDED DEBT",
       [
-        actor("actor.red-ledger.ledger-marker", "player", 44, 150, 20, "right", "archivist marker", "A notebook silhouette marks the active line of inquiry."),
+        actor(
+          "actor.red-ledger.ledger-marker",
+          "player",
+          44,
+          150,
+          20,
+          "right",
+          "archivist marker",
+          "A notebook silhouette marks the active line of inquiry.",
+        ),
       ],
       [
         prop("prop.red-ledger.evidence-date", "clue", 54, 64, 68, 24, "account date", "verified"),

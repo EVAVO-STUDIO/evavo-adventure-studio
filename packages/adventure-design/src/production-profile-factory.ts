@@ -1,4 +1,4 @@
-import type { PresentationProfile } from "@evavo/adventure-project-schema";
+import type { PresentationProfile, Size } from "@evavo/adventure-project-schema";
 import type {
   AdventureDialoguePresentation,
   AdventureInterfaceFamily,
@@ -8,10 +8,7 @@ import type {
   AdventurePuzzleGrammar,
   AdventureSplashProfile,
 } from "./production-profile-types.js";
-import type {
-  AdventureCompositionMode,
-  AdventureProductionMode,
-} from "./types.js";
+import type { AdventureCompositionMode, AdventureProductionMode } from "./types.js";
 
 export const palette = (
   maxColours: number,
@@ -92,12 +89,12 @@ export const interfaceGrammar = (
   showScore,
 });
 
-export const audio = (
-  music: string,
-  ambience: string,
-  transitionSting: string,
-  interfaceSound: string,
-) => ({ music, ambience, transitionSting, interfaceSound });
+export const audio = (music: string, ambience: string, transitionSting: string, interfaceSound: string) => ({
+  music,
+  ambience,
+  transitionSting,
+  interfaceSound,
+});
 
 export const showcase = (
   id: string,
@@ -121,6 +118,7 @@ export interface ProfileSpec {
   readonly label: string;
   readonly family: AdventureProductionProfile["family"];
   readonly summary: string;
+  readonly nativeSize?: Size;
   readonly productionModes: readonly AdventureProductionMode[];
   readonly compositionModes: readonly AdventureCompositionMode[];
   readonly pixelMotionPolicy?: PresentationProfile["pixelMotionPolicy"];
@@ -144,7 +142,7 @@ export const profile = (spec: ProfileSpec): AdventureProductionProfile => ({
   label: spec.label,
   family: spec.family,
   summary: spec.summary,
-  nativeSize: { width: 320, height: 200 },
+  nativeSize: spec.nativeSize ?? { width: 320, height: 200 },
   productionModes: spec.productionModes,
   compositionModes: spec.compositionModes,
   pixelMotionPolicy: spec.pixelMotionPolicy ?? "strict",
@@ -157,16 +155,15 @@ export const profile = (spec: ProfileSpec): AdventureProductionProfile => ({
   audio: spec.audio,
   splash: spec.splash,
   showcase: spec.showcase,
-  authenticityRules: [
+  rules: [
     "Author and review every screen at final native resolution.",
     "Protect actor, clue, obstacle and exit readability before decoration.",
     spec.rule,
   ],
-  prohibitedShortcuts: [
+  prohibitions: [
     "Do not downsample generic high-resolution art as final pixel work.",
     "Do not copy commercial characters, rooms, logos, dialogue or puzzle solutions.",
     spec.prohibition,
   ],
   reviewQuestions: spec.reviewQuestions,
 });
-

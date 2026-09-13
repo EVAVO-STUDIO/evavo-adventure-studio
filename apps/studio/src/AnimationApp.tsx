@@ -1,26 +1,23 @@
 import {
+  type AnimationEditorCommand,
+  animationFrameTimeline,
+  applyAnimationEditorCommand,
+  frameUsage,
+} from "@evavo/adventure-animation-editor-core";
+import type { Actor, AnimationClip, Point, SpriteFrame } from "@evavo/adventure-project-schema";
+import {
+  type CSSProperties,
+  type Dispatch,
+  type ReactNode,
   useCallback,
   useEffect,
   useMemo,
   useReducer,
   useState,
-  type CSSProperties,
-  type Dispatch,
-  type ReactNode,
 } from "react";
 import {
-  animationFrameTimeline,
-  applyAnimationEditorCommand,
-  frameUsage,
-  type AnimationEditorCommand,
-} from "@evavo/adventure-animation-editor-core";
-import type {
-  Actor,
-  AnimationClip,
-  Point,
-  SpriteFrame,
-} from "@evavo/adventure-project-schema";
-import {
+  type AnimationWorkspaceAction,
+  type AnimationWorkspaceState,
   activeAnimationActor,
   animationWorkspaceIsDirty,
   animationWorkspaceReducer,
@@ -32,8 +29,6 @@ import {
   removeSelectedClipFrameCommand,
   selectedAnimationClip,
   selectedAnimationFrame,
-  type AnimationWorkspaceAction,
-  type AnimationWorkspaceState,
 } from "./animation-workspace.js";
 import { studioProject } from "./fixture.js";
 import "./animation-editor.css";
@@ -62,27 +57,16 @@ const Button = ({
   readonly disabled?: boolean;
   readonly className?: string;
 }) => (
-  <button
-    type="button"
-    className={`button ${className}`}
-    disabled={disabled}
-    onClick={onClick}
-  >
+  <button type="button" className={`button ${className}`} disabled={disabled} onClick={onClick}>
     {children}
   </button>
 );
 
-const Field = ({
-  label,
-  children,
-}: {
-  readonly label: string;
-  readonly children: ReactNode;
-}) => (
-  <label className="field">
+const Field = ({ label, children }: { readonly label: string; readonly children: ReactNode }) => (
+  <div className="field">
     <span>{label}</span>
     {children}
-  </label>
+  </div>
 );
 
 const CommitInput = ({
@@ -186,11 +170,7 @@ const clampPoint = (point: Point, frame: SpriteFrame): Point => ({
   y: clamp(point.y, 0, frame.sourceSize.height),
 });
 
-const withSourceSize = (
-  frame: SpriteFrame,
-  width: number,
-  height: number,
-): SpriteFrame => {
+const withSourceSize = (frame: SpriteFrame, width: number, height: number): SpriteFrame => {
   const sourceSize = {
     width: Math.max(1, Math.round(width)),
     height: Math.max(1, Math.round(height)),
@@ -201,43 +181,26 @@ const withSourceSize = (
   };
   const sourceRect = {
     ...frame.sourceRect,
-    width: clamp(
-      frame.sourceRect.width,
-      1,
-      Math.max(1, sourceSize.width - trimOffset.x),
-    ),
-    height: clamp(
-      frame.sourceRect.height,
-      1,
-      Math.max(1, sourceSize.height - trimOffset.y),
-    ),
+    width: clamp(frame.sourceRect.width, 1, Math.max(1, sourceSize.width - trimOffset.x)),
+    height: clamp(frame.sourceRect.height, 1, Math.max(1, sourceSize.height - trimOffset.y)),
   };
   const draft = { ...frame, sourceSize, trimOffset, sourceRect };
   return {
     ...draft,
     pivot: clampPoint(frame.pivot, draft),
     footPoint: clampPoint(frame.footPoint, draft),
-    ...(frame.shadowAnchor
-      ? { shadowAnchor: clampPoint(frame.shadowAnchor, draft) }
-      : {}),
+    ...(frame.shadowAnchor ? { shadowAnchor: clampPoint(frame.shadowAnchor, draft) } : {}),
     ...(frame.attachmentPoints
       ? {
           attachmentPoints: Object.fromEntries(
-            Object.entries(frame.attachmentPoints).map(([name, point]) => [
-              name,
-              clampPoint(point, draft),
-            ]),
+            Object.entries(frame.attachmentPoints).map(([name, point]) => [name, clampPoint(point, draft)]),
           ),
         }
       : {}),
   };
 };
 
-const withTrimOffset = (
-  frame: SpriteFrame,
-  x: number,
-  y: number,
-): SpriteFrame => {
+const withTrimOffset = (frame: SpriteFrame, x: number, y: number): SpriteFrame => {
   const trimOffset = {
     x: clamp(x, 0, frame.sourceSize.width - 1),
     y: clamp(y, 0, frame.sourceSize.height - 1),
@@ -247,38 +210,18 @@ const withTrimOffset = (
     trimOffset,
     sourceRect: {
       ...frame.sourceRect,
-      width: clamp(
-        frame.sourceRect.width,
-        1,
-        Math.max(1, frame.sourceSize.width - trimOffset.x),
-      ),
-      height: clamp(
-        frame.sourceRect.height,
-        1,
-        Math.max(1, frame.sourceSize.height - trimOffset.y),
-      ),
+      width: clamp(frame.sourceRect.width, 1, Math.max(1, frame.sourceSize.width - trimOffset.x)),
+      height: clamp(frame.sourceRect.height, 1, Math.max(1, frame.sourceSize.height - trimOffset.y)),
     },
   };
 };
 
-const withTrimSize = (
-  frame: SpriteFrame,
-  width: number,
-  height: number,
-): SpriteFrame => ({
+const withTrimSize = (frame: SpriteFrame, width: number, height: number): SpriteFrame => ({
   ...frame,
   sourceRect: {
     ...frame.sourceRect,
-    width: clamp(
-      width,
-      1,
-      Math.max(1, frame.sourceSize.width - frame.trimOffset.x),
-    ),
-    height: clamp(
-      height,
-      1,
-      Math.max(1, frame.sourceSize.height - frame.trimOffset.y),
-    ),
+    width: clamp(width, 1, Math.max(1, frame.sourceSize.width - frame.trimOffset.x)),
+    height: clamp(height, 1, Math.max(1, frame.sourceSize.height - frame.trimOffset.y)),
   },
 });
 
@@ -295,8 +238,7 @@ const downloadActor = (actor: Actor): void => {
   URL.revokeObjectURL(url);
 };
 
-const frameEventsText = (frame: SpriteFrame): string =>
-  (frame.events ?? []).join("\n");
+const frameEventsText = (frame: SpriteFrame): string => (frame.events ?? []).join("\n");
 
 const parseFrameEvents = (value: string): string[] => [
   ...new Set(
@@ -314,10 +256,7 @@ const SpriteGeometryPreview = ({
   readonly frame: SpriteFrame;
   readonly assetLabel: string;
 }) => {
-  const scale = Math.max(
-    2,
-    Math.min(7, 280 / frame.sourceSize.width, 340 / frame.sourceSize.height),
-  );
+  const scale = Math.max(2, Math.min(7, 280 / frame.sourceSize.width, 340 / frame.sourceSize.height));
   const style = {
     "--sprite-width": `${frame.sourceSize.width * scale}px`,
     "--sprite-height": `${frame.sourceSize.height * scale}px`,
@@ -346,8 +285,8 @@ const SpriteGeometryPreview = ({
       <div className="sprite-preview-caption">
         <code>{assetLabel}</code>
         <span>
-          original {frame.sourceSize.width} × {frame.sourceSize.height} · trim{" "}
-          {frame.sourceRect.width} × {frame.sourceRect.height}
+          original {frame.sourceSize.width} × {frame.sourceSize.height} · trim {frame.sourceRect.width} ×{" "}
+          {frame.sourceRect.height}
         </span>
       </div>
     </div>
@@ -385,17 +324,12 @@ const CadenceTimeline = ({
         ))}
       </div>
       <div className="cadence-track">
-        <span
-          className="cadence-playhead"
-          style={{ left: `${(state.playheadTick * 100) / duration}%` }}
-        />
+        <span className="cadence-playhead" style={{ left: `${(state.playheadTick * 100) / duration}%` }} />
         {timeline.map((entry) => (
           <button
             type="button"
             key={`${entry.frameId}:${entry.frameIndex}`}
-            className={`cadence-block ${
-              state.clipFrameIndex === entry.frameIndex ? "is-active" : ""
-            }`}
+            className={`cadence-block ${state.clipFrameIndex === entry.frameIndex ? "is-active" : ""}`}
             style={{
               left: `${(entry.startTick * 100) / duration}%`,
               width: `${(entry.durationTicks * 100) / duration}%`,
@@ -441,24 +375,17 @@ const AnimationInspector = ({
 
   const replaceFrame = (next: SpriteFrame, notice = "Updated sprite frame."): void => {
     if (!frame) return;
-    execute(
-      { kind: "replace-frame", frameId: frame.id, frame: next },
-      { notice },
-    );
+    execute({ kind: "replace-frame", frameId: frame.id, frame: next }, { notice });
   };
 
   const replaceAnimation = (next: AnimationClip): void => {
     if (!animation) return;
     const duplicate = actor.animations.some(
       (candidate) =>
-        candidate.id !== animation.id &&
-        candidate.state === next.state &&
-        candidate.facing === next.facing,
+        candidate.id !== animation.id && candidate.state === next.state && candidate.facing === next.facing,
     );
     if (duplicate) {
-      window.alert(
-        `Another '${next.state}' animation already faces '${next.facing}'.`,
-      );
+      window.alert(`Another '${next.state}' animation already faces '${next.facing}'.`);
       return;
     }
     execute(
@@ -486,9 +413,7 @@ const AnimationInspector = ({
             <Field label="State">
               <CommitInput
                 value={animation.state}
-                onCommit={(stateName) =>
-                  replaceAnimation({ ...animation, state: stateName })
-                }
+                onCommit={(stateName) => replaceAnimation({ ...animation, state: stateName })}
               />
             </Field>
             <Field label="Facing">
@@ -551,9 +476,7 @@ const AnimationInspector = ({
                 value={frame.durationTicks}
                 min={1}
                 max={600}
-                onChange={(durationTicks) =>
-                  replaceFrame({ ...frame, durationTicks }, "Updated frame hold.")
-                }
+                onChange={(durationTicks) => replaceFrame({ ...frame, durationTicks }, "Updated frame hold.")}
               />
             </Field>
             <Field label="Markers">
@@ -593,11 +516,7 @@ const AnimationInspector = ({
                   value={frame.sourceSize.width}
                   min={1}
                   max={2048}
-                  onChange={(width) =>
-                    replaceFrame(
-                      withSourceSize(frame, width, frame.sourceSize.height),
-                    )
-                  }
+                  onChange={(width) => replaceFrame(withSourceSize(frame, width, frame.sourceSize.height))}
                 />
               </Field>
               <Field label="Height">
@@ -605,11 +524,7 @@ const AnimationInspector = ({
                   value={frame.sourceSize.height}
                   min={1}
                   max={2048}
-                  onChange={(height) =>
-                    replaceFrame(
-                      withSourceSize(frame, frame.sourceSize.width, height),
-                    )
-                  }
+                  onChange={(height) => replaceFrame(withSourceSize(frame, frame.sourceSize.width, height))}
                 />
               </Field>
             </div>
@@ -649,9 +564,7 @@ const AnimationInspector = ({
                   value={frame.trimOffset.x}
                   min={0}
                   max={frame.sourceSize.width - 1}
-                  onChange={(x) =>
-                    replaceFrame(withTrimOffset(frame, x, frame.trimOffset.y))
-                  }
+                  onChange={(x) => replaceFrame(withTrimOffset(frame, x, frame.trimOffset.y))}
                 />
               </Field>
               <Field label="Trim Y">
@@ -659,9 +572,7 @@ const AnimationInspector = ({
                   value={frame.trimOffset.y}
                   min={0}
                   max={frame.sourceSize.height - 1}
-                  onChange={(y) =>
-                    replaceFrame(withTrimOffset(frame, frame.trimOffset.x, y))
-                  }
+                  onChange={(y) => replaceFrame(withTrimOffset(frame, frame.trimOffset.x, y))}
                 />
               </Field>
               <Field label="Trim W">
@@ -669,9 +580,7 @@ const AnimationInspector = ({
                   value={frame.sourceRect.width}
                   min={1}
                   max={frame.sourceSize.width - frame.trimOffset.x}
-                  onChange={(width) =>
-                    replaceFrame(withTrimSize(frame, width, frame.sourceRect.height))
-                  }
+                  onChange={(width) => replaceFrame(withTrimSize(frame, width, frame.sourceRect.height))}
                 />
               </Field>
               <Field label="Trim H">
@@ -679,9 +588,7 @@ const AnimationInspector = ({
                   value={frame.sourceRect.height}
                   min={1}
                   max={frame.sourceSize.height - frame.trimOffset.y}
-                  onChange={(height) =>
-                    replaceFrame(withTrimSize(frame, frame.sourceRect.width, height))
-                  }
+                  onChange={(height) => replaceFrame(withTrimSize(frame, frame.sourceRect.width, height))}
                 />
               </Field>
             </div>
@@ -758,7 +665,7 @@ export const AnimationApp = () => {
   const actor = activeAnimationActor(state);
   const frame = selectedAnimationFrame(state);
   const animation = selectedAnimationClip(state);
-  const displayFrame = state.playing ? frameAtPlayhead(state) ?? frame : frame;
+  const displayFrame = state.playing ? (frameAtPlayhead(state) ?? frame) : frame;
   const dirty = animationWorkspaceIsDirty(state);
   const history = state.histories[state.activeActorId];
 
@@ -776,9 +683,7 @@ export const AnimationApp = () => {
         applyAnimationEditorCommand(actor, command);
         dispatch({ type: "execute", command, ...options });
       } catch (error) {
-        window.alert(
-          error instanceof Error ? error.message : "Animation edit failed.",
-        );
+        window.alert(error instanceof Error ? error.message : "Animation edit failed.");
       }
     },
     [actor],
@@ -829,10 +734,7 @@ export const AnimationApp = () => {
 
   useEffect(() => {
     if (!state.playing) return;
-    const handle = window.setInterval(
-      () => dispatch({ type: "advance-playhead", ticks: 6 }),
-      100,
-    );
+    const handle = window.setInterval(() => dispatch({ type: "advance-playhead", ticks: 6 }), 100);
     return () => window.clearInterval(handle);
   }, [state.playing]);
 
@@ -859,10 +761,7 @@ export const AnimationApp = () => {
     return () => window.removeEventListener("keydown", onKeyDown);
   }, [save]);
 
-  const frameUsageEntries = useMemo(
-    () => (frame ? frameUsage(actor, frame.id) : []),
-    [actor, frame],
-  );
+  const frameUsageEntries = useMemo(() => (frame ? frameUsage(actor, frame.id) : []), [actor, frame]);
 
   return (
     <div className="studio-app animation-app">
@@ -962,9 +861,7 @@ export const AnimationApp = () => {
                 <button
                   type="button"
                   key={actorId}
-                  className={`actor-selector ${
-                    actorId === state.activeActorId ? "is-active" : ""
-                  }`}
+                  className={`actor-selector ${actorId === state.activeActorId ? "is-active" : ""}`}
                   onClick={() => dispatch({ type: "select-actor", actorId })}
                 >
                   <span className="actor-avatar">{candidate.name.slice(0, 1)}</span>
@@ -989,9 +886,7 @@ export const AnimationApp = () => {
               <button
                 type="button"
                 key={candidate.id}
-                className={`animation-clip-row ${
-                  candidate.id === animation?.id ? "is-active" : ""
-                }`}
+                className={`animation-clip-row ${candidate.id === animation?.id ? "is-active" : ""}`}
                 onClick={() =>
                   dispatch({
                     type: "select-animation",
@@ -1020,19 +915,14 @@ export const AnimationApp = () => {
               <button
                 type="button"
                 key={candidate.id}
-                className={`sprite-frame-row ${
-                  candidate.id === frame?.id ? "is-active" : ""
-                }`}
-                onClick={() =>
-                  dispatch({ type: "select-frame", frameId: candidate.id })
-                }
+                className={`sprite-frame-row ${candidate.id === frame?.id ? "is-active" : ""}`}
+                onClick={() => dispatch({ type: "select-frame", frameId: candidate.id })}
               >
                 <span>{String(index + 1).padStart(2, "0")}</span>
                 <span>
                   <strong>{shortId(candidate.id)}</strong>
                   <small>
-                    {candidate.durationTicks}t · {candidate.sourceSize.width}×
-                    {candidate.sourceSize.height}
+                    {candidate.durationTicks}t · {candidate.sourceSize.width}×{candidate.sourceSize.height}
                   </small>
                 </span>
               </button>
@@ -1055,10 +945,7 @@ export const AnimationApp = () => {
                 min={0}
                 max={Math.max(
                   0,
-                  animation
-                    ? (animationFrameTimeline(actor, animation.id).at(-1)
-                        ?.endTick ?? 1) - 1
-                    : 0,
+                  animation ? (animationFrameTimeline(actor, animation.id).at(-1)?.endTick ?? 1) - 1 : 0,
                 )}
                 onChange={(tick) => dispatch({ type: "set-playhead", tick })}
               />
@@ -1066,10 +953,7 @@ export const AnimationApp = () => {
           </div>
 
           {displayFrame ? (
-            <SpriteGeometryPreview
-              frame={displayFrame}
-              assetLabel={displayFrame.assetId}
-            />
+            <SpriteGeometryPreview frame={displayFrame} assetLabel={displayFrame.assetId} />
           ) : (
             <div className="animation-empty">No sprite frame selected.</div>
           )}

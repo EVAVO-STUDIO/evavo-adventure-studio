@@ -1,14 +1,14 @@
-import { z } from "zod";
 import type { BitmapFontManifest } from "@evavo/adventure-bitmap-font";
 import {
-  idSchema,
-  rectangleSchema,
-  sizeSchema,
   type AdventureProject,
   type Id,
+  idSchema,
   type PresentationProfile,
   type Rectangle,
+  rectangleSchema,
+  sizeSchema,
 } from "@evavo/adventure-project-schema";
+import { z } from "zod";
 
 export const uiColorSchema = z.union([
   z.number().int().min(0).max(0xffffff),
@@ -169,8 +169,7 @@ export const uiSkinManifestSchema = z
   .strict();
 export type UiSkinManifest = z.infer<typeof uiSkinManifestSchema>;
 
-export const parseUiSkinManifest = (input: unknown): UiSkinManifest =>
-  uiSkinManifestSchema.parse(input);
+export const parseUiSkinManifest = (input: unknown): UiSkinManifest => uiSkinManifestSchema.parse(input);
 
 export type UiSkinIssueCode =
   | "project-mismatch"
@@ -261,40 +260,112 @@ const validateModeRequirements = (
   const mode = skin.interactionMode;
   const requiresBar = mode === "icon-bar" || mode === "verb-list" || mode === "two-button";
   if (requiresBar && !skin.verbBar) {
-    addIssue(issues, "error", "missing-verb-bar", `${path}.verbBar`, `${mode} skins require a persistent verb bar.`);
+    addIssue(
+      issues,
+      "error",
+      "missing-verb-bar",
+      `${path}.verbBar`,
+      `${mode} skins require a persistent verb bar.`,
+    );
   }
   if (!requiresBar && skin.verbBar) {
-    addIssue(issues, "warning", "unexpected-verb-bar", `${path}.verbBar`, `${mode} skins do not normally use a persistent verb bar.`);
+    addIssue(
+      issues,
+      "warning",
+      "unexpected-verb-bar",
+      `${path}.verbBar`,
+      `${mode} skins do not normally use a persistent verb bar.`,
+    );
   }
   if (mode === "verb-coin" && !skin.verbCoin) {
-    addIssue(issues, "error", "missing-verb-coin", `${path}.verbCoin`, "Verb-coin skins require coin geometry.");
+    addIssue(
+      issues,
+      "error",
+      "missing-verb-coin",
+      `${path}.verbCoin`,
+      "Verb-coin skins require coin geometry.",
+    );
   }
   if (mode !== "verb-coin" && skin.verbCoin) {
-    addIssue(issues, "warning", "unexpected-verb-coin", `${path}.verbCoin`, `${mode} skins do not normally use a verb coin.`);
+    addIssue(
+      issues,
+      "warning",
+      "unexpected-verb-coin",
+      `${path}.verbCoin`,
+      `${mode} skins do not normally use a verb coin.`,
+    );
   }
   if (mode === "parser-assisted" && !skin.parser) {
-    addIssue(issues, "error", "missing-parser", `${path}.parser`, "Parser-assisted skins require a parser region.");
+    addIssue(
+      issues,
+      "error",
+      "missing-parser",
+      `${path}.parser`,
+      "Parser-assisted skins require a parser region.",
+    );
   }
   if (mode !== "parser-assisted" && skin.parser) {
-    addIssue(issues, "warning", "unexpected-parser", `${path}.parser`, `${mode} skins do not normally expose a parser field.`);
+    addIssue(
+      issues,
+      "warning",
+      "unexpected-parser",
+      `${path}.parser`,
+      `${mode} skins do not normally expose a parser field.`,
+    );
   }
   if (project.presentation.showScore && !skin.score) {
-    addIssue(issues, "error", "missing-score-region", `${path}.score`, "The project presentation enables score but this skin has no score region.");
+    addIssue(
+      issues,
+      "error",
+      "missing-score-region",
+      `${path}.score`,
+      "The project presentation enables score but this skin has no score region.",
+    );
   }
   if ((skin.verbBar || skin.verbCoin) && !skin.fonts.verb) {
-    addIssue(issues, "error", "missing-verb-font", `${path}.fonts.verb`, "Visible verbs require a bitmap-font role.");
+    addIssue(
+      issues,
+      "error",
+      "missing-verb-font",
+      `${path}.fonts.verb`,
+      "Visible verbs require a bitmap-font role.",
+    );
   }
   if (skin.parser && !skin.fonts.parser) {
-    addIssue(issues, "error", "missing-parser-font", `${path}.fonts.parser`, "Parser text requires a bitmap-font role.");
+    addIssue(
+      issues,
+      "error",
+      "missing-parser-font",
+      `${path}.fonts.parser`,
+      "Parser text requires a bitmap-font role.",
+    );
   }
   if (skin.score && !skin.fonts.score) {
-    addIssue(issues, "error", "missing-score-font", `${path}.fonts.score`, "Score text requires a bitmap-font role.");
+    addIssue(
+      issues,
+      "error",
+      "missing-score-font",
+      `${path}.fonts.score`,
+      "Score text requires a bitmap-font role.",
+    );
   }
   if (mode === "two-button" && skin.verbs.filter((verb) => verb.primary).length !== 2) {
-    addIssue(issues, "error", "insufficient-primary-verbs", `${path}.verbs`, "Two-button skins require exactly two primary verbs.");
+    addIssue(
+      issues,
+      "error",
+      "insufficient-primary-verbs",
+      `${path}.verbs`,
+      "Two-button skins require exactly two primary verbs.",
+    );
   }
   if (mode === "icon-bar" && skin.verbs.some((verb) => !verb.iconAssetId)) {
-    addIssue(issues, "error", "icon-bar-without-icons", `${path}.verbs`, "Every icon-bar verb requires an icon asset.");
+    addIssue(
+      issues,
+      "error",
+      "icon-bar-without-icons",
+      `${path}.verbs`,
+      "Every icon-bar verb requires an icon asset.",
+    );
   }
 };
 
@@ -305,7 +376,13 @@ export const validateUiSkinManifest = (
 ): readonly UiSkinIssue[] => {
   const issues: UiSkinIssue[] = [];
   if (manifest.projectId !== project.id) {
-    addIssue(issues, "error", "project-mismatch", "projectId", `UI skin project '${manifest.projectId}' does not match '${project.id}'.`);
+    addIssue(
+      issues,
+      "error",
+      "project-mismatch",
+      "projectId",
+      `UI skin project '${manifest.projectId}' does not match '${project.id}'.`,
+    );
   }
 
   const knownFonts = fontIds(fonts);
@@ -321,7 +398,13 @@ export const validateUiSkinManifest = (
       skin.nativeSize.width !== project.presentation.nativeWidth ||
       skin.nativeSize.height !== project.presentation.nativeHeight
     ) {
-      addIssue(issues, "error", "native-size-mismatch", `${path}.nativeSize`, `UI skin '${skin.id}' does not match the ${project.presentation.nativeWidth} × ${project.presentation.nativeHeight} project canvas.`);
+      addIssue(
+        issues,
+        "error",
+        "native-size-mismatch",
+        `${path}.nativeSize`,
+        `UI skin '${skin.id}' does not match the ${project.presentation.nativeWidth} × ${project.presentation.nativeHeight} project canvas.`,
+      );
     }
 
     const regions = skinRegions(skin);
@@ -329,14 +412,26 @@ export const validateUiSkinManifest = (
     regions.forEach((region, regionIndex) => {
       const regionPath = `${path}.regions[${regionIndex}]`;
       if (regionIds.has(region.id)) {
-        addIssue(issues, "error", "duplicate-region", `${regionPath}.id`, `UI region '${region.id}' is duplicated in skin '${skin.id}'.`);
+        addIssue(
+          issues,
+          "error",
+          "duplicate-region",
+          `${regionPath}.id`,
+          `UI region '${region.id}' is duplicated in skin '${skin.id}'.`,
+        );
       }
       regionIds.add(region.id);
       if (
         region.rect.x + region.rect.width > skin.nativeSize.width ||
         region.rect.y + region.rect.height > skin.nativeSize.height
       ) {
-        addIssue(issues, "error", "region-out-of-bounds", `${regionPath}.rect`, `UI region '${region.id}' exceeds the native canvas.`);
+        addIssue(
+          issues,
+          "error",
+          "region-out-of-bounds",
+          `${regionPath}.rect`,
+          `UI region '${region.id}' exceeds the native canvas.`,
+        );
       }
     });
     for (let left = 0; left < regions.length; left += 1) {
@@ -344,7 +439,13 @@ export const validateUiSkinManifest = (
         const leftRegion = regions[left];
         const rightRegion = regions[right];
         if (leftRegion && rightRegion && rectanglesOverlap(leftRegion.rect, rightRegion.rect)) {
-          addIssue(issues, "warning", "region-overlap", `${path}.regions`, `UI regions '${leftRegion.id}' and '${rightRegion.id}' overlap.`);
+          addIssue(
+            issues,
+            "warning",
+            "region-overlap",
+            `${path}.regions`,
+            `UI regions '${leftRegion.id}' and '${rightRegion.id}' overlap.`,
+          );
         }
       }
     }
@@ -360,19 +461,43 @@ export const validateUiSkinManifest = (
       if (verb.shortcut) {
         const normalized = verb.shortcut.toLocaleLowerCase("en-US");
         if (shortcuts.has(normalized)) {
-          addIssue(issues, "error", "duplicate-shortcut", `${verbPath}.shortcut`, `Shortcut '${verb.shortcut}' is duplicated.`);
+          addIssue(
+            issues,
+            "error",
+            "duplicate-shortcut",
+            `${verbPath}.shortcut`,
+            `Shortcut '${verb.shortcut}' is duplicated.`,
+          );
         }
         shortcuts.add(normalized);
       }
       if (verb.iconFrameId && !verb.iconAssetId) {
-        addIssue(issues, "error", "icon-frame-without-asset", `${verbPath}.iconFrameId`, `Verb '${verb.id}' declares a frame without an icon asset.`);
+        addIssue(
+          issues,
+          "error",
+          "icon-frame-without-asset",
+          `${verbPath}.iconFrameId`,
+          `Verb '${verb.id}' declares a frame without an icon asset.`,
+        );
       }
       if (verb.iconAssetId) {
         const asset = assets.get(verb.iconAssetId);
         if (!asset) {
-          addIssue(issues, "error", "unknown-icon-asset", `${verbPath}.iconAssetId`, `Verb icon asset '${verb.iconAssetId}' does not exist.`);
+          addIssue(
+            issues,
+            "error",
+            "unknown-icon-asset",
+            `${verbPath}.iconAssetId`,
+            `Verb icon asset '${verb.iconAssetId}' does not exist.`,
+          );
         } else if (asset.kind !== "image" && asset.kind !== "spritesheet") {
-          addIssue(issues, "error", "icon-asset-kind", `${verbPath}.iconAssetId`, `Verb icon asset '${verb.iconAssetId}' is '${asset.kind}', not an image or spritesheet.`);
+          addIssue(
+            issues,
+            "error",
+            "icon-asset-kind",
+            `${verbPath}.iconAssetId`,
+            `Verb icon asset '${verb.iconAssetId}' is '${asset.kind}', not an image or spritesheet.`,
+          );
         }
       }
     });
@@ -388,9 +513,21 @@ export const validateUiSkinManifest = (
 
   const defaultSkin = manifest.skins.find((skin) => skin.id === manifest.defaultSkinId);
   if (!defaultSkin) {
-    addIssue(issues, "error", "missing-default-skin", "defaultSkinId", `Default UI skin '${manifest.defaultSkinId}' does not exist.`);
+    addIssue(
+      issues,
+      "error",
+      "missing-default-skin",
+      "defaultSkinId",
+      `Default UI skin '${manifest.defaultSkinId}' does not exist.`,
+    );
   } else if (defaultSkin.interactionMode !== project.presentation.interactionMode) {
-    addIssue(issues, "error", "default-mode-mismatch", "defaultSkinId", `Default skin mode '${defaultSkin.interactionMode}' does not match project mode '${project.presentation.interactionMode}'.`);
+    addIssue(
+      issues,
+      "error",
+      "default-mode-mismatch",
+      "defaultSkinId",
+      `Default skin mode '${defaultSkin.interactionMode}' does not match project mode '${project.presentation.interactionMode}'.`,
+    );
   }
 
   return issues;

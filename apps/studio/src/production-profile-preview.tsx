@@ -1,9 +1,9 @@
-import type { CSSProperties } from "react";
 import type {
   AdventureInterfaceFamily,
   AdventureProductionProfile,
   AdventureSplashFamily,
 } from "@evavo/adventure-design/production-profiles";
+import type { CSSProperties } from "react";
 
 export const profileStyle = (profile: AdventureProductionProfile): CSSProperties => {
   const colours = profile.palette.keyColours;
@@ -16,7 +16,6 @@ export const profileStyle = (profile: AdventureProductionProfile): CSSProperties
     "--ppf-paper": colours[5] ?? "#efe7cc",
   } as CSSProperties;
 };
-
 
 export const ProfileButton = ({
   profile,
@@ -42,7 +41,9 @@ export const ProfileButton = ({
       <strong>{profile.label}</strong>
       <small>{profile.family.replaceAll("-", " ")}</small>
     </span>
-    <em>{profile.nativeSize.width}×{profile.nativeSize.height}</em>
+    <em>
+      {profile.nativeSize.width}×{profile.nativeSize.height}
+    </em>
   </button>
 );
 
@@ -135,7 +136,7 @@ export const SplashPreview = ({ profile }: { readonly profile: AdventureProducti
         </text>
       </svg>
     </div>
-    <div className="ppf-timeline" aria-label="Splash timeline">
+    <div className="ppf-timeline" role="img" aria-label="Splash timeline">
       {profile.splash.beats.map((entry) => (
         <div
           key={entry.id}
@@ -155,7 +156,7 @@ export const SplashPreview = ({ profile }: { readonly profile: AdventureProducti
 );
 
 const IconBar = () => (
-  <div className="ppf-ui-icon-bar" aria-label="Top icon bar preview">
+  <div className="ppf-ui-icon-bar" role="img" aria-label="Top icon bar preview">
     {[
       ["↗", "Walk"],
       ["◉", "Look"],
@@ -172,20 +173,10 @@ const IconBar = () => (
 );
 
 const VerbPanel = () => (
-  <div className="ppf-ui-verb-panel" aria-label="Verb and inventory panel preview">
+  <div className="ppf-ui-verb-panel" role="img" aria-label="Verb and inventory panel preview">
     <div className="ppf-sentence-line">USE brass lens WITH signal housing</div>
     <div className="ppf-verbs">
-      {[
-        "OPEN",
-        "WALK TO",
-        "USE",
-        "CLOSE",
-        "PICK UP",
-        "LOOK AT",
-        "PUSH",
-        "TALK TO",
-        "PULL",
-      ].map((verb) => (
+      {["OPEN", "WALK TO", "USE", "CLOSE", "PICK UP", "LOOK AT", "PUSH", "TALK TO", "PULL"].map((verb) => (
         <span key={verb}>{verb}</span>
       ))}
     </div>
@@ -198,7 +189,7 @@ const VerbPanel = () => (
 );
 
 const TopicPanel = () => (
-  <div className="ppf-ui-topic-panel" aria-label="Investigation topic panel preview">
+  <div className="ppf-ui-topic-panel" role="img" aria-label="Investigation topic panel preview">
     <div className="ppf-portrait-silhouette" />
     <div>
       <strong>INTERVIEW TOPICS</strong>
@@ -210,15 +201,24 @@ const TopicPanel = () => (
 );
 
 const DossierPanel = () => (
-  <div className="ppf-ui-dossier" aria-label="Cinematic dossier preview">
+  <div className="ppf-ui-dossier" role="img" aria-label="Cinematic dossier preview">
     <header>
       <span>ROUTE 03</span>
       <strong>JADE HORIZON</strong>
     </header>
     <dl>
-      <div><dt>TIME</dt><dd>21:40</dd></div>
-      <div><dt>TRUST</dt><dd>GUARDED</dd></div>
-      <div><dt>FARE</dt><dd>₡ 840</dd></div>
+      <div>
+        <dt>TIME</dt>
+        <dd>21:40</dd>
+      </div>
+      <div>
+        <dt>TRUST</dt>
+        <dd>GUARDED</dd>
+      </div>
+      <div>
+        <dt>FARE</dt>
+        <dd>₡ 840</dd>
+      </div>
     </dl>
   </div>
 );
@@ -226,7 +226,9 @@ const DossierPanel = () => (
 const MinimalContext = () => (
   <>
     <div className="ppf-minimal-caption">The signal repeats your name in the wrong voice.</div>
-    <div className="ppf-context-cursor" aria-hidden="true">+</div>
+    <div className="ppf-context-cursor" aria-hidden="true">
+      +
+    </div>
   </>
 );
 
@@ -259,8 +261,12 @@ const StageSet = ({ profile }: { readonly profile: AdventureProductionProfile })
       <div className="ppf-stage-ground" />
       <div className="ppf-stage-prop is-primary" />
       <div className="ppf-stage-prop is-secondary" />
-      <div className="ppf-stage-actor is-player"><i /></div>
-      <div className="ppf-stage-actor is-npc"><i /></div>
+      <div className="ppf-stage-actor is-player">
+        <i />
+      </div>
+      <div className="ppf-stage-actor is-npc">
+        <i />
+      </div>
       <div className="ppf-stage-rain" />
       <InterfaceChrome family={profile.interface.family} />
     </div>

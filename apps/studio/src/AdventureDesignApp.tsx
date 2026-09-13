@@ -1,39 +1,38 @@
 import {
-  useEffect,
-  useMemo,
-  useState,
-  type ChangeEvent,
-  type KeyboardEvent as ReactKeyboardEvent,
-  type ReactNode,
-} from "react";
-import {
-  adventurePuzzleDependencyOrder,
-  validateAdventureDesignDocument,
   type AdventureCutscene,
   type AdventureDesignDocument,
   type AdventureDesignId,
   type AdventureMapLocation,
   type AdventurePuzzle,
+  adventurePuzzleDependencyOrder,
+  validateAdventureDesignDocument,
 } from "@evavo/adventure-design";
 import {
+  type AdventureDesignCommand,
+  type AdventureDesignHistoryState,
   adventureDesignHistoryIsDirty,
   createAdventureDesignHistory,
   executeAdventureDesignCommand,
   markAdventureDesignSaved,
   redoAdventureDesignCommand,
   undoAdventureDesignCommand,
-  type AdventureDesignCommand,
-  type AdventureDesignHistoryState,
 } from "@evavo/adventure-design/editor";
 import { showcaseAdventureDesigns } from "@evavo/adventure-design/showcases";
+import {
+  type ChangeEvent,
+  type KeyboardEvent as ReactKeyboardEvent,
+  type ReactNode,
+  useEffect,
+  useMemo,
+  useState,
+} from "react";
 import "./adventure-design.css";
 
 type DesignSurface = "bible" | "map" | "puzzles" | "cutscenes";
 
 const shortId = (value: string): string => value.split(".").at(-1) ?? value;
 
-const designId = <T extends string>(value: string): AdventureDesignId<T> =>
-  value as AdventureDesignId<T>;
+const designId = <T extends string>(value: string): AdventureDesignId<T> => value as AdventureDesignId<T>;
 
 const Button = ({
   children,
@@ -73,9 +72,7 @@ const CommitText = ({
     <textarea
       rows={rows}
       value={draft}
-      onChange={(event: ChangeEvent<HTMLTextAreaElement>) =>
-        setDraft(event.currentTarget.value)
-      }
+      onChange={(event: ChangeEvent<HTMLTextAreaElement>) => setDraft(event.currentTarget.value)}
       onBlur={() => {
         const normalized = draft.trim();
         if (normalized && normalized !== value) onCommit(normalized);
@@ -103,7 +100,7 @@ const NativePreview = ({ document }: { readonly document: AdventureDesignDocumen
   const colour = (index: number, fallback: string): string =>
     colours[index % Math.max(1, colours.length)] ?? fallback;
   return (
-    <div className="design-native-frame" aria-label="Original native-resolution production study">
+    <div className="design-native-frame">
       <svg viewBox="0 0 320 200" role="img" aria-label={document.title}>
         <rect width="320" height="200" fill={colour(0, "#0a0b10")} />
         <path d="M0 0H320V104L0 126Z" fill={colour(1, "#1c2430")} />
@@ -255,6 +252,7 @@ const MapSurface = ({
             ) : null;
           })}
           {document.map.locations.map((location) => (
+            // biome-ignore lint/a11y/useSemanticElements: SVG interaction nodes cannot use HTML button elements.
             <g
               key={location.id}
               role="button"
@@ -337,10 +335,16 @@ const PuzzleSurface = ({
 
       <section className="design-puzzle-grid">
         {document.puzzles.map((puzzle) => (
-          <article
+          // biome-ignore lint/a11y/useSemanticElements: The complete production card is the selection target.
+          <div
             className={`design-card design-puzzle-card${selectedPuzzleId === puzzle.id ? " is-selected" : ""}`}
             key={puzzle.id}
+            role="button"
+            tabIndex={0}
             onClick={() => onSelect(puzzle.id)}
+            onKeyDown={(event: ReactKeyboardEvent<HTMLElement>) => {
+              if (event.key === "Enter" || event.key === " ") onSelect(puzzle.id);
+            }}
           >
             <header>
               <div>
@@ -364,7 +368,7 @@ const PuzzleSurface = ({
                 </li>
               ))}
             </ol>
-          </article>
+          </div>
         ))}
       </section>
     </div>
@@ -406,25 +410,46 @@ const CutsceneSurface = ({
         className={`design-card design-cutscene-card${selectedCutsceneId === cutscene.id ? " is-selected" : ""}`}
         key={cutscene.id}
       >
-        <header onClick={() => onSelect(cutscene.id)}>
+        {/* biome-ignore lint/a11y/useSemanticElements: The storyboard heading selects its authored cutscene. */}
+        <div
+          className="design-cutscene-select"
+          role="button"
+          tabIndex={0}
+          onClick={() => onSelect(cutscene.id)}
+          onKeyDown={(event: ReactKeyboardEvent<HTMLElement>) => {
+            if (event.key === "Enter" || event.key === " ") onSelect(cutscene.id);
+          }}
+        >
           <div>
             <span className="design-eyebrow">STORYBOARD · {cutscene.trigger.kind}</span>
             <h2>{cutscene.name}</h2>
           </div>
           <strong>{cutscene.skippable ? "SKIPPABLE · CONVERGENT" : "UNSKIPPABLE"}</strong>
-        </header>
+        </div>
         <div className="design-storyboard">
           {cutscene.shots
             .slice()
             .sort((left, right) => left.order - right.order)
             .map((shot) => (
-              <article key={shot.id} onClick={() => onSelect(cutscene.id)}>
+              // biome-ignore lint/a11y/useSemanticElements: The complete storyboard card is the selection target.
+              <div
+                className="design-storyboard-card"
+                key={shot.id}
+                role="button"
+                tabIndex={0}
+                onClick={() => onSelect(cutscene.id)}
+                onKeyDown={(event: ReactKeyboardEvent<HTMLElement>) => {
+                  if (event.key === "Enter" || event.key === " ") onSelect(cutscene.id);
+                }}
+              >
                 <ShotThumbnail document={document} shot={shot} />
-                <span>SHOT {shot.order + 1} · {shot.durationTicks}t</span>
+                <span>
+                  SHOT {shot.order + 1} · {shot.durationTicks}t
+                </span>
                 <h3>{shot.framing}</h3>
                 <p>{shot.staging}</p>
                 <footer>{shot.transition}</footer>
-              </article>
+              </div>
             ))}
         </div>
       </section>
@@ -453,9 +478,7 @@ const Inspector = ({
     document.map.locations[0] ??
     null;
   const selectedPuzzle =
-    document.puzzles.find((puzzle) => puzzle.id === selectedPuzzleId) ??
-    document.puzzles[0] ??
-    null;
+    document.puzzles.find((puzzle) => puzzle.id === selectedPuzzleId) ?? document.puzzles[0] ?? null;
   const selectedCutscene =
     document.cutscenes.find((cutscene) => cutscene.id === selectedCutsceneId) ??
     document.cutscenes[0] ??
@@ -467,7 +490,7 @@ const Inspector = ({
         <span className="design-eyebrow">LOCATION INSPECTOR</span>
         <h2>{selectedLocation.name}</h2>
         <code>{selectedLocation.id}</code>
-        <label>
+        <div className="design-field">
           <span>Art brief</span>
           <CommitText
             value={selectedLocation.artBrief}
@@ -483,8 +506,8 @@ const Inspector = ({
               )
             }
           />
-        </label>
-        <label>
+        </div>
+        <div className="design-field">
           <span>Arrival beat</span>
           <CommitText
             value={selectedLocation.arrivalBeat}
@@ -500,11 +523,20 @@ const Inspector = ({
               )
             }
           />
-        </label>
+        </div>
         <dl>
-          <div><dt>Kind</dt><dd>{selectedLocation.kind}</dd></div>
-          <div><dt>Scene</dt><dd>{selectedLocation.sceneId ?? "Design only"}</dd></div>
-          <div><dt>Unlocks</dt><dd>{selectedLocation.unlockedByPuzzleIds.length}</dd></div>
+          <div>
+            <dt>Kind</dt>
+            <dd>{selectedLocation.kind}</dd>
+          </div>
+          <div>
+            <dt>Scene</dt>
+            <dd>{selectedLocation.sceneId ?? "Design only"}</dd>
+          </div>
+          <div>
+            <dt>Unlocks</dt>
+            <dd>{selectedLocation.unlockedByPuzzleIds.length}</dd>
+          </div>
         </dl>
       </aside>
     );
@@ -516,7 +548,7 @@ const Inspector = ({
         <span className="design-eyebrow">PUZZLE INSPECTOR</span>
         <h2>{selectedPuzzle.name}</h2>
         <code>{selectedPuzzle.id}</code>
-        <label>
+        <div className="design-field">
           <span>Player goal</span>
           <CommitText
             value={selectedPuzzle.goal}
@@ -532,8 +564,8 @@ const Inspector = ({
               )
             }
           />
-        </label>
-        <label>
+        </div>
+        <div className="design-field">
           <span>Story payoff</span>
           <CommitText
             value={selectedPuzzle.storyPayoff}
@@ -549,12 +581,24 @@ const Inspector = ({
               )
             }
           />
-        </label>
+        </div>
         <dl>
-          <div><dt>Solutions</dt><dd>{selectedPuzzle.solutions.length}</dd></div>
-          <div><dt>Hints</dt><dd>{selectedPuzzle.hints.length}</dd></div>
-          <div><dt>Failure</dt><dd>{selectedPuzzle.failure.mode}</dd></div>
-          <div><dt>Score</dt><dd>{selectedPuzzle.score}</dd></div>
+          <div>
+            <dt>Solutions</dt>
+            <dd>{selectedPuzzle.solutions.length}</dd>
+          </div>
+          <div>
+            <dt>Hints</dt>
+            <dd>{selectedPuzzle.hints.length}</dd>
+          </div>
+          <div>
+            <dt>Failure</dt>
+            <dd>{selectedPuzzle.failure.mode}</dd>
+          </div>
+          <div>
+            <dt>Score</dt>
+            <dd>{selectedPuzzle.score}</dd>
+          </div>
         </dl>
       </aside>
     );
@@ -569,7 +613,7 @@ const Inspector = ({
         <code>{selectedCutscene.id}</code>
         {firstShot ? (
           <>
-            <label>
+            <div className="design-field">
               <span>Opening shot staging</span>
               <CommitText
                 value={firstShot.staging}
@@ -590,8 +634,8 @@ const Inspector = ({
                   )
                 }
               />
-            </label>
-            <label>
+            </div>
+            <div className="design-field">
               <span>Camera rule</span>
               <CommitText
                 value={firstShot.camera}
@@ -612,13 +656,22 @@ const Inspector = ({
                   )
                 }
               />
-            </label>
+            </div>
           </>
         ) : null}
         <dl>
-          <div><dt>Shots</dt><dd>{selectedCutscene.shots.length}</dd></div>
-          <div><dt>Trigger</dt><dd>{selectedCutscene.trigger.kind}</dd></div>
-          <div><dt>Final actions</dt><dd>{selectedCutscene.completionActions.length}</dd></div>
+          <div>
+            <dt>Shots</dt>
+            <dd>{selectedCutscene.shots.length}</dd>
+          </div>
+          <div>
+            <dt>Trigger</dt>
+            <dd>{selectedCutscene.trigger.kind}</dd>
+          </div>
+          <div>
+            <dt>Final actions</dt>
+            <dd>{selectedCutscene.completionActions.length}</dd>
+          </div>
         </dl>
       </aside>
     );
@@ -630,13 +683,19 @@ const Inspector = ({
       <h2>Authenticity guardrails</h2>
       <div className="design-inspector-list">
         {document.creativeDirection.authenticityRules.map((rule) => (
-          <article key={rule}><span>✓</span><p>{rule}</p></article>
+          <article key={rule}>
+            <span>✓</span>
+            <p>{rule}</p>
+          </article>
         ))}
       </div>
       <span className="design-eyebrow design-inspector-section">PROHIBITED SHORTCUTS</span>
       <div className="design-inspector-list is-danger">
         {document.creativeDirection.prohibitedShortcuts.map((rule) => (
-          <article key={rule}><span>×</span><p>{rule}</p></article>
+          <article key={rule}>
+            <span>×</span>
+            <p>{rule}</p>
+          </article>
         ))}
       </div>
     </aside>
@@ -645,9 +704,7 @@ const Inspector = ({
 
 export const AdventureDesignApp = () => {
   const [showcaseIndex, setShowcaseIndex] = useState(0);
-  const [history, setHistory] = useState(() =>
-    createAdventureDesignHistory(showcaseAdventureDesigns[0]!),
-  );
+  const [history, setHistory] = useState(() => createAdventureDesignHistory(showcaseAdventureDesigns[0]!));
   const [surface, setSurface] = useState<DesignSurface>("bible");
   const [selectedLocationId, setSelectedLocationId] = useState<string | null>(
     showcaseAdventureDesigns[0]!.map.locations[0]?.id ?? null,
@@ -659,10 +716,7 @@ export const AdventureDesignApp = () => {
     showcaseAdventureDesigns[0]!.cutscenes[0]?.id ?? null,
   );
   const [notice, setNotice] = useState("Original production template loaded.");
-  const issues = useMemo(
-    () => validateAdventureDesignDocument(history.document),
-    [history.document],
-  );
+  const issues = useMemo(() => validateAdventureDesignDocument(history.document), [history.document]);
   const dirty = adventureDesignHistoryIsDirty(history);
 
   const loadShowcase = (index: number): void => {
@@ -829,15 +883,28 @@ export const AdventureDesignApp = () => {
       <header className="design-topbar">
         <div className="design-brand">
           <span>EV</span>
-          <div><strong>ADVENTURE DESIGN DIRECTOR</strong><small>AUTHENTIC PRODUCTION BIBLE</small></div>
+          <div>
+            <strong>ADVENTURE DESIGN DIRECTOR</strong>
+            <small>AUTHENTIC PRODUCTION BIBLE</small>
+          </div>
         </div>
         <div className="design-document-title">
           <strong>{history.document.title}</strong>
           <span>{dirty ? "UNSAVED" : "SAVED"}</span>
         </div>
         <div className="design-top-actions">
-          <Button onClick={() => setHistory(undoAdventureDesignCommand(history))} disabled={history.undoStack.length === 0}>Undo</Button>
-          <Button onClick={() => setHistory(redoAdventureDesignCommand(history))} disabled={history.redoStack.length === 0}>Redo</Button>
+          <Button
+            onClick={() => setHistory(undoAdventureDesignCommand(history))}
+            disabled={history.undoStack.length === 0}
+          >
+            Undo
+          </Button>
+          <Button
+            onClick={() => setHistory(redoAdventureDesignCommand(history))}
+            disabled={history.redoStack.length === 0}
+          >
+            Redo
+          </Button>
           <Button
             className="primary-button"
             onClick={() => {
@@ -856,7 +923,13 @@ export const AdventureDesignApp = () => {
         <div>
           {(["bible", "map", "puzzles", "cutscenes"] as const).map((item) => (
             <Button key={item} active={surface === item} onClick={() => setSurface(item)}>
-              {item === "bible" ? "Direction Bible" : item === "map" ? "Map & Chapters" : item === "puzzles" ? "Puzzles & Clues" : "Cutscene Storyboard"}
+              {item === "bible"
+                ? "Direction Bible"
+                : item === "map"
+                  ? "Map & Chapters"
+                  : item === "puzzles"
+                    ? "Puzzles & Clues"
+                    : "Cutscene Storyboard"}
             </Button>
           ))}
         </div>
@@ -876,7 +949,9 @@ export const AdventureDesignApp = () => {
             <span>Current design</span>
             <select value={showcaseIndex} onChange={chooseShowcase}>
               {showcaseAdventureDesigns.map((document, index) => (
-                <option key={document.projectId} value={index}>{document.title}</option>
+                <option key={document.projectId} value={index}>
+                  {document.title}
+                </option>
               ))}
             </select>
           </label>
@@ -896,9 +971,14 @@ export const AdventureDesignApp = () => {
           <div className="design-validation-summary">
             <span className="design-eyebrow">DESIGN REVIEW</span>
             <strong>{issues.length === 0 ? "Production coherent" : `${issues.length} issue(s)`}</strong>
-            <p>{issues[0]?.message ?? "Puzzle causality, references, hints and cutscene convergence are coherent."}</p>
+            <p>
+              {issues[0]?.message ??
+                "Puzzle causality, references, hints and cutscene convergence are coherent."}
+            </p>
           </div>
-          <div className="design-notice" role="status">{notice}</div>
+          <div className="design-notice" role="status">
+            {notice}
+          </div>
         </aside>
 
         <section className="design-canvas">

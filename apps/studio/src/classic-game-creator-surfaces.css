@@ -89,7 +89,9 @@
 
 .cc-puzzle-card li span {
   color: var(--cc-accent);
-  font: 900 14px/1 ui-monospace, monospace;
+  font:
+    900 14px / 1 ui-monospace,
+    monospace;
 }
 
 .cc-puzzle-card li p {
@@ -142,7 +144,9 @@
 
 .cc-timing-surface > header strong {
   color: var(--cc-warm);
-  font: 800 14px/1 ui-monospace, monospace;
+  font:
+    800 14px / 1 ui-monospace,
+    monospace;
 }
 
 .cc-timing-surface > header p {
@@ -167,7 +171,9 @@
 
 .cc-timing-chart article strong {
   color: var(--cc-warm);
-  font: 800 11px/1 ui-monospace, monospace;
+  font:
+    800 11px / 1 ui-monospace,
+    monospace;
 }
 
 .cc-timing-track {

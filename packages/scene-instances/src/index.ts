@@ -1,22 +1,22 @@
-import { z } from "zod";
 import {
-  conditionSchema,
-  idSchema,
-  interactionSchema,
-  pointSchema,
-  polygonSchema,
-  rectangleSchema,
-  sizeSchema,
   type Action,
   type Actor,
+  conditionSchema,
   type DialogueGraph,
   type Id,
   type InventoryItem,
+  idSchema,
+  interactionSchema,
   type NavigationArea,
+  pointSchema,
+  polygonSchema,
+  rectangleSchema,
   type Scene,
   type Sequence,
+  sizeSchema,
 } from "@evavo/adventure-project-schema";
 import { pointInPolygon } from "@evavo/adventure-scene";
+import { z } from "zod";
 
 export const sceneActorInstanceSchema = z
   .object({
@@ -89,9 +89,7 @@ export const sceneObjectInstanceSchema = z
     definitionId: idSchema("object-definition"),
     position: pointSchema,
     initialStateId: idSchema("object-state").optional(),
-    layer: z
-      .enum(["rear-ambient", "world", "occlusion", "front-ambient"])
-      .default("world"),
+    layer: z.enum(["rear-ambient", "world", "occlusion", "front-ambient"]).default("world"),
     elevation: z.number().finite().default(0),
     zOffset: z.number().finite().default(0),
     scaleMultiplier: z.number().positive().default(1),
@@ -114,9 +112,7 @@ export const sceneNavigationPortalSchema = z
     traversalAnimationState: z.string().min(1).optional(),
   })
   .strict();
-export type SceneNavigationPortal = z.infer<
-  typeof sceneNavigationPortalSchema
->;
+export type SceneNavigationPortal = z.infer<typeof sceneNavigationPortalSchema>;
 
 export const sceneCompositionSchema = z
   .object({
@@ -141,9 +137,7 @@ export type SceneInstanceManifest = z.infer<typeof sceneInstanceManifestSchema>;
 export const parseSceneInstanceManifest = (input: unknown): SceneInstanceManifest =>
   sceneInstanceManifestSchema.parse(input);
 
-export const emptySceneInstanceManifest = (
-  projectId: Id<"project">,
-): SceneInstanceManifest => ({
+export const emptySceneInstanceManifest = (projectId: Id<"project">): SceneInstanceManifest => ({
   manifestVersion: 1,
   projectId,
   objectDefinitions: [],
@@ -152,21 +146,12 @@ export const emptySceneInstanceManifest = (
 
 export interface SceneInstanceAssetReference {
   readonly id: Id<"asset">;
-  readonly kind:
-    | "image"
-    | "spritesheet"
-    | "audio"
-    | "font"
-    | "video"
-    | "palette";
+  readonly kind: "image" | "spritesheet" | "audio" | "font" | "video" | "palette";
 }
 
 export interface SceneInstanceProjectContext {
   readonly projectId: Id<"project">;
-  readonly scenes: readonly Pick<
-    Scene,
-    "id" | "navigationAreas" | "entrances"
-  >[];
+  readonly scenes: readonly Pick<Scene, "id" | "navigationAreas" | "entrances">[];
   readonly actors: readonly Actor[];
   readonly assets: readonly SceneInstanceAssetReference[];
   readonly inventoryItems?: readonly Pick<InventoryItem, "id">[];
@@ -224,12 +209,7 @@ const registerId = (
 ): void => {
   const existing = ids.get(id);
   if (existing) {
-    addIssue(
-      issues,
-      "duplicate-scene-instance-id",
-      path,
-      `ID '${id}' is already declared at '${existing}'.`,
-    );
+    addIssue(issues, "duplicate-scene-instance-id", path, `ID '${id}' is already declared at '${existing}'.`);
   } else {
     ids.set(id, path);
   }
@@ -240,9 +220,7 @@ const pointInsideNavigation = (
   areas: readonly NavigationArea[],
 ): boolean => areas.some((area) => pointInPolygon(position, area.shape));
 
-const polygonArea = (
-  points: readonly { readonly x: number; readonly y: number }[],
-): number => {
+const polygonArea = (points: readonly { readonly x: number; readonly y: number }[]): number => {
   let total = 0;
   for (let index = 0; index < points.length; index += 1) {
     const current = points[index];
@@ -262,14 +240,8 @@ interface PlacedObjectReference {
 interface ActionValidationContext {
   readonly actorsById: ReadonlyMap<string, Actor>;
   readonly itemsById: ReadonlySet<string>;
-  readonly scenesById: ReadonlyMap<
-    string,
-    Pick<Scene, "id" | "navigationAreas" | "entrances">
-  >;
-  readonly dialoguesById: ReadonlyMap<
-    string,
-    Pick<DialogueGraph, "id" | "nodes">
-  >;
+  readonly scenesById: ReadonlyMap<string, Pick<Scene, "id" | "navigationAreas" | "entrances">>;
+  readonly dialoguesById: ReadonlyMap<string, Pick<DialogueGraph, "id" | "nodes">>;
   readonly sequencesById: ReadonlySet<string>;
   readonly objectsById: ReadonlyMap<string, PlacedObjectReference>;
 }
@@ -311,9 +283,7 @@ const validateInteractionAction = (
           `${path}.sceneId`,
           `Interaction action references missing scene '${action.sceneId}'.`,
         );
-      } else if (
-        !scene.entrances.some((entrance) => entrance.id === action.entranceId)
-      ) {
+      } else if (!scene.entrances.some((entrance) => entrance.id === action.entranceId)) {
         addIssue(
           issues,
           "missing-interaction-entrance",
@@ -342,10 +312,7 @@ const validateInteractionAction = (
           `${path}.dialogueId`,
           `Interaction action references missing dialogue '${action.dialogueId}'.`,
         );
-      } else if (
-        action.nodeId &&
-        !dialogue.nodes.some((node) => node.id === action.nodeId)
-      ) {
+      } else if (action.nodeId && !dialogue.nodes.some((node) => node.id === action.nodeId)) {
         addIssue(
           issues,
           "missing-interaction-dialogue-node",
@@ -364,10 +331,7 @@ const validateInteractionAction = (
           `${path}.objectId`,
           `Interaction action references missing object '${action.objectId}'.`,
         );
-      } else if (
-        placed.definition &&
-        !placed.definition.states.some((state) => state.id === action.state)
-      ) {
+      } else if (placed.definition && !placed.definition.states.some((state) => state.id === action.state)) {
         addIssue(
           issues,
           "invalid-interaction-object-state",
@@ -390,19 +354,11 @@ export const validateSceneInstanceManifest = (
 ): readonly SceneInstanceIssue[] => {
   const issues: SceneInstanceIssue[] = [];
   const ids = new Map<string, string>();
-  const scenesById = new Map(
-    context.scenes.map((scene) => [scene.id as string, scene]),
-  );
-  const actorsById = new Map(
-    context.actors.map((actor) => [actor.id as string, actor]),
-  );
-  const assetsById = new Map(
-    context.assets.map((asset) => [asset.id as string, asset]),
-  );
+  const scenesById = new Map(context.scenes.map((scene) => [scene.id as string, scene]));
+  const actorsById = new Map(context.actors.map((actor) => [actor.id as string, actor]));
+  const assetsById = new Map(context.assets.map((asset) => [asset.id as string, asset]));
   const definitionsById = new Map(
-    manifest.objectDefinitions.map(
-      (definition) => [definition.id as string, definition] as const,
-    ),
+    manifest.objectDefinitions.map((definition) => [definition.id as string, definition] as const),
   );
   const objectsById = new Map<string, PlacedObjectReference>();
 
@@ -420,13 +376,9 @@ export const validateSceneInstanceManifest = (
     itemsById: new Set((context.inventoryItems ?? []).map((item) => item.id)),
     scenesById,
     dialoguesById: new Map(
-      (context.dialogues ?? []).map(
-        (dialogue) => [dialogue.id as string, dialogue] as const,
-      ),
+      (context.dialogues ?? []).map((dialogue) => [dialogue.id as string, dialogue] as const),
     ),
-    sequencesById: new Set(
-      (context.sequences ?? []).map((sequence) => sequence.id),
-    ),
+    sequencesById: new Set((context.sequences ?? []).map((sequence) => sequence.id)),
     objectsById,
   };
 
@@ -469,8 +421,7 @@ export const validateSceneInstanceManifest = (
             `Object state '${state.id}' references missing asset '${visual.assetId}'.`,
           );
         } else {
-          const expectedKind =
-            visual.kind === "image" ? "image" : "spritesheet";
+          const expectedKind = visual.kind === "image" ? "image" : "spritesheet";
           if (asset.kind !== expectedKind) {
             addIssue(
               issues,
@@ -482,10 +433,7 @@ export const validateSceneInstanceManifest = (
         }
       }
 
-      if (
-        state.interactionShape &&
-        Math.abs(polygonArea(state.interactionShape.points)) < 1e-7
-      ) {
+      if (state.interactionShape && Math.abs(polygonArea(state.interactionShape.points)) < 1e-7) {
         addIssue(
           issues,
           "degenerate-object-interaction-shape",
@@ -497,14 +445,14 @@ export const validateSceneInstanceManifest = (
       state.interactions.forEach((interaction, interactionIndex) => {
         const interactionPath = `${statePath}.interactions[${interactionIndex}]`;
         registerId(ids, issues, interaction.id, `${interactionPath}.id`);
-        interaction.actions.forEach((action, actionIndex) =>
+        interaction.actions.forEach((action, actionIndex) => {
           validateInteractionAction(
             action,
             `${interactionPath}.actions[${actionIndex}]`,
             actionContext,
             issues,
-          ),
-        );
+          );
+        });
       });
     });
 
@@ -554,9 +502,7 @@ export const validateSceneInstanceManifest = (
         );
       } else if (
         !actor.animations.some(
-          (animation) =>
-            animation.state === instance.animationState &&
-            animation.facing === instance.facing,
+          (animation) => animation.state === instance.animationState && animation.facing === instance.facing,
         )
       ) {
         addIssue(
@@ -612,12 +558,8 @@ export const validateSceneInstanceManifest = (
       if (!scene) {
         return;
       }
-      const fromArea = scene.navigationAreas.find(
-        (area) => area.id === portal.fromAreaId,
-      );
-      const toArea = scene.navigationAreas.find(
-        (area) => area.id === portal.toAreaId,
-      );
+      const fromArea = scene.navigationAreas.find((area) => area.id === portal.fromAreaId);
+      const toArea = scene.navigationAreas.find((area) => area.id === portal.toAreaId);
       if (!fromArea) {
         addIssue(
           issues,
@@ -657,8 +599,4 @@ export const validateSceneInstanceManifest = (
 export const sceneCompositionById = (
   manifest: SceneInstanceManifest,
 ): ReadonlyMap<string, SceneComposition> =>
-  new Map(
-    manifest.scenes.map(
-      (composition) => [composition.sceneId as string, composition] as const,
-    ),
-  );
+  new Map(manifest.scenes.map((composition) => [composition.sceneId as string, composition] as const));

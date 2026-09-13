@@ -1,14 +1,12 @@
-import type { CSSProperties } from "react";
 import type {
   AdventureSceneReadabilityReport,
   AdventureSceneReadabilitySeverity,
 } from "@evavo/adventure-design/scene-readability";
+import type { CSSProperties } from "react";
 import { Button, FindingCard, Metric, SceneOverlay } from "./scene-readability-components.js";
 
 export type SceneReadabilityView = "overlay" | "findings" | "handoff";
-export type SceneReadabilityFindingFilter =
-  | "all"
-  | AdventureSceneReadabilitySeverity;
+export type SceneReadabilityFindingFilter = "all" | AdventureSceneReadabilitySeverity;
 
 export const OverlayView = ({ report }: { readonly report: AdventureSceneReadabilityReport }) => (
   <div className="cmp-overlay-view">
@@ -25,9 +23,9 @@ export const OverlayView = ({ report }: { readonly report: AdventureSceneReadabi
         <span className="cmp-eyebrow">NATIVE COMPOSITION READINESS</span>
         <h1>{report.sceneName}</h1>
         <p>
-          Geometry is evaluated in the same coordinate system used by navigation,
-          interaction, depth and final pixels. The overlay is a production proof, not a
-          substitute for viewing the finished background and actor sprites at 1×.
+          Geometry is evaluated in the same coordinate system used by navigation, interaction, depth and final
+          pixels. The overlay is a production proof, not a substitute for viewing the finished background and
+          actor sprites at 1×.
         </p>
       </div>
       <dl>
@@ -41,11 +39,7 @@ export const OverlayView = ({ report }: { readonly report: AdventureSceneReadabi
           value={report.metrics.hotspotCoveragePercent.toFixed(1)}
           suffix="%"
         />
-        <Metric
-          label="Depth span"
-          value={report.metrics.walkableVerticalSpanPercent.toFixed(1)}
-          suffix="%"
-        />
+        <Metric label="Depth span" value={report.metrics.walkableVerticalSpanPercent.toFixed(1)} suffix="%" />
       </dl>
     </section>
   </div>
@@ -60,9 +54,7 @@ export const FindingsView = ({
   readonly filter: SceneReadabilityFindingFilter;
   readonly onFilter: (filter: SceneReadabilityFindingFilter) => void;
 }) => {
-  const findings = report.findings.filter(
-    (finding) => filter === "all" || finding.severity === filter,
-  );
+  const findings = report.findings.filter((finding) => filter === "all" || finding.severity === filter);
   return (
     <section className="cmp-findings-view">
       <header>
@@ -104,8 +96,8 @@ export const HandoffView = ({ report }: { readonly report: AdventureSceneReadabi
       <span className="cmp-eyebrow">LEVEL AND ART HANDOFF</span>
       <h1>{report.designLink?.locationName ?? report.sceneName}</h1>
       <p>
-        Use this page as the shared review boundary between background art, actor animation,
-        level geometry, interaction authoring and runtime implementation.
+        Use this page as the shared review boundary between background art, actor animation, level geometry,
+        interaction authoring and runtime implementation.
       </p>
     </header>
     <div className="cmp-handoff-grid">
@@ -129,12 +121,8 @@ export const HandoffView = ({ report }: { readonly report: AdventureSceneReadabi
         <span>Navigation</span>
         <h2>Actor stage lane</h2>
         <p>
-          {report.metrics.navigationAreaCount} authored area(s), covering{
-            " "
-          }
-          {report.metrics.navigationCoveragePercent.toFixed(1)}% of the native canvas and{
-            " "
-          }
+          {report.metrics.navigationAreaCount} authored area(s), covering{" "}
+          {report.metrics.navigationCoveragePercent.toFixed(1)}% of the native canvas and{" "}
           {report.metrics.walkableVerticalSpanPercent.toFixed(1)}% of its vertical depth.
         </p>
       </article>
@@ -142,17 +130,16 @@ export const HandoffView = ({ report }: { readonly report: AdventureSceneReadabi
         <span>Interaction</span>
         <h2>Consequential targets</h2>
         <p>
-          {report.metrics.hotspotCount} hotspot(s), {report.metrics.exitHotspotCount} explicit
-          exit(s), and {report.metrics.hotspotCoveragePercent.toFixed(1)}% total target
-          coverage.
+          {report.metrics.hotspotCount} hotspot(s), {report.metrics.exitHotspotCount} explicit exit(s), and{" "}
+          {report.metrics.hotspotCoveragePercent.toFixed(1)}% total target coverage.
         </p>
       </article>
       <article>
         <span>Depth and occlusion</span>
         <h2>Foreground continuity</h2>
         <p>
-          {report.metrics.depthBandCount} depth band(s), {report.metrics.occluderCount}{" "}
-          occluder(s), and {report.metrics.entranceCount} controlled arrival point(s).
+          {report.metrics.depthBandCount} depth band(s), {report.metrics.occluderCount} occluder(s), and{" "}
+          {report.metrics.entranceCount} controlled arrival point(s).
         </p>
       </article>
       <article>

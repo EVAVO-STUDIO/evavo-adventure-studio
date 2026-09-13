@@ -1,0 +1,460 @@
+.localisation-app {
+  min-width: 1180px;
+}
+
+.localisation-toolbar {
+  justify-content: space-between;
+}
+
+.localisation-toolbar-summary {
+  display: flex;
+  min-width: 0;
+  flex: 1;
+  flex-direction: column;
+  padding: 0 18px;
+}
+
+.localisation-toolbar-summary strong {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  color: #d9dce4;
+  font-size: 11px;
+}
+
+.localisation-workspace-grid {
+  display: grid;
+  grid-template-columns: 236px minmax(560px, 1fr) 310px;
+  min-height: calc(100vh - 118px);
+  background: #090a0e;
+}
+
+.localisation-locale-sidebar,
+.localisation-inspector {
+  min-width: 0;
+  background: #101117;
+}
+
+.localisation-locale-sidebar {
+  border-right: 1px solid #292b33;
+}
+
+.localisation-inspector {
+  overflow: auto;
+  border-left: 1px solid #292b33;
+}
+
+.localisation-locale-list {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  padding: 8px;
+}
+
+.localisation-locale-list button {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+  width: 100%;
+  min-height: 54px;
+  padding: 9px 10px;
+  border: 1px solid transparent;
+  border-radius: 3px;
+  background: #15171e;
+  color: #d9dce4;
+  text-align: left;
+  cursor: pointer;
+}
+
+.localisation-locale-list button:hover,
+.localisation-locale-list button.is-active {
+  border-color: #444752;
+  background: #1a1d26;
+}
+
+.localisation-locale-list button.is-active {
+  box-shadow: inset 2px 0 0 #ff244e;
+}
+
+.localisation-locale-list button span {
+  display: flex;
+  min-width: 0;
+  flex-direction: column;
+  gap: 3px;
+}
+
+.localisation-locale-list strong,
+.localisation-locale-list small {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.localisation-locale-list strong {
+  font-size: 11px;
+}
+
+.localisation-locale-list small,
+.localisation-locale-list b {
+  color: #7f838f;
+  font-size: 8px;
+  font-weight: 700;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+}
+
+.localisation-add-locale {
+  display: grid;
+  gap: 7px;
+  margin: 8px;
+  padding: 12px;
+  border-top: 1px solid #292b33;
+  background: #0d0f14;
+}
+
+.localisation-add-locale input,
+.localisation-search,
+.localisation-field input,
+.localisation-field select,
+.localisation-field textarea {
+  box-sizing: border-box;
+  width: 100%;
+  border: 1px solid #333640;
+  border-radius: 2px;
+  background: #0b0c11;
+  color: #eff0f4;
+  font: inherit;
+}
+
+.localisation-add-locale input,
+.localisation-search,
+.localisation-field input,
+.localisation-field select {
+  height: 30px;
+  padding: 0 8px;
+}
+
+.localisation-field textarea {
+  min-height: 104px;
+  resize: vertical;
+  padding: 10px;
+  line-height: 1.5;
+}
+
+.localisation-add-locale input:focus,
+.localisation-search:focus,
+.localisation-field input:focus,
+.localisation-field select:focus,
+.localisation-field textarea:focus {
+  border-color: #ff244e;
+  outline: none;
+}
+
+.localisation-catalogue-column {
+  display: grid;
+  grid-template-rows: auto minmax(220px, 1fr) auto;
+  min-width: 0;
+  overflow: hidden;
+  background: #0b0c11;
+}
+
+.localisation-catalogue-head,
+.localisation-editor-heading {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 16px;
+}
+
+.localisation-catalogue-head {
+  padding: 14px 16px;
+  border-bottom: 1px solid #292b33;
+  background: #101117;
+}
+
+.localisation-catalogue-head h2,
+.localisation-editor-heading h2 {
+  margin: 2px 0 0;
+  color: #f2f3f6;
+  font-size: 14px;
+  font-weight: 700;
+}
+
+.localisation-search {
+  max-width: 360px;
+}
+
+.localisation-string-list {
+  overflow: auto;
+  padding: 6px;
+}
+
+.localisation-string-list button {
+  position: relative;
+  display: grid;
+  grid-template-columns: 118px minmax(0, 1fr) auto;
+  gap: 5px 12px;
+  width: 100%;
+  padding: 9px 10px;
+  border: 1px solid transparent;
+  border-bottom-color: #22242b;
+  background: transparent;
+  color: #cdd0d8;
+  text-align: left;
+  cursor: pointer;
+}
+
+.localisation-string-list button:hover,
+.localisation-string-list button.is-active {
+  border-color: #373a44;
+  background: #12141b;
+}
+
+.localisation-string-list button.is-active {
+  box-shadow: inset 2px 0 0 #ff244e;
+}
+
+.localisation-string-role,
+.localisation-string-state,
+.localisation-string-list small {
+  color: #7d818d;
+  font-size: 8px;
+  font-weight: 700;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+}
+
+.localisation-string-role {
+  grid-row: span 2;
+  align-self: center;
+}
+
+.localisation-string-list strong {
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  font-size: 11px;
+  font-weight: 600;
+}
+
+.localisation-string-list small {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  text-transform: none;
+}
+
+.localisation-string-state {
+  grid-column: 3;
+  grid-row: 1 / span 2;
+  align-self: center;
+  white-space: nowrap;
+}
+
+.localisation-string-state.is-translated {
+  color: #9fc8a8;
+}
+
+.localisation-string-state.is-missing {
+  color: #c79d72;
+}
+
+.localisation-editor-card {
+  display: grid;
+  gap: 12px;
+  padding: 16px;
+  border-top: 1px solid #292b33;
+  background: #101117;
+}
+
+.localisation-editor-heading > span {
+  color: #8b8f9a;
+  font-size: 8px;
+  font-weight: 800;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+}
+
+.localisation-source-copy,
+.localisation-pseudo-preview {
+  padding: 10px 12px;
+  border: 1px solid #2b2d35;
+  border-radius: 2px;
+  background: #0c0d12;
+}
+
+.localisation-source-copy span,
+.localisation-pseudo-preview span {
+  color: #6f737e;
+  font-size: 8px;
+  font-weight: 800;
+  letter-spacing: 0.08em;
+}
+
+.localisation-source-copy p,
+.localisation-pseudo-preview p {
+  margin: 7px 0 0;
+  color: #dadde4;
+  line-height: 1.5;
+}
+
+.localisation-pseudo-preview p {
+  color: #9ea3b0;
+  font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
+  font-size: 10px;
+}
+
+.localisation-field {
+  display: grid;
+  gap: 6px;
+}
+
+.localisation-field > span {
+  color: #7e828e;
+  font-size: 8px;
+  font-weight: 800;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+}
+
+.localisation-inspector > section,
+.localisation-settings,
+.localisation-metrics,
+.localisation-source-inspector,
+.localisation-fit-inspector,
+.localisation-findings {
+  display: grid;
+  gap: 10px;
+  padding: 14px;
+  border-top: 1px solid #292b33;
+}
+
+.localisation-settings .danger-button {
+  border-color: #4b2a32;
+  color: #c99ca7;
+}
+
+.localisation-metric-grid {
+  display: grid;
+  grid-template-columns: repeat(2, 1fr);
+  gap: 6px;
+}
+
+.localisation-metric-grid > div {
+  display: flex;
+  min-height: 54px;
+  flex-direction: column;
+  justify-content: center;
+  padding: 8px;
+  border: 1px solid #2c2f38;
+  background: #0c0e13;
+}
+
+.localisation-metric-grid strong {
+  color: #f0f1f4;
+  font-size: 16px;
+}
+
+.localisation-metric-grid span,
+.localisation-fit-grid span {
+  color: #737784;
+  font-size: 8px;
+  font-weight: 700;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+}
+
+.localisation-source-inspector dl {
+  display: grid;
+  gap: 8px;
+  margin: 0;
+}
+
+.localisation-source-inspector dl > div {
+  display: grid;
+  gap: 3px;
+}
+
+.localisation-source-inspector dt {
+  color: #6f7380;
+  font-size: 8px;
+  font-weight: 800;
+  text-transform: uppercase;
+}
+
+.localisation-source-inspector dd {
+  margin: 0;
+  overflow-wrap: anywhere;
+  color: #cbd0d9;
+  font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
+  font-size: 9px;
+}
+
+.localisation-fit-grid {
+  display: grid;
+  gap: 6px;
+}
+
+.localisation-fit-grid > div {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+  padding: 7px 0;
+  border-bottom: 1px solid #23252c;
+}
+
+.localisation-fit-grid strong {
+  color: #d7dae2;
+  font-size: 9px;
+  text-align: right;
+}
+
+.localisation-findings > div {
+  padding: 9px 10px;
+  border-left: 2px solid #555a66;
+  background: #0d0f14;
+}
+
+.localisation-findings > div.is-error {
+  border-left-color: #ff244e;
+}
+
+.localisation-findings > div.is-warning {
+  border-left-color: #c68a4b;
+}
+
+.localisation-findings strong {
+  color: #d9dce4;
+  font-size: 9px;
+}
+
+.localisation-findings p,
+.localisation-clean,
+.localisation-fit-inspector p {
+  margin: 4px 0 0;
+  color: #898e9a;
+  font-size: 9px;
+  line-height: 1.45;
+}
+
+.localisation-clean {
+  color: #88aa91;
+}
+
+.localisation-notice {
+  margin: 12px;
+  padding: 9px 10px;
+  border: 1px solid #30333c;
+  background: #151820;
+  color: #b4b8c2;
+  font-size: 9px;
+}
+
+@media (max-width: 1320px) {
+  .localisation-workspace-grid {
+    grid-template-columns: 210px minmax(520px, 1fr) 280px;
+  }
+}

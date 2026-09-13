@@ -1,0 +1,17 @@
+{
+  "schemaVersion": "evavo.repo-manifest.v1",
+  "identity": {"key":"evavo-adventure-studio","name":"EVAVO Adventure Studio","owner":"EVAVO-STUDIO","category":"classic-adventure-engine-foundation","status":"active"},
+  "runtime": {"language":"typescript","localFirst":true,"requiresPaidHostedControlPlane":false},
+  "summary": "Canonical reusable engine, visual authoring environment and deterministic production toolchain for original 1990s-style point-and-click adventure games.",
+  "defaultBranch": "main",
+  "providerPosture": {"observedRepositoryVisibility":"public","trackedSourceMustRemainPublicSafe":true,"visibilityIntentReviewRequired":true},
+  "authority": {
+    "readOnly": ["validate-adventure-project","inspect-scene-staging-and-progression","inspect-authenticity-and-playfeel-evidence","inspect-save-replay-and-compiled-output"],
+    "reversible": ["author-project-and-scene-data","compile-deterministic-runtime-bundle","create-browser-or-windows-development-build","create-playtest-replay-and-evidence"],
+    "consequential": ["promote-exact-reviewed-game-package"],
+    "neverImplicit": ["copy-protected-commercial-assets-or-content","let-editor-renderer-or-platform-shell-own-canonical-game-data","treat-procedural-profile-as-title-copy","claim-build-or-test-pass-without-execution","nest-sibling-repositories-inside-worktree"]
+  },
+  "integrations": ["evavo-art-studio","evavo-sprite-studio","dialogue-manager","localization-manager","evavo-audio-studio","GodotGameFoundationKit","automated-testing","delivery-studio"],
+  "responsibilityBoundary": {"owns":["classic-adventure-game-runtime","adventure-project-schema","scene-staging-and-progression","adventure-authoring-tools","deterministic-save-replay-and-export"],"doesNotOwn":["generic-art-production","generic-audio-production","portfolio-game-creation-policy"]},
+  "reviewedAt": "2026-09-05"
+}

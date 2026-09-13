@@ -35,19 +35,11 @@ export type AdventureProductionProfileReference =
   | "neo-noir-lowres";
 
 export type AdventureNativeQuantization = "native-pixel" | "subpixel";
-export type AdventureRetargetPolicy =
-  | "replace-immediately"
-  | "cancel-and-settle"
-  | "finish-current-segment";
+export type AdventureRetargetPolicy = "replace-immediately" | "cancel-and-settle" | "finish-current-segment";
 export type AdventureWalkPhaseMode = "distance";
 export type AdventureCameraMode = "fixed" | "dead-zone-follow" | "shot-led";
 export type AdventureRenderInterpolation = "none" | "camera-only";
-export type AdventureMotionPhase =
-  | "starting"
-  | "moving"
-  | "cornering"
-  | "arriving"
-  | "arrived";
+export type AdventureMotionPhase = "starting" | "moving" | "cornering" | "arriving" | "arrived";
 export type AdventureFootfall = "left" | "right" | null;
 
 export interface AdventureMovementFeel {

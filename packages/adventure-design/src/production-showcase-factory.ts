@@ -1,3 +1,4 @@
+import type { AdventureProductionProfileId, AdventurePuzzleGrammar } from "./production-profile-types.js";
 import type {
   AdventureProductionShowcase,
   AdventureShowcaseActorBeat,
@@ -7,10 +8,6 @@ import type {
   AdventureShowcasePuzzleBeat,
   AdventureShowcaseVisualMotif,
 } from "./production-showcase-types.js";
-import type {
-  AdventureProductionProfileId,
-  AdventurePuzzleGrammar,
-} from "./production-profile-types.js";
 
 export const actor = (
   id: string,

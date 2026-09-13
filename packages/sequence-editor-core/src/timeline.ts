@@ -1,9 +1,4 @@
-import type {
-  Id,
-  Sequence,
-  SequenceCue,
-  SequenceTrack,
-} from "@evavo/adventure-project-schema";
+import type { Id, Sequence, SequenceCue, SequenceTrack } from "@evavo/adventure-project-schema";
 import { canonicalSequenceEditorJson } from "./index.js";
 
 export interface TimelineViewport {
@@ -44,10 +39,7 @@ const assertViewport = (viewport: TimelineViewport): void => {
   }
 };
 
-export const timelineXForTick = (
-  tick: number,
-  viewport: TimelineViewport,
-): number => {
+export const timelineXForTick = (tick: number, viewport: TimelineViewport): number => {
   assertViewport(viewport);
   if (!Number.isFinite(tick)) {
     throw new RangeError("Timeline tick must be finite.");
@@ -55,10 +47,7 @@ export const timelineXForTick = (
   return (tick - viewport.scrollTick) * viewport.pixelsPerTick;
 };
 
-export const timelineTickForX = (
-  x: number,
-  viewport: TimelineViewport,
-): number => {
+export const timelineTickForX = (x: number, viewport: TimelineViewport): number => {
   assertViewport(viewport);
   if (!Number.isFinite(x)) {
     throw new RangeError("Timeline X coordinate must be finite.");
@@ -66,11 +55,7 @@ export const timelineTickForX = (
   return viewport.scrollTick + x / viewport.pixelsPerTick;
 };
 
-export const snapTimelineTick = (
-  tick: number,
-  intervalTicks: number,
-  maximumTick: number,
-): number => {
+export const snapTimelineTick = (tick: number, intervalTicks: number, maximumTick: number): number => {
   if (!Number.isFinite(tick)) {
     throw new RangeError("Timeline tick must be finite.");
   }
@@ -80,10 +65,7 @@ export const snapTimelineTick = (
   if (!Number.isSafeInteger(maximumTick) || maximumTick < 0) {
     throw new RangeError("Timeline maximum tick must be non-negative.");
   }
-  return Math.min(
-    maximumTick,
-    Math.max(0, Math.round(tick / intervalTicks) * intervalTicks),
-  );
+  return Math.min(maximumTick, Math.max(0, Math.round(tick / intervalTicks) * intervalTicks));
 };
 
 export const cueDurationTicks = (cue: SequenceCue): number => {
@@ -98,8 +80,7 @@ export const cueDurationTicks = (cue: SequenceCue): number => {
   }
 };
 
-export const cueEndTick = (cue: SequenceCue): number =>
-  cue.atTick + cueDurationTicks(cue);
+export const cueEndTick = (cue: SequenceCue): number => cue.atTick + cueDurationTicks(cue);
 
 export const cueLabel = (cue: SequenceCue): string => {
   switch (cue.kind) {
@@ -156,9 +137,7 @@ export const layoutSequenceTimeline = (
   assertViewport(viewport);
   return sequence.tracks.map((track) => ({
     track,
-    cues: track.cues.map((_cue, cueIndex) =>
-      layoutTimelineCue(track, cueIndex, viewport),
-    ),
+    cues: track.cues.map((_cue, cueIndex) => layoutTimelineCue(track, cueIndex, viewport)),
   }));
 };
 
@@ -168,24 +147,16 @@ export const timelineVisibleTickRange = (
   assertViewport(viewport);
   return {
     startTick: viewport.scrollTick,
-    endTick:
-      viewport.scrollTick + viewport.widthPixels / viewport.pixelsPerTick,
+    endTick: viewport.scrollTick + viewport.widthPixels / viewport.pixelsPerTick,
   };
 };
 
-export const sameTimelineCueLocator = (
-  left: TimelineCueLocator,
-  right: TimelineCueLocator,
-): boolean =>
+export const sameTimelineCueLocator = (left: TimelineCueLocator, right: TimelineCueLocator): boolean =>
   left.trackId === right.trackId &&
   left.cueIndex === right.cueIndex &&
-  canonicalSequenceEditorJson(left.expectedCue) ===
-    canonicalSequenceEditorJson(right.expectedCue);
+  canonicalSequenceEditorJson(left.expectedCue) === canonicalSequenceEditorJson(right.expectedCue);
 
-export const insertionIndexForTick = (
-  track: SequenceTrack,
-  tick: number,
-): number => {
+export const insertionIndexForTick = (track: SequenceTrack, tick: number): number => {
   if (!Number.isFinite(tick)) {
     throw new RangeError("Timeline insertion tick must be finite.");
   }

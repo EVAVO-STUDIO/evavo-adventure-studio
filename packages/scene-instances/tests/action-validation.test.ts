@@ -1,9 +1,6 @@
-import { describe, expect, it } from "vitest";
 import { parseAdventureProject } from "@evavo/adventure-project-schema";
-import {
-  parseSceneInstanceManifest,
-  validateSceneInstanceManifest,
-} from "../src/index.js";
+import { describe, expect, it } from "vitest";
+import { parseSceneInstanceManifest, validateSceneInstanceManifest } from "../src/index.js";
 
 const project = parseAdventureProject({
   schemaVersion: 1,
@@ -191,15 +188,10 @@ describe("scene interaction action validation", () => {
         },
       ],
     });
-    const codes = validateSceneInstanceManifest(context, manifest).map(
-      (issue) => issue.code,
-    );
+    const codes = validateSceneInstanceManifest(context, manifest).map((issue) => issue.code);
 
     expect(codes).toEqual(
-      expect.arrayContaining([
-        "invalid-interaction-object-state",
-        "missing-interaction-object",
-      ]),
+      expect.arrayContaining(["invalid-interaction-object-state", "missing-interaction-object"]),
     );
   });
 });

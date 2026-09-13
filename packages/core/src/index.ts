@@ -131,10 +131,7 @@ const normalizeSeed = (seed: number): number => {
   return normalized === 0 ? 0x6d2b79f5 : normalized;
 };
 
-export const createInitialState = (
-  project: AdventureProject,
-  seed = 0x45564156,
-): RuntimeState => {
+export const createInitialState = (project: AdventureProject, seed = 0x45564156): RuntimeState => {
   const startScene = project.scenes.find((scene) => scene.id === project.startSceneId);
   if (!startScene) {
     throw new Error(`Start scene '${project.startSceneId}' does not exist.`);
@@ -211,10 +208,7 @@ const compareScalars = (
   return false;
 };
 
-export const evaluateCondition = (
-  condition: Condition,
-  state: RuntimeState,
-): boolean => {
+export const evaluateCondition = (condition: Condition, state: RuntimeState): boolean => {
   switch (condition.kind) {
     case "always":
       return true;
@@ -222,9 +216,7 @@ export const evaluateCondition = (
       return (state.flags[condition.flag] ?? false) === condition.equals;
     case "variable": {
       const actual = state.variables[condition.variable];
-      return actual === undefined
-        ? false
-        : compareScalars(actual, condition.operator, condition.value);
+      return actual === undefined ? false : compareScalars(actual, condition.operator, condition.value);
     }
     case "has-item":
       return state.inventory.includes(condition.itemId);
@@ -362,10 +354,7 @@ const applyAction = (state: RuntimeState, action: Action): RuntimeTransition => 
   }
 };
 
-export const applyActions = (
-  state: RuntimeState,
-  actions: readonly Action[],
-): RuntimeTransition => {
+export const applyActions = (state: RuntimeState, actions: readonly Action[]): RuntimeTransition => {
   let nextState = state;
   const events: RuntimeEvent[] = [];
 
@@ -378,10 +367,7 @@ export const applyActions = (
   return { state: nextState, events };
 };
 
-export const runInteraction = (
-  state: RuntimeState,
-  interaction: Interaction,
-): InteractionResult => {
+export const runInteraction = (state: RuntimeState, interaction: Interaction): InteractionResult => {
   if (interaction.once && state.consumedInteractionIds.includes(interaction.id)) {
     return { kind: "rejected", reason: "already-used", state };
   }
@@ -395,10 +381,7 @@ export const runInteraction = (
   const nextState = shouldConsume
     ? {
         ...transition.state,
-        consumedInteractionIds: [
-          ...transition.state.consumedInteractionIds,
-          interaction.id,
-        ],
+        consumedInteractionIds: [...transition.state.consumedInteractionIds, interaction.id],
       }
     : transition.state;
 
@@ -406,10 +389,7 @@ export const runInteraction = (
     kind: "accepted",
     transition: {
       state: nextState,
-      events: [
-        ...transition.events,
-        { kind: "interaction-completed", interactionId: interaction.id },
-      ],
+      events: [...transition.events, { kind: "interaction-completed", interactionId: interaction.id }],
     },
   };
 };

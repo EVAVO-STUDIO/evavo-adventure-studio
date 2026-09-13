@@ -1,15 +1,17 @@
+import { type Id, sequenceSchema } from "@evavo/adventure-project-schema";
 import { describe, expect, it } from "vitest";
-import { sequenceSchema } from "@evavo/adventure-project-schema";
+import { parseSequenceEditorCommand } from "../src/command-schema.js";
 import {
   createSequenceEditorHistory,
   executeSequenceEditorCommand,
   isSequenceEditorDocumentDirty,
   markSequenceEditorHistorySaved,
   redoSequenceEditorCommand,
-  SequenceEditorCommandError,
+  type SequenceEditorCommandError,
   undoSequenceEditorCommand,
 } from "../src/index.js";
-import { parseSequenceEditorCommand } from "../src/command-schema.js";
+
+const id = <T extends string>(value: string) => value as Id<T>;
 
 const sequence = sequenceSchema.parse({
   id: "sequence.office.blackout",
@@ -22,9 +24,7 @@ const sequence = sequenceSchema.parse({
   skip: {
     allowed: true,
     safeAfterTick: 30,
-    completionActions: [
-      { kind: "set-flag", flag: "office.blackout-watched", value: true },
-    ],
+    completionActions: [{ kind: "set-flag", flag: "office.blackout-watched", value: true }],
   },
   tracks: [
     {
@@ -34,7 +34,7 @@ const sequence = sequenceSchema.parse({
         {
           kind: "actor-animation",
           atTick: 0,
-          actorId: "actor.detective",
+          actorId: id<"actor">("actor.detective"),
           animationState: "idle",
           facing: "east",
           awaitCompletion: false,
@@ -43,7 +43,7 @@ const sequence = sequenceSchema.parse({
           kind: "actor-move",
           atTick: 60,
           durationTicks: 80,
-          actorId: "actor.detective",
+          actorId: id<"actor">("actor.detective"),
           destination: { x: 190, y: 166 },
           easing: "linear",
         },
@@ -160,7 +160,7 @@ describe("sequence editor history", () => {
         cue: {
           kind: "sound",
           atTick: 180,
-          assetId: "asset.sound.thunder",
+          assetId: id<"asset">("asset.sound.thunder"),
           bus: "effects",
           volume: 1,
           loop: false,
@@ -185,7 +185,7 @@ describe("sequence editor history", () => {
         cue: {
           kind: "actor-animation",
           atTick: 180,
-          actorId: "actor.detective",
+          actorId: id<"actor">("actor.detective"),
           animationState: "turn",
           awaitCompletion: false,
         },
@@ -216,37 +216,34 @@ describe("sequence editor history", () => {
   });
 
   it("applies atomic track and cue batches", () => {
-    const history = executeSequenceEditorCommand(
-      createSequenceEditorHistory(sequence),
-      {
-        kind: "batch",
-        commands: [
-          {
-            kind: "insert-track",
-            index: sequence.tracks.length,
-            track: {
-              id: "sequence-track.office.effects",
-              kind: "effects",
-              cues: [],
-            },
+    const history = executeSequenceEditorCommand(createSequenceEditorHistory(sequence), {
+      kind: "batch",
+      commands: [
+        {
+          kind: "insert-track",
+          index: sequence.tracks.length,
+          track: {
+            id: id<"sequence-track">("sequence-track.office.effects"),
+            kind: "effects",
+            cues: [],
           },
-          {
-            kind: "insert-cue",
-            trackId: "sequence-track.office.effects",
-            index: 0,
-            cue: {
-              kind: "layer-visibility",
-              atTick: 30,
-              layerId: "layer.office.lamps",
-              visible: false,
-            },
+        },
+        {
+          kind: "insert-cue",
+          trackId: id<"sequence-track">("sequence-track.office.effects"),
+          index: 0,
+          cue: {
+            kind: "layer-visibility",
+            atTick: 30,
+            layerId: "layer.office.lamps",
+            visible: false,
           },
-        ],
-      },
-    );
+        },
+      ],
+    });
 
     expect(history.document.sequence.tracks.at(-1)).toMatchObject({
-      id: "sequence-track.office.effects",
+      id: id<"sequence-track">("sequence-track.office.effects"),
       cues: [{ kind: "layer-visibility", atTick: 30 }],
     });
     expect(history.undoStack).toHaveLength(1);
@@ -272,8 +269,6 @@ describe("sequence editor command schema", () => {
   });
 
   it("rejects empty timeline batches", () => {
-    expect(() =>
-      parseSequenceEditorCommand({ kind: "batch", commands: [] }),
-    ).toThrow();
+    expect(() => parseSequenceEditorCommand({ kind: "batch", commands: [] })).toThrow();
   });
 });

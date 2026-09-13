@@ -1,16 +1,12 @@
-import {
-  createReplayLog,
-  executeReplay,
-} from "@evavo/adventure-replay";
 import type { Id } from "@evavo/adventure-project-schema";
+import { createReplayLog, executeReplay } from "@evavo/adventure-replay";
 import type { RuntimeBundle } from "@evavo/adventure-runtime-bundle";
 import { createSaveGame } from "@evavo/adventure-save-game";
 import { describe, expect, it } from "vitest";
 import { createPackagedRuntimeController } from "../src/packaged-controller.js";
 
 const hash = "0".repeat(64);
-const actorInstanceId =
-  "actor-instance.traveller" as Id<"actor-instance">;
+const actorInstanceId = "actor-instance.traveller" as Id<"actor-instance">;
 
 const actorFrame = (id: string, x: number) => ({
   id,
@@ -142,11 +138,7 @@ const bundle = {
     {
       id: "actor.traveller",
       name: "Traveller",
-      frames: [
-        actorFrame("frame.idle", 0),
-        actorFrame("frame.walk-a", 14),
-        actorFrame("frame.walk-b", 28),
-      ],
+      frames: [actorFrame("frame.idle", 0), actorFrame("frame.walk-a", 14), actorFrame("frame.walk-b", 28)],
       animations: [
         {
           id: "animation.idle-east",
@@ -336,9 +328,7 @@ describe("profiled camera in the packaged runtime controller", () => {
 
     const restored = createPackagedRuntimeController(bundle);
     restored.restoreSaveGame(save);
-    expect(restored.createFrame(0).camera).toEqual(
-      controller.createFrame(0).camera,
-    );
+    expect(restored.createFrame(0).camera).toEqual(controller.createFrame(0).camera);
     expect(restored.cameraState()).toEqual(controller.cameraState());
   });
 
@@ -363,11 +353,7 @@ describe("profiled camera in the packaged runtime controller", () => {
     const source = createPackagedRuntimeController(bundle);
     source.activate({ x: 300, y: 160 });
     source.createFrame(120);
-    const legacySave = createSaveGame(
-      bundle,
-      source.worldState(),
-      interfaceState,
-    );
+    const legacySave = createSaveGame(bundle, source.worldState(), interfaceState);
 
     expect(legacySave.interface.profiledCamera).toBeUndefined();
 
@@ -383,11 +369,7 @@ describe("profiled camera in the packaged runtime controller", () => {
     const source = createPackagedRuntimeController(bundle);
     source.activate({ x: 300, y: 160 });
     source.createFrame(90);
-    const legacyInitialSave = createSaveGame(
-      bundle,
-      source.worldState(),
-      interfaceState,
-    );
+    const legacyInitialSave = createSaveGame(bundle, source.worldState(), interfaceState);
 
     const direct = createPackagedRuntimeController(bundle);
     direct.restoreSaveGame(legacyInitialSave);
@@ -403,9 +385,7 @@ describe("profiled camera in the packaged runtime controller", () => {
     const replayController = createPackagedRuntimeController(bundle);
     const result = executeReplay(bundle, replay, replayController);
 
-    expect(result.finalSaveFingerprint).toBe(
-      expectedLegacySave.saveFingerprint,
-    );
+    expect(result.finalSaveFingerprint).toBe(expectedLegacySave.saveFingerprint);
     expect(result.finalSave.interface.profiledCamera).toBeUndefined();
   });
 
@@ -426,8 +406,6 @@ describe("profiled camera in the packaged runtime controller", () => {
     const result = executeReplay(bundle, replay, replayController);
 
     expect(result.finalSaveFingerprint).toBe(expectedSave.saveFingerprint);
-    expect(result.finalSave.interface.profiledCamera).toEqual(
-      expectedSave.interface.profiledCamera,
-    );
+    expect(result.finalSave.interface.profiledCamera).toEqual(expectedSave.interface.profiledCamera);
   });
 });

@@ -5,10 +5,7 @@ import type {
   SolidRectangleRenderNode,
 } from "@evavo/adventure-render-contract";
 import type { RuntimeBundle } from "@evavo/adventure-runtime-bundle";
-import {
-  createIntegerPresentationTransform,
-  hostPointToNative,
-} from "@evavo/adventure-scene";
+import { createIntegerPresentationTransform, hostPointToNative } from "@evavo/adventure-scene";
 import type { ResolvedSceneObjectHotspot } from "@evavo/adventure-scene-runtime/interactions";
 
 export interface ClientPoint {
@@ -46,8 +43,7 @@ export interface SoftwareCursorState {
   readonly pressed: boolean;
 }
 
-const renderNodeId = (value: string): Id<"render-node"> =>
-  value as Id<"render-node">;
+const renderNodeId = (value: string): Id<"render-node"> => value as Id<"render-node">;
 
 export const selectControlledActorInstance = (
   bundle: Pick<RuntimeBundle, "startSceneId" | "sceneInstances">,
@@ -59,9 +55,7 @@ export const selectControlledActorInstance = (
   const placed = composition?.actorInstances ?? [];
 
   if (requestedActorInstanceId) {
-    const requested = placed.find(
-      (candidate) => candidate.id === requestedActorInstanceId,
-    );
+    const requested = placed.find((candidate) => candidate.id === requestedActorInstanceId);
     if (!requested) {
       return {
         kind: "invalid",
@@ -96,10 +90,7 @@ export const selectControlledActorInstance = (
   }
   return {
     kind: "none",
-    reason:
-      candidates.length === 0
-        ? "no-walkable-actor"
-        : "ambiguous-walkable-actors",
+    reason: candidates.length === 0 ? "no-walkable-actor" : "ambiguous-walkable-actors",
     candidates,
   };
 };
@@ -134,17 +125,13 @@ export const mapClientPointToNative = (
   );
 };
 
-export const nativeScreenPointToWorld = (
-  nativePoint: Point,
-  camera: ResolvedCamera,
-): Point => ({
+export const nativeScreenPointToWorld = (nativePoint: Point, camera: ResolvedCamera): Point => ({
   x: nativePoint.x + camera.position.x - camera.shakeOffset.x,
   y: nativePoint.y + camera.position.y - camera.shakeOffset.y,
 });
 
-export const cursorIdForObjectTarget = (
-  target: ResolvedSceneObjectHotspot | null,
-): string => target?.hotspot.cursor ?? (target ? "use" : "walk");
+export const cursorIdForObjectTarget = (target: ResolvedSceneObjectHotspot | null): string =>
+  target?.hotspot.cursor ?? (target ? "use" : "walk");
 
 export const verbForCursorId = (cursorId: string): string => {
   switch (cursorId) {
@@ -224,24 +211,8 @@ export const createSoftwareCursorNodes = (
 
   if (state.cursorId === "walk") {
     return [
-      cursorRectangle(
-        "cursor.walk.outline.horizontal",
-        x - 5,
-        y - 1,
-        11,
-        3,
-        outline,
-        0,
-      ),
-      cursorRectangle(
-        "cursor.walk.outline.vertical",
-        x - 1,
-        y - 5,
-        3,
-        11,
-        outline,
-        1,
-      ),
+      cursorRectangle("cursor.walk.outline.horizontal", x - 5, y - 1, 11, 3, outline, 0),
+      cursorRectangle("cursor.walk.outline.vertical", x - 1, y - 5, 3, 11, outline, 1),
       cursorRectangle("cursor.walk.horizontal", x - 4, y, 9, 1, color, 2),
       cursorRectangle("cursor.walk.vertical", x, y - 4, 1, 9, color, 3),
       cursorRectangle("cursor.walk.center", x, y, 1, 1, 0xff244e, 4),
@@ -249,43 +220,23 @@ export const createSoftwareCursorNodes = (
   }
 
   return [
-    cursorRectangle(
-      "cursor.action.outline.shaft",
-      x - 1,
-      y - 1,
-      3,
-      10,
-      outline,
-      0,
-    ),
-    cursorRectangle(
-      "cursor.action.outline.head",
-      x - 1,
-      y - 1,
-      8,
-      3,
-      outline,
-      1,
-    ),
+    cursorRectangle("cursor.action.outline.shaft", x - 1, y - 1, 3, 10, outline, 0),
+    cursorRectangle("cursor.action.outline.head", x - 1, y - 1, 8, 3, outline, 1),
     cursorRectangle("cursor.action.shaft", x, y, 1, 8, color, 2),
     cursorRectangle("cursor.action.head.horizontal", x, y, 6, 1, color, 3),
     cursorRectangle("cursor.action.head.vertical", x, y, 1, 6, color, 4),
   ];
 };
 
-export const appendSoftwareCursor = (
-  frame: ResolvedFrame,
-  state: SoftwareCursorState,
-): ResolvedFrame => ({
+export const appendSoftwareCursor = (frame: ResolvedFrame, state: SoftwareCursorState): ResolvedFrame => ({
   ...frame,
   nodes: [...frame.nodes, ...createSoftwareCursorNodes(state)],
 });
 
-export const requestedActorFromSearch = (
-  search: string,
-): string | null => new URLSearchParams(search).get("actor");
+export const requestedActorFromSearch = (search: string): string | null =>
+  new URLSearchParams(search).get("actor");
 
 export const walkDestinationForTarget = (
   target: ResolvedSceneObjectHotspot | null,
   worldPoint: Point,
-): Point | null => (target ? target.hotspot.walkTo ?? null : worldPoint);
+): Point | null => (target ? (target.hotspot.walkTo ?? null) : worldPoint);

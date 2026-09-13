@@ -1,5 +1,5 @@
-import { describe, expect, it } from "vitest";
 import { parseAdventureProject } from "@evavo/adventure-project-schema";
+import { describe, expect, it } from "vitest";
 import { validateProjectSemantics } from "../src/index.js";
 
 const createProject = () =>

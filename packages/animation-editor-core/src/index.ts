@@ -1,10 +1,4 @@
-import type {
-  Actor,
-  AnimationClip,
-  Id,
-  Point,
-  SpriteFrame,
-} from "@evavo/adventure-project-schema";
+import type { Actor, AnimationClip, Id, Point, SpriteFrame } from "@evavo/adventure-project-schema";
 
 export type ActorAnimationIssueCode =
   | "duplicate-frame-id"
@@ -145,9 +139,7 @@ const canonicalize = (value: unknown): unknown => {
   if (value && typeof value === "object") {
     const source = value as Readonly<Record<string, unknown>>;
     const output: Record<string, unknown> = {};
-    for (const key of Object.keys(source).sort((left, right) =>
-      left.localeCompare(right),
-    )) {
+    for (const key of Object.keys(source).sort((left, right) => left.localeCompare(right))) {
       const child = source[key];
       if (child !== undefined) output[key] = canonicalize(child);
     }
@@ -175,14 +167,8 @@ const issue = (
 
 const isPixelInteger = (value: number): boolean => Number.isSafeInteger(value);
 
-const pointInsideSource = (
-  point: Point,
-  frame: SpriteFrame,
-): boolean =>
-  point.x >= 0 &&
-  point.y >= 0 &&
-  point.x <= frame.sourceSize.width &&
-  point.y <= frame.sourceSize.height;
+const pointInsideSource = (point: Point, frame: SpriteFrame): boolean =>
+  point.x >= 0 && point.y >= 0 && point.x <= frame.sourceSize.width && point.y <= frame.sourceSize.height;
 
 const validateAnchor = (
   issues: ActorAnimationIssue[],
@@ -192,12 +178,7 @@ const validateAnchor = (
   label: string,
 ): void => {
   if (!isPixelInteger(point.x) || !isPixelInteger(point.y)) {
-    issue(
-      issues,
-      "invalid-pixel-coordinate",
-      path,
-      `${label} must use integer native-pixel coordinates.`,
-    );
+    issue(issues, "invalid-pixel-coordinate", path, `${label} must use integer native-pixel coordinates.`);
   }
   if (!pointInsideSource(point, frame)) {
     issue(
@@ -209,9 +190,7 @@ const validateAnchor = (
   }
 };
 
-export const validateEditableActor = (
-  actor: Actor,
-): readonly ActorAnimationIssue[] => {
+export const validateEditableActor = (actor: Actor): readonly ActorAnimationIssue[] => {
   const issues: ActorAnimationIssue[] = [];
   const frameIds = new Set<string>();
   const animationIds = new Set<string>();
@@ -255,25 +234,11 @@ export const validateEditableActor = (
     }
 
     validateAnchor(issues, frame, frame.pivot, `${framePath}.pivot`, "Pivot");
-    validateAnchor(
-      issues,
-      frame,
-      frame.footPoint,
-      `${framePath}.footPoint`,
-      "Foot point",
-    );
+    validateAnchor(issues, frame, frame.footPoint, `${framePath}.footPoint`, "Foot point");
     if (frame.shadowAnchor) {
-      validateAnchor(
-        issues,
-        frame,
-        frame.shadowAnchor,
-        `${framePath}.shadowAnchor`,
-        "Shadow anchor",
-      );
+      validateAnchor(issues, frame, frame.shadowAnchor, `${framePath}.shadowAnchor`, "Shadow anchor");
     }
-    for (const [name, attachment] of Object.entries(
-      frame.attachmentPoints ?? {},
-    )) {
+    for (const [name, attachment] of Object.entries(frame.attachmentPoints ?? {})) {
       validateAnchor(
         issues,
         frame,
@@ -357,12 +322,7 @@ export const assertEditableActor = (actor: Actor): void => {
   }
 };
 
-const insertAt = <T>(
-  values: readonly T[],
-  index: number,
-  value: T,
-  path: string,
-): T[] => {
+const insertAt = <T>(values: readonly T[], index: number, value: T, path: string): T[] => {
   if (!Number.isSafeInteger(index) || index < 0 || index > values.length) {
     throw new AnimationEditorCommandError(
       "invalid-index",
@@ -370,11 +330,7 @@ const insertAt = <T>(
       `Insert index ${index} is outside 0 to ${values.length}.`,
     );
   }
-  return [
-    ...values.slice(0, index).map(cloneJson),
-    cloneJson(value),
-    ...values.slice(index).map(cloneJson),
-  ];
+  return [...values.slice(0, index).map(cloneJson), cloneJson(value), ...values.slice(index).map(cloneJson)];
 };
 
 const removeAt = <T>(values: readonly T[], index: number): T[] => [
@@ -409,9 +365,7 @@ const findAnimation = (
   actor: Actor,
   animationId: Id<"animation-clip">,
 ): { readonly index: number; readonly animation: AnimationClip } => {
-  const index = actor.animations.findIndex(
-    (animation) => animation.id === animationId,
-  );
+  const index = actor.animations.findIndex((animation) => animation.id === animationId);
   if (index < 0) {
     throw new AnimationEditorCommandError(
       "missing-entity",
@@ -424,11 +378,7 @@ const findAnimation = (
   return { index, animation };
 };
 
-const assertStableIdentity = (
-  expected: string,
-  actual: string,
-  path: string,
-): void => {
+const assertStableIdentity = (expected: string, actual: string, path: string): void => {
   if (expected !== actual) {
     throw new AnimationEditorCommandError(
       "identity-change",
@@ -443,10 +393,7 @@ const validateResult = (actor: Actor): Actor => {
   return actor;
 };
 
-export const frameUsage = (
-  actor: Actor,
-  frameId: Id<"sprite-frame">,
-): readonly FrameUsage[] =>
+export const frameUsage = (actor: Actor, frameId: Id<"sprite-frame">): readonly FrameUsage[] =>
   actor.animations.flatMap((animation) => {
     const frameIndexes = animation.frameIds.flatMap((candidate, index) =>
       candidate === frameId ? [index] : [],
@@ -468,9 +415,7 @@ export const animationFrameTimeline = (
   animationId: Id<"animation-clip">,
 ): readonly AnimationFrameTimelineEntry[] => {
   const { animation } = findAnimation(actor, animationId);
-  const framesById = new Map(
-    actor.frames.map((frame) => [frame.id as string, frame] as const),
-  );
+  const framesById = new Map(actor.frames.map((frame) => [frame.id as string, frame] as const));
   let startTick = 0;
   return animation.frameIds.map((frameId, frameIndex) => {
     const frame = framesById.get(frameId);
@@ -494,14 +439,8 @@ export const animationFrameTimeline = (
   });
 };
 
-export const animationClipDurationTicks = (
-  actor: Actor,
-  animationId: Id<"animation-clip">,
-): number =>
-  animationFrameTimeline(actor, animationId).reduce(
-    (total, frame) => total + frame.durationTicks,
-    0,
-  );
+export const animationClipDurationTicks = (actor: Actor, animationId: Id<"animation-clip">): number =>
+  animationFrameTimeline(actor, animationId).reduce((total, frame) => total + frame.durationTicks, 0);
 
 export const applyAnimationEditorCommand = (
   actor: Actor,
@@ -581,11 +520,7 @@ export const applyAnimationEditorCommand = (
       };
     }
     case "insert-animation": {
-      if (
-        actor.animations.some(
-          (animation) => animation.id === command.animation.id,
-        )
-      ) {
+      if (actor.animations.some((animation) => animation.id === command.animation.id)) {
         throw new AnimationEditorCommandError(
           "duplicate-id",
           "animation.id",
@@ -594,12 +529,7 @@ export const applyAnimationEditorCommand = (
       }
       const next = validateResult({
         ...actor,
-        animations: insertAt(
-          actor.animations,
-          command.index,
-          command.animation,
-          "index",
-        ),
+        animations: insertAt(actor.animations, command.index, command.animation, "index"),
       });
       return {
         actor: next,
@@ -620,23 +550,12 @@ export const applyAnimationEditorCommand = (
       };
     }
     case "replace-animation": {
-      const { index, animation: previous } = findAnimation(
-        actor,
-        command.animationId,
-      );
-      assertStableIdentity(
-        command.animationId,
-        command.animation.id,
-        "animation.id",
-      );
+      const { index, animation: previous } = findAnimation(actor, command.animationId);
+      assertStableIdentity(command.animationId, command.animation.id, "animation.id");
       return {
         actor: validateResult({
           ...actor,
-          animations: replaceAt(
-            actor.animations,
-            index,
-            command.animation,
-          ),
+          animations: replaceAt(actor.animations, index, command.animation),
         }),
         inverse: {
           kind: "replace-animation",
@@ -650,12 +569,7 @@ export const applyAnimationEditorCommand = (
       const { index, animation } = findAnimation(actor, command.animationId);
       const nextAnimation = {
         ...animation,
-        frameIds: insertAt(
-          animation.frameIds,
-          command.index,
-          command.frameId,
-          "index",
-        ),
+        frameIds: insertAt(animation.frameIds, command.index, command.frameId, "index"),
       };
       return {
         actor: validateResult({
@@ -710,11 +624,7 @@ export const applyAnimationEditorCommand = (
       }
       const nextAnimation = {
         ...animation,
-        frameIds: replaceAt(
-          animation.frameIds,
-          command.frameIndex,
-          command.frameId,
-        ),
+        frameIds: replaceAt(animation.frameIds, command.frameIndex, command.frameId),
       };
       return {
         actor: validateResult({
@@ -733,9 +643,7 @@ export const applyAnimationEditorCommand = (
   }
 };
 
-export const createAnimationEditorDocument = (
-  actor: Actor,
-): AnimationEditorDocumentState => {
+export const createAnimationEditorDocument = (actor: Actor): AnimationEditorDocumentState => {
   assertEditableActor(actor);
   const snapshot = cloneJson(actor);
   return {
@@ -745,15 +653,10 @@ export const createAnimationEditorDocument = (
   };
 };
 
-export const isAnimationEditorDocumentDirty = (
-  document: AnimationEditorDocumentState,
-): boolean =>
-  canonicalAnimationEditorJson(document.actor) !==
-  canonicalAnimationEditorJson(document.savedActor);
+export const isAnimationEditorDocumentDirty = (document: AnimationEditorDocumentState): boolean =>
+  canonicalAnimationEditorJson(document.actor) !== canonicalAnimationEditorJson(document.savedActor);
 
-export const createAnimationEditorHistory = (
-  actor: Actor,
-): AnimationEditorHistoryState => ({
+export const createAnimationEditorHistory = (actor: Actor): AnimationEditorHistoryState => ({
   document: createAnimationEditorDocument(actor),
   undoStack: [],
   redoStack: [],
@@ -784,10 +687,7 @@ export const executeAnimationEditorCommand = (
   const applied = applyToDocument(history.document, command);
   return {
     document: applied.document,
-    undoStack: [
-      ...history.undoStack,
-      { undo: applied.inverse, redo: cloneJson(command) },
-    ],
+    undoStack: [...history.undoStack, { undo: applied.inverse, redo: cloneJson(command) }],
     redoStack: [],
   };
 };

@@ -1,12 +1,11 @@
-import { describe, expect, it } from "vitest";
+import type { Id } from "@evavo/adventure-project-schema";
 import { createReplayLog } from "@evavo/adventure-replay";
 import { parseRuntimeBundle } from "@evavo/adventure-runtime-bundle";
 import { createSaveGame } from "@evavo/adventure-save-game";
-import {
-  diffSaveGames,
-  inspectReplay,
-  inspectSaveGame,
-} from "../src/index.js";
+import { describe, expect, it } from "vitest";
+import { diffSaveGames, inspectReplay, inspectSaveGame } from "../src/index.js";
+
+const id = <T extends string>(value: string): Id<T> => value as Id<T>;
 
 const hash = "0".repeat(64);
 const bundle = parseRuntimeBundle({
@@ -99,7 +98,6 @@ const bundle = parseRuntimeBundle({
         },
       ],
       fallbackText: "Nothing happens.",
-      interactionIndex: {},
     },
   ],
   dialogues: [],
@@ -123,7 +121,7 @@ const worldAt = (
     currentEntranceId: bundle.startEntranceId,
     flags: { raining: options.rainFlag ?? false },
     variables: { visits: options.visits ?? 1 },
-    inventory: options.hasKey ? ["item.key"] : [],
+    inventory: options.hasKey ? [id<"item">("item.key")] : [],
     awardedScoreIds: [],
     consumedInteractionIds: [],
     consumedDialogueChoiceIds: [],
@@ -138,14 +136,11 @@ const worldAt = (
   pendingObjectCommands: {},
 });
 
-const saveAt = (
-  tick: number,
-  options: Parameters<typeof worldAt>[1] = {},
-) =>
+const saveAt = (tick: number, options: Parameters<typeof worldAt>[1] = {}) =>
   createSaveGame(bundle, worldAt(tick, options), {
     controlledActorInstanceId: null,
     selectedVerbId: null,
-    selectedItemId: options.hasKey ? "item.key" : null,
+    selectedItemId: options.hasKey ? id<"item">("item.key") : null,
     statusText: options.hasKey ? "KEY ACQUIRED" : "READY",
     parser: {
       text: "",

@@ -14,9 +14,7 @@
   width: 100%;
   height: 100%;
   color: #f2f3f7;
-  background:
-    radial-gradient(circle at 48% 10%, rgb(44 47 63 / 38%), transparent 42%),
-    #090a0f;
+  background: radial-gradient(circle at 48% 10%, rgb(44 47 63 / 38%), transparent 42%), #090a0f;
 }
 
 .auth-app button,
@@ -312,9 +310,7 @@
   gap: 24px;
   padding: 22px;
   border: 1px solid var(--auth-line);
-  background:
-    linear-gradient(135deg, rgb(255 36 78 / 7%), transparent 42%),
-    var(--auth-panel);
+  background: linear-gradient(135deg, rgb(255 36 78 / 7%), transparent 42%), var(--auth-panel);
 }
 
 .auth-score-ring {
@@ -328,7 +324,9 @@
   background:
     radial-gradient(circle at center, #11131a 0 62%, transparent 63%),
     conic-gradient(var(--auth-red) calc(var(--score) * 1%), #2b2e38 0);
-  box-shadow: 0 0 0 1px #343844, inset 0 0 24px rgb(0 0 0 / 30%);
+  box-shadow:
+    0 0 0 1px #343844,
+    inset 0 0 24px rgb(0 0 0 / 30%);
 }
 
 .auth-score-ring.is-ready {

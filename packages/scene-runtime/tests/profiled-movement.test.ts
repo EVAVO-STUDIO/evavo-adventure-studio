@@ -1,6 +1,6 @@
-import { describe, expect, it } from "vitest";
 import type { Id } from "@evavo/adventure-project-schema";
 import type { NavigationRoute } from "@evavo/adventure-scene/navigation";
+import { describe, expect, it } from "vitest";
 import {
   advanceProfiledNavigationMovement,
   beginProfiledNavigationMovement,
@@ -33,10 +33,7 @@ const route = (portalDistance?: number): NavigationRoute => ({
       to: { x: 160, y: 100 },
       kind: portalDistance === undefined ? "walk" : "portal",
       areaId,
-      portalId:
-        portalDistance === undefined
-          ? null
-          : ("navigation-portal.stairs" as Id<"navigation-portal">),
+      portalId: portalDistance === undefined ? null : ("navigation-portal.stairs" as Id<"navigation-portal">),
       distance: portalDistance ?? Math.hypot(40, 40),
     },
     {
@@ -96,10 +93,7 @@ describe("profiled navigation movement", () => {
     }
     expect(chunked.state).toEqual(stepped);
     expect(chunked.events).toEqual(events);
-    expect(chunked.distanceAdvancedPixels).toBeCloseTo(
-      distanceAdvancedPixels,
-      12,
-    );
+    expect(chunked.distanceAdvancedPixels).toBeCloseTo(distanceAdvancedPixels, 12);
   });
 
   it("arrives exactly and emits phase, footfall, segment and completion evidence", () => {
@@ -129,9 +123,7 @@ describe("profiled navigation movement", () => {
     const json = canonicalProfiledNavigationMovementJson(advanced.state);
     expect(parseProfiledNavigationMovementJson(json)).toEqual(advanced.state);
     expect(() =>
-      parseProfiledNavigationMovementJson(
-        json.replace('"stateVersion":1', '"stateVersion":2'),
-      ),
+      parseProfiledNavigationMovementJson(json.replace('"stateVersion":1', '"stateVersion":2')),
     ).toThrow(/version 1/u);
   });
 
@@ -170,8 +162,7 @@ describe("profiled navigation movement", () => {
       canonicalProfiledNavigationMovementJson(advanced.state),
     ) as typeof advanced.state;
     const currentPhase = corrupted.extension.motion.phase;
-    const alternatePhase: typeof currentPhase =
-      currentPhase === "moving" ? "starting" : "moving";
+    const alternatePhase: typeof currentPhase = currentPhase === "moving" ? "starting" : "moving";
     const state: typeof advanced.state = {
       ...corrupted,
       lastPhase: alternatePhase,
@@ -185,8 +176,7 @@ describe("profiled navigation movement", () => {
             ...corrupted.extension.motion.position,
             x: corrupted.extension.motion.position.x + 2,
           },
-          walkCyclePhase:
-            (corrupted.extension.motion.walkCyclePhase + 0.25) % 1,
+          walkCyclePhase: (corrupted.extension.motion.walkCyclePhase + 0.25) % 1,
         },
       },
     };

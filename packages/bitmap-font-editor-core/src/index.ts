@@ -1,10 +1,10 @@
 import {
-  bitmapFontManifestSchema,
-  validateBitmapFontManifest,
   type BitmapFontDefinition,
   type BitmapFontManifest,
   type BitmapGlyph,
   type BitmapKerning,
+  bitmapFontManifestSchema,
+  validateBitmapFontManifest,
 } from "@evavo/adventure-bitmap-font";
 import type { AdventureProject, Id } from "@evavo/adventure-project-schema";
 
@@ -19,11 +19,7 @@ export class BitmapFontEditorCommandError extends Error {
     | "invalid-document";
   readonly path: string;
 
-  constructor(
-    code: BitmapFontEditorCommandError["code"],
-    path: string,
-    message: string,
-  ) {
+  constructor(code: BitmapFontEditorCommandError["code"], path: string, message: string) {
     super(message);
     this.name = "BitmapFontEditorCommandError";
     this.code = code;
@@ -116,9 +112,7 @@ const canonicalize = (value: unknown): unknown => {
   if (value && typeof value === "object") {
     const source = value as Readonly<Record<string, unknown>>;
     const output: Record<string, unknown> = {};
-    for (const key of Object.keys(source).sort((left, right) =>
-      left.localeCompare(right),
-    )) {
+    for (const key of Object.keys(source).sort((left, right) => left.localeCompare(right))) {
       const child = source[key];
       if (child !== undefined) output[key] = canonicalize(child);
     }
@@ -135,12 +129,7 @@ export const canonicalBitmapFontEditorJson = (value: unknown): string => {
   return output;
 };
 
-const insertAt = <T>(
-  values: readonly T[],
-  index: number,
-  value: T,
-  path: string,
-): T[] => {
+const insertAt = <T>(values: readonly T[], index: number, value: T, path: string): T[] => {
   if (!Number.isSafeInteger(index) || index < 0 || index > values.length) {
     throw new BitmapFontEditorCommandError(
       "invalid-index",
@@ -148,11 +137,7 @@ const insertAt = <T>(
       `Insert index ${index} is outside 0 to ${values.length}.`,
     );
   }
-  return [
-    ...values.slice(0, index).map(cloneJson),
-    cloneJson(value),
-    ...values.slice(index).map(cloneJson),
-  ];
+  return [...values.slice(0, index).map(cloneJson), cloneJson(value), ...values.slice(index).map(cloneJson)];
 };
 
 const removeAt = <T>(values: readonly T[], index: number): T[] => [
@@ -209,9 +194,7 @@ const findKerning = (
   rightCodePoint: number,
 ): { readonly index: number; readonly kerning: BitmapKerning } => {
   const index = font.kernings.findIndex(
-    (kerning) =>
-      kerning.leftCodePoint === leftCodePoint &&
-      kerning.rightCodePoint === rightCodePoint,
+    (kerning) => kerning.leftCodePoint === leftCodePoint && kerning.rightCodePoint === rightCodePoint,
   );
   if (index < 0) {
     throw new BitmapFontEditorCommandError(
@@ -234,30 +217,18 @@ const manifestIds = (manifest: BitmapFontManifest): ReadonlySet<string> => {
   return ids;
 };
 
-const assertInsertedIds = (
-  manifest: BitmapFontManifest,
-  ids: readonly string[],
-  path: string,
-): void => {
+const assertInsertedIds = (manifest: BitmapFontManifest, ids: readonly string[], path: string): void => {
   const existing = manifestIds(manifest);
   const local = new Set<string>();
   for (const id of ids) {
     if (local.has(id) || existing.has(id)) {
-      throw new BitmapFontEditorCommandError(
-        "duplicate-id",
-        path,
-        `Bitmap font ID '${id}' already exists.`,
-      );
+      throw new BitmapFontEditorCommandError("duplicate-id", path, `Bitmap font ID '${id}' already exists.`);
     }
     local.add(id);
   }
 };
 
-const assertStableIdentity = (
-  expected: string,
-  actual: string,
-  path: string,
-): void => {
+const assertStableIdentity = (expected: string, actual: string, path: string): void => {
   if (expected !== actual) {
     throw new BitmapFontEditorCommandError(
       "identity-change",
@@ -302,11 +273,7 @@ const applyCommandUnchecked = (
       };
     }
     case "insert-font": {
-      assertInsertedIds(
-        manifest,
-        [command.font.id, ...command.font.glyphs.map((glyph) => glyph.id)],
-        "font",
-      );
+      assertInsertedIds(manifest, [command.font.id, ...command.font.glyphs.map((glyph) => glyph.id)], "font");
       return {
         manifest: {
           ...manifest,
@@ -325,15 +292,9 @@ const applyCommandUnchecked = (
     case "replace-font": {
       const { index, font: previous } = findFont(manifest, command.fontId);
       assertStableIdentity(command.fontId, command.font.id, "font.id");
-      const previousIds = new Set([
-        previous.id,
-        ...previous.glyphs.map((glyph) => glyph.id),
-      ]);
+      const previousIds = new Set([previous.id, ...previous.glyphs.map((glyph) => glyph.id)]);
       const existing = manifestIds(manifest);
-      for (const id of [
-        command.font.id,
-        ...command.font.glyphs.map((glyph) => glyph.id),
-      ]) {
+      for (const id of [command.font.id, ...command.font.glyphs.map((glyph) => glyph.id)]) {
         if (existing.has(id) && !previousIds.has(id)) {
           throw new BitmapFontEditorCommandError(
             "duplicate-id",
@@ -417,12 +378,7 @@ const applyCommandUnchecked = (
       return {
         manifest: updateFont(manifest, fontIndex, {
           ...font,
-          kernings: insertAt(
-            font.kernings,
-            command.index,
-            command.kerning,
-            "index",
-          ),
+          kernings: insertAt(font.kernings, command.index, command.kerning, "index"),
         }),
         inverse: {
           kind: "remove-kerning",
@@ -434,11 +390,7 @@ const applyCommandUnchecked = (
     }
     case "remove-kerning": {
       const { index: fontIndex, font } = findFont(manifest, command.fontId);
-      const { index, kerning } = findKerning(
-        font,
-        command.leftCodePoint,
-        command.rightCodePoint,
-      );
+      const { index, kerning } = findKerning(font, command.leftCodePoint, command.rightCodePoint);
       return {
         manifest: updateFont(manifest, fontIndex, {
           ...font,
@@ -454,11 +406,7 @@ const applyCommandUnchecked = (
     }
     case "replace-kerning": {
       const { index: fontIndex, font } = findFont(manifest, command.fontId);
-      const { index, kerning: previous } = findKerning(
-        font,
-        command.leftCodePoint,
-        command.rightCodePoint,
-      );
+      const { index, kerning: previous } = findKerning(font, command.leftCodePoint, command.rightCodePoint);
       if (
         command.kerning.leftCodePoint !== command.leftCodePoint ||
         command.kerning.rightCodePoint !== command.rightCodePoint
@@ -536,11 +484,8 @@ export const createBitmapFontEditorDocument = (
   };
 };
 
-export const isBitmapFontEditorDocumentDirty = (
-  document: BitmapFontEditorDocumentState,
-): boolean =>
-  canonicalBitmapFontEditorJson(document.manifest) !==
-  canonicalBitmapFontEditorJson(document.savedManifest);
+export const isBitmapFontEditorDocumentDirty = (document: BitmapFontEditorDocumentState): boolean =>
+  canonicalBitmapFontEditorJson(document.manifest) !== canonicalBitmapFontEditorJson(document.savedManifest);
 
 export const createBitmapFontEditorHistory = (
   project: Pick<AdventureProject, "id" | "assets">,
@@ -559,11 +504,7 @@ const applyToDocument = (
   readonly document: BitmapFontEditorDocumentState;
   readonly inverse: BitmapFontEditorCommand;
 } => {
-  const applied = applyBitmapFontEditorCommand(
-    project,
-    document.manifest,
-    command,
-  );
+  const applied = applyBitmapFontEditorCommand(project, document.manifest, command);
   return {
     document: {
       ...document,
@@ -582,10 +523,7 @@ export const executeBitmapFontEditorCommand = (
   const applied = applyToDocument(project, history.document, command);
   return {
     document: applied.document,
-    undoStack: [
-      ...history.undoStack,
-      { undo: applied.inverse, redo: cloneJson(command) },
-    ],
+    undoStack: [...history.undoStack, { undo: applied.inverse, redo: cloneJson(command) }],
     redoStack: [],
   };
 };

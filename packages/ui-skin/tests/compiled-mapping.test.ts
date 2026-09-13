@@ -1,7 +1,7 @@
-import { describe, expect, it } from "vitest";
 import { assetBuildManifestSchema } from "@evavo/adventure-asset-contract";
-import { uiSkinManifestSchema } from "../src/index.js";
+import { describe, expect, it } from "vitest";
 import { validateCompiledUiSkinMappings } from "../src/compiled-mapping.js";
+import { uiSkinManifestSchema } from "../src/index.js";
 
 const hash = "0".repeat(64);
 
@@ -14,9 +14,7 @@ const compiled = assetBuildManifestSchema.parse({
     {
       assetId: "asset.icon.image",
       kind: "image",
-      sourceFiles: [
-        { path: "art/icon.png", sha256: hash, byteLength: 1 },
-      ],
+      sourceFiles: [{ path: "art/icon.png", sha256: hash, byteLength: 1 }],
       outputFiles: [
         {
           role: "primary",
@@ -37,9 +35,7 @@ const compiled = assetBuildManifestSchema.parse({
     {
       assetId: "asset.icon.atlas",
       kind: "spritesheet",
-      sourceFiles: [
-        { path: "art/icons.aseprite", sha256: hash, byteLength: 1 },
-      ],
+      sourceFiles: [{ path: "art/icons.aseprite", sha256: hash, byteLength: 1 }],
       outputFiles: [
         {
           role: "atlas-manifest",

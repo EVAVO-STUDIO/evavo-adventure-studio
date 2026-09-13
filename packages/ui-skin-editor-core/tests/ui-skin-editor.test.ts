@@ -1,17 +1,20 @@
-import { describe, expect, it } from "vitest";
 import { bitmapFontManifestSchema } from "@evavo/adventure-bitmap-font";
+import type { Id } from "@evavo/adventure-project-schema";
 import { parseAdventureProject } from "@evavo/adventure-project-schema";
 import { parseUiSkinManifest } from "@evavo/adventure-ui-skin";
+import { describe, expect, it } from "vitest";
+import { parseUiSkinEditorCommand } from "../src/command-schema.js";
 import {
   createUiSkinEditorHistory,
   executeUiSkinEditorCommand,
   isUiSkinEditorDocumentDirty,
   markUiSkinEditorHistorySaved,
   redoUiSkinEditorCommand,
-  UiSkinEditorCommandError,
+  type UiSkinEditorCommandError,
   undoUiSkinEditorCommand,
 } from "../src/index.js";
-import { parseUiSkinEditorCommand } from "../src/command-schema.js";
+
+const id = <T extends string>(value: string): Id<T> => value as Id<T>;
 
 const project = parseAdventureProject({
   schemaVersion: 1,
@@ -94,7 +97,7 @@ const panel = {
   borderWidth: 1,
 };
 
-const skin = {
+const skinInput = {
   id: "ui-skin.context",
   name: "Context",
   interactionMode: "context" as const,
@@ -118,9 +121,14 @@ const skin = {
 const manifest = parseUiSkinManifest({
   manifestVersion: 1,
   projectId: project.id,
-  defaultSkinId: skin.id,
-  skins: [skin],
+  defaultSkinId: skinInput.id,
+  skins: [skinInput],
 });
+
+const [skin] = manifest.skins;
+if (!skin) {
+  throw new Error("Expected the UI editor fixture to contain its base skin.");
+}
 
 describe("interface skin editor history", () => {
   it("edits skin regions with undo, redo and save tracking", () => {
@@ -158,7 +166,7 @@ describe("interface skin editor history", () => {
       skinId: skin.id,
       index: 0,
       verb: {
-        id: "ui-verb.look",
+        id: id<"ui-verb">("ui-verb.look"),
         verb: "look",
         label: "LOOK",
         cursorId: "look",
@@ -170,7 +178,7 @@ describe("interface skin editor history", () => {
       skinId: skin.id,
       index: 0,
       verb: {
-        id: "ui-verb.use",
+        id: id<"ui-verb">("ui-verb.use"),
         verb: "use",
         label: "USE",
         cursorId: "use",
@@ -178,22 +186,20 @@ describe("interface skin editor history", () => {
       },
     });
 
-    expect(history.document.manifest.skins[0]?.verbs.map((verb) => verb.verb)).toEqual([
-      "use",
-      "look",
-    ]);
+    expect(history.document.manifest.skins[0]?.verbs.map((verb) => verb.verb)).toEqual(["use", "look"]);
     history = undoUiSkinEditorCommand(project, fonts, history);
-    expect(history.document.manifest.skins[0]?.verbs.map((verb) => verb.verb)).toEqual([
-      "look",
-    ]);
+    expect(history.document.manifest.skins[0]?.verbs.map((verb) => verb.verb)).toEqual(["look"]);
   });
 
   it("allows atomic default-skin migration and blocks invalid standalone removal", () => {
     const alternate = {
       ...skin,
-      id: "ui-skin.context.alternate",
+      id: id<"ui-skin">("ui-skin.context.alternate"),
       name: "Context alternate",
-      status: { ...skin.status, id: "ui-region.status.alternate" },
+      status: {
+        ...skin.status,
+        id: id<"ui-region">("ui-region.status.alternate"),
+      },
     };
     let history = executeUiSkinEditorCommand(
       project,
@@ -247,7 +253,7 @@ describe("interface skin editor history", () => {
             ...current.fonts,
             status: {
               ...current.fonts.status,
-              fontId: "bitmap-font.missing",
+              fontId: id<"bitmap-font">("bitmap-font.missing"),
             },
           },
         },
@@ -289,8 +295,6 @@ describe("interface skin editor command schema", () => {
   });
 
   it("rejects empty batches", () => {
-    expect(() =>
-      parseUiSkinEditorCommand({ kind: "batch", commands: [] }),
-    ).toThrow();
+    expect(() => parseUiSkinEditorCommand({ kind: "batch", commands: [] })).toThrow();
   });
 });

@@ -1,7 +1,7 @@
-import { describe, expect, it } from "vitest";
 import type { Id } from "@evavo/adventure-project-schema";
 import { parseRuntimeBundle } from "@evavo/adventure-runtime-bundle";
 import { createSaveGame } from "@evavo/adventure-save-game";
+import { describe, expect, it } from "vitest";
 import { diffCanonicalSaveGames } from "../src/canonical-diff.js";
 
 const id = <T extends string>(value: string): Id<T> => value as Id<T>;
@@ -70,7 +70,6 @@ const bundle = parseRuntimeBundle({
         },
       ],
       fallbackText: "Nothing happens.",
-      interactionIndex: {},
     },
   ],
   dialogues: [],
@@ -125,12 +124,8 @@ describe("canonical playtest save diff", () => {
     const after = saveWith({
       randomState: 2,
       awardedScoreIds: [id<"score-award">("score-award.first-clue")],
-      consumedInteractionIds: [
-        id<"interaction">("interaction.office.door.open"),
-      ],
-      consumedDialogueChoiceIds: [
-        id<"dialogue-choice">("dialogue-choice.receptionist.ask-key"),
-      ],
+      consumedInteractionIds: [id<"interaction">("interaction.office.door.open")],
+      consumedDialogueChoiceIds: [id<"dialogue-choice">("dialogue-choice.receptionist.ask-key")],
     });
 
     const diff = diffCanonicalSaveGames(bundle, before, after);
@@ -184,14 +179,10 @@ describe("canonical playtest save diff", () => {
       randomState: 2,
       awardedScoreIds: [id<"score-award">("score-award.first-clue")],
       consumedInteractionIds: [id<"interaction">("interaction.first")],
-      consumedDialogueChoiceIds: [
-        id<"dialogue-choice">("dialogue-choice.first"),
-      ],
+      consumedDialogueChoiceIds: [id<"dialogue-choice">("dialogue-choice.first")],
     });
 
-    expect(
-      diffCanonicalSaveGames(bundle, before, after, { maxDifferences: 2 }),
-    ).toMatchObject({
+    expect(diffCanonicalSaveGames(bundle, before, after, { maxDifferences: 2 })).toMatchObject({
       changed: true,
       truncated: true,
       entries: [
@@ -204,8 +195,8 @@ describe("canonical playtest save diff", () => {
       truncated: false,
       entries: [],
     });
-    expect(() =>
-      diffCanonicalSaveGames(bundle, before, after, { maxDifferences: 0 }),
-    ).toThrow(new RangeError("maxDifferences must be a positive integer."));
+    expect(() => diffCanonicalSaveGames(bundle, before, after, { maxDifferences: 0 })).toThrow(
+      new RangeError("maxDifferences must be a positive integer."),
+    );
   });
 });

@@ -1,32 +1,25 @@
 import { evaluateCondition } from "@evavo/adventure-core";
 import {
   defaultInteractionPolicy,
-  executeHotspotCommand,
   type ExecutedInteraction,
+  executeHotspotCommand,
   type InteractionPolicy,
 } from "@evavo/adventure-interaction";
-import type {
-  Hotspot,
-  Id,
-  Point,
-  Polygon,
-} from "@evavo/adventure-project-schema";
-import {
-  compareRenderOrder,
-  type RenderOrder,
-} from "@evavo/adventure-render-contract";
+import type { Hotspot, Id, Point, Polygon } from "@evavo/adventure-project-schema";
+import { compareRenderOrder, type RenderOrder } from "@evavo/adventure-render-contract";
 import type { RuntimeBundle } from "@evavo/adventure-runtime-bundle";
-import {
-  pointInPolygon,
-  quantizeNativePoint,
-  resolveScaleAtY,
-} from "@evavo/adventure-scene";
+import { pointInPolygon, quantizeNativePoint, resolveScaleAtY } from "@evavo/adventure-scene";
 import type {
   ObjectDefinition,
   ObjectStateDefinition,
   SceneObjectInstance,
 } from "@evavo/adventure-scene-instances";
+import {
+  type InteractionComfortRegion,
+  sampleDepthScale,
+} from "@evavo/adventure-scene-instances/staging";
 import type { RuntimeWorldState } from "./index.js";
+import { stagingForScene } from "./staging.js";
 
 export interface ResolvedSceneObjectHotspot {
   readonly objectInstanceId: Id<"object">;
@@ -68,24 +61,17 @@ export type SceneObjectCommandExecution =
       readonly objectInstanceId: Id<"object">;
     };
 
-const objectDefinitionsById = (
-  bundle: RuntimeBundle,
-): ReadonlyMap<string, ObjectDefinition> =>
+const objectDefinitionsById = (bundle: RuntimeBundle): ReadonlyMap<string, ObjectDefinition> =>
   new Map(
     (bundle.sceneInstances?.objectDefinitions ?? []).map(
       (definition) => [definition.id as string, definition] as const,
     ),
   );
 
-const objectStateFor = (
-  definition: ObjectDefinition,
-  stateId: string,
-): ObjectStateDefinition => {
+const objectStateFor = (definition: ObjectDefinition, stateId: string): ObjectStateDefinition => {
   const state = definition.states.find((candidate) => candidate.id === stateId);
   if (!state) {
-    throw new Error(
-      `Object definition '${definition.id}' has no state '${stateId}'.`,
-    );
+    throw new Error(`Object definition '${definition.id}' has no state '${stateId}'.`);
   }
   return state;
 };
@@ -97,13 +83,10 @@ const activeObjectState = (
 ): ObjectStateDefinition =>
   objectStateFor(
     definition,
-    world.story.objectStates[instance.id] ??
-      instance.initialStateId ??
-      definition.initialStateId,
+    world.story.objectStates[instance.id] ?? instance.initialStateId ?? definition.initialStateId,
   );
 
-const localShapePivot = (state: ObjectStateDefinition): Point =>
-  state.visual?.pivot ?? { x: 0, y: 0 };
+const localShapePivot = (state: ObjectStateDefinition): Point => state.visual?.pivot ?? { x: 0, y: 0 };
 
 const transformLocalPoint = (
   point: Point,
@@ -123,15 +106,10 @@ const transformPolygon = (
   scale: number,
   mirrored: boolean,
 ): Polygon => ({
-  points: polygon.points.map((point) =>
-    transformLocalPoint(point, anchor, pivot, scale, mirrored),
-  ),
+  points: polygon.points.map((point) => transformLocalPoint(point, anchor, pivot, scale, mirrored)),
 });
 
-const hotspotId = (
-  instance: SceneObjectInstance,
-  state: ObjectStateDefinition,
-): Id<"hotspot"> =>
+const hotspotId = (instance: SceneObjectInstance, state: ObjectStateDefinition): Id<"hotspot"> =>
   `hotspot.object.${instance.id}.${state.id}` as Id<"hotspot">;
 
 const objectOrder = (
@@ -149,6 +127,30 @@ const objectOrder = (
   };
 };
 
+const stagedObjectScale = (
+  bundle: RuntimeBundle,
+  world: RuntimeWorldState,
+  scene: RuntimeBundle["scenes"][number],
+  point: Point,
+  fallbackScale: number,
+): number => {
+  const staging = stagingForScene(bundle.sceneStaging, scene.id);
+  if (!staging) return fallbackScale;
+  const area = scene.navigationAreas
+    .filter((candidate) => !candidate.enabledWhen || evaluateCondition(candidate.enabledWhen, world.story))
+    .filter((candidate) => pointInPolygon(point, candidate.shape))
+    .sort((left, right) => {
+      if (left.elevation !== right.elevation) return right.elevation - left.elevation;
+      return left.id.localeCompare(right.id);
+    })[0];
+  if (!area) return fallbackScale;
+  const override = staging.navigationScaleOverrides.find((candidate) => candidate.areaId === area.id);
+  if (!override) return fallbackScale;
+  if (override.mode === "fixed") return override.fixedScale ?? fallbackScale;
+  const curve = staging.depthScaleCurves.find((candidate) => candidate.id === override.curveId);
+  return curve ? sampleDepthScale(curve, point.y) : fallbackScale;
+};
+
 export const resolveSceneObjectHotspots = (
   bundle: RuntimeBundle,
   world: RuntimeWorldState,
@@ -158,50 +160,31 @@ export const resolveSceneObjectHotspots = (
   if (!scene) {
     throw new Error(`Runtime scene '${sceneId}' does not exist.`);
   }
-  const composition = bundle.sceneInstances?.scenes.find(
-    (candidate) => candidate.sceneId === sceneId,
-  );
+  const composition = bundle.sceneInstances?.scenes.find((candidate) => candidate.sceneId === sceneId);
   const definitions = objectDefinitionsById(bundle);
   const resolved: ResolvedSceneObjectHotspot[] = [];
 
   for (const instance of composition?.objectInstances ?? []) {
-    if (
-      instance.visibleWhen &&
-      !evaluateCondition(instance.visibleWhen, world.story)
-    ) {
+    if (instance.visibleWhen && !evaluateCondition(instance.visibleWhen, world.story)) {
       continue;
     }
     const definition = definitions.get(instance.definitionId);
     if (!definition) {
-      throw new Error(
-        `Object instance '${instance.id}' definition '${instance.definitionId}' is missing.`,
-      );
+      throw new Error(`Object instance '${instance.id}' definition '${instance.definitionId}' is missing.`);
     }
     const state = activeObjectState(world, instance, definition);
     if (!state.visible || !state.interactionShape) {
       continue;
     }
 
-    const anchor = quantizeNativePoint(
-      instance.position,
-      bundle.presentation.pixelMotionPolicy,
-      "entity",
-    );
+    const anchor = quantizeNativePoint(instance.position, bundle.presentation.pixelMotionPolicy, "entity");
     const perspective = resolveScaleAtY(scene.depthBands, anchor.y);
-    const scale = (perspective?.scale ?? 1) * instance.scaleMultiplier;
+    const scale = stagedObjectScale(bundle, world, scene, anchor, perspective?.scale ?? 1) * instance.scaleMultiplier;
     const pivot = localShapePivot(state);
-    const shape = transformPolygon(
-      state.interactionShape,
-      anchor,
-      pivot,
-      scale,
-      instance.mirrored,
-    );
+    const shape = transformPolygon(state.interactionShape, anchor, pivot, scale, instance.mirrored);
     const walkTo = state.walkToOffset
       ? {
-          x:
-            anchor.x +
-            state.walkToOffset.x * scale * (instance.mirrored ? -1 : 1),
+          x: anchor.x + state.walkToOffset.x * scale * (instance.mirrored ? -1 : 1),
           y: anchor.y + state.walkToOffset.y * scale,
         }
       : undefined;
@@ -223,9 +206,39 @@ export const resolveSceneObjectHotspots = (
     });
   }
 
-  return resolved.sort((left, right) =>
-    compareRenderOrder(left.order, right.order),
-  );
+  return resolved.sort((left, right) => compareRenderOrder(left.order, right.order));
+};
+
+interface ComfortCandidate {
+  readonly target: ResolvedSceneObjectHotspot;
+  readonly region: InteractionComfortRegion;
+}
+
+const comfortCandidatesAtPoint = (
+  bundle: RuntimeBundle,
+  world: RuntimeWorldState,
+  sceneId: Id<"scene">,
+  point: Point,
+  hotspots: readonly ResolvedSceneObjectHotspot[],
+): readonly ComfortCandidate[] => {
+  const staging = stagingForScene(bundle.sceneStaging, sceneId);
+  if (!staging) return [];
+  const targets = new Map(hotspots.map((target) => [target.objectInstanceId as string, target] as const));
+  const candidates: ComfortCandidate[] = [];
+  for (const [objectId, regions] of Object.entries(staging.interactionComfortRegionsByObject)) {
+    const target = targets.get(objectId);
+    if (!target) continue;
+    for (const region of regions) {
+      if (region.enabledWhen && !evaluateCondition(region.enabledWhen, world.story)) continue;
+      if (pointInPolygon(point, region.shape)) candidates.push({ target, region });
+    }
+  }
+  return candidates.sort((left, right) => {
+    if (left.region.priority !== right.region.priority) return right.region.priority - left.region.priority;
+    const render = compareRenderOrder(left.target.order, right.target.order);
+    if (render !== 0) return -render;
+    return left.region.id.localeCompare(right.region.id);
+  });
 };
 
 export const hitTestSceneObject = (
@@ -235,13 +248,17 @@ export const hitTestSceneObject = (
   sceneId: Id<"scene"> = world.story.currentSceneId,
 ): ResolvedSceneObjectHotspot | null => {
   const hotspots = resolveSceneObjectHotspots(bundle, world, sceneId);
+
+  // Exact authored visible geometry always wins. Comfort regions are only a fallback
+  // for tiny native-resolution props and therefore cannot steal an exact click.
   for (let index = hotspots.length - 1; index >= 0; index -= 1) {
     const target = hotspots[index];
     if (target && pointInPolygon(point, target.hotspot.shape)) {
       return target;
     }
   }
-  return null;
+
+  return comfortCandidatesAtPoint(bundle, world, sceneId, point)[0]?.target ?? null;
 };
 
 export const executeSceneObjectCommand = (
@@ -250,9 +267,7 @@ export const executeSceneObjectCommand = (
   command: SceneObjectCommand,
   policy: InteractionPolicy = defaultInteractionPolicy,
 ): SceneObjectCommandExecution => {
-  const scene = bundle.scenes.find(
-    (candidate) => candidate.id === world.story.currentSceneId,
-  );
+  const scene = bundle.scenes.find((candidate) => candidate.id === world.story.currentSceneId);
   if (!scene) {
     throw new Error(`Runtime scene '${world.story.currentSceneId}' does not exist.`);
   }
@@ -292,8 +307,17 @@ export const executeSceneObjectCommand = (
     };
   }
 
+  if (execution.kind === "fallback") {
+    return {
+      kind: "fallback",
+      target,
+      execution,
+      state: world,
+    };
+  }
+
   return {
-    kind: execution.kind,
+    kind: "rejected",
     target,
     execution,
     state: world,

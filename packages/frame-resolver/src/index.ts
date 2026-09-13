@@ -7,20 +7,17 @@ import type {
   SpriteFrame,
 } from "@evavo/adventure-project-schema";
 import {
-  orderRenderNodes,
-  validateResolvedFrame,
   type NativeCanvas,
+  orderRenderNodes,
   type RenderFrameIssue,
   type RenderLayer,
   type RenderNode,
   type ResolvedCamera,
   type ResolvedFrame,
   type SpriteRenderNode,
+  validateResolvedFrame,
 } from "@evavo/adventure-render-contract";
-import {
-  quantizeNativePoint,
-  resolveScaleAtY,
-} from "@evavo/adventure-scene";
+import { quantizeNativePoint, resolveScaleAtY } from "@evavo/adventure-scene";
 
 export interface ActorSpriteInput {
   readonly nodeId: Id<"render-node">;
@@ -38,14 +35,8 @@ export interface ActorSpriteInput {
   readonly visible?: boolean;
 }
 
-export const resolveActorSprite = (
-  input: ActorSpriteInput,
-): SpriteRenderNode => {
-  const position = quantizeNativePoint(
-    input.footPosition,
-    input.presentation.pixelMotionPolicy,
-    "entity",
-  );
+export const resolveActorSprite = (input: ActorSpriteInput): SpriteRenderNode => {
+  const position = quantizeNativePoint(input.footPosition, input.presentation.pixelMotionPolicy, "entity");
   const scaleSolution = resolveScaleAtY(input.depthBands, position.y);
   const perspectiveScale = scaleSolution?.scale ?? 1;
   const scale = perspectiveScale * (input.scaleMultiplier ?? 1);
@@ -91,11 +82,7 @@ export interface CameraInput {
 }
 
 export const resolveCamera = (input: CameraInput): ResolvedCamera => ({
-  position: quantizeNativePoint(
-    input.position,
-    input.presentation.pixelMotionPolicy,
-    "camera",
-  ),
+  position: quantizeNativePoint(input.position, input.presentation.pixelMotionPolicy, "camera"),
   viewport: input.viewport,
   shakeOffset: quantizeNativePoint(
     input.shakeOffset ?? { x: 0, y: 0 },
@@ -116,13 +103,9 @@ export interface FrameBuildResult {
   readonly issues: readonly RenderFrameIssue[];
 }
 
-export const buildResolvedFrame = (
-  input: FrameBuildInput,
-): FrameBuildResult => {
+export const buildResolvedFrame = (input: FrameBuildInput): FrameBuildResult => {
   if (!Number.isSafeInteger(input.tick) || input.tick < 0) {
-    throw new RangeError(
-      "Resolved frame tick must be a non-negative safe integer.",
-    );
+    throw new RangeError("Resolved frame tick must be a non-negative safe integer.");
   }
 
   const frame: ResolvedFrame = {

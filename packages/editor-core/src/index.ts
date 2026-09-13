@@ -18,11 +18,7 @@ export class EditorCommandError extends Error {
     | "empty-batch";
   readonly path: string;
 
-  constructor(
-    code: EditorCommandError["code"],
-    path: string,
-    message: string,
-  ) {
+  constructor(code: EditorCommandError["code"], path: string, message: string) {
     super(message);
     this.name = "EditorCommandError";
     this.code = code;
@@ -146,9 +142,7 @@ const canonicalize = (value: unknown): unknown => {
   if (value && typeof value === "object") {
     const source = value as Readonly<Record<string, unknown>>;
     const output: Record<string, unknown> = {};
-    for (const key of Object.keys(source).sort((left, right) =>
-      left.localeCompare(right),
-    )) {
+    for (const key of Object.keys(source).sort((left, right) => left.localeCompare(right))) {
       const child = source[key];
       if (child !== undefined) output[key] = canonicalize(child);
     }
@@ -165,12 +159,7 @@ export const canonicalEditorJson = (value: unknown): string => {
   return output;
 };
 
-const insertAt = <T>(
-  values: readonly T[],
-  index: number,
-  value: T,
-  path: string,
-): T[] => {
+const insertAt = <T>(values: readonly T[], index: number, value: T, path: string): T[] => {
   if (!Number.isSafeInteger(index) || index < 0 || index > values.length) {
     throw new EditorCommandError(
       "invalid-index",
@@ -178,11 +167,7 @@ const insertAt = <T>(
       `Insert index ${index} is outside 0 to ${values.length}.`,
     );
   }
-  return [
-    ...values.slice(0, index).map(cloneJson),
-    cloneJson(value),
-    ...values.slice(index).map(cloneJson),
-  ];
+  return [...values.slice(0, index).map(cloneJson), cloneJson(value), ...values.slice(index).map(cloneJson)];
 };
 
 const removeAt = <T>(values: readonly T[], index: number): T[] => [
@@ -204,20 +189,12 @@ const findIndexOrThrow = <T>(
 ): number => {
   const index = values.findIndex(predicate);
   if (index < 0) {
-    throw new EditorCommandError(
-      "missing-entity",
-      path,
-      `${label} does not exist.`,
-    );
+    throw new EditorCommandError("missing-entity", path, `${label} does not exist.`);
   }
   return index;
 };
 
-const assertStableIdentity = (
-  expected: string,
-  actual: string,
-  path: string,
-): void => {
+const assertStableIdentity = (expected: string, actual: string, path: string): void => {
   if (expected !== actual) {
     throw new EditorCommandError(
       "identity-change",
@@ -263,27 +240,16 @@ const assertUniqueIds = (
   const local = new Set<string>();
   for (const id of ids) {
     if (local.has(id)) {
-      throw new EditorCommandError(
-        "duplicate-id",
-        path,
-        `Inserted data declares ID '${id}' more than once.`,
-      );
+      throw new EditorCommandError("duplicate-id", path, `Inserted data declares ID '${id}' more than once.`);
     }
     local.add(id);
     if (existing.has(id) && !ignored.has(id)) {
-      throw new EditorCommandError(
-        "duplicate-id",
-        path,
-        `ID '${id}' already exists in the scene document.`,
-      );
+      throw new EditorCommandError("duplicate-id", path, `ID '${id}' already exists in the scene document.`);
     }
   }
 };
 
-const sceneIndex = (
-  manifest: SceneInstanceManifest,
-  sceneId: Id<"scene">,
-): number =>
+const sceneIndex = (manifest: SceneInstanceManifest, sceneId: Id<"scene">): number =>
   findIndexOrThrow(
     manifest.scenes,
     (composition) => composition.sceneId === sceneId,
@@ -305,9 +271,7 @@ const referencedDefinition = (
   definitionId: Id<"object-definition">,
 ): SceneObjectInstance | null => {
   for (const composition of manifest.scenes) {
-    const instance = composition.objectInstances.find(
-      (candidate) => candidate.definitionId === definitionId,
-    );
+    const instance = composition.objectInstances.find((candidate) => candidate.definitionId === definitionId);
     if (instance) return instance;
   }
   return null;
@@ -320,11 +284,7 @@ export const applyEditorCommand = (
   switch (command.kind) {
     case "batch": {
       if (command.commands.length === 0) {
-        throw new EditorCommandError(
-          "empty-batch",
-          "commands",
-          "Editor command batches cannot be empty.",
-        );
+        throw new EditorCommandError("empty-batch", "commands", "Editor command batches cannot be empty.");
       }
       let next = manifest;
       const inverses: EditorCommand[] = [];
@@ -339,32 +299,18 @@ export const applyEditorCommand = (
       };
     }
     case "insert-scene-composition": {
-      if (
-        manifest.scenes.some(
-          (composition) =>
-            composition.sceneId === command.composition.sceneId,
-        )
-      ) {
+      if (manifest.scenes.some((composition) => composition.sceneId === command.composition.sceneId)) {
         throw new EditorCommandError(
           "duplicate-id",
           "composition.sceneId",
           `Scene composition '${command.composition.sceneId}' already exists.`,
         );
       }
-      assertUniqueIds(
-        manifest,
-        compositionIds(command.composition),
-        "composition",
-      );
+      assertUniqueIds(manifest, compositionIds(command.composition), "composition");
       return {
         manifest: {
           ...manifest,
-          scenes: insertAt(
-            manifest.scenes,
-            command.index,
-            command.composition,
-            "index",
-          ),
+          scenes: insertAt(manifest.scenes, command.index, command.composition, "index"),
         },
         inverse: {
           kind: "remove-scene-composition",
@@ -389,11 +335,7 @@ export const applyEditorCommand = (
       const index = sceneIndex(manifest, command.sceneId);
       const previous = manifest.scenes[index];
       if (!previous) throw new Error("Scene composition index is invalid.");
-      assertStableIdentity(
-        command.sceneId,
-        command.composition.sceneId,
-        "composition.sceneId",
-      );
+      assertStableIdentity(command.sceneId, command.composition.sceneId, "composition.sceneId");
       assertUniqueIds(
         manifest,
         compositionIds(command.composition),
@@ -414,12 +356,7 @@ export const applyEditorCommand = (
       return {
         manifest: {
           ...manifest,
-          objectDefinitions: insertAt(
-            manifest.objectDefinitions,
-            command.index,
-            command.definition,
-            "index",
-          ),
+          objectDefinitions: insertAt(manifest.objectDefinitions, command.index, command.definition, "index"),
         },
         inverse: {
           kind: "remove-object-definition",
@@ -465,16 +402,8 @@ export const applyEditorCommand = (
       );
       const previous = manifest.objectDefinitions[index];
       if (!previous) throw new Error("Object definition index is invalid.");
-      assertStableIdentity(
-        command.definitionId,
-        command.definition.id,
-        "definition.id",
-      );
-      if (
-        !command.definition.states.some(
-          (state) => state.id === command.definition.initialStateId,
-        )
-      ) {
+      assertStableIdentity(command.definitionId, command.definition.id, "definition.id");
+      if (!command.definition.states.some((state) => state.id === command.definition.initialStateId)) {
         throw new EditorCommandError(
           "protected-entity",
           "definition.initialStateId",
@@ -490,11 +419,7 @@ export const applyEditorCommand = (
       return {
         manifest: {
           ...manifest,
-          objectDefinitions: replaceAt(
-            manifest.objectDefinitions,
-            index,
-            command.definition,
-          ),
+          objectDefinitions: replaceAt(manifest.objectDefinitions, index, command.definition),
         },
         inverse: {
           kind: "replace-object-definition",
@@ -511,12 +436,7 @@ export const applyEditorCommand = (
       return {
         manifest: updateScene(manifest, index, {
           ...scene,
-          actorInstances: insertAt(
-            scene.actorInstances,
-            command.index,
-            command.instance,
-            "index",
-          ),
+          actorInstances: insertAt(scene.actorInstances, command.index, command.instance, "index"),
         }),
         inverse: {
           kind: "remove-actor-instance",
@@ -562,19 +482,11 @@ export const applyEditorCommand = (
       );
       const previous = scene.actorInstances[entityIndex];
       if (!previous) throw new Error("Actor instance index is invalid.");
-      assertStableIdentity(
-        command.instanceId,
-        command.instance.id,
-        "instance.id",
-      );
+      assertStableIdentity(command.instanceId, command.instance.id, "instance.id");
       return {
         manifest: updateScene(manifest, index, {
           ...scene,
-          actorInstances: replaceAt(
-            scene.actorInstances,
-            entityIndex,
-            command.instance,
-          ),
+          actorInstances: replaceAt(scene.actorInstances, entityIndex, command.instance),
         }),
         inverse: {
           kind: "replace-actor-instance",
@@ -592,12 +504,7 @@ export const applyEditorCommand = (
       return {
         manifest: updateScene(manifest, index, {
           ...scene,
-          objectInstances: insertAt(
-            scene.objectInstances,
-            command.index,
-            command.instance,
-            "index",
-          ),
+          objectInstances: insertAt(scene.objectInstances, command.index, command.instance, "index"),
         }),
         inverse: {
           kind: "remove-object-instance",
@@ -643,19 +550,11 @@ export const applyEditorCommand = (
       );
       const previous = scene.objectInstances[entityIndex];
       if (!previous) throw new Error("Object instance index is invalid.");
-      assertStableIdentity(
-        command.instanceId,
-        command.instance.id,
-        "instance.id",
-      );
+      assertStableIdentity(command.instanceId, command.instance.id, "instance.id");
       return {
         manifest: updateScene(manifest, index, {
           ...scene,
-          objectInstances: replaceAt(
-            scene.objectInstances,
-            entityIndex,
-            command.instance,
-          ),
+          objectInstances: replaceAt(scene.objectInstances, entityIndex, command.instance),
         }),
         inverse: {
           kind: "replace-object-instance",
@@ -673,12 +572,7 @@ export const applyEditorCommand = (
       return {
         manifest: updateScene(manifest, index, {
           ...scene,
-          navigationPortals: insertAt(
-            scene.navigationPortals,
-            command.index,
-            command.portal,
-            "index",
-          ),
+          navigationPortals: insertAt(scene.navigationPortals, command.index, command.portal, "index"),
         }),
         inverse: {
           kind: "remove-navigation-portal",
@@ -728,11 +622,7 @@ export const applyEditorCommand = (
       return {
         manifest: updateScene(manifest, index, {
           ...scene,
-          navigationPortals: replaceAt(
-            scene.navigationPortals,
-            entityIndex,
-            command.portal,
-          ),
+          navigationPortals: replaceAt(scene.navigationPortals, entityIndex, command.portal),
         }),
         inverse: {
           kind: "replace-navigation-portal",
@@ -745,9 +635,7 @@ export const applyEditorCommand = (
   }
 };
 
-export const createEditorDocument = (
-  manifest: SceneInstanceManifest,
-): EditorDocumentState => {
+export const createEditorDocument = (manifest: SceneInstanceManifest): EditorDocumentState => {
   const snapshot = cloneJson(manifest);
   return {
     manifest: snapshot,
@@ -756,18 +644,13 @@ export const createEditorDocument = (
   };
 };
 
-export const markEditorDocumentSaved = (
-  document: EditorDocumentState,
-): EditorDocumentState => ({
+export const markEditorDocumentSaved = (document: EditorDocumentState): EditorDocumentState => ({
   ...document,
   savedManifest: cloneJson(document.manifest),
 });
 
-export const isEditorDocumentDirty = (
-  document: EditorDocumentState,
-): boolean =>
-  canonicalEditorJson(document.manifest) !==
-  canonicalEditorJson(document.savedManifest);
+export const isEditorDocumentDirty = (document: EditorDocumentState): boolean =>
+  canonicalEditorJson(document.manifest) !== canonicalEditorJson(document.savedManifest);
 
 const applyToDocument = (
   document: EditorDocumentState,
@@ -784,9 +667,7 @@ const applyToDocument = (
   };
 };
 
-export const createEditorHistory = (
-  manifest: SceneInstanceManifest,
-): EditorHistoryState => ({
+export const createEditorHistory = (manifest: SceneInstanceManifest): EditorHistoryState => ({
   document: createEditorDocument(manifest),
   undoStack: [],
   redoStack: [],
@@ -799,17 +680,12 @@ export const executeEditorCommand = (
   const applied = applyToDocument(history.document, command);
   return {
     document: applied.document,
-    undoStack: [
-      ...history.undoStack,
-      { undo: applied.inverse, redo: cloneJson(command) },
-    ],
+    undoStack: [...history.undoStack, { undo: applied.inverse, redo: cloneJson(command) }],
     redoStack: [],
   };
 };
 
-export const undoEditorCommand = (
-  history: EditorHistoryState,
-): EditorHistoryState => {
+export const undoEditorCommand = (history: EditorHistoryState): EditorHistoryState => {
   const entry = history.undoStack.at(-1);
   if (!entry) return history;
   const applied = applyToDocument(history.document, entry.undo);
@@ -820,9 +696,7 @@ export const undoEditorCommand = (
   };
 };
 
-export const redoEditorCommand = (
-  history: EditorHistoryState,
-): EditorHistoryState => {
+export const redoEditorCommand = (history: EditorHistoryState): EditorHistoryState => {
   const entry = history.redoStack.at(-1);
   if (!entry) return history;
   const applied = applyToDocument(history.document, entry.redo);
@@ -833,9 +707,7 @@ export const redoEditorCommand = (
   };
 };
 
-export const markEditorHistorySaved = (
-  history: EditorHistoryState,
-): EditorHistoryState => ({
+export const markEditorHistorySaved = (history: EditorHistoryState): EditorHistoryState => ({
   ...history,
   document: markEditorDocumentSaved(history.document),
 });

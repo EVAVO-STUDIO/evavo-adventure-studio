@@ -11,6 +11,14 @@
       "types": "./dist/src/runner.d.ts",
       "import": "./dist/src/runner.js"
     },
+    "./lifecycle": {
+      "types": "./dist/src/lifecycle-cli.d.ts",
+      "import": "./dist/src/lifecycle-cli.js"
+    },
+    "./localisation": {
+      "types": "./dist/src/localisation-cli.d.ts",
+      "import": "./dist/src/localisation-cli.js"
+    },
     "./runtime-artifacts": {
       "types": "./dist/src/runtime-artifacts.d.ts",
       "import": "./dist/src/runtime-artifacts.js"
@@ -20,7 +28,9 @@
       "import": "./dist/src/replay-execute.js"
     }
   },
-  "files": ["dist"],
+  "files": [
+    "dist"
+  ],
   "scripts": {
     "build": "tsc -b",
     "typecheck": "tsc -b --pretty false"
@@ -28,6 +38,8 @@
   "dependencies": {
     "@evavo/adventure-art-direction": "workspace:*",
     "@evavo/adventure-asset-contract": "workspace:*",
+    "@evavo/adventure-asset-pipeline": "workspace:*",
+    "@evavo/adventure-audio": "workspace:*",
     "@evavo/adventure-bitmap-font": "workspace:*",
     "@evavo/adventure-compiler": "workspace:*",
     "@evavo/adventure-playtest-inspector": "workspace:*",

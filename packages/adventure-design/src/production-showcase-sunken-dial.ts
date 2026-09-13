@@ -10,8 +10,7 @@ export const sunkenDialShowcase = showcase({
   motif: "museum-dig",
   titleTreatment:
     "Grounded illustrated lettering is framed by a conservation bench, map fragments and one copper mechanism arc.",
-  dialogueTreatment:
-    "Selective close-ups preserve material evidence, companion posture and route tension.",
+  dialogueTreatment: "Selective close-ups preserve material evidence, companion posture and route tension.",
   systemTreatment:
     "A dossier combines mechanism sections, field notes and genuinely different route strategies.",
   plates: [
@@ -45,8 +44,26 @@ export const sunkenDialShowcase = showcase({
       106,
       "LOOK AT replacement alloy",
       [
-        actor("actor.sunken.conservator", "player", 86, 164, 54, "right", "lens inspection", "Apron, lens and sample tray read as a working conservator silhouette."),
-        actor("actor.sunken.companion", "companion", 202, 158, 52, "left", "route map held", "Map case and hat distinguish the companion's practical role."),
+        actor(
+          "actor.sunken.conservator",
+          "player",
+          86,
+          164,
+          54,
+          "right",
+          "lens inspection",
+          "Apron, lens and sample tray read as a working conservator silhouette.",
+        ),
+        actor(
+          "actor.sunken.companion",
+          "companion",
+          202,
+          158,
+          52,
+          "left",
+          "route map held",
+          "Map case and hat distinguish the companion's practical role.",
+        ),
       ],
       [
         prop("prop.sunken.dial", "puzzle", 236, 88, 52, 52, "tidal dial", "partly restored"),
@@ -69,8 +86,26 @@ export const sunkenDialShowcase = showcase({
       112,
       "The river is faster. The machine says it is also wrong.",
       [
-        actor("actor.sunken.conservator-close", "player", 78, 166, 76, "right", "measured challenge", "Lens and alloy sample stay visible during the close-up."),
-        actor("actor.sunken.companion-close", "companion", 236, 164, 78, "left", "map defended", "Folded map and guarded shoulder line communicate route commitment."),
+        actor(
+          "actor.sunken.conservator-close",
+          "player",
+          78,
+          166,
+          76,
+          "right",
+          "measured challenge",
+          "Lens and alloy sample stay visible during the close-up.",
+        ),
+        actor(
+          "actor.sunken.companion-close",
+          "companion",
+          236,
+          164,
+          78,
+          "left",
+          "map defended",
+          "Folded map and guarded shoulder line communicate route commitment.",
+        ),
       ],
       [
         prop("prop.sunken.route-map", "clue", 132, 82, 54, 34, "river map", "marked"),
@@ -92,7 +127,16 @@ export const sunkenDialShowcase = showcase({
       118,
       "COASTAL ROUTE · SLOW · MECHANICALLY CONSISTENT",
       [
-        actor("actor.sunken.dossier-marker", "player", 44, 150, 20, "right", "conservator marker", "A lens symbol identifies the evidence-led route."),
+        actor(
+          "actor.sunken.dossier-marker",
+          "player",
+          44,
+          150,
+          20,
+          "right",
+          "conservator marker",
+          "A lens symbol identifies the evidence-led route.",
+        ),
       ],
       [
         prop("prop.sunken.route-river", "exit", 56, 68, 62, 28, "river route", "fast-risky"),

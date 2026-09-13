@@ -1,0 +1,26 @@
+{
+  "name": "@evavo/adventure-audio-web",
+  "version": "0.1.0",
+  "private": true,
+  "type": "module",
+  "exports": {
+    ".": {
+      "types": "./dist/src/index.d.ts",
+      "import": "./dist/src/index.js"
+    },
+    "./assets": {
+      "types": "./dist/src/assets.d.ts",
+      "import": "./dist/src/assets.js"
+    }
+  },
+  "files": ["dist"],
+  "scripts": {
+    "build": "tsc -b",
+    "typecheck": "tsc -b --pretty false"
+  },
+  "dependencies": {
+    "@evavo/adventure-audio": "workspace:*",
+    "@evavo/adventure-asset-contract": "workspace:*",
+    "@evavo/adventure-project-schema": "workspace:*"
+  }
+}

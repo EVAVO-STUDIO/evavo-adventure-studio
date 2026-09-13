@@ -1,7 +1,10 @@
-import type {
-  AdventureProject,
-  Id,
-} from "@evavo/adventure-project-schema";
+import type { AdventureProject, Id } from "@evavo/adventure-project-schema";
+import {
+  evaluateSceneCanvas,
+  evaluateSceneDepth,
+  evaluateSceneEntrances,
+  evaluateSceneNavigation,
+} from "./scene-readability-foundation.js";
 import {
   adventurePolygonCoveragePercent,
   adventurePolygonVerticalSpanPercent,
@@ -10,23 +13,17 @@ import {
   pointInAdventurePolygon,
 } from "./scene-readability-geometry.js";
 import {
-  evaluateSceneCanvas,
-  evaluateSceneDepth,
-  evaluateSceneEntrances,
-  evaluateSceneNavigation,
-} from "./scene-readability-foundation.js";
-import {
   evaluateSceneComposition,
   evaluateSceneHotspots,
   evaluateSceneOcclusion,
 } from "./scene-readability-interaction.js";
 import {
-  AdventureSceneReadabilityError,
-  sceneReadabilitySeverityOrder,
   type AdventureSceneDesignLink,
+  AdventureSceneReadabilityError,
   type AdventureSceneReadabilityFinding,
   type AdventureSceneReadabilityReport,
   type AdventureSceneReadabilityStatus,
+  sceneReadabilitySeverityOrder,
 } from "./scene-readability-types.js";
 import type { AdventureDesignDocument } from "./types.js";
 
@@ -37,9 +34,7 @@ const designLinkFor = (
   design: AdventureDesignDocument | undefined,
   sceneId: Id<"scene">,
 ): AdventureSceneDesignLink | null => {
-  const location = design?.map.locations.find(
-    (candidate) => candidate.sceneId === sceneId,
-  );
+  const location = design?.map.locations.find((candidate) => candidate.sceneId === sceneId);
   return location
     ? {
         locationId: location.id,
@@ -71,14 +66,9 @@ export const evaluateAdventureSceneReadability = (
     scene.navigationAreas.map((area) => area.shape),
     size.height,
   );
-  const exitHotspotCount = scene.hotspots.filter((_, index) =>
-    hotspotChangesScene(scene, index),
-  ).length;
+  const exitHotspotCount = scene.hotspots.filter((_, index) => hotspotChangesScene(scene, index)).length;
   const findings: AdventureSceneReadabilityFinding[] = [];
-  const designLink =
-    design && design.projectId === project.id
-      ? designLinkFor(design, scene.id)
-      : null;
+  const designLink = design && design.projectId === project.id ? designLinkFor(design, scene.id) : null;
 
   evaluateSceneCanvas(project, scene, findings);
   evaluateSceneNavigation(scene, size, navigationCoverage, verticalSpan, findings);
@@ -90,19 +80,13 @@ export const evaluateAdventureSceneReadability = (
 
   const sorted = [...findings].sort(
     (left, right) =>
-      sceneReadabilitySeverityOrder[left.severity] -
-        sceneReadabilitySeverityOrder[right.severity] ||
+      sceneReadabilitySeverityOrder[left.severity] - sceneReadabilitySeverityOrder[right.severity] ||
       left.area.localeCompare(right.area) ||
       left.path.localeCompare(right.path) ||
       left.id.localeCompare(right.id),
   );
-  const score = Math.max(
-    0,
-    100 - sorted.reduce((total, finding) => total + finding.impact, 0),
-  );
-  const status: AdventureSceneReadabilityStatus = sorted.some(
-    (finding) => finding.severity === "error",
-  )
+  const score = Math.max(0, 100 - sorted.reduce((total, finding) => total + finding.impact, 0));
+  const status: AdventureSceneReadabilityStatus = sorted.some((finding) => finding.severity === "error")
     ? "blocked"
     : sorted.some((finding) => finding.severity === "warning") || score < 90
       ? "attention"
@@ -138,6 +122,4 @@ export const createAdventureSceneReadabilityReports = (
   project: AdventureProject,
   design?: AdventureDesignDocument,
 ): readonly AdventureSceneReadabilityReport[] =>
-  project.scenes.map((scene) =>
-    evaluateAdventureSceneReadability(project, scene.id, design),
-  );
+  project.scenes.map((scene) => evaluateAdventureSceneReadability(project, scene.id, design));

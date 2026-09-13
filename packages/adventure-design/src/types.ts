@@ -1,10 +1,4 @@
-import type {
-  Action,
-  AdventureProject,
-  Id,
-  Point,
-  Size,
-} from "@evavo/adventure-project-schema";
+import type { Action, AdventureProject, Id, Point, Size } from "@evavo/adventure-project-schema";
 
 export type AdventureDesignId<T extends string> = string & {
   readonly __adventureDesignId: T;
@@ -18,12 +12,7 @@ export type AdventureProductionMode =
   | "cinematic-photocollage"
   | "custom";
 
-export type AdventureCompositionMode =
-  | "stage"
-  | "cinematic"
-  | "storybook"
-  | "comic-panel"
-  | "travel";
+export type AdventureCompositionMode = "stage" | "cinematic" | "storybook" | "comic-panel" | "travel";
 
 export interface AdventurePaletteDirection {
   readonly maxColours: number;
@@ -52,13 +41,7 @@ export interface AdventureCreativeDirection {
   readonly prohibitedShortcuts: readonly string[];
 }
 
-export type AdventureLocationKind =
-  | "hub"
-  | "scene"
-  | "interior"
-  | "dungeon"
-  | "travel"
-  | "close-up";
+export type AdventureLocationKind = "hub" | "scene" | "interior" | "dungeon" | "travel" | "close-up";
 
 export interface AdventureMapLocation {
   readonly id: AdventureDesignId<"location">;
@@ -90,12 +73,7 @@ export interface AdventureWorldMap {
   readonly routes: readonly AdventureMapRoute[];
 }
 
-export type AdventureChapterMode =
-  | "act"
-  | "day"
-  | "mission"
-  | "era"
-  | "open-phase";
+export type AdventureChapterMode = "act" | "day" | "mission" | "era" | "open-phase";
 
 export interface AdventureChapter {
   readonly id: AdventureDesignId<"chapter">;
@@ -151,11 +129,7 @@ export interface AdventureHint {
   readonly text: string;
 }
 
-export type AdventureFailureMode =
-  | "none"
-  | "setback"
-  | "death"
-  | "alternate-branch";
+export type AdventureFailureMode = "none" | "setback" | "death" | "alternate-branch";
 
 export interface AdventureFailurePolicy {
   readonly mode: AdventureFailureMode;
@@ -251,11 +225,5 @@ export interface AdventureDesignIssue {
 
 export type AdventureProjectShell = Pick<
   AdventureProject,
-  | "id"
-  | "presentation"
-  | "scenes"
-  | "actors"
-  | "inventoryItems"
-  | "dialogues"
-  | "sequences"
+  "id" | "presentation" | "scenes" | "actors" | "inventoryItems" | "dialogues" | "sequences"
 >;

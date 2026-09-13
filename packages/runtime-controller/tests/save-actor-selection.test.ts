@@ -1,9 +1,6 @@
-import { describe, expect, it } from "vitest";
 import type { Id } from "@evavo/adventure-project-schema";
-import {
-  controlledActorRequestFromSave,
-  selectControlledActorInstance,
-} from "../src/input.js";
+import { describe, expect, it } from "vitest";
+import { controlledActorRequestFromSave, selectControlledActorInstance } from "../src/input.js";
 
 const id = <T extends string>(value: string): Id<T> => value as Id<T>;
 
@@ -56,12 +53,7 @@ const bundle = {
 
 describe("save-boundary controlled actor selection", () => {
   it("preserves explicit view-only saves instead of auto-selecting an actor", () => {
-    expect(
-      selectControlledActorInstance(
-        bundle,
-        controlledActorRequestFromSave(null),
-      ),
-    ).toEqual({
+    expect(selectControlledActorInstance(bundle, controlledActorRequestFromSave(null))).toEqual({
       kind: "none",
       reason: "explicit-view-only",
       candidates: [],
@@ -72,18 +64,14 @@ describe("save-boundary controlled actor selection", () => {
     expect(
       selectControlledActorInstance(
         bundle,
-        controlledActorRequestFromSave(
-          id<"actor-instance">("actor-instance.later"),
-        ),
+        controlledActorRequestFromSave(id<"actor-instance">("actor-instance.later")),
       ),
     ).toEqual({
       kind: "selected",
       actorInstanceId: "actor-instance.later",
       explicit: true,
     });
-    expect(
-      selectControlledActorInstance(bundle, "actor-instance.later"),
-    ).toMatchObject({
+    expect(selectControlledActorInstance(bundle, "actor-instance.later")).toMatchObject({
       kind: "invalid",
       reason: "unknown-requested-actor",
     });

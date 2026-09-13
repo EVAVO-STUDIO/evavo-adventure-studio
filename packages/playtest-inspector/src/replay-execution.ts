@@ -9,20 +9,17 @@ import { createPackagedRuntimeController } from "@evavo/adventure-runtime-contro
 import { controlledActorRequestFromSave } from "@evavo/adventure-runtime-controller/input";
 import type { SaveGame } from "@evavo/adventure-save-game";
 import { inspectSaveGame, type SaveGameInspection } from "./index.js";
-import {
-  assertReplayWithinExecutionLimits,
-  type ReplayExecutionLimits,
-} from "./replay-limits.js";
+import { assertReplayWithinExecutionLimits, type ReplayExecutionLimits } from "./replay-limits.js";
 
 export {
+  assertReplayWithinExecutionLimits,
   DEFAULT_ABSOLUTE_MAXIMUM_REPLAY_DURATION_TICKS,
   DEFAULT_MAXIMUM_REPLAY_DURATION_SECONDS,
   DEFAULT_MAXIMUM_REPLAY_EVENTS,
-  ReplayExecutionLimitError,
-  assertReplayWithinExecutionLimits,
-  resolveReplayExecutionLimits,
   type ReplayExecutionLimitCode,
+  ReplayExecutionLimitError,
   type ReplayExecutionLimits,
+  resolveReplayExecutionLimits,
 } from "./replay-limits.js";
 
 export interface InspectedReplayExecution {
@@ -62,8 +59,7 @@ export const executeInspectedReplay = (
     finalTick: result.finalTick,
     finalSaveFingerprint: result.finalSaveFingerprint,
     expectedFinalSaveFingerprint: expected,
-    checkpointMatched:
-      expected === null ? null : expected === result.finalSaveFingerprint,
+    checkpointMatched: expected === null ? null : expected === result.finalSaveFingerprint,
     finalSaveDocument: result.finalSave,
     finalSave: inspectSaveGame(bundle, result.finalSave),
   };

@@ -1,11 +1,11 @@
-import { describe, expect, it } from "vitest";
-import type { Hotspot, Id } from "@evavo/adventure-project-schema";
 import type { RuntimeState } from "@evavo/adventure-core";
+import type { Hotspot, Id } from "@evavo/adventure-project-schema";
+import { describe, expect, it } from "vitest";
 import {
   executeHotspotCommand,
+  type InteractionCommand,
   resolveCursor,
   resolveHotspotCommand,
-  type InteractionCommand,
 } from "../src/index.js";
 
 const id = <T extends string>(value: string) => value as Id<T>;
@@ -65,10 +65,7 @@ const drawer: Hotspot = {
   ],
 };
 
-const command = (
-  verb: string,
-  itemId: Id<"item"> | null,
-): InteractionCommand => ({
+const command = (verb: string, itemId: Id<"item"> | null): InteractionCommand => ({
   actorId: id<"actor">("actor.player"),
   verb,
   targetHotspotId: drawer.id,
@@ -77,11 +74,7 @@ const command = (
 
 describe("interaction resolver", () => {
   it("selects an exact inventory interaction", () => {
-    const resolution = resolveHotspotCommand(
-      state(),
-      drawer,
-      command("use", id<"item">("item.brass-key")),
-    );
+    const resolution = resolveHotspotCommand(state(), drawer, command("use", id<"item">("item.brass-key")));
 
     expect(resolution.kind).toBe("matched");
     if (resolution.kind === "matched") {
@@ -90,11 +83,7 @@ describe("interaction resolver", () => {
   });
 
   it("returns authored feedback for the wrong item", () => {
-    const resolution = resolveHotspotCommand(
-      state(),
-      drawer,
-      command("use", id<"item">("item.wrong-key")),
-    );
+    const resolution = resolveHotspotCommand(state(), drawer, command("use", id<"item">("item.wrong-key")));
 
     expect(resolution).toMatchObject({
       kind: "fallback",
@@ -104,11 +93,7 @@ describe("interaction resolver", () => {
   });
 
   it("filters one-time interactions after execution", () => {
-    const first = executeHotspotCommand(
-      state(),
-      drawer,
-      command("use", id<"item">("item.brass-key")),
-    );
+    const first = executeHotspotCommand(state(), drawer, command("use", id<"item">("item.brass-key")));
     expect(first.kind).toBe("executed");
     if (first.kind !== "executed") {
       throw new Error("Expected first interaction to execute.");

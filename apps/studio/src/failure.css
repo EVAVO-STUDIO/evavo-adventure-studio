@@ -4,9 +4,7 @@
   height: 100%;
   place-items: center;
   padding: 32px;
-  background:
-    radial-gradient(circle at 50% 30%, rgb(255 36 78 / 10%), transparent 42%),
-    #090a0f;
+  background: radial-gradient(circle at 50% 30%, rgb(255 36 78 / 10%), transparent 42%), #090a0f;
 }
 
 .studio-failure-card {

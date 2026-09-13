@@ -1,4 +1,3 @@
-import { z } from "zod";
 import { idSchema } from "@evavo/adventure-project-schema";
 import {
   objectDefinitionSchema,
@@ -7,6 +6,7 @@ import {
   sceneNavigationPortalSchema,
   sceneObjectInstanceSchema,
 } from "@evavo/adventure-scene-instances";
+import { z } from "zod";
 import type { EditorCommand } from "./index.js";
 
 export const editorCommandSchema: z.ZodType<EditorCommand> = z.lazy(() =>
@@ -129,8 +129,7 @@ export const editorCommandSchema: z.ZodType<EditorCommand> = z.lazy(() =>
   ]),
 );
 
-export const parseEditorCommand = (input: unknown): EditorCommand =>
-  editorCommandSchema.parse(input);
+export const parseEditorCommand = (input: unknown): EditorCommand => editorCommandSchema.parse(input);
 
 export const editorOperationSchema = z
   .object({

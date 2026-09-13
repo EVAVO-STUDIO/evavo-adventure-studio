@@ -1,11 +1,4 @@
-import type {
-  Actor,
-  DepthBand,
-  Point,
-  Polygon,
-  Rectangle,
-  Scene,
-} from "@evavo/adventure-project-schema";
+import type { Actor, DepthBand, Point, Polygon, Rectangle, Scene } from "@evavo/adventure-project-schema";
 import type {
   ObjectDefinition,
   ObjectStateDefinition,
@@ -30,8 +23,7 @@ export const adventurePointDistance = (left: Point, right: Point): number =>
 const depthScaleAtY = (bands: readonly DepthBand[], y: number): number => {
   const band = bands.find(
     (candidate) =>
-      y >= Math.min(candidate.farY, candidate.nearY) &&
-      y <= Math.max(candidate.farY, candidate.nearY),
+      y >= Math.min(candidate.farY, candidate.nearY) && y <= Math.max(candidate.farY, candidate.nearY),
   );
   if (!band) return 1;
   const range = band.nearY - band.farY;
@@ -53,13 +45,10 @@ export const actorStagingMarker = (
   instance: SceneActorInstance,
 ): AdventureActorStagingMarker => {
   const clip = actor?.animations.find(
-    (candidate) =>
-      candidate.state === instance.animationState && candidate.facing === instance.facing,
+    (candidate) => candidate.state === instance.animationState && candidate.facing === instance.facing,
   );
   const frameId = clip?.frameIds[0];
-  const frame = frameId
-    ? actor?.frames.find((candidate) => candidate.id === frameId)
-    : undefined;
+  const frame = frameId ? actor?.frames.find((candidate) => candidate.id === frameId) : undefined;
   const depthScale = depthScaleAtY(scene.depthBands, instance.position.y);
   const scale = depthScale * instance.scaleMultiplier;
   const bounds = frame
@@ -96,35 +85,23 @@ export const objectStateForInstance = (
   return definition.states.find((candidate) => candidate.id === stateId) ?? null;
 };
 
-const transformedPoint = (
-  point: Point,
-  instance: SceneObjectInstance,
-): Point => ({
-  x:
-    instance.position.x +
-    (instance.mirrored ? -point.x : point.x) * instance.scaleMultiplier,
+const transformedPoint = (point: Point, instance: SceneObjectInstance): Point => ({
+  x: instance.position.x + (instance.mirrored ? -point.x : point.x) * instance.scaleMultiplier,
   y: instance.position.y + point.y * instance.scaleMultiplier,
 });
 
-const transformedPolygon = (
-  polygon: Polygon,
-  instance: SceneObjectInstance,
-): Polygon => ({
+const transformedPolygon = (polygon: Polygon, instance: SceneObjectInstance): Polygon => ({
   points: polygon.points.map((point) => transformedPoint(point, instance)),
 });
 
-const spriteBounds = (
-  state: ObjectStateDefinition,
-  instance: SceneObjectInstance,
-): Rectangle | null => {
+const spriteBounds = (state: ObjectStateDefinition, instance: SceneObjectInstance): Rectangle | null => {
   const visual = state.visual;
   if (!visual || visual.kind !== "sprite-frame") return null;
   const scale = instance.scaleMultiplier;
   return normalizeRectangle({
     x:
       instance.position.x -
-      (instance.mirrored ? visual.sourceSize.width - visual.pivot.x : visual.pivot.x) *
-        scale,
+      (instance.mirrored ? visual.sourceSize.width - visual.pivot.x : visual.pivot.x) * scale,
     y: instance.position.y - visual.pivot.y * scale,
     width: visual.sourceSize.width * scale,
     height: visual.sourceSize.height * scale,
@@ -140,9 +117,7 @@ export const objectStagingMarker = (
   const interactionShape = state?.interactionShape
     ? transformedPolygon(state.interactionShape, instance)
     : null;
-  const walkTo = state?.walkToOffset
-    ? transformedPoint(state.walkToOffset, instance)
-    : null;
+  const walkTo = state?.walkToOffset ? transformedPoint(state.walkToOffset, instance) : null;
   return {
     instanceId: instance.id,
     definitionId: instance.definitionId,
@@ -155,8 +130,7 @@ export const objectStagingMarker = (
     scaleMultiplier: instance.scaleMultiplier,
     mirrored: instance.mirrored,
     visible: state?.visible ?? false,
-    interactive:
-      (state?.interactions.length ?? 0) > 0 || Boolean(state?.fallbackText),
+    interactive: (state?.interactions.length ?? 0) > 0 || Boolean(state?.fallbackText),
     visualKind: state?.visual?.kind ?? null,
     visualResolved: Boolean(state && (!state.visible || state.visual)),
     opacity,
@@ -166,34 +140,18 @@ export const objectStagingMarker = (
   };
 };
 
-export const rectangleIntersectionRatio = (
-  left: Rectangle,
-  right: Rectangle,
-): number => {
+export const rectangleIntersectionRatio = (left: Rectangle, right: Rectangle): number => {
   const x = Math.max(left.x, right.x);
   const y = Math.max(left.y, right.y);
-  const width = Math.max(
-    0,
-    Math.min(left.x + left.width, right.x + right.width) - x,
-  );
-  const height = Math.max(
-    0,
-    Math.min(left.y + left.height, right.y + right.height) - y,
-  );
+  const width = Math.max(0, Math.min(left.x + left.width, right.x + right.width) - x);
+  const height = Math.max(0, Math.min(left.y + left.height, right.y + right.height) - y);
   const intersection = width * height;
   const smaller = Math.min(left.width * left.height, right.width * right.height);
   return smaller <= 0 ? 0 : intersection / smaller;
 };
 
-export const rectangleOutsideFraction = (
-  rectangle: Rectangle,
-  width: number,
-  height: number,
-): number => {
-  const clippedWidth = Math.max(
-    0,
-    Math.min(rectangle.x + rectangle.width, width) - Math.max(rectangle.x, 0),
-  );
+export const rectangleOutsideFraction = (rectangle: Rectangle, width: number, height: number): number => {
+  const clippedWidth = Math.max(0, Math.min(rectangle.x + rectangle.width, width) - Math.max(rectangle.x, 0));
   const clippedHeight = Math.max(
     0,
     Math.min(rectangle.y + rectangle.height, height) - Math.max(rectangle.y, 0),
@@ -203,10 +161,7 @@ export const rectangleOutsideFraction = (
   return 1 - (clippedWidth * clippedHeight) / total;
 };
 
-export const objectMarkerInsideCanvas = (
-  marker: AdventureObjectStagingMarker,
-  scene: Scene,
-): boolean =>
+export const objectMarkerInsideCanvas = (marker: AdventureObjectStagingMarker, scene: Scene): boolean =>
   pointInsideSceneCanvas(marker.position, {
     width: scene.width,
     height: scene.height,
@@ -217,15 +172,10 @@ export const objectMarkerInsideCanvas = (
       height: scene.height,
     }));
 
-export const objectWalkToIsReachable = (
-  marker: AdventureObjectStagingMarker,
-  scene: Scene,
-): boolean => !marker.walkTo || pointInsideSceneNavigation(scene, marker.walkTo);
+export const objectWalkToIsReachable = (marker: AdventureObjectStagingMarker, scene: Scene): boolean =>
+  !marker.walkTo || pointInsideSceneNavigation(scene, marker.walkTo);
 
-export const pointOccupiesObject = (
-  point: Point,
-  marker: AdventureObjectStagingMarker,
-): boolean =>
+export const pointOccupiesObject = (point: Point, marker: AdventureObjectStagingMarker): boolean =>
   marker.interactionShape
     ? pointInAdventurePolygon(point, marker.interactionShape)
     : marker.bounds

@@ -6,6 +6,7 @@
   },
   "include": ["src/**/*.ts", "tests/**/*.ts"],
   "references": [
+    { "path": "../audio" },
     { "path": "../asset-contract" },
     { "path": "../bitmap-font" },
     { "path": "../project-schema" },

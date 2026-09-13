@@ -1,11 +1,5 @@
-import type {
-  ReplayInspection,
-  SaveGameInspection,
-} from "@evavo/adventure-playtest-inspector";
-import {
-  compareReplayCheckpoint,
-  type ReplayCheckpointComparison,
-} from "./playtest-replay-checkpoint.js";
+import type { ReplayInspection, SaveGameInspection } from "@evavo/adventure-playtest-inspector";
+import { compareReplayCheckpoint, type ReplayCheckpointComparison } from "./playtest-replay-checkpoint.js";
 import "./playtest-checkpoint.css";
 
 const checkpointCopy = (
@@ -58,10 +52,7 @@ export const ReplayCheckpointPanel = ({
   const copy = checkpointCopy(comparison);
 
   return (
-    <section
-      className={`playtest-card playtest-checkpoint is-${comparison.status}`}
-      aria-live="polite"
-    >
+    <section className={`playtest-card playtest-checkpoint is-${comparison.status}`} aria-live="polite">
       <div>
         <span className="playtest-eyebrow">Replay closure</span>
         <h2>{copy.title}</h2>

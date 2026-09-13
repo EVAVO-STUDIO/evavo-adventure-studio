@@ -1,16 +1,16 @@
-import { z } from "zod";
 import {
-  validateAssetBuildManifest,
   type AssetBuildManifest,
   type CompiledAssetRecord,
+  validateAssetBuildManifest,
 } from "@evavo/adventure-asset-contract";
 import {
-  idSchema,
-  sizeSchema,
   type AdventureProject,
   type Id,
+  idSchema,
   type Size,
+  sizeSchema,
 } from "@evavo/adventure-project-schema";
+import { z } from "zod";
 
 export const artPresetSchema = z.enum([
   "ega-16-320x200",
@@ -66,9 +66,7 @@ export const artAssetRuleSchema = z
     maxColours: z.number().int().min(2).max(16_777_216).optional(),
     dither: z.number().min(0).max(1).optional(),
     trimMode: z.enum(["none", "alpha", "either"]).default("either"),
-    transparency: z
-      .enum(["inherit", "opaque", "binary", "full"])
-      .default("inherit"),
+    transparency: z.enum(["inherit", "opaque", "binary", "full"]).default("inherit"),
     sizePolicy: z.enum(["any", "exact", "minimum"]).default("any"),
     expectedSize: sizeSchema.optional(),
     nearestOnly: z.boolean().default(true),
@@ -92,10 +90,7 @@ export type ArtDirectionManifest = z.infer<typeof artDirectionManifestSchema>;
 export const parseArtDirectionManifest = (input: unknown): ArtDirectionManifest =>
   artDirectionManifestSchema.parse(input);
 
-const profileForPreset = (
-  preset: ArtPreset,
-  nativeSize: Size,
-): ArtDirectionProfile => {
+const profileForPreset = (preset: ArtPreset, nativeSize: Size): ArtDirectionProfile => {
   switch (preset) {
     case "ega-16-320x200":
       return {
@@ -190,9 +185,7 @@ const profileForPreset = (
   }
 };
 
-const sceneBackgroundSizes = (
-  project: AdventureProject,
-): ReadonlyMap<string, readonly Size[]> => {
+const sceneBackgroundSizes = (project: AdventureProject): ReadonlyMap<string, readonly Size[]> => {
   const mutable = new Map<string, Size[]>();
   for (const scene of project.scenes) {
     const sizes = mutable.get(scene.backgroundAssetId) ?? [];
@@ -203,37 +196,24 @@ const sceneBackgroundSizes = (
 };
 
 const actorAssetIds = (project: AdventureProject): ReadonlySet<string> =>
-  new Set(
-    project.actors.flatMap((actor) =>
-      actor.frames.map((frame) => frame.assetId as string),
-    ),
-  );
+  new Set(project.actors.flatMap((actor) => actor.frames.map((frame) => frame.assetId as string)));
 
 const inventoryAssetIds = (project: AdventureProject): ReadonlySet<string> =>
   new Set(project.inventoryItems.map((item) => item.iconAssetId as string));
 
 const occluderAssetIds = (project: AdventureProject): ReadonlySet<string> =>
-  new Set(
-    project.scenes.flatMap((scene) =>
-      scene.occluders.map((occluder) => occluder.assetId as string),
-    ),
-  );
+  new Set(project.scenes.flatMap((scene) => scene.occluders.map((occluder) => occluder.assetId as string)));
 
 const paletteCycleAssetIds = (project: AdventureProject): ReadonlySet<string> =>
   new Set(
     project.sequences.flatMap((sequence) =>
       sequence.tracks.flatMap((track) =>
-        track.cues.flatMap((cue) =>
-          cue.kind === "palette-cycle" ? [cue.paletteAssetId as string] : [],
-        ),
+        track.cues.flatMap((cue) => (cue.kind === "palette-cycle" ? [cue.paletteAssetId as string] : [])),
       ),
     ),
   );
 
-const inferredRole = (
-  project: AdventureProject,
-  assetId: Id<"asset">,
-): ArtAssetRole => {
+const inferredRole = (project: AdventureProject, assetId: Id<"asset">): ArtAssetRole => {
   const asset = project.assets.find((candidate) => candidate.id === assetId);
   if (!asset) return "other";
   if (sceneBackgroundSizes(project).has(assetId)) return "background";
@@ -256,29 +236,23 @@ const inferredRole = (
   }
 };
 
-const uniqueBackgroundSize = (
-  project: AdventureProject,
-  assetId: Id<"asset">,
-): Size | undefined => {
+const uniqueBackgroundSize = (project: AdventureProject, assetId: Id<"asset">): Size | undefined => {
   const sizes = sceneBackgroundSizes(project).get(assetId) ?? [];
   const unique = new Map(sizes.map((size) => [`${size.width}x${size.height}`, size]));
   return unique.size === 1 ? [...unique.values()][0] : undefined;
 };
 
-const defaultRule = (
-  project: AdventureProject,
-  assetId: Id<"asset">,
-): ArtAssetRule => {
+const defaultRule = (project: AdventureProject, assetId: Id<"asset">): ArtAssetRule => {
   const role = inferredRole(project, assetId);
   const backgroundSize = role === "background" ? uniqueBackgroundSize(project, assetId) : undefined;
-  const visual = role === "background" || role === "actor" || role === "object" || role === "ui" || role === "cursor";
+  const visual =
+    role === "background" || role === "actor" || role === "object" || role === "ui" || role === "cursor";
   return {
     assetId,
     role,
     outputMode: "inherit",
     trimMode: role === "background" ? "none" : visual ? "alpha" : "either",
-    transparency:
-      role === "background" ? "opaque" : visual ? "inherit" : "inherit",
+    transparency: role === "background" ? "opaque" : visual ? "inherit" : "inherit",
     sizePolicy: backgroundSize ? "exact" : "any",
     ...(backgroundSize ? { expectedSize: backgroundSize } : {}),
     nearestOnly: visual,
@@ -340,10 +314,7 @@ const addIssue = (
   issues.push({ severity, code, path, message });
 };
 
-const roleAllowsKind = (
-  role: ArtAssetRole,
-  kind: AdventureProject["assets"][number]["kind"],
-): boolean => {
+const roleAllowsKind = (role: ArtAssetRole, kind: AdventureProject["assets"][number]["kind"]): boolean => {
   switch (role) {
     case "background":
       return kind === "image";
@@ -396,10 +367,7 @@ export const validateArtDirectionManifest = (
       `Profile native size ${manifest.profile.nativeSize.width} × ${manifest.profile.nativeSize.height} does not match project ${projectNative.width} × ${projectNative.height}.`,
     );
   }
-  if (
-    manifest.profile.nearestSamplingRequired &&
-    project.presentation.textureSampling !== "nearest"
-  ) {
+  if (manifest.profile.nearestSamplingRequired && project.presentation.textureSampling !== "nearest") {
     addIssue(
       issues,
       "error",
@@ -408,10 +376,7 @@ export const validateArtDirectionManifest = (
       "The art profile requires nearest-neighbour texture sampling.",
     );
   }
-  if (
-    manifest.profile.integerScaleRequired &&
-    !project.presentation.integerScale
-  ) {
+  if (manifest.profile.integerScaleRequired && !project.presentation.integerScale) {
     addIssue(
       issues,
       "error",
@@ -420,10 +385,7 @@ export const validateArtDirectionManifest = (
       "The art profile requires integer presentation scaling.",
     );
   }
-  if (
-    manifest.profile.palette.mode === "indexed" &&
-    manifest.profile.palette.maxColours > 256
-  ) {
+  if (manifest.profile.palette.mode === "indexed" && manifest.profile.palette.maxColours > 256) {
     addIssue(
       issues,
       "error",
@@ -433,9 +395,7 @@ export const validateArtDirectionManifest = (
     );
   }
 
-  const projectAssets = new Map(
-    project.assets.map((asset) => [asset.id as string, asset] as const),
-  );
+  const projectAssets = new Map(project.assets.map((asset) => [asset.id as string, asset] as const));
   const ruleByAsset = new Map<string, ArtAssetRule>();
   manifest.assets.forEach((rule, ruleIndex) => {
     if (ruleByAsset.has(rule.assetId)) {
@@ -468,10 +428,7 @@ export const validateArtDirectionManifest = (
         `Role '${rule.role}' is incompatible with '${asset.kind}' asset '${asset.id}'.`,
       );
     }
-    if (
-      (rule.sizePolicy === "exact" || rule.sizePolicy === "minimum") &&
-      !rule.expectedSize
-    ) {
+    if ((rule.sizePolicy === "exact" || rule.sizePolicy === "minimum") && !rule.expectedSize) {
       addIssue(
         issues,
         "error",
@@ -480,10 +437,7 @@ export const validateArtDirectionManifest = (
         `Size policy '${rule.sizePolicy}' requires expected dimensions.`,
       );
     }
-    const resolvedMode =
-      rule.outputMode === "inherit"
-        ? manifest.profile.palette.mode
-        : rule.outputMode;
+    const resolvedMode = rule.outputMode === "inherit" ? manifest.profile.palette.mode : rule.outputMode;
     const resolvedMax = rule.maxColours ?? manifest.profile.palette.maxColours;
     if (resolvedMode === "indexed" && resolvedMax > 256) {
       addIssue(
@@ -535,9 +489,7 @@ export const validateArtDirectionManifest = (
     const expected = [...unique.values()][0];
     if (
       expected &&
-      (rule.sizePolicy !== "exact" ||
-        !rule.expectedSize ||
-        !sameSize(rule.expectedSize, expected))
+      (rule.sizePolicy !== "exact" || !rule.expectedSize || !sameSize(rule.expectedSize, expected))
     ) {
       addIssue(
         issues,
@@ -552,16 +504,10 @@ export const validateArtDirectionManifest = (
   return issues;
 };
 
-const compiledById = (
-  manifest: AssetBuildManifest,
-): ReadonlyMap<string, CompiledAssetRecord> =>
+const compiledById = (manifest: AssetBuildManifest): ReadonlyMap<string, CompiledAssetRecord> =>
   new Map(manifest.assets.map((asset) => [asset.assetId as string, asset] as const));
 
-const sizeMatches = (
-  rule: ArtAssetRule,
-  width: number,
-  height: number,
-): boolean => {
+const sizeMatches = (rule: ArtAssetRule, width: number, height: number): boolean => {
   if (rule.sizePolicy === "any" || !rule.expectedSize) return true;
   return rule.sizePolicy === "exact"
     ? width === rule.expectedSize.width && height === rule.expectedSize.height
@@ -573,17 +519,9 @@ export const evaluateCompiledArtDirection = (
   art: ArtDirectionManifest,
   compiled: AssetBuildManifest,
 ): readonly ArtDirectionIssue[] => {
-  const issues: ArtDirectionIssue[] = [
-    ...validateArtDirectionManifest(project, art),
-  ];
+  const issues: ArtDirectionIssue[] = [...validateArtDirectionManifest(project, art)];
   for (const assetIssue of validateAssetBuildManifest(project, compiled)) {
-    addIssue(
-      issues,
-      "error",
-      "asset-build-invalid",
-      assetIssue.path,
-      assetIssue.message,
-    );
+    addIssue(issues, "error", "asset-build-invalid", assetIssue.path, assetIssue.message);
   }
 
   const evidence = compiledById(compiled);
@@ -599,8 +537,7 @@ export const evaluateCompiledArtDirection = (
       );
       return;
     }
-    const resolvedMode =
-      rule.outputMode === "inherit" ? art.profile.palette.mode : rule.outputMode;
+    const resolvedMode = rule.outputMode === "inherit" ? art.profile.palette.mode : rule.outputMode;
     const resolvedMax = rule.maxColours ?? art.profile.palette.maxColours;
 
     if (asset.kind === "image") {
@@ -726,9 +663,7 @@ const canonicalize = (value: unknown): unknown => {
   if (value && typeof value === "object") {
     const source = value as Readonly<Record<string, unknown>>;
     const output: Record<string, unknown> = {};
-    for (const key of Object.keys(source).sort((left, right) =>
-      left.localeCompare(right),
-    )) {
+    for (const key of Object.keys(source).sort((left, right) => left.localeCompare(right))) {
       const child = source[key];
       if (child !== undefined) output[key] = canonicalize(child);
     }
@@ -764,10 +699,7 @@ export class ArtDirectionEditorCommandError extends Error {
   }
 }
 
-const assertManifestValid = (
-  project: AdventureProject,
-  manifest: ArtDirectionManifest,
-): void => {
+const assertManifestValid = (project: AdventureProject, manifest: ArtDirectionManifest): void => {
   const issues = validateArtDirectionManifest(project, manifest).filter(
     (entry) => entry.severity === "error",
   );
@@ -820,9 +752,7 @@ export const applyArtDirectionEditorCommand = (
           `Asset rule '${command.assetId}' cannot become '${command.rule.assetId}'.`,
         );
       }
-      const index = manifest.assets.findIndex(
-        (rule) => rule.assetId === command.assetId,
-      );
+      const index = manifest.assets.findIndex((rule) => rule.assetId === command.assetId);
       if (index < 0) {
         throw new ArtDirectionEditorCommandError(
           "missing-rule",
@@ -870,11 +800,8 @@ export const createArtDirectionEditorHistory = (
   };
 };
 
-export const isArtDirectionEditorDocumentDirty = (
-  document: ArtDirectionEditorDocumentState,
-): boolean =>
-  canonicalArtDirectionJson(document.manifest) !==
-  canonicalArtDirectionJson(document.savedManifest);
+export const isArtDirectionEditorDocumentDirty = (document: ArtDirectionEditorDocumentState): boolean =>
+  canonicalArtDirectionJson(document.manifest) !== canonicalArtDirectionJson(document.savedManifest);
 
 const applyToArtDocument = (
   project: AdventureProject,
@@ -903,10 +830,7 @@ export const executeArtDirectionEditorCommand = (
   const applied = applyToArtDocument(project, history.document, command);
   return {
     document: applied.document,
-    undoStack: [
-      ...history.undoStack,
-      { undo: applied.inverse, redo: cloneJson(command) },
-    ],
+    undoStack: [...history.undoStack, { undo: applied.inverse, redo: cloneJson(command) }],
     redoStack: [],
   };
 };

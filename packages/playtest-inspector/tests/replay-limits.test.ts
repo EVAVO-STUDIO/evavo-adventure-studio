@@ -1,5 +1,5 @@
-import { describe, expect, it } from "vitest";
 import type { ReplayLog } from "@evavo/adventure-replay";
+import { describe, expect, it } from "vitest";
 import {
   assertReplayWithinExecutionLimits,
   ReplayExecutionLimitError,
@@ -10,11 +10,7 @@ const bundle = {
   presentation: { logicalTicksPerSecond: 60 },
 };
 
-const replay = (
-  eventCount: number,
-  initialTick: number,
-  finalTick: number,
-) =>
+const replay = (eventCount: number, initialTick: number, finalTick: number) =>
   ({
     events: Array.from({ length: eventCount }, (_, sequence) => ({
       kind: "activate" as const,
@@ -49,9 +45,7 @@ describe("replay execution limits", () => {
       assertReplayWithinExecutionLimits(bundle, replay(4, 0, 10), {
         maxEvents: 3,
       }),
-    ).toThrow(
-      new ReplayExecutionLimitError("event-count-exceeded", 4, 3),
-    );
+    ).toThrow(new ReplayExecutionLimitError("event-count-exceeded", 4, 3));
   });
 
   it("rejects excessive logical duration before execution", () => {
@@ -63,9 +57,7 @@ describe("replay execution limits", () => {
   });
 
   it("rejects invalid caller-supplied limits", () => {
-    expect(() =>
-      resolveReplayExecutionLimits(bundle, { maxEvents: 0 }),
-    ).toThrow(/positive safe integer/);
+    expect(() => resolveReplayExecutionLimits(bundle, { maxEvents: 0 })).toThrow(/positive safe integer/);
     expect(() =>
       resolveReplayExecutionLimits(bundle, {
         maxDurationTicks: Number.MAX_SAFE_INTEGER + 1,

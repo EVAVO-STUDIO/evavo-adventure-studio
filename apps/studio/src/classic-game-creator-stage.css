@@ -122,7 +122,9 @@
 .cc-puzzle-card code,
 .cc-inspector footer code {
   color: var(--cc-warm);
-  font: 700 9px/1.2 ui-monospace, monospace;
+  font:
+    700 9px / 1.2 ui-monospace,
+    monospace;
 }
 
 .cc-scene-heading > div:last-child strong {
@@ -277,7 +279,9 @@
 
 .ccp-interface-preview text {
   fill: var(--cc-paper);
-  font: 6px ui-monospace, monospace;
+  font:
+    6px ui-monospace,
+    monospace;
   letter-spacing: 0.04em;
 }
 
@@ -331,7 +335,9 @@
 
 .cc-native-proof-grid span {
   color: var(--cc-accent);
-  font: 900 12px/1 ui-monospace, monospace;
+  font:
+    900 12px / 1 ui-monospace,
+    monospace;
 }
 
 .cc-native-proof-grid p {

@@ -1,8 +1,8 @@
-import type { ReactNode } from "react";
 import type {
   AdventureSceneReadabilityFinding,
   AdventureSceneReadabilityReport,
 } from "@evavo/adventure-design/scene-readability";
+import type { ReactNode } from "react";
 
 const shortId = (value: string): string => value.split(".").at(-1) ?? value;
 
@@ -15,11 +15,7 @@ export const Button = ({
   readonly active?: boolean;
   readonly onClick: () => void;
 }) => (
-  <button
-    type="button"
-    className={`cmp-button${active ? " is-active" : ""}`}
-    onClick={onClick}
-  >
+  <button type="button" className={`cmp-button${active ? " is-active" : ""}`} onClick={onClick}>
     {children}
   </button>
 );
@@ -151,10 +147,7 @@ export const SceneOverlay = ({ report }: { readonly report: AdventureSceneReadab
 
         {overlay.navigationAreas.map((area) => (
           <g key={area.id}>
-            <polygon
-              points={polygonPoints(area.points)}
-              className="cmp-navigation-polygon"
-            />
+            <polygon points={polygonPoints(area.points)} className="cmp-navigation-polygon" />
             <text
               x={area.points[0]?.x ?? 0}
               y={(area.points[0]?.y ?? 0) - 5}

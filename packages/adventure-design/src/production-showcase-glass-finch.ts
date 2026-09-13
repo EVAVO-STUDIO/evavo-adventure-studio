@@ -8,12 +8,10 @@ export const glassFinchShowcase = showcase({
   logline:
     "A bell keeper follows a crystal bird through a valley whose seasons change whenever the tower rings.",
   motif: "enchanted-belltower",
-  titleTreatment:
-    "Hand-painted lettering sits between a dark valley silhouette and one warm lantern window.",
+  titleTreatment: "Hand-painted lettering sits between a dark valley silhouette and one warm lantern window.",
   dialogueTreatment:
     "Short portrait exchanges preserve the room tableau and reserve expression changes for important beats.",
-  systemTreatment:
-    "A parchment valley map reveals routes through visible season and landmark changes.",
+  systemTreatment: "A parchment valley map reveals routes through visible season and landmark changes.",
   plates: [
     plate(
       "plate.glass-finch.title",
@@ -87,8 +85,26 @@ export const glassFinchShowcase = showcase({
       110,
       "A bell remembers who rang it last.",
       [
-        actor("actor.glass-finch.keeper-close", "player", 92, 168, 78, "right", "listening profile", "Scarf and nose line stay distinct in six value steps."),
-        actor("actor.glass-finch.bird-close", "npc", 226, 118, 42, "left", "wing raised", "Crystal facets use hard clusters instead of transparency."),
+        actor(
+          "actor.glass-finch.keeper-close",
+          "player",
+          92,
+          168,
+          78,
+          "right",
+          "listening profile",
+          "Scarf and nose line stay distinct in six value steps.",
+        ),
+        actor(
+          "actor.glass-finch.bird-close",
+          "npc",
+          226,
+          118,
+          42,
+          "left",
+          "wing raised",
+          "Crystal facets use hard clusters instead of transparency.",
+        ),
       ],
       [
         prop("prop.glass-finch.bell-shadow", "ambience", 136, 34, 62, 48, "bell shadow", "still", false),
@@ -110,7 +126,16 @@ export const glassFinchShowcase = showcase({
       120,
       "SPRING ROUTE RESTORED",
       [
-        actor("actor.glass-finch.map-marker", "player", 80, 146, 20, "right", "map marker", "A tiny keeper silhouette distinguishes current location from route icons."),
+        actor(
+          "actor.glass-finch.map-marker",
+          "player",
+          80,
+          146,
+          20,
+          "right",
+          "map marker",
+          "A tiny keeper silhouette distinguishes current location from route icons.",
+        ),
       ],
       [
         prop("prop.glass-finch.map-orchard", "exit", 72, 112, 28, 20, "orchard", "visited"),

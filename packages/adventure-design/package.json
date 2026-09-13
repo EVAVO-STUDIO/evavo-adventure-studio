@@ -4,54 +4,55 @@
   "private": true,
   "type": "module",
   "exports": {
-    ".": {
-      "types": "./dist/src/index.d.ts",
-      "import": "./dist/src/index.js"
-    },
-    "./editor": {
-      "types": "./dist/src/editor.d.ts",
-      "import": "./dist/src/editor.js"
-    },
-    "./showcases": {
-      "types": "./dist/src/showcases.d.ts",
-      "import": "./dist/src/showcases.js"
-    },
-    "./authenticity": {
-      "types": "./dist/src/authenticity.d.ts",
-      "import": "./dist/src/authenticity.js"
-    },
-    "./compiled-evidence": {
-      "types": "./dist/src/compiled-evidence.d.ts",
-      "import": "./dist/src/compiled-evidence.js"
-    },
-    "./scene-readability": {
-      "types": "./dist/src/scene-readability.d.ts",
-      "import": "./dist/src/scene-readability.js"
-    },
-    "./scene-staging": {
-      "types": "./dist/src/scene-staging.d.ts",
-      "import": "./dist/src/scene-staging.js"
-    },
-    "./progression": {
-      "types": "./dist/src/progression.d.ts",
-      "import": "./dist/src/progression.js"
-    },
-    "./production-profiles": {
-      "types": "./dist/src/production-profiles.d.ts",
-      "import": "./dist/src/production-profiles.js"
-    },
-    "./production-showcases": {
-      "types": "./dist/src/production-showcases.d.ts",
-      "import": "./dist/src/production-showcases.js"
-    },
-    "./classic-game-creator": {
-      "types": "./dist/src/classic-game-creator.d.ts",
-      "import": "./dist/src/classic-game-creator.js"
-    }
+    ".": { "types": "./dist/src/index.d.ts", "import": "./dist/src/index.js" },
+    "./editor": { "types": "./dist/src/editor.d.ts", "import": "./dist/src/editor.js" },
+    "./showcases": { "types": "./dist/src/showcases.d.ts", "import": "./dist/src/showcases.js" },
+    "./authenticity": { "types": "./dist/src/authenticity.d.ts", "import": "./dist/src/authenticity.js" },
+    "./compiled-evidence": { "types": "./dist/src/compiled-evidence.d.ts", "import": "./dist/src/compiled-evidence.js" },
+    "./scene-readability": { "types": "./dist/src/scene-readability.d.ts", "import": "./dist/src/scene-readability.js" },
+    "./scene-staging": { "types": "./dist/src/scene-staging.d.ts", "import": "./dist/src/scene-staging.js" },
+    "./progression": { "types": "./dist/src/progression.d.ts", "import": "./dist/src/progression.js" },
+    "./investigation": { "types": "./dist/src/investigation.d.ts", "import": "./dist/src/investigation.js" },
+    "./production-profiles": { "types": "./dist/src/production-profiles.d.ts", "import": "./dist/src/production-profiles.js" },
+    "./production-showcases": { "types": "./dist/src/production-showcases.d.ts", "import": "./dist/src/production-showcases.js" },
+    "./creative-production": { "types": "./dist/src/creative-production.d.ts", "import": "./dist/src/creative-production.js" },
+    "./creative-handoff-v2": { "types": "./dist/src/creative-handoff-v2.d.ts", "import": "./dist/src/creative-handoff-v2.js" },
+    "./creative-handoff-v3": { "types": "./dist/src/creative-production-handoff-v3.d.ts", "import": "./dist/src/creative-production-handoff-v3.js" },
+    "./creative-production-bridge-v3": { "types": "./dist/src/creative-production-bridge-v3.d.ts", "import": "./dist/src/creative-production-bridge-v3.js" },
+    "./creative-production-orchestrator-v3": { "types": "./dist/src/creative-production-orchestrator-v3.d.ts", "import": "./dist/src/creative-production-orchestrator-v3.js" },
+    "./creative-production-admission-v3": { "types": "./dist/src/creative-production-admission-v3.d.ts", "import": "./dist/src/creative-production-admission-v3.js" },
+    "./creative-handoff-compiler": { "types": "./dist/src/creative-handoff-compiler.d.ts", "import": "./dist/src/creative-handoff-compiler.js" },
+    "./creative-handoff-acceptance": { "types": "./dist/src/creative-handoff-acceptance.d.ts", "import": "./dist/src/creative-handoff-acceptance.js" },
+    "./creative-production-quality-v3": { "types": "./dist/src/creative-production-quality-v3.d.ts", "import": "./dist/src/creative-production-quality-v3.js" },
+    "./creative-production-v2-promotion": { "types": "./dist/src/creative-production-v2-promotion.d.ts", "import": "./dist/src/creative-production-v2-promotion.js" },
+    "./ninth-reliquary-creative-proof": { "types": "./dist/src/ninth-reliquary-creative-proof.d.ts", "import": "./dist/src/ninth-reliquary-creative-proof.js" },
+    "./ninth-reliquary-creative-proof-v3": { "types": "./dist/src/ninth-reliquary-creative-proof-v3.d.ts", "import": "./dist/src/ninth-reliquary-creative-proof-v3.js" },
+    "./ninth-reliquary-full-game-proof": { "types": "./dist/src/ninth-reliquary-full-game-proof.d.ts", "import": "./dist/src/ninth-reliquary-full-game-proof.js" },
+    "./ninth-reliquary-production-package-v3": { "types": "./dist/src/ninth-reliquary-production-package-v3.d.ts", "import": "./dist/src/ninth-reliquary-production-package-v3.js" },
+    "./reference-fidelity": { "types": "./dist/src/reference-fidelity.d.ts", "import": "./dist/src/reference-fidelity.js" },
+    "./classic-design-repair": { "types": "./dist/src/classic-design-repair.d.ts", "import": "./dist/src/classic-design-repair.js" },
+    "./reference-proof-lanes": { "types": "./dist/src/reference-proof-lanes.d.ts", "import": "./dist/src/reference-proof-lanes.js" },
+    "./reference-proof-readiness": { "types": "./dist/src/reference-proof-readiness.d.ts", "import": "./dist/src/reference-proof-readiness.js" },
+    "./reference-proof-development": { "types": "./dist/src/reference-proof-development.d.ts", "import": "./dist/src/reference-proof-development.js" },
+    "./open-case-gameplay-proof": { "types": "./dist/src/open-case-gameplay-proof.d.ts", "import": "./dist/src/open-case-gameplay-proof.js" },
+    "./open-case-investigation-proof": { "types": "./dist/src/open-case-investigation-proof.d.ts", "import": "./dist/src/open-case-investigation-proof.js" },
+    "./open-case-runtime-source": { "types": "./dist/src/open-case-runtime-source.d.ts", "import": "./dist/src/open-case-runtime-source.js" },
+    "./open-case-runtime-readiness": { "types": "./dist/src/open-case-runtime-readiness.d.ts", "import": "./dist/src/open-case-runtime-readiness.js" },
+    "./after-hours-gameplay-proof": { "types": "./dist/src/after-hours-gameplay-proof.d.ts", "import": "./dist/src/after-hours-gameplay-proof.js" },
+    "./after-hours-runtime-source": { "types": "./dist/src/after-hours-runtime-source.d.ts", "import": "./dist/src/after-hours-runtime-source.js" },
+    "./cold-meridian-gameplay-proof": { "types": "./dist/src/cold-meridian-gameplay-proof.d.ts", "import": "./dist/src/cold-meridian-gameplay-proof.js" },
+    "./cold-meridian-runtime-source": { "types": "./dist/src/cold-meridian-runtime-source.d.ts", "import": "./dist/src/cold-meridian-runtime-source.js" },
+    "./full-game-capabilities": { "types": "./dist/src/full-game-capabilities.d.ts", "import": "./dist/src/full-game-capabilities.js" },
+    "./full-game-reference-policy": { "types": "./dist/src/full-game-reference-policy.d.ts", "import": "./dist/src/full-game-reference-policy.js" },
+    "./cinematic-conspiracy-full-game": { "types": "./dist/src/cinematic-conspiracy-full-game.d.ts", "import": "./dist/src/cinematic-conspiracy-full-game.js" },
+    "./scene-archetypes": { "types": "./dist/src/scene-archetypes.d.ts", "import": "./dist/src/scene-archetypes.js" },
+    "./full-game-upgrade-plan": { "types": "./dist/src/full-game-upgrade-plan.d.ts", "import": "./dist/src/full-game-upgrade-plan.js" },
+    "./dynamix-cinematic": { "types": "./dist/src/dynamix-cinematic.d.ts", "import": "./dist/src/dynamix-cinematic.js" },
+    "./classic-game-creator": { "types": "./dist/src/classic-game-creator.d.ts", "import": "./dist/src/classic-game-creator.js" },
+    "./classic-experience": { "types": "./dist/src/classic-experience.d.ts", "import": "./dist/src/classic-experience.js" },
+    "./red-ledger-runtime": { "types": "./dist/src/red-ledger-runtime.d.ts", "import": "./dist/src/red-ledger-runtime.js" }
   },
-  "files": [
-    "dist"
-  ],
+  "files": ["dist"],
   "scripts": {
     "build": "tsc -b",
     "typecheck": "tsc -b --pretty false"
@@ -64,5 +65,8 @@
     "@evavo/adventure-scene-instances": "workspace:*",
     "@evavo/adventure-ui-skin": "workspace:*",
     "@evavo/adventure-validation": "workspace:*"
+  },
+  "devDependencies": {
+    "@evavo/adventure-runtime-bundle": "workspace:*"
   }
 }

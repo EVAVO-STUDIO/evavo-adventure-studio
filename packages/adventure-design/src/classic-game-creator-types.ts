@@ -1,18 +1,12 @@
 import type { Point, Size } from "@evavo/adventure-project-schema";
-import type {
-  AdventureProductionProfileId,
-  AdventurePuzzleGrammar,
-} from "./production-profile-types.js";
+import type { AdventureProductionProfileId, AdventurePuzzleGrammar } from "./production-profile-types.js";
 import type {
   AdventureProductionShowcaseId,
   AdventureShowcasePlateKind,
   AdventureShowcaseVisualMotif,
 } from "./production-showcase-types.js";
 
-export type ClassicAdventureCreatorFamily =
-  | "storybook-icon"
-  | "gothic-investigation"
-  | "verb-panel-comedy";
+export type ClassicAdventureCreatorFamily = "storybook-icon" | "gothic-investigation" | "verb-panel-comedy";
 
 export type ClassicAdventureCreatorInterfaceFamily =
   | "temporary-icon-bar"
@@ -27,17 +21,9 @@ export type ClassicAdventureCreatorLayerRole =
   | "foreground"
   | "interface";
 
-export type ClassicAdventureCreatorActorRole =
-  | "player"
-  | "companion"
-  | "npc"
-  | "threat";
+export type ClassicAdventureCreatorActorRole = "player" | "companion" | "npc" | "threat";
 
-export type ClassicAdventureCreatorPropRole =
-  | "clue"
-  | "exit"
-  | "puzzle"
-  | "ambience";
+export type ClassicAdventureCreatorPropRole = "clue" | "exit" | "puzzle" | "ambience";
 
 export interface ClassicAdventureCreatorRect {
   readonly x: number;
@@ -136,8 +122,10 @@ export interface ClassicAdventureCreatorTiming {
   readonly sceneFadeInTicks: number;
 }
 
-export type ClassicAdventureCreatorTimingField =
-  keyof Omit<ClassicAdventureCreatorTiming, "logicalTicksPerSecond">;
+export type ClassicAdventureCreatorTimingField = keyof Omit<
+  ClassicAdventureCreatorTiming,
+  "logicalTicksPerSecond"
+>;
 
 export interface ClassicAdventureCreatorPuzzle {
   readonly id: string;
@@ -155,10 +143,7 @@ export interface ClassicAdventureCreatorPuzzle {
 export interface ClassicAdventureCreatorDialogue {
   readonly id: string;
   readonly sceneId: string;
-  readonly mode:
-    | "storybook-exchange"
-    | "portrait-topics"
-    | "in-scene-choices";
+  readonly mode: "storybook-exchange" | "portrait-topics" | "in-scene-choices";
   readonly openingLine: string;
   readonly topics: readonly string[];
   readonly stateChanges: readonly string[];
@@ -187,27 +172,36 @@ export interface ClassicAdventureCreatorProject {
   readonly originalityStatement: string;
 }
 
-export type ClassicAdventureCreatorIssueSeverity =
-  | "error"
-  | "warning"
-  | "note";
+export type ClassicAdventureCreatorIssueSeverity = "error" | "warning" | "note";
 
 export type ClassicAdventureCreatorIssueCode =
   | "profile-family-mismatch"
   | "showcase-family-mismatch"
+  | "duplicate-id"
   | "invalid-native-size"
   | "invalid-palette"
-  | "duplicate-id"
-  | "missing-scene-kind"
   | "invalid-interface"
+  | "invalid-interface-geometry"
+  | "invalid-interface-family"
   | "invalid-timing"
+  | "missing-scene-kind"
   | "invalid-scene-geometry"
+  | "invalid-layer-stack"
+  | "missing-player"
   | "missing-interaction"
+  | "invalid-actor-geometry"
+  | "invalid-prop-geometry"
   | "missing-puzzle-scene"
   | "missing-puzzle-prop"
+  | "unknown-puzzle-scene"
+  | "unknown-puzzle-prop"
+  | "unsupported-puzzle-grammar"
+  | "irreversible-puzzle-failure"
   | "unsafe-puzzle-recovery"
   | "missing-dialogue-scene"
+  | "unknown-dialogue-scene"
   | "insufficient-investigation-topics"
+  | "insufficient-production-proof"
   | "missing-originality-boundary";
 
 export interface ClassicAdventureCreatorIssue {
@@ -219,73 +213,19 @@ export interface ClassicAdventureCreatorIssue {
   readonly impact: number;
 }
 
+export interface ClassicAdventureCreatorMetrics {
+  readonly sceneCount: number;
+  readonly interactivePropCount: number;
+  readonly puzzleCount: number;
+  readonly dialogueTopicCount: number;
+  readonly nativeReviewProofCount: number;
+}
+
 export interface ClassicAdventureCreatorReport {
   readonly reportVersion: 1;
   readonly projectId: string;
   readonly status: "ready" | "attention" | "blocked";
   readonly score: number;
   readonly issues: readonly ClassicAdventureCreatorIssue[];
-  readonly metrics: {
-    readonly sceneCount: number;
-    readonly interactivePropCount: number;
-    readonly puzzleCount: number;
-    readonly dialogueTopicCount: number;
-    readonly nativeReviewProofCount: number;
-  };
-}
-
-export type ClassicAdventureCreatorCommand =
-  | {
-      readonly kind: "move-actor";
-      readonly sceneId: string;
-      readonly actorId: string;
-      readonly position: Point;
-    }
-  | {
-      readonly kind: "move-prop";
-      readonly sceneId: string;
-      readonly propId: string;
-      readonly position: Point;
-    }
-  | {
-      readonly kind: "set-scene-horizon";
-      readonly sceneId: string;
-      readonly horizonY: number;
-    }
-  | {
-      readonly kind: "set-walk-lane";
-      readonly sceneId: string;
-      readonly top: number;
-      readonly bottom: number;
-    }
-  | {
-      readonly kind: "rename-scene";
-      readonly sceneId: string;
-      readonly name: string;
-    }
-  | {
-      readonly kind: "set-interface-chrome";
-      readonly chromeHeight: number;
-    }
-  | {
-      readonly kind: "set-timing";
-      readonly field: ClassicAdventureCreatorTimingField;
-      readonly value: number;
-    }
-  | {
-      readonly kind: "duplicate-scene";
-      readonly sceneId: string;
-      readonly newSceneId: string;
-      readonly name: string;
-    }
-  | {
-      readonly kind: "remove-scene";
-      readonly sceneId: string;
-    };
-
-export interface ClassicAdventureCreatorHistory {
-  readonly present: ClassicAdventureCreatorProject;
-  readonly past: readonly ClassicAdventureCreatorProject[];
-  readonly future: readonly ClassicAdventureCreatorProject[];
-  readonly savedFingerprint: string;
+  readonly metrics: ClassicAdventureCreatorMetrics;
 }

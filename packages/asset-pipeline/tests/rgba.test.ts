@@ -12,9 +12,8 @@ const image: RgbaImage = {
   width: 3,
   height: 3,
   data: new Uint8Array([
-    255, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
-    0, 0, 0, 0, 10, 20, 30, 255, 0, 0, 0, 0,
-    0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
+    255, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 10, 20, 30, 255, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
+    0, 0, 0,
   ]),
 };
 
@@ -43,10 +42,7 @@ describe("canonical RGBA operations", () => {
     const source: RgbaImage = {
       width: 2,
       height: 1,
-      data: new Uint8Array([
-        255, 0, 0, 255,
-        0, 0, 255, 255,
-      ]),
+      data: new Uint8Array([255, 0, 0, 255, 0, 0, 255, 255]),
     };
     const extruded = extrudeRgba(source, 1);
 
@@ -54,12 +50,7 @@ describe("canonical RGBA operations", () => {
     expect(extruded.height).toBe(3);
     for (let y = 0; y < 3; y += 1) {
       const row = [...extruded.data.slice(y * 16, y * 16 + 16)];
-      expect(row).toEqual([
-        255, 0, 0, 255,
-        255, 0, 0, 255,
-        0, 0, 255, 255,
-        0, 0, 255, 255,
-      ]);
+      expect(row).toEqual([255, 0, 0, 255, 255, 0, 0, 255, 0, 0, 255, 255, 0, 0, 255, 255]);
     }
   });
 
@@ -67,10 +58,7 @@ describe("canonical RGBA operations", () => {
     const colours: RgbaImage = {
       width: 2,
       height: 1,
-      data: new Uint8Array([
-        20, 30, 40, 255,
-        20, 30, 40, 128,
-      ]),
+      data: new Uint8Array([20, 30, 40, 255, 20, 30, 40, 128]),
     };
 
     expect(countUniqueRgbaColours(colours)).toBe(2);

@@ -1,4 +1,5 @@
 import type { Scene } from "@evavo/adventure-project-schema";
+import { addSceneStagingFinding } from "./scene-staging-findings.js";
 import {
   adventurePointDistance,
   objectMarkerInsideCanvas,
@@ -6,7 +7,6 @@ import {
   pointOccupiesObject,
   stageLayerOrder,
 } from "./scene-staging-geometry.js";
-import { addSceneStagingFinding } from "./scene-staging-findings.js";
 import type {
   AdventureActorStagingMarker,
   AdventureObjectStagingMarker,
@@ -72,10 +72,7 @@ export const evaluateSceneStagedObjects = (
           "Remove the hidden target or provide explicit invisible-trigger intent and player feedback.",
       });
     }
-    if (
-      object.interactive &&
-      (object.layer === "rear-ambient" || object.layer === "front-ambient")
-    ) {
+    if (object.interactive && (object.layer === "rear-ambient" || object.layer === "front-ambient")) {
       addSceneStagingFinding(findings, {
         id: `object-interactive-on-ambient-layer-${object.instanceId}`,
         area: "layers",
@@ -113,8 +110,7 @@ export const evaluateSceneStagedObjects = (
         message:
           `Object '${object.definitionName}' uses an extreme local scale multiplier ` +
           `of ${object.scaleMultiplier}.`,
-        recommendation:
-          "Confirm source dimensions and pivot before compensating with large local scale.",
+        recommendation: "Confirm source dimensions and pivot before compensating with large local scale.",
       });
     }
     for (const entrance of scene.entrances) {
@@ -181,8 +177,7 @@ export const evaluateSceneStagedPortals = (
         impact: 2,
         path,
         message: `Portal '${portal.id}' has effectively identical handoff points.`,
-        recommendation:
-          "Confirm that a portal is necessary rather than a direct shared navigation boundary.",
+        recommendation: "Confirm that a portal is necessary rather than a direct shared navigation boundary.",
       });
     }
     if (portal.traversalCost > 10) {
@@ -198,10 +193,7 @@ export const evaluateSceneStagedPortals = (
       });
     }
     for (const object of objects.filter((candidate) => candidate.visible)) {
-      if (
-        pointOccupiesObject(portal.fromPoint, object) ||
-        pointOccupiesObject(portal.toPoint, object)
-      ) {
+      if (pointOccupiesObject(portal.fromPoint, object) || pointOccupiesObject(portal.toPoint, object)) {
         addSceneStagingFinding(findings, {
           id: `portal-obstructed-${portal.id}-${object.instanceId}`,
           area: "portals",
@@ -222,7 +214,10 @@ export const evaluateSceneStagedLayers = (
   objects: readonly AdventureObjectStagingMarker[],
   findings: AdventureSceneStagingFinding[],
 ): void => {
-  const layerOrder = stageLayerOrder(actors, objects.filter((object) => object.visible));
+  const layerOrder = stageLayerOrder(
+    actors,
+    objects.filter((object) => object.visible),
+  );
   const occupied = new Map<string, string>();
   for (const node of layerOrder) {
     const key = [node.layer, node.elevation, node.baselineY, node.zOffset].join("|");
@@ -245,9 +240,7 @@ export const evaluateSceneStagedLayers = (
       occupied.set(key, node.id);
     }
   }
-  const frontAmbient = objects.filter(
-    (object) => object.visible && object.layer === "front-ambient",
-  );
+  const frontAmbient = objects.filter((object) => object.visible && object.layer === "front-ambient");
   if (frontAmbient.length > 3) {
     addSceneStagingFinding(findings, {
       id: "layers-front-ambient-overloaded",

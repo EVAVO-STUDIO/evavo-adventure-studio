@@ -1,8 +1,8 @@
-import { describe, expect, it } from "vitest";
 import type { RuntimeEvent } from "@evavo/adventure-core";
 import type { Id } from "@evavo/adventure-project-schema";
 import type { RuntimeBundle } from "@evavo/adventure-runtime-bundle";
 import type { InteractiveRuntimeWorldState } from "@evavo/adventure-scene-runtime/commands";
+import { describe, expect, it } from "vitest";
 import {
   advanceProfiledRuntimeCamera,
   canonicalProfiledRuntimeCameraJson,
@@ -13,14 +13,11 @@ import {
   validateProfiledRuntimeCameraCompatibility,
 } from "../src/profiled-camera.js";
 
-const actorInstanceId =
-  "actor-instance.traveller" as Id<"actor-instance">;
+const actorInstanceId = "actor-instance.traveller" as Id<"actor-instance">;
 const sequenceId = "sequence.pan" as Id<"sequence">;
 const trackId = "sequence-track.camera" as Id<"sequence-track">;
 
-const bundle = (
-  profileId: RuntimeBundle["playFeelProfileId"] | null = "pulp-grounded",
-): RuntimeBundle =>
+const bundle = (profileId: RuntimeBundle["playFeelProfileId"] | null = "pulp-grounded"): RuntimeBundle =>
   ({
     ...(profileId ? { playFeelProfileId: profileId } : {}),
     presentation: {
@@ -65,11 +62,7 @@ const bundle = (
     ],
   }) as unknown as RuntimeBundle;
 
-const world = (
-  tick: number,
-  actorX: number,
-  activeSequence = false,
-): InteractiveRuntimeWorldState =>
+const world = (tick: number, actorX: number, activeSequence = false): InteractiveRuntimeWorldState =>
   ({
     story: {
       tick,
@@ -191,9 +184,7 @@ describe("profiled runtime camera", () => {
       previousWorld: previous,
       nextWorld: completedWorld,
       controlledActorInstanceId: actorInstanceId,
-      runtimeEvents: [
-        { kind: "sequence-completed", sequenceId },
-      ],
+      runtimeEvents: [{ kind: "sequence-completed", sequenceId }],
     });
     expect(completed.state?.activeShot).toBeNull();
     expect(completed.camera.position).toEqual({ x: 160, y: 100 });
@@ -252,9 +243,7 @@ describe("profiled runtime camera", () => {
         tracks: sequence.tracks.map((track) => ({
           ...track,
           cues: track.cues.map((cue) =>
-            cue.kind === "camera-shot"
-              ? { ...cue, position: { x: 40, y: 20 } }
-              : cue,
+            cue.kind === "camera-shot" ? { ...cue, position: { x: 40, y: 20 } } : cue,
           ),
         })),
       })),
@@ -265,11 +254,7 @@ describe("profiled runtime camera", () => {
         world: world(1, 40, true),
         state: started,
       }),
-    ).toEqual(
-      expect.arrayContaining([
-        expect.objectContaining({ code: "shot-cue-mismatch" }),
-      ]),
-    );
+    ).toEqual(expect.arrayContaining([expect.objectContaining({ code: "shot-cue-mismatch" })]));
   });
 
   it("resets exactly on scene changes without advancing the camera twice", () => {

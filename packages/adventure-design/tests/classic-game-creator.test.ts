@@ -15,9 +15,7 @@ import {
 
 describe("classic adventure game creator", () => {
   it("ships three original, production-ready flagship creator projects", () => {
-    expect(
-      classicAdventureCreatorProjects.map((project) => project.family),
-    ).toEqual([
+    expect(classicAdventureCreatorProjects.map((project) => project.family)).toEqual([
       "storybook-icon",
       "gothic-investigation",
       "verb-panel-comedy",
@@ -34,9 +32,7 @@ describe("classic adventure game creator", () => {
   });
 
   it("keeps executable creator data original", () => {
-    const serialized = JSON.stringify(
-      classicAdventureCreatorProjects,
-    ).toLowerCase();
+    const serialized = JSON.stringify(classicAdventureCreatorProjects).toLowerCase();
     for (const protectedName of [
       "gabriel knight",
       "king's quest",
@@ -50,12 +46,8 @@ describe("classic adventure game creator", () => {
   });
 
   it("executes native scene edits with deterministic undo and redo", () => {
-    const source = classicAdventureCreatorProjectByFamily(
-      "gothic-investigation",
-    );
-    const scene = source.scenes.find((candidate) =>
-      candidate.id.endsWith(".gameplay"),
-    );
+    const source = classicAdventureCreatorProjectByFamily("gothic-investigation");
+    const scene = source.scenes.find((candidate) => candidate.id.endsWith(".gameplay"));
     const actor = scene?.actors[0];
     if (!scene || !actor) throw new Error("Expected gameplay actor.");
 
@@ -87,9 +79,7 @@ describe("classic adventure game creator", () => {
   it("protects puzzle and dialogue scene references", () => {
     const source = classicAdventureCreatorProjectByFamily("storybook-icon");
     const history = createClassicAdventureCreatorHistory(source);
-    const gameplay = source.scenes.find((scene) =>
-      scene.id.endsWith(".gameplay"),
-    );
+    const gameplay = source.scenes.find((scene) => scene.id.endsWith(".gameplay"));
     if (!gameplay) throw new Error("Expected gameplay scene.");
 
     expect(() =>
@@ -101,9 +91,7 @@ describe("classic adventure game creator", () => {
   });
 
   it("permits safe duplicated scene experiments", () => {
-    const source = classicAdventureCreatorProjectByFamily(
-      "verb-panel-comedy",
-    );
+    const source = classicAdventureCreatorProjectByFamily("verb-panel-comedy");
     const title = source.scenes.find((scene) => scene.kind === "title");
     if (!title) throw new Error("Expected title scene.");
 
@@ -124,26 +112,16 @@ describe("classic adventure game creator", () => {
   });
 
   it("preserves full-screen plates when persistent chrome changes", () => {
-    const source = classicAdventureCreatorProjectByFamily(
-      "verb-panel-comedy",
-    );
+    const source = classicAdventureCreatorProjectByFamily("verb-panel-comedy");
     const history = createClassicAdventureCreatorHistory(source);
     const changed = executeClassicAdventureCreatorCommand(history, {
       kind: "set-interface-chrome",
       chromeHeight: 64,
     });
-    const gameplay = changed.present.scenes.find(
-      (scene) => scene.kind === "gameplay",
-    );
-    const dialogue = changed.present.scenes.find(
-      (scene) => scene.kind === "dialogue",
-    );
-    const title = changed.present.scenes.find(
-      (scene) => scene.kind === "title",
-    );
-    const system = changed.present.scenes.find(
-      (scene) => scene.kind === "system",
-    );
+    const gameplay = changed.present.scenes.find((scene) => scene.kind === "gameplay");
+    const dialogue = changed.present.scenes.find((scene) => scene.kind === "dialogue");
+    const title = changed.present.scenes.find((scene) => scene.kind === "title");
+    const system = changed.present.scenes.find((scene) => scene.kind === "system");
 
     expect(gameplay?.interfaceSafeRect.height).toBe(136);
     expect(dialogue?.interfaceSafeRect.height).toBe(136);
@@ -152,9 +130,7 @@ describe("classic adventure game creator", () => {
   });
 
   it("blocks incompatible interface and investigation authoring", () => {
-    const source = classicAdventureCreatorProjectByFamily(
-      "gothic-investigation",
-    );
+    const source = classicAdventureCreatorProjectByFamily("gothic-investigation");
     const malformed = {
       ...source,
       interface: {
@@ -186,9 +162,7 @@ describe("classic adventure game creator", () => {
 
   it("detects native geometry drift", () => {
     const source = classicAdventureCreatorProjectByFamily("storybook-icon");
-    const gameplayIndex = source.scenes.findIndex(
-      (scene) => scene.kind === "gameplay",
-    );
+    const gameplayIndex = source.scenes.findIndex((scene) => scene.kind === "gameplay");
     const gameplay = source.scenes[gameplayIndex];
     const prop = gameplay?.props[0];
     if (!gameplay || !prop) throw new Error("Expected gameplay prop.");
@@ -213,19 +187,13 @@ describe("classic adventure game creator", () => {
     };
     const report = validateClassicAdventureCreatorProject(malformed);
     expect(report.issues).toEqual(
-      expect.arrayContaining([
-        expect.objectContaining({ code: "invalid-scene-geometry" }),
-      ]),
+      expect.arrayContaining([expect.objectContaining({ code: "invalid-scene-geometry" })]),
     );
   });
 
   it("fingerprints equal projects identically", () => {
-    const project = classicAdventureCreatorProjectByFamily(
-      "verb-panel-comedy",
-    );
+    const project = classicAdventureCreatorProjectByFamily("verb-panel-comedy");
     const clone = JSON.parse(JSON.stringify(project)) as typeof project;
-    expect(classicAdventureCreatorFingerprint(clone)).toBe(
-      classicAdventureCreatorFingerprint(project),
-    );
+    expect(classicAdventureCreatorFingerprint(clone)).toBe(classicAdventureCreatorFingerprint(project));
   });
 });

@@ -1,11 +1,11 @@
+import type { SceneInstanceManifest } from "@evavo/adventure-scene-instances";
 import {
   applyEditorCommand,
-  executeEditorCommand,
-  EditorCommandError,
   type EditorCommand,
+  EditorCommandError,
   type EditorHistoryState,
+  executeEditorCommand,
 } from "./index.js";
-import type { SceneInstanceManifest } from "@evavo/adventure-scene-instances";
 
 const assertCommandValid = (
   manifest: SceneInstanceManifest,
@@ -21,9 +21,7 @@ const assertCommandValid = (
 
   if (
     command.kind === "insert-scene-composition" &&
-    manifest.scenes.some(
-      (composition) => composition.sceneId === command.composition.sceneId,
-    )
+    manifest.scenes.some((composition) => composition.sceneId === command.composition.sceneId)
   ) {
     throw new EditorCommandError(
       "duplicate-id",
@@ -35,10 +33,7 @@ const assertCommandValid = (
   return applyEditorCommand(manifest, command).manifest;
 };
 
-export const validateEditorCommand = (
-  manifest: SceneInstanceManifest,
-  command: EditorCommand,
-): void => {
+export const validateEditorCommand = (manifest: SceneInstanceManifest, command: EditorCommand): void => {
   assertCommandValid(manifest, command);
 };
 

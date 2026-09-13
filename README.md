@@ -7,16 +7,21 @@ The project is designed around the production grammar of classic Sierra, LucasAr
 ## Product pillars
 
 - **Authentic presentation:** integer-scaled low-resolution rendering, palette-aware art, bitmap typography, deliberate animation timing, scene transitions, cursor language and era-appropriate UI layouts.
-- **Profile-driven identity:** seven original production families connect canvas, palette, scene grammar, actor performance, interface, puzzles, audio, publisher splash and showcase direction instead of applying one generic retro filter.
+- **Profile-driven identity:** ten original production families connect canvas, palette, scene grammar, actor performance, interface, puzzles, audio, publisher splash and showcase direction instead of applying one generic retro filter.
+- **Title-specific reference fidelity:** separate KQ5, Police Quest I VGA remake, QFG4, Gabriel Knight, Police Quest IV, Fate of Atlantis, Heart of China and Rise of the Dragon packs bind exact engine dialects, release variants, subsystems, executable scenarios and evidence requirements without adding commercial content to the generic profiles.
+- **Separate early and later procedural VGA languages:** the early SCI1 procedural lane uses small in-scene actors, compact icon interaction, practical targets, visible score and bounded failure/restart, while the later SCI32 procedural lane keeps evidence custody, case state, interrogation and richer case-file surfaces distinct.
+- **Dynamix DGDS cinematic systems:** original editorial-travel and clock-driven proofs govern full-screen panels, protagonist and relationship state, route costs, scheduled contacts, action windows, safe retry, authentic timing and 320 × 200 art production.
 - **Original showcase proof:** every production family includes title, gameplay, dialogue and system plates with native composition, actor, prop, UI and recoverable puzzle intent.
 - **Deterministic play feel:** authored acceleration, braking, cornering, footfall phase, camera response, command buffering and fixed-step frame pacing make each family play differently without letting monitor cadence alter story state.
+- **Deterministic audio production:** authored buses, voice limits, cue loop points, fades, ducking, room soundscapes, cinematic cues, speech bindings and performance markers share the fixed-tick runtime and save-state contract.
 - **Complete adventure runtime:** navigation, hotspots, verbs, inventory, dialogue, conditions, flags, scoring, cutscenes, audio and save-state persistence.
 - **Connected game direction:** a production bible for visual identity, illustrated geography, chapters, puzzle causality, clue delivery and shot-based cinematic intent.
 - **Evidence-backed production:** compiled dimensions, indexed pixels, binary alpha, bitmap fonts and native interface geometry are reviewed against the same canonical project.
 - **Native scene construction:** walk lanes, depth bands, entrances, hotspots and foreground occlusion are reviewed together at the exact gameplay canvas before final art lock.
-- **Native scene staging:** player control, actor silhouettes, stateful props, portal handoffs and deterministic layer order are reviewed in the same scene-instance graph that ships.
+- **Scene Director:** one native 320 × 200 coordinate truth exposes WALK, CONTROL, DEPTH, OCCLUSION, HOTSPOTS, APPROACH, ACTORS, SURFACE, LIGHT, ENTRY and DEBUG overlays over the same room data that ships.
+- **Directed 2.5D staging:** actor footprints, preferred lanes, surface zones, piecewise perspective, approach slots, click comfort, stateful traversal, entry choreography and multi-plane foreground priority remain authored rather than becoming modern physics/navmesh behaviour.
 - **Progression integrity:** bounded canonical state exploration proves routes through object interactions, inventory, dialogue and sequence outcomes while exposing unreachable objectives and recoverability risks.
-- **Visual production studio:** scene composition, walkmesh editing, depth maps, occluders, hotspot authoring, character animation, art-direction policy, bitmap fonts, interaction skins, dialogue graphs, timeline sequencing, playtest artifact inspection and project validation.
+- **Visual production studio:** scene composition, Scene Director overlays, walkmesh editing, depth maps, occluders, hotspot authoring, character animation, art-direction policy, bitmap fonts, interaction skins, audio mixing, dialogue graphs, timeline sequencing, playtest artifact inspection and project validation.
 - **Flexible game identity:** supports parser-like, icon-bar, verb-list, verb-coin, two-button and context-sensitive interaction models without copying any one commercial game.
 - **Deterministic projects:** human-readable project files, stable IDs, schema validation, reproducible builds and revision-safe exports.
 
@@ -53,11 +58,14 @@ The top-level `/card-game-studio/` path is ignored defensively so an accidental 
 - [Authentic pixel rendering](docs/pixel-rendering.md)
 - [Authentic classic-adventure production principles](docs/classic-adventure-authenticity.md)
 - [Adventure production profiles](docs/production-profiles.md)
+- [Title-specific reference fidelity](docs/reference-fidelity.md)
+- [Dynamix DGDS cinematic adventures](docs/dynamix-cinematic-adventures.md)
 - [Native showcase gallery](docs/native-showcase-gallery.md)
 - [Classic adventure play feel and frame timing](docs/classic-adventure-play-feel.md)
 - [Adventure Design Director](docs/adventure-design.md)
 - [Compiled authenticity evidence](docs/compiled-authenticity-evidence.md)
 - [Native scene composition and readability](docs/native-scene-composition.md)
+- [Classic VGA scene staging / Scene Director contract](docs/classic-vga-scene-staging.md)
 - [Native scene staging and initial runtime state](docs/native-scene-staging.md)
 - [Progression flow and soft-lock analysis](docs/progression-flow.md)
 - [Runtime narrative request execution](docs/runtime-narrative-execution.md)
@@ -70,6 +78,7 @@ The top-level `/card-game-studio/` path is ignored defensively so an accidental 
 - [Art direction and compiled pixel evidence](docs/art-direction.md)
 - [Native bitmap fonts](docs/bitmap-fonts.md)
 - [Interface skins and interaction layouts](docs/interface-skins.md)
+- [Audio Studio and deterministic sound production](docs/audio-studio.md)
 - [Deterministic save games](docs/save-games.md)
 - [Deterministic replays](docs/deterministic-replays.md)
 - [Renderer-free replay execution](docs/replay-execution.md)
@@ -85,13 +94,16 @@ The first milestone is a small five-room mystery vignette that proves:
 3. one selected production profile controlling canvas, palette, UI, puzzle grammar and original splash;
 4. an original title, gameplay, dialogue and system showcase plate for the selected profile;
 5. a deterministic play-feel profile controlling motion, footfall phase, camera and frame pacing;
-6. navigation, depth, scale and partial occlusion;
+6. navigation, preferred lanes, footprint clearance, depth, scale and multi-plane occlusion;
 7. authentic native-resolution rendering, palettes, sprite timing and bitmap text;
 8. verbs, cursors, dialogue, inventory, score and alternate interface policies;
-9. skippable in-scene cinematics with equivalent completion state;
-10. bounded progression exploration and one deliberately broken recoverability variant;
-11. validation fixtures, rendering laboratories and compiled exports;
-12. browser and Windows development players.
+9. deterministic buses, room soundscapes, surface footsteps, speech bindings and skippable cinematic audio;
+10. approach-slot and interaction choreography with deterministic actor/object state changes;
+11. authored entry paths and control handoff through scene transitions;
+12. skippable in-scene cinematics with equivalent completion state;
+13. bounded progression exploration and one deliberately broken recoverability variant;
+14. validation fixtures, rendering laboratories, Scene Director review and compiled exports;
+15. browser and Windows development players.
 
 ## Development
 
@@ -131,6 +143,12 @@ Studio routes currently include:
 
 ```text
 /?workspace=composer
+/?workspace=creator
+/?workspace=compatibility
+/?workspace=dynamix
+/?workspace=front-end
+/?workspace=lifecycle
+/?workspace=polish
 /?workspace=profiles
 /?workspace=showcases
 /?workspace=feel
@@ -138,14 +156,16 @@ Studio routes currently include:
 /?workspace=authenticity
 /?workspace=evidence
 /?workspace=composition
-/?workspace=staging
+/?workspace=staging    # Scene Director
 /?workspace=progression
 /?workspace=geometry
 /?workspace=objects
 /?workspace=animation
 /?workspace=art
 /?workspace=fonts
+/?workspace=localisation
 /?workspace=interface
+/?workspace=audio
 /?workspace=dialogue
 /?workspace=playtest
 /?workspace=validation

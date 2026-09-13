@@ -1,0 +1,291 @@
+import type { Actor, Asset, Id, Scene, Sequence } from "@evavo/adventure-project-schema";
+import { pointInPolygon } from "@evavo/adventure-scene";
+import type { SceneInstanceManifest } from "./index.js";
+import type { SceneStagingManifest } from "./staging.js";
+
+export type SceneStagingIssueCode =
+  | "scene-staging-project-mismatch"
+  | "duplicate-scene-staging"
+  | "missing-staging-scene"
+  | "missing-staging-actor"
+  | "missing-staging-asset"
+  | "invalid-staging-asset-kind"
+  | "missing-staging-navigation-area"
+  | "missing-staging-navigation-portal"
+  | "missing-staging-object"
+  | "missing-staging-object-state"
+  | "invalid-staging-approach-position"
+  | "missing-staging-approach-slot"
+  | "missing-staging-interaction"
+  | "missing-staging-sequence"
+  | "missing-staging-entrance";
+
+export interface SceneStagingIssue {
+  readonly severity: "error";
+  readonly code: SceneStagingIssueCode;
+  readonly path: string;
+  readonly message: string;
+}
+
+export interface SceneStagingValidationContext {
+  readonly projectId: Id<"project">;
+  readonly scenes: readonly Pick<Scene, "id" | "navigationAreas" | "entrances">[];
+  readonly actors: readonly Pick<Actor, "id">[];
+  readonly assets?: readonly Pick<Asset, "id" | "kind">[];
+  readonly sequences?: readonly Pick<Sequence, "id">[];
+  readonly sceneInstances?: SceneInstanceManifest;
+}
+
+const addIssue = (
+  issues: SceneStagingIssue[],
+  code: SceneStagingIssueCode,
+  path: string,
+  message: string,
+): void => {
+  issues.push({ severity: "error", code, path, message });
+};
+
+export const validateSceneStagingManifest = (
+  context: SceneStagingValidationContext,
+  manifest: SceneStagingManifest,
+): readonly SceneStagingIssue[] => {
+  const issues: SceneStagingIssue[] = [];
+  if (manifest.projectId !== context.projectId) {
+    addIssue(
+      issues,
+      "scene-staging-project-mismatch",
+      "projectId",
+      `Scene staging project '${manifest.projectId}' does not match '${context.projectId}'.`,
+    );
+  }
+
+  const scenesById = new Map(context.scenes.map((scene) => [scene.id as string, scene] as const));
+  const actors = new Set(context.actors.map((actor) => actor.id as string));
+  const assetsById = new Map((context.assets ?? []).map((asset) => [asset.id as string, asset] as const));
+  const sequences = new Set((context.sequences ?? []).map((sequence) => sequence.id as string));
+  const compositionsBySceneId = new Map(
+    (context.sceneInstances?.scenes ?? []).map(
+      (composition) => [composition.sceneId as string, composition] as const,
+    ),
+  );
+  const definitionsById = new Map(
+    (context.sceneInstances?.objectDefinitions ?? []).map(
+      (definition) => [definition.id as string, definition] as const,
+    ),
+  );
+  const stagedScenes = new Set<string>();
+
+  manifest.scenes.forEach((staging, stagingIndex) => {
+    const path = `scenes[${stagingIndex}]`;
+    if (stagedScenes.has(staging.sceneId)) {
+      addIssue(
+        issues,
+        "duplicate-scene-staging",
+        `${path}.sceneId`,
+        `Scene '${staging.sceneId}' has more than one staging document.`,
+      );
+    }
+    stagedScenes.add(staging.sceneId);
+
+    const scene = scenesById.get(staging.sceneId);
+    if (!scene) {
+      addIssue(
+        issues,
+        "missing-staging-scene",
+        `${path}.sceneId`,
+        `Scene staging references missing scene '${staging.sceneId}'.`,
+      );
+      return;
+    }
+    const areaIds = new Set(scene.navigationAreas.map((area) => area.id as string));
+    const composition = compositionsBySceneId.get(staging.sceneId);
+    const portalIds = new Set((composition?.navigationPortals ?? []).map((portal) => portal.id as string));
+    const objectsById = new Map(
+      (composition?.objectInstances ?? []).map((instance) => [instance.id as string, instance] as const),
+    );
+    const approachSlots = new Set<string>();
+
+    for (const actorId of Object.keys(staging.actorFootprints)) {
+      if (!actors.has(actorId)) {
+        addIssue(
+          issues,
+          "missing-staging-actor",
+          `${path}.actorFootprints.${actorId}`,
+          `Actor footprint references missing actor '${actorId}'.`,
+        );
+      }
+    }
+
+    staging.navigationScaleOverrides.forEach((override, index) => {
+      if (!areaIds.has(override.areaId)) {
+        addIssue(
+          issues,
+          "missing-staging-navigation-area",
+          `${path}.navigationScaleOverrides[${index}].areaId`,
+          `Scale override references missing navigation area '${override.areaId}'.`,
+        );
+      }
+    });
+
+    staging.navigationStateModifiers.forEach((modifier, index) => {
+      const modifierPath = `${path}.navigationStateModifiers[${index}]`;
+      const instance = objectsById.get(modifier.objectId);
+      if (!instance) {
+        addIssue(
+          issues,
+          "missing-staging-object",
+          `${modifierPath}.objectId`,
+          `Navigation modifier '${modifier.id}' references object '${modifier.objectId}' outside scene '${scene.id}'.`,
+        );
+      } else {
+        const definition = definitionsById.get(instance.definitionId);
+        const states = new Set((definition?.states ?? []).map((state) => state.id as string));
+        modifier.activeStateIds.forEach((stateId, stateIndex) => {
+          if (!states.has(stateId)) {
+            addIssue(
+              issues,
+              "missing-staging-object-state",
+              `${modifierPath}.activeStateIds[${stateIndex}]`,
+              `Navigation modifier '${modifier.id}' references missing state '${stateId}' for object '${modifier.objectId}'.`,
+            );
+          }
+        });
+      }
+      modifier.disabledAreaIds.forEach((areaId, areaIndex) => {
+        if (!areaIds.has(areaId)) {
+          addIssue(
+            issues,
+            "missing-staging-navigation-area",
+            `${modifierPath}.disabledAreaIds[${areaIndex}]`,
+            `Navigation modifier '${modifier.id}' references missing area '${areaId}'.`,
+          );
+        }
+      });
+      modifier.disabledPortalIds.forEach((portalId, portalIndex) => {
+        if (!portalIds.has(portalId)) {
+          addIssue(
+            issues,
+            "missing-staging-navigation-portal",
+            `${modifierPath}.disabledPortalIds[${portalIndex}]`,
+            `Navigation modifier '${modifier.id}' references missing portal '${portalId}'.`,
+          );
+        }
+      });
+    });
+
+    for (const [objectId, slots] of Object.entries(staging.approachSlotsByObject)) {
+      if (!objectsById.has(objectId)) {
+        addIssue(
+          issues,
+          "missing-staging-object",
+          `${path}.approachSlotsByObject.${objectId}`,
+          `Approach slots reference object '${objectId}' that is not placed in scene '${scene.id}'.`,
+        );
+      }
+      slots.forEach((slot, slotIndex) => {
+        approachSlots.add(slot.id);
+        if (!scene.navigationAreas.some((area) => pointInPolygon(slot.position, area.shape))) {
+          addIssue(
+            issues,
+            "invalid-staging-approach-position",
+            `${path}.approachSlotsByObject.${objectId}[${slotIndex}].position`,
+            `Approach slot '${slot.id}' is outside every navigation area in scene '${scene.id}'.`,
+          );
+        }
+      });
+    }
+
+    for (const objectId of Object.keys(staging.interactionComfortRegionsByObject)) {
+      if (!objectsById.has(objectId)) {
+        addIssue(
+          issues,
+          "missing-staging-object",
+          `${path}.interactionComfortRegionsByObject.${objectId}`,
+          `Interaction comfort regions reference object '${objectId}' that is not placed in scene '${scene.id}'.`,
+        );
+      }
+    }
+
+    staging.interactionChoreographies.forEach((choreography, index) => {
+      const choreographyPath = `${path}.interactionChoreographies[${index}]`;
+      for (const slotId of choreography.approachSlotIds) {
+        if (!approachSlots.has(slotId)) {
+          addIssue(
+            issues,
+            "missing-staging-approach-slot",
+            `${choreographyPath}.approachSlotIds`,
+            `Choreography '${choreography.id}' references missing approach slot '${slotId}'.`,
+          );
+        }
+      }
+
+      const interactionExists = [...objectsById.values()].some((instance) => {
+        const definition = definitionsById.get(instance.definitionId);
+        return definition?.states.some((state) =>
+          state.interactions.some((interaction) => interaction.id === choreography.interactionId),
+        );
+      });
+      if (!interactionExists) {
+        addIssue(
+          issues,
+          "missing-staging-interaction",
+          `${choreographyPath}.interactionId`,
+          `Choreography '${choreography.id}' references missing interaction '${choreography.interactionId}'.`,
+        );
+      }
+
+      choreography.beats.forEach((beat, beatIndex) => {
+        if (beat.kind === "sequence" && !sequences.has(beat.sequenceId)) {
+          addIssue(
+            issues,
+            "missing-staging-sequence",
+            `${choreographyPath}.beats[${beatIndex}].sequenceId`,
+            `Choreography '${choreography.id}' references missing sequence '${beat.sequenceId}'.`,
+          );
+        }
+        if (beat.kind === "object-state" && !objectsById.has(beat.objectId)) {
+          addIssue(
+            issues,
+            "missing-staging-object",
+            `${choreographyPath}.beats[${beatIndex}].objectId`,
+            `Choreography '${choreography.id}' references object '${beat.objectId}' outside this scene.`,
+          );
+        }
+      });
+    });
+
+    staging.entryChoreographies.forEach((entry, index) => {
+      if (!scene.entrances.some((entrance) => entrance.id === entry.entranceId)) {
+        addIssue(
+          issues,
+          "missing-staging-entrance",
+          `${path}.entryChoreographies[${index}].entranceId`,
+          `Entry choreography references missing entrance '${entry.entranceId}'.`,
+        );
+      }
+    });
+
+    if (context.assets) {
+      staging.occlusionPlanes.forEach((plane, index) => {
+        const asset = assetsById.get(plane.assetId);
+        if (!asset) {
+          addIssue(
+            issues,
+            "missing-staging-asset",
+            `${path}.occlusionPlanes[${index}].assetId`,
+            `Occlusion plane '${plane.id}' references missing asset '${plane.assetId}'.`,
+          );
+        } else if (asset.kind !== "image") {
+          addIssue(
+            issues,
+            "invalid-staging-asset-kind",
+            `${path}.occlusionPlanes[${index}].assetId`,
+            `Occlusion plane '${plane.id}' requires an image asset; '${plane.assetId}' is '${asset.kind}'.`,
+          );
+        }
+      });
+    }
+  });
+
+  return issues;
+};

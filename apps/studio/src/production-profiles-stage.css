@@ -71,7 +71,10 @@
     linear-gradient(14deg, transparent 49%, rgb(255 255 255 / 7%) 50% 51%, transparent 52%),
     linear-gradient(-12deg, transparent 49%, rgb(0 0 0 / 18%) 50% 51%, transparent 52%),
     color-mix(in srgb, var(--ppf-mid) 46%, var(--ppf-ink));
-  background-size: 28px 18px, 34px 22px, auto;
+  background-size:
+    28px 18px,
+    34px 22px,
+    auto;
   clip-path: polygon(0 18%, 100% 0, 100% 100%, 0 100%);
 }
 

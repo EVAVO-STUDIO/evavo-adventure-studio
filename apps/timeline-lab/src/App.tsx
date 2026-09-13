@@ -1,17 +1,14 @@
+import type { Id, SequenceCue, SequenceTrack } from "@evavo/adventure-project-schema";
 import {
+  type Dispatch,
+  type ReactNode,
+  type PointerEvent as ReactPointerEvent,
   useCallback,
   useEffect,
   useMemo,
   useReducer,
   useState,
-  type PointerEvent as ReactPointerEvent,
-  type ReactNode,
 } from "react";
-import type {
-  Id,
-  SequenceCue,
-  SequenceTrack,
-} from "@evavo/adventure-project-schema";
 import { timelineSequence } from "./fixture.js";
 import {
   createTimelineWorkspace,
@@ -20,10 +17,11 @@ import {
   removeSelectedCueCommand,
   replaceSelectedCueCommand,
   selectedTimelineCue,
+  type TimelineSelection,
+  type TimelineWorkspaceAction,
   timelineSequenceDocument,
   timelineWorkspaceIsDirty,
   timelineWorkspaceReducer,
-  type TimelineSelection,
 } from "./workspace.js";
 
 const Button = ({
@@ -101,10 +99,7 @@ const trackColor = (track: SequenceTrack): string => {
   }
 };
 
-const selectionFor = (
-  track: SequenceTrack,
-  cueIndex: number,
-): TimelineSelection => {
+const selectionFor = (track: SequenceTrack, cueIndex: number): TimelineSelection => {
   const cue = track.cues[cueIndex];
   if (!cue) throw new RangeError("Timeline cue index is invalid.");
   return { trackId: track.id, cueIndex, expectedCue: cue };
@@ -161,7 +156,7 @@ const CueInspector = ({
   dispatch,
 }: {
   readonly state: ReturnType<typeof createTimelineWorkspace>;
-  readonly dispatch: ReturnType<typeof useReducer<typeof timelineWorkspaceReducer>>[1];
+  readonly dispatch: Dispatch<TimelineWorkspaceAction>;
 }) => {
   const selected = selectedTimelineCue(state);
   if (!selected) {
@@ -207,7 +202,7 @@ const CueInspector = ({
       </div>
       <div className="timeline-inspector-form">
         <NumberField label="Start tick" value={cue.atTick} onChange={move} />
-        {(cue.kind === "actor-move" || cue.kind === "camera-shot") ? (
+        {cue.kind === "actor-move" || cue.kind === "camera-shot" ? (
           <NumberField
             label="Duration ticks"
             value={cue.durationTicks}
@@ -293,9 +288,7 @@ const CueInspector = ({
               label="Volume"
               value={cue.volume}
               step={0.05}
-              onChange={(volume) =>
-                replace({ ...cue, volume: Math.min(1, Math.max(0, volume)) })
-              }
+              onChange={(volume) => replace({ ...cue, volume: Math.min(1, Math.max(0, volume)) })}
             />
           </>
         ) : null}
@@ -326,17 +319,11 @@ const CueInspector = ({
 };
 
 export const App = () => {
-  const [state, dispatch] = useReducer(
-    timelineWorkspaceReducer,
-    createTimelineWorkspace(timelineSequence),
-  );
+  const [state, dispatch] = useReducer(timelineWorkspaceReducer, createTimelineWorkspace(timelineSequence));
   const [drag, setDrag] = useState<CueDrag | null>(null);
   const sequence = timelineSequenceDocument(state);
   const dirty = timelineWorkspaceIsDirty(state);
-  const timelineWidth = Math.max(
-    900,
-    sequence.durationTicks * state.pixelsPerTick,
-  );
+  const timelineWidth = Math.max(900, sequence.durationTicks * state.pixelsPerTick);
   const rulerTicks = useMemo(() => {
     const interval = state.pixelsPerTick >= 3 ? 12 : state.pixelsPerTick >= 1 ? 30 : 60;
     return Array.from(
@@ -441,16 +428,10 @@ export const App = () => {
 
       <div className="timeline-toolbar">
         <div className="timeline-toolbar-group">
-          <Button
-            onClick={() => dispatch({ type: "undo" })}
-            disabled={state.history.undoStack.length === 0}
-          >
+          <Button onClick={() => dispatch({ type: "undo" })} disabled={state.history.undoStack.length === 0}>
             ↶
           </Button>
-          <Button
-            onClick={() => dispatch({ type: "redo" })}
-            disabled={state.history.redoStack.length === 0}
-          >
+          <Button onClick={() => dispatch({ type: "redo" })} disabled={state.history.redoStack.length === 0}>
             ↷
           </Button>
           <Button onClick={removeCue} disabled={!state.selection}>
@@ -515,18 +496,13 @@ export const App = () => {
                 const bounds = event.currentTarget.getBoundingClientRect();
                 dispatch({
                   type: "set-playhead",
-                  playheadTick:
-                    state.scrollTick +
-                    (event.clientX - bounds.left) / state.pixelsPerTick,
+                  playheadTick: state.scrollTick + (event.clientX - bounds.left) / state.pixelsPerTick,
                 });
               }}
             >
               <div className="timeline-ruler" style={{ width: timelineWidth }}>
                 {rulerTicks.map((tick) => (
-                  <span
-                    key={tick}
-                    style={{ left: tick * state.pixelsPerTick }}
-                  >
+                  <span key={tick} style={{ left: tick * state.pixelsPerTick }}>
                     <i />
                     <em>{tick}</em>
                   </span>
@@ -554,16 +530,8 @@ export const App = () => {
                     style={{ width: timelineWidth }}
                     onPointerMove={(event) => {
                       if (!drag || drag.pointerId !== event.pointerId) return;
-                      const delta =
-                        (event.clientX - drag.originClientX) /
-                        state.pixelsPerTick;
-                      const tick = Math.max(
-                        0,
-                        Math.min(
-                          sequence.durationTicks - 1,
-                          drag.originTick + delta,
-                        ),
-                      );
+                      const delta = (event.clientX - drag.originClientX) / state.pixelsPerTick;
+                      const tick = Math.max(0, Math.min(sequence.durationTicks - 1, drag.originTick + delta));
                       setDrag({ ...drag, previewTick: tick });
                     }}
                     onPointerUp={commitDrag}
@@ -573,9 +541,7 @@ export const App = () => {
                         const bounds = event.currentTarget.getBoundingClientRect();
                         dispatch({
                           type: "set-playhead",
-                          playheadTick:
-                            (event.clientX - bounds.left) /
-                            state.pixelsPerTick,
+                          playheadTick: (event.clientX - bounds.left) / state.pixelsPerTick,
                         });
                         dispatch({ type: "select", selection: null });
                       }
@@ -584,11 +550,9 @@ export const App = () => {
                     {track.cues.map((cue, cueIndex) => {
                       const selection = selectionFor(track, cueIndex);
                       const selected =
-                        state.selection?.trackId === track.id &&
-                        state.selection.cueIndex === cueIndex;
+                        state.selection?.trackId === track.id && state.selection.cueIndex === cueIndex;
                       const previewTick =
-                        drag?.selection.trackId === track.id &&
-                        drag.selection.cueIndex === cueIndex
+                        drag?.selection.trackId === track.id && drag.selection.cueIndex === cueIndex
                           ? drag.previewTick
                           : cue.atTick;
                       return (
@@ -598,10 +562,7 @@ export const App = () => {
                           className={`timeline-cue ${selected ? "is-active" : ""}`}
                           style={{
                             left: previewTick * state.pixelsPerTick,
-                            width: Math.max(
-                              4,
-                              cueDuration(cue) * state.pixelsPerTick,
-                            ),
+                            width: Math.max(4, cueDuration(cue) * state.pixelsPerTick),
                             borderColor: trackColor(track),
                             backgroundColor: `${trackColor(track)}22`,
                           }}

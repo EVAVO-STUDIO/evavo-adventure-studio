@@ -1,21 +1,15 @@
-import { describe, expect, it } from "vitest";
-import {
-  createArtDirectionManifest,
-  type ArtDirectionManifest,
-} from "@evavo/adventure-art-direction";
+import { type ArtDirectionManifest, createArtDirectionManifest } from "@evavo/adventure-art-direction";
 import type { ArtVisualEvidenceManifest } from "@evavo/adventure-art-direction/evidence";
 import type { AssetBuildManifest } from "@evavo/adventure-asset-contract";
 import type { BitmapFontManifest } from "@evavo/adventure-bitmap-font";
 import type { AdventureProject, Id } from "@evavo/adventure-project-schema";
 import type { UiSkinManifest } from "@evavo/adventure-ui-skin";
+import { describe, expect, it } from "vitest";
 import {
   createAdventureAuthenticityEvidenceRequirements,
   evaluateAdventureCompiledEvidence,
 } from "../src/compiled-evidence.js";
-import {
-  showcaseAdventureDesigns,
-  showcaseProjectShells,
-} from "../src/showcases.js";
+import { showcaseAdventureDesigns, showcaseProjectShells } from "../src/showcases.js";
 
 const hash = "0".repeat(64);
 const id = <T extends string>(value: string): Id<T> => value as Id<T>;
@@ -65,9 +59,7 @@ const imageRecord = (
 });
 
 const backgroundId = project.scenes[0]!.backgroundAssetId;
-const toolAsset = project.assets.find(
-  (asset) => asset.id !== backgroundId && asset.id !== fontAssetId,
-)!;
+const toolAsset = project.assets.find((asset) => asset.id !== backgroundId && asset.id !== fontAssetId)!;
 
 const compiledAssets: AssetBuildManifest = {
   manifestVersion: 1,
@@ -82,30 +74,13 @@ const compiledAssets: AssetBuildManifest = {
       200,
       128,
     ),
-    imageRecord(
-      toolAsset.id,
-      toolAsset.path,
-      "assets/tool.png",
-      16,
-      16,
-      12,
-    ),
-    imageRecord(
-      fontAssetId,
-      "art/glass-finch/font.png",
-      "assets/font.png",
-      128,
-      64,
-      16,
-    ),
+    imageRecord(toolAsset.id, toolAsset.path, "assets/tool.png", 16, 16, 12),
+    imageRecord(fontAssetId, "art/glass-finch/font.png", "assets/font.png", 128, 64, 16),
   ],
   fingerprint: hash,
 };
 
-const baseArtDirection = createArtDirectionManifest(
-  project,
-  "vga-256-320x200",
-);
+const baseArtDirection = createArtDirectionManifest(project, "vga-256-320x200");
 const artDirection: ArtDirectionManifest = {
   ...baseArtDirection,
   assets: baseArtDirection.assets.map((rule) =>
@@ -205,9 +180,25 @@ const uiSkins: UiSkinManifest = {
           verb: "use",
           label: "USE",
           cursorId: "use",
+          iconAssetId: toolAsset.id,
           primary: true,
         },
       ],
+      verbBar: {
+        region: {
+          id: id<"ui-region">("ui-region.glass-finch.verbs"),
+          rect: { x: 0, y: 160, width: 320, height: 24 },
+          padding: 2,
+          panel: { fill: 0, border: 0xffffff, borderWidth: 1 },
+        },
+        orientation: "horizontal",
+        gap: 2,
+        buttonHeight: 20,
+        normal: { fill: 0, border: 0xffffff, borderWidth: 1 },
+        hover: { fill: 0x111111, border: 0xffffff, borderWidth: 1 },
+        pressed: { fill: 0x222222, border: 0xffffff, borderWidth: 1 },
+        disabled: { fill: 0, border: 0x666666, borderWidth: 1 },
+      },
       fonts: {
         status: {
           fontId: bitmapFonts.fonts[0]!.id,
@@ -218,6 +209,11 @@ const uiSkins: UiSkinManifest = {
           fontId: bitmapFonts.fonts[0]!.id,
           color: 0xffffff,
           align: "right",
+        },
+        verb: {
+          fontId: bitmapFonts.fonts[0]!.id,
+          color: 0xffffff,
+          align: "center",
         },
       },
     },
@@ -276,9 +272,7 @@ describe("compiled adventure authenticity evidence", () => {
       visualEvidence: broken,
     });
     expect(report.status).toBe("blocked");
-    expect(report.findings.map((finding) => finding.id)).toContain(
-      "evidence-background-pixels-invalid",
-    );
+    expect(report.findings.map((finding) => finding.id)).toContain("evidence-background-pixels-invalid");
   });
 
   it("keeps missing font and interface proof visible as attention", () => {
@@ -291,10 +285,7 @@ describe("compiled adventure authenticity evidence", () => {
 
     expect(report.status).toBe("attention");
     expect(report.findings.map((finding) => finding.id)).toEqual(
-      expect.arrayContaining([
-        "evidence-bitmap-fonts-missing",
-        "evidence-ui-skins-missing",
-      ]),
+      expect.arrayContaining(["evidence-bitmap-fonts-missing", "evidence-ui-skins-missing"]),
     );
   });
 

@@ -1,20 +1,14 @@
 import {
-  useMemo,
-  useState,
-  type ChangeEvent,
-  type CSSProperties,
-  type ReactNode,
-} from "react";
-import {
-  createAdventureSceneProductionBriefs,
-  evaluateAdventureAuthenticity,
   type AdventureAuthenticityDimensionResult,
   type AdventureAuthenticityFinding,
   type AdventureAuthenticitySeverity,
   type AdventureDesignDocument,
   type AdventureSceneProductionBrief,
+  createAdventureSceneProductionBriefs,
+  evaluateAdventureAuthenticity,
 } from "@evavo/adventure-design";
 import { showcaseAdventureDesigns } from "@evavo/adventure-design/showcases";
+import { type ChangeEvent, type CSSProperties, type ReactNode, useMemo, useState } from "react";
 import "./adventure-authenticity.css";
 
 type LabView = "scorecard" | "findings" | "scenes";
@@ -37,11 +31,7 @@ const Button = ({
   readonly onClick: () => void;
   readonly active?: boolean;
 }) => (
-  <button
-    type="button"
-    className={`auth-button${active ? " is-active" : ""}`}
-    onClick={onClick}
-  >
+  <button type="button" className={`auth-button${active ? " is-active" : ""}`} onClick={onClick}>
     {children}
   </button>
 );
@@ -73,10 +63,7 @@ const NativeStudy = ({ document }: { readonly document: AdventureDesignDocument 
       </svg>
       <figcaption>
         <strong>
-          {document.creativeDirection.nativeSize.width} ×{
-            " "
-          }
-          {document.creativeDirection.nativeSize.height}
+          {document.creativeDirection.nativeSize.width} × {document.creativeDirection.nativeSize.height}
         </strong>
         <span>native composition study</span>
       </figcaption>
@@ -93,7 +80,15 @@ const DimensionCard = ({ dimension }: { readonly dimension: AdventureAuthenticit
       </div>
       <strong>{dimension.score}/10</strong>
     </header>
-    <div className="auth-meter" aria-label={`${dimension.label}: ${dimension.score} out of 10`}>
+    {/* biome-ignore lint/a11y/useSemanticElements: The custom fill preserves the production scorecard visual while exposing complete meter semantics. */}
+    <div
+      className="auth-meter"
+      role="meter"
+      aria-label={dimension.label}
+      aria-valuemin={0}
+      aria-valuemax={10}
+      aria-valuenow={dimension.score}
+    >
       <span style={{ width: `${dimension.score * 10}%` }} />
     </div>
     <p>
@@ -127,7 +122,9 @@ const SceneBriefCard = ({ brief }: { readonly brief: AdventureSceneProductionBri
         <code>{brief.sceneId ?? brief.locationId}</code>
       </div>
       <div className="auth-scene-spec">
-        <strong>{brief.nativeSize.width} × {brief.nativeSize.height}</strong>
+        <strong>
+          {brief.nativeSize.width} × {brief.nativeSize.height}
+        </strong>
         <span>{brief.paletteBudget} colours</span>
       </div>
     </header>
@@ -153,16 +150,28 @@ const SceneBriefCard = ({ brief }: { readonly brief: AdventureSceneProductionBri
     <div className="auth-scene-lists">
       <section>
         <h3>Focal hierarchy</h3>
-        <ol>{brief.focalHierarchy.map((item) => <li key={item}>{item}</li>)}</ol>
+        <ol>
+          {brief.focalHierarchy.map((item) => (
+            <li key={item}>{item}</li>
+          ))}
+        </ol>
       </section>
       <section>
         <h3>Layer plan</h3>
-        <ol>{brief.layerPlan.map((item) => <li key={item}>{item}</li>)}</ol>
+        <ol>
+          {brief.layerPlan.map((item) => (
+            <li key={item}>{item}</li>
+          ))}
+        </ol>
       </section>
     </div>
     <details>
       <summary>Native-size review questions</summary>
-      <ul>{brief.reviewQuestions.map((question) => <li key={question}>{question}</li>)}</ul>
+      <ul>
+        {brief.reviewQuestions.map((question) => (
+          <li key={question}>{question}</li>
+        ))}
+      </ul>
     </details>
   </article>
 );
@@ -204,7 +213,9 @@ export const AdventureAuthenticityApp = () => {
             }
           >
             {showcaseAdventureDesigns.map((candidate, index) => (
-              <option key={candidate.projectId} value={index}>{candidate.title}</option>
+              <option key={candidate.projectId} value={index}>
+                {candidate.title}
+              </option>
             ))}
           </select>
         </label>
@@ -216,9 +227,15 @@ export const AdventureAuthenticityApp = () => {
 
       <nav className="auth-toolbar" aria-label="Authenticity Lab views">
         <div>
-          <Button active={view === "scorecard"} onClick={() => setView("scorecard")}>Scorecard</Button>
-          <Button active={view === "findings"} onClick={() => setView("findings")}>Findings</Button>
-          <Button active={view === "scenes"} onClick={() => setView("scenes")}>Scene briefs</Button>
+          <Button active={view === "scorecard"} onClick={() => setView("scorecard")}>
+            Scorecard
+          </Button>
+          <Button active={view === "findings"} onClick={() => setView("findings")}>
+            Findings
+          </Button>
+          <Button active={view === "scenes"} onClick={() => setView("scenes")}>
+            Scene briefs
+          </Button>
         </div>
         <p>Evidence-led production review · not a substitute for final art or playtesting</p>
       </nav>
@@ -231,10 +248,22 @@ export const AdventureAuthenticityApp = () => {
             <h1>{document.title}</h1>
             <p>{document.playerPromise}</p>
             <dl>
-              <div><dt>Mode</dt><dd>{document.creativeDirection.productionMode}</dd></div>
-              <div><dt>Composition</dt><dd>{document.creativeDirection.compositionMode}</dd></div>
-              <div><dt>Palette</dt><dd>{document.creativeDirection.palette.maxColours}</dd></div>
-              <div><dt>Locations</dt><dd>{document.map.locations.length}</dd></div>
+              <div>
+                <dt>Mode</dt>
+                <dd>{document.creativeDirection.productionMode}</dd>
+              </div>
+              <div>
+                <dt>Composition</dt>
+                <dd>{document.creativeDirection.compositionMode}</dd>
+              </div>
+              <div>
+                <dt>Palette</dt>
+                <dd>{document.creativeDirection.palette.maxColours}</dd>
+              </div>
+              <div>
+                <dt>Locations</dt>
+                <dd>{document.map.locations.length}</dd>
+              </div>
             </dl>
           </section>
           <section className="auth-palette">
@@ -267,9 +296,18 @@ export const AdventureAuthenticityApp = () => {
                   </p>
                 </div>
                 <dl className="auth-score-counts">
-                  <div><dt>Errors</dt><dd>{counts.error}</dd></div>
-                  <div><dt>Warnings</dt><dd>{counts.warning}</dd></div>
-                  <div><dt>Notes</dt><dd>{counts.note}</dd></div>
+                  <div>
+                    <dt>Errors</dt>
+                    <dd>{counts.error}</dd>
+                  </div>
+                  <div>
+                    <dt>Warnings</dt>
+                    <dd>{counts.warning}</dd>
+                  </div>
+                  <div>
+                    <dt>Notes</dt>
+                    <dd>{counts.note}</dd>
+                  </div>
                 </dl>
               </section>
               <section className="auth-dimension-grid">
@@ -278,12 +316,18 @@ export const AdventureAuthenticityApp = () => {
                 ))}
               </section>
               <section className="auth-doctrine-strip">
-                <article><span>Silhouette</span><p>{document.creativeDirection.actorSilhouette}</p></article>
+                <article>
+                  <span>Silhouette</span>
+                  <p>{document.creativeDirection.actorSilhouette}</p>
+                </article>
                 <article>
                   <span>Interface</span>
                   <p>{document.creativeDirection.interfaceTreatment}</p>
                 </article>
-                <article><span>Animation</span><p>{document.creativeDirection.animationCadence}</p></article>
+                <article>
+                  <span>Animation</span>
+                  <p>{document.creativeDirection.animationCadence}</p>
+                </article>
               </section>
             </>
           ) : null}
@@ -294,9 +338,7 @@ export const AdventureAuthenticityApp = () => {
                 <div>
                   <span className="auth-eyebrow">CORRECTIVE PRODUCTION QUEUE</span>
                   <h1>
-                    {report.findings.length === 0
-                      ? "No findings"
-                      : `${report.findings.length} findings`}
+                    {report.findings.length === 0 ? "No findings" : `${report.findings.length} findings`}
                   </h1>
                 </div>
                 <div className="auth-filter-row">
@@ -309,14 +351,15 @@ export const AdventureAuthenticityApp = () => {
               </header>
               {visibleFindings.length > 0 ? (
                 <div className="auth-finding-list">
-                  {visibleFindings.map((finding) => <FindingCard key={finding.id} finding={finding} />)}
+                  {visibleFindings.map((finding) => (
+                    <FindingCard key={finding.id} finding={finding} />
+                  ))}
                 </div>
               ) : (
                 <div className="auth-empty-state">
                   <strong>Current authored evidence satisfies this filter.</strong>
                   <p>
-                    Continue with native-size visual review, interaction testing and final
-                    asset evidence.
+                    Continue with native-size visual review, interaction testing and final asset evidence.
                   </p>
                 </div>
               )}
@@ -329,13 +372,14 @@ export const AdventureAuthenticityApp = () => {
                 <span className="auth-eyebrow">SCENE PRODUCTION PACK</span>
                 <h1>{briefs.length} native scene briefs</h1>
                 <p>
-                  Each brief translates the project bible into focal hierarchy, layer
-                  structure, actor readability, animation, interface and audio direction
-                  for one location.
+                  Each brief translates the project bible into focal hierarchy, layer structure, actor
+                  readability, animation, interface and audio direction for one location.
                 </p>
               </header>
               <div className="auth-scene-list">
-                {briefs.map((brief) => <SceneBriefCard key={brief.locationId} brief={brief} />)}
+                {briefs.map((brief) => (
+                  <SceneBriefCard key={brief.locationId} brief={brief} />
+                ))}
               </div>
             </section>
           ) : null}
@@ -345,7 +389,11 @@ export const AdventureAuthenticityApp = () => {
           <section>
             <span className="auth-eyebrow">PRODUCTION RULES</span>
             <h2>Must remain true</h2>
-            <ul>{document.creativeDirection.authenticityRules.map((rule) => <li key={rule}>{rule}</li>)}</ul>
+            <ul>
+              {document.creativeDirection.authenticityRules.map((rule) => (
+                <li key={rule}>{rule}</li>
+              ))}
+            </ul>
           </section>
           <section>
             <span className="auth-eyebrow">PROHIBITED SHORTCUTS</span>
@@ -358,9 +406,7 @@ export const AdventureAuthenticityApp = () => {
           </section>
           <section className="auth-next-action">
             <span className="auth-eyebrow">NEXT ACTION</span>
-            <h2>
-              {report.findings[0]?.message ?? "Review at 1× native size"}
-            </h2>
+            <h2>{report.findings[0]?.message ?? "Review at 1× native size"}</h2>
             <p>
               {report.findings[0]?.recommendation ??
                 "Confirm actor, obstacle, prop and exit remain readable without hotspot assistance."}

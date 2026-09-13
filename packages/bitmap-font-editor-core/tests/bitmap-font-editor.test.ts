@@ -1,8 +1,9 @@
-import { describe, expect, it } from "vitest";
 import { bitmapFontManifestSchema } from "@evavo/adventure-bitmap-font";
 import { parseAdventureProject } from "@evavo/adventure-project-schema";
+import { describe, expect, it } from "vitest";
+import { parseBitmapFontEditorCommand } from "../src/command-schema.js";
 import {
-  BitmapFontEditorCommandError,
+  type BitmapFontEditorCommandError,
   createBitmapFontEditorHistory,
   executeBitmapFontEditorCommand,
   isBitmapFontEditorDocumentDirty,
@@ -10,7 +11,6 @@ import {
   redoBitmapFontEditorCommand,
   undoBitmapFontEditorCommand,
 } from "../src/index.js";
-import { parseBitmapFontEditorCommand } from "../src/command-schema.js";
 
 const project = parseAdventureProject({
   schemaVersion: 1,
@@ -216,16 +216,12 @@ describe("bitmap font editor history", () => {
   it("protects globally unique glyph identities", () => {
     const font = manifest.fonts[0]!;
     expect(() =>
-      executeBitmapFontEditorCommand(
-        project,
-        createBitmapFontEditorHistory(project, manifest),
-        {
-          kind: "insert-glyph",
-          fontId: font.id,
-          index: font.glyphs.length,
-          glyph: { ...font.glyphs[1]!, codePoint: 66 },
-        },
-      ),
+      executeBitmapFontEditorCommand(project, createBitmapFontEditorHistory(project, manifest), {
+        kind: "insert-glyph",
+        fontId: font.id,
+        index: font.glyphs.length,
+        glyph: { ...font.glyphs[1]!, codePoint: 66 },
+      }),
     ).toThrowError(
       expect.objectContaining<Partial<BitmapFontEditorCommandError>>({
         code: "duplicate-id",
@@ -262,8 +258,6 @@ describe("bitmap font command schema", () => {
   });
 
   it("rejects empty command batches", () => {
-    expect(() =>
-      parseBitmapFontEditorCommand({ kind: "batch", commands: [] }),
-    ).toThrow();
+    expect(() => parseBitmapFontEditorCommand({ kind: "batch", commands: [] })).toThrow();
   });
 });

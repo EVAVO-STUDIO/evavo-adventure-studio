@@ -1,5 +1,5 @@
-import { describe, expect, it } from "vitest";
 import { parseSceneInstanceManifest } from "@evavo/adventure-scene-instances";
+import { describe, expect, it } from "vitest";
 import { studioProject, studioSceneInstances } from "../src/fixture.js";
 import { validateStudioManifest } from "../src/validation.js";
 
@@ -49,10 +49,7 @@ describe("studio validation", () => {
       ]),
     );
     expect(summary.groups.map((group) => `${group.kind}:${group.label}`)).toEqual(
-      expect.arrayContaining([
-        "object-definition:Desk lamp",
-        "scene:Rain Office",
-      ]),
+      expect.arrayContaining(["object-definition:Desk lamp", "scene:Rain Office"]),
     );
   });
 });

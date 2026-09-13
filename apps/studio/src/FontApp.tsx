@@ -1,18 +1,10 @@
-import {
-  useCallback,
-  useEffect,
-  useMemo,
-  useReducer,
-  type Dispatch,
-  type ReactNode,
-} from "react";
-import type {
-  BitmapFontDefinition,
-  BitmapGlyph,
-  BitmapKerning,
-} from "@evavo/adventure-bitmap-font";
+import type { BitmapFontDefinition, BitmapGlyph, BitmapKerning } from "@evavo/adventure-bitmap-font";
 import type { BitmapFontEditorCommand } from "@evavo/adventure-bitmap-font-editor-core";
+import { type Dispatch, type ReactNode, useCallback, useEffect, useMemo, useReducer } from "react";
+import { studioBitmapFonts, studioFontProject } from "./font-fixture.js";
 import {
+  type BitmapFontWorkspaceAction,
+  type BitmapFontWorkspaceState,
   bitmapFontPreviewLayout,
   bitmapFontWorkspaceIsDirty,
   bitmapFontWorkspaceReducer,
@@ -24,13 +16,7 @@ import {
   replaceSelectedGlyphCommand,
   selectedBitmapFont,
   selectedBitmapGlyph,
-  type BitmapFontWorkspaceAction,
-  type BitmapFontWorkspaceState,
 } from "./font-workspace.js";
-import {
-  studioBitmapFonts,
-  studioFontProject,
-} from "./font-fixture.js";
 import "./font-editor.css";
 
 type FontDispatch = Dispatch<BitmapFontWorkspaceAction>;
@@ -46,27 +32,16 @@ const Button = ({
   readonly disabled?: boolean;
   readonly className?: string;
 }) => (
-  <button
-    type="button"
-    className={`button ${className}`}
-    disabled={disabled}
-    onClick={onClick}
-  >
+  <button type="button" className={`button ${className}`} disabled={disabled} onClick={onClick}>
     {children}
   </button>
 );
 
-const Field = ({
-  label,
-  children,
-}: {
-  readonly label: string;
-  readonly children: ReactNode;
-}) => (
-  <label className="field">
+const Field = ({ label, children }: { readonly label: string; readonly children: ReactNode }) => (
+  <div className="field">
     <span>{label}</span>
     {children}
-  </label>
+  </div>
 );
 
 const NumberInput = ({
@@ -124,9 +99,7 @@ const executeSafely = (
   try {
     dispatch({ type: "execute", command, notice });
   } catch (error) {
-    window.alert(
-      error instanceof Error ? error.message : "Bitmap font edit failed.",
-    );
+    window.alert(error instanceof Error ? error.message : "Bitmap font edit failed.");
   }
 };
 
@@ -139,12 +112,7 @@ const FontMetrics = ({
 }) => {
   const font = selectedBitmapFont(state);
   const replace = (next: BitmapFontDefinition): void =>
-    executeSafely(
-      state,
-      dispatch,
-      replaceSelectedFontCommand(state, next),
-      "Updated bitmap font metrics.",
-    );
+    executeSafely(state, dispatch, replaceSelectedFontCommand(state, next), "Updated bitmap font metrics.");
 
   return (
     <section className="font-metrics-card">
@@ -198,12 +166,7 @@ const GlyphInspector = ({
   const font = selectedBitmapFont(state);
   const glyph = selectedBitmapGlyph(state);
   const replace = (next: BitmapGlyph): void =>
-    executeSafely(
-      state,
-      dispatch,
-      replaceSelectedGlyphCommand(state, next),
-      "Updated bitmap glyph metrics.",
-    );
+    executeSafely(state, dispatch, replaceSelectedGlyphCommand(state, next), "Updated bitmap glyph metrics.");
   const makeFallback = (): void =>
     executeSafely(
       state,
@@ -245,13 +208,8 @@ const GlyphInspector = ({
               onChange={(codePoint) => replace({ ...glyph, codePoint })}
             />
           </Field>
-          <Button
-            onClick={makeFallback}
-            disabled={font.fallbackCodePoint === glyph.codePoint}
-          >
-            {font.fallbackCodePoint === glyph.codePoint
-              ? "Current fallback"
-              : "Use as fallback"}
+          <Button onClick={makeFallback} disabled={font.fallbackCodePoint === glyph.codePoint}>
+            {font.fallbackCodePoint === glyph.codePoint ? "Current fallback" : "Use as fallback"}
           </Button>
         </section>
         <section>
@@ -313,17 +271,13 @@ const GlyphInspector = ({
             <Field label="Bearing X">
               <NumberInput
                 value={glyph.bearing.x}
-                onChange={(x) =>
-                  replace({ ...glyph, bearing: { ...glyph.bearing, x } })
-                }
+                onChange={(x) => replace({ ...glyph, bearing: { ...glyph.bearing, x } })}
               />
             </Field>
             <Field label="Bearing Y">
               <NumberInput
                 value={glyph.bearing.y}
-                onChange={(y) =>
-                  replace({ ...glyph, bearing: { ...glyph.bearing, y } })
-                }
+                onChange={(y) => replace({ ...glyph, bearing: { ...glyph.bearing, y } })}
               />
             </Field>
           </div>
@@ -349,9 +303,7 @@ const KerningPanel = ({
 }) => {
   const font = selectedBitmapFont(state);
   const glyph = selectedBitmapGlyph(state);
-  const pairs = font.kernings.filter(
-    (kerning) => kerning.leftCodePoint === glyph.codePoint,
-  );
+  const pairs = font.kernings.filter((kerning) => kerning.leftCodePoint === glyph.codePoint);
   const replace = (previous: BitmapKerning, next: BitmapKerning): void =>
     executeSafely(
       state,
@@ -386,14 +338,7 @@ const KerningPanel = ({
           <h3>{displayCharacter(glyph.codePoint)} pairs</h3>
         </div>
         <Button
-          onClick={() =>
-            executeSafely(
-              state,
-              dispatch,
-              insertKerningCommand(state),
-              "Added kerning pair.",
-            )
-          }
+          onClick={() => executeSafely(state, dispatch, insertKerningCommand(state), "Added kerning pair.")}
         >
           ＋ Pair
         </Button>
@@ -403,19 +348,14 @@ const KerningPanel = ({
           <p>No authored kerning pairs begin with this glyph.</p>
         ) : (
           pairs.map((kerning) => (
-            <div
-              key={`${kerning.leftCodePoint}:${kerning.rightCodePoint}`}
-              className="font-kerning-row"
-            >
+            <div key={`${kerning.leftCodePoint}:${kerning.rightCodePoint}`} className="font-kerning-row">
               <strong>
                 {displayCharacter(kerning.leftCodePoint)}
                 {displayCharacter(kerning.rightCodePoint)}
               </strong>
               <NumberInput
                 value={kerning.adjustment}
-                onChange={(adjustment) =>
-                  replace(kerning, { ...kerning, adjustment })
-                }
+                onChange={(adjustment) => replace(kerning, { ...kerning, adjustment })}
               />
               <button type="button" onClick={() => remove(kerning)}>
                 ×
@@ -458,12 +398,7 @@ export const FontApp = () => {
   };
 
   const removeGlyph = (): void =>
-    executeSafely(
-      state,
-      dispatch,
-      removeSelectedGlyphCommand(state),
-      "Removed bitmap glyph.",
-    );
+    executeSafely(state, dispatch, removeSelectedGlyphCommand(state), "Removed bitmap glyph.");
 
   useEffect(() => {
     const onKeyDown = (event: KeyboardEvent): void => {
@@ -507,16 +442,10 @@ export const FontApp = () => {
 
       <div className="toolbar font-toolbar">
         <div className="toolbar-group">
-          <Button
-            onClick={() => dispatch({ type: "undo" })}
-            disabled={state.history.undoStack.length === 0}
-          >
+          <Button onClick={() => dispatch({ type: "undo" })} disabled={state.history.undoStack.length === 0}>
             ↶
           </Button>
-          <Button
-            onClick={() => dispatch({ type: "redo" })}
-            disabled={state.history.redoStack.length === 0}
-          >
+          <Button onClick={() => dispatch({ type: "redo" })} disabled={state.history.redoStack.length === 0}>
             ↷
           </Button>
         </div>
@@ -548,13 +477,9 @@ export const FontApp = () => {
                 <button
                   type="button"
                   key={candidate.id}
-                  className={
-                    candidate.id === glyph.id ? "is-active" : undefined
-                  }
+                  className={candidate.id === glyph.id ? "is-active" : undefined}
                   title={`${displayCharacter(candidate.codePoint)} ${codePointLabel(candidate.codePoint)}`}
-                  onClick={() =>
-                    dispatch({ type: "select-glyph", glyphId: candidate.id })
-                  }
+                  onClick={() => dispatch({ type: "select-glyph", glyphId: candidate.id })}
                 >
                   <strong>{displayCharacter(candidate.codePoint)}</strong>
                   <small>{candidate.advance}px</small>

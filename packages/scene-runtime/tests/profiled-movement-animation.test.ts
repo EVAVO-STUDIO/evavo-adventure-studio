@@ -1,11 +1,5 @@
-import {
-  currentAnimationFrame,
-  startAnimation,
-} from "@evavo/adventure-animation";
-import {
-  ADVENTURE_MOTION_UNITS_PER_PIXEL,
-  adventurePlayFeelProfileById,
-} from "@evavo/adventure-play-feel";
+import { currentAnimationFrame, startAnimation } from "@evavo/adventure-animation";
+import { ADVENTURE_MOTION_UNITS_PER_PIXEL, adventurePlayFeelProfileById } from "@evavo/adventure-play-feel";
 import type { Actor, Id } from "@evavo/adventure-project-schema";
 import type { RuntimeBundle } from "@evavo/adventure-runtime-bundle";
 import { describe, expect, it } from "vitest";
@@ -13,10 +7,7 @@ import {
   playbackForProfiledMovement,
   synchronizeProfiledMovementAnimations,
 } from "../src/movement-animation.js";
-import type {
-  ActorMovementState,
-  NavigableRuntimeWorldState,
-} from "../src/movement-types.js";
+import type { ActorMovementState, NavigableRuntimeWorldState } from "../src/movement-types.js";
 
 const id = <T extends string>(value: string): Id<T> => value as Id<T>;
 const actorInstanceId = id<"actor-instance">("actor-instance.traveller");
@@ -133,9 +124,7 @@ const runtimeActor = (instanceId: Id<"actor-instance">) => ({
   visibleOverride: null,
 });
 
-const world = (
-  movement: ActorMovementState | null,
-): NavigableRuntimeWorldState =>
+const world = (movement: ActorMovementState | null): NavigableRuntimeWorldState =>
   ({
     story: { tick: 1 },
     actorInstances: {
@@ -160,11 +149,10 @@ const animationEvent = (instanceId: Id<"actor-instance">) => ({
 describe("profiled movement animation presentation", () => {
   it("locks visible walk frames to travelled distance and filters tick-driven events", () => {
     const movement = profiledMovement();
-    const synchronized = synchronizeProfiledMovementAnimations(
-      bundle,
-      world(movement),
-      [animationEvent(actorInstanceId), animationEvent(otherActorInstanceId)],
-    );
+    const synchronized = synchronizeProfiledMovementAnimations(bundle, world(movement), [
+      animationEvent(actorInstanceId),
+      animationEvent(otherActorInstanceId),
+    ]);
     const runtime = synchronized.state.actorInstances[actorInstanceId];
     if (!runtime) throw new Error("Expected profiled actor runtime state.");
 
@@ -175,9 +163,7 @@ describe("profiled movement animation presentation", () => {
       completed: false,
     });
     expect(currentAnimationFrame(actor, runtime.playback).id).toBe("frame.walk-b");
-    expect(synchronized.animationEvents).toEqual([
-      animationEvent(otherActorInstanceId),
-    ]);
+    expect(synchronized.animationEvents).toEqual([animationEvent(otherActorInstanceId)]);
   });
 
   it("rejects a non-looping clip instead of silently drifting from movement phase", () => {
@@ -186,14 +172,11 @@ describe("profiled movement animation presentation", () => {
       animations: actor.animations.map((clip) => ({ ...clip, loop: false })),
     };
     const movement = profiledMovement();
-    const playback = startAnimation(
-      nonLooping,
-      id<"animation-clip">("animation.walk-east"),
-    ).state;
+    const playback = startAnimation(nonLooping, id<"animation-clip">("animation.walk-east")).state;
 
-    expect(() =>
-      playbackForProfiledMovement(nonLooping, playback, movement),
-    ).toThrow(/must be authored as a looping clip/u);
+    expect(() => playbackForProfiledMovement(nonLooping, playback, movement)).toThrow(
+      /must be authored as a looping clip/u,
+    );
   });
 
   it("leaves legacy movement playback and animation events untouched", () => {
@@ -209,11 +192,7 @@ describe("profiled movement animation presentation", () => {
     };
     const sourceWorld = world(legacy);
     const events = [animationEvent(actorInstanceId)];
-    const synchronized = synchronizeProfiledMovementAnimations(
-      bundle,
-      sourceWorld,
-      events,
-    );
+    const synchronized = synchronizeProfiledMovementAnimations(bundle, sourceWorld, events);
 
     expect(synchronized.state).toBe(sourceWorld);
     expect(synchronized.animationEvents).toBe(events);

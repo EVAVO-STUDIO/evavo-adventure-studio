@@ -1,8 +1,8 @@
 import {
-  adventureSceneStagingSeverityOrder,
   type AdventureSceneStagingArea,
   type AdventureSceneStagingFinding,
   type AdventureSceneStagingSeverity,
+  adventureSceneStagingSeverityOrder,
 } from "./scene-staging-types.js";
 
 export interface AdventureSceneStagingFindingInput {
@@ -27,10 +27,7 @@ export const uniqueSortedSceneStagingFindings = (
 ): readonly AdventureSceneStagingFinding[] => {
   const unique = new Map<string, AdventureSceneStagingFinding>();
   for (const finding of findings) {
-    unique.set(
-      [finding.id, finding.area, finding.path, finding.message].join("|"),
-      finding,
-    );
+    unique.set([finding.id, finding.area, finding.path, finding.message].join("|"), finding);
   }
   return [...unique.values()].sort(
     (left, right) =>

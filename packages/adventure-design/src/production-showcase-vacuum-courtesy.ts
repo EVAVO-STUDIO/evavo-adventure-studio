@@ -10,8 +10,7 @@ export const vacuumCourtesyShowcase = showcase({
   motif: "orbital-service-bay",
   titleTreatment:
     "A crooked transmission card assembles from utility panels, warning chevrons and one absurdly polite status light.",
-  dialogueTreatment:
-    "Compact in-scene dialogue favours strong reaction poses and specific machine feedback.",
+  dialogueTreatment: "Compact in-scene dialogue favours strong reaction poses and specific machine feedback.",
   systemTreatment:
     "A maintenance schematic exposes valves, pressure zones and bureaucratic ownership without becoming a generic hacking screen.",
   plates: [
@@ -45,8 +44,26 @@ export const vacuumCourtesyShowcase = showcase({
       106,
       "PLEASE REMAIN CALM WHILE OXYGEN IS REASSIGNED.",
       [
-        actor("actor.vacuum.clerk", "player", 84, 166, 52, "right", "toolbox ready", "Square helmet, toolbox and bent knees read before suit detail."),
-        actor("actor.vacuum.attendant", "npc", 198, 158, 48, "left", "polite panic", "Raised tray and rigid smile form the comic reaction silhouette."),
+        actor(
+          "actor.vacuum.clerk",
+          "player",
+          84,
+          166,
+          52,
+          "right",
+          "toolbox ready",
+          "Square helmet, toolbox and bent knees read before suit detail.",
+        ),
+        actor(
+          "actor.vacuum.attendant",
+          "npc",
+          198,
+          158,
+          48,
+          "left",
+          "polite panic",
+          "Raised tray and rigid smile form the comic reaction silhouette.",
+        ),
       ],
       [
         prop("prop.vacuum.valve", "puzzle", 226, 86, 32, 44, "pressure valve", "mislabelled"),
@@ -69,8 +86,26 @@ export const vacuumCourtesyShowcase = showcase({
       112,
       "The blue handle is red on weekends. Union regulation.",
       [
-        actor("actor.vacuum.clerk-close", "player", 88, 166, 72, "right", "flat stare", "The visor reflection stays one simple shape."),
-        actor("actor.vacuum.attendant-close", "npc", 228, 164, 74, "left", "tray explanation", "Tray, smile and one raised finger carry the line."),
+        actor(
+          "actor.vacuum.clerk-close",
+          "player",
+          88,
+          166,
+          72,
+          "right",
+          "flat stare",
+          "The visor reflection stays one simple shape.",
+        ),
+        actor(
+          "actor.vacuum.attendant-close",
+          "npc",
+          228,
+          164,
+          74,
+          "left",
+          "tray explanation",
+          "Tray, smile and one raised finger carry the line.",
+        ),
       ],
       [
         prop("prop.vacuum.label-card", "clue", 142, 66, 48, 20, "weekend label", "folded"),
@@ -92,7 +127,16 @@ export const vacuumCourtesyShowcase = showcase({
       118,
       "CIRCUIT 7B · OWNER: HOSPITALITY ADJACENT",
       [
-        actor("actor.vacuum.schematic-marker", "player", 58, 150, 20, "right", "service marker", "A compact helmet marker shows current maintenance access."),
+        actor(
+          "actor.vacuum.schematic-marker",
+          "player",
+          58,
+          150,
+          20,
+          "right",
+          "service marker",
+          "A compact helmet marker shows current maintenance access.",
+        ),
       ],
       [
         prop("prop.vacuum.zone-banquet", "puzzle", 68, 70, 58, 32, "banquet zone", "low pressure"),

@@ -1,19 +1,15 @@
+import { gameLifecycleSaveCompatibilityView } from "@evavo/adventure-project-schema/lifecycle";
 import type { RuntimeBundle } from "@evavo/adventure-runtime-bundle";
+import { runtimeBundleSaveCompatibilityView } from "@evavo/adventure-runtime-bundle/localisation";
 import { SaveGameIntegrityError } from "./errors.js";
-import {
-  saveGameSchema,
-  type SaveGame,
-  type SaveGamePayload,
-} from "./schema.js";
+import { type SaveGame, type SaveGamePayload, saveGameSchema } from "./schema.js";
 
 const canonicalize = (value: unknown): unknown => {
   if (Array.isArray(value)) return value.map(canonicalize);
   if (value && typeof value === "object") {
     const source = value as Readonly<Record<string, unknown>>;
     const output: Record<string, unknown> = {};
-    for (const key of Object.keys(source).sort((left, right) =>
-      left.localeCompare(right),
-    )) {
+    for (const key of Object.keys(source).sort((left, right) => left.localeCompare(right))) {
       const child = source[key];
       if (child !== undefined) output[key] = canonicalize(child);
     }
@@ -41,8 +37,24 @@ export const fnv1a64 = (value: string): string => {
   return `fnv1a64:${hash.toString(16).padStart(16, "0")}`;
 };
 
-export const runtimeBundleFingerprint = (bundle: RuntimeBundle): string =>
+export const runtimeBundleExactFingerprint = (bundle: RuntimeBundle): string =>
   fnv1a64(canonicalSaveGameJson(bundle));
+
+const runtimeBundleSaveFingerprintView = (bundle: RuntimeBundle): RuntimeBundle => {
+  const localisationNeutral = runtimeBundleSaveCompatibilityView(bundle);
+  const lifecycleNeutral = localisationNeutral.lifecycle
+    ? ({
+        ...localisationNeutral,
+        lifecycle: gameLifecycleSaveCompatibilityView(localisationNeutral.lifecycle),
+      } as RuntimeBundle)
+    : localisationNeutral;
+  if (!lifecycleNeutral.frontEnd) return lifecycleNeutral;
+  const { frontEnd: _frontEnd, ...withoutFrontEnd } = lifecycleNeutral;
+  return withoutFrontEnd as RuntimeBundle;
+};
+
+export const runtimeBundleFingerprint = (bundle: RuntimeBundle): string =>
+  runtimeBundleExactFingerprint(runtimeBundleSaveFingerprintView(bundle));
 
 export const payloadFromSave = (save: SaveGame): SaveGamePayload => ({
   saveVersion: save.saveVersion,
@@ -55,10 +67,7 @@ export const payloadFromSave = (save: SaveGame): SaveGamePayload => ({
 
 export const parseSaveGame = (input: unknown): SaveGame => {
   const save = saveGameSchema.parse(input);
-  if (
-    fnv1a64(canonicalSaveGameJson(payloadFromSave(save))) !==
-    save.saveFingerprint
-  ) {
+  if (fnv1a64(canonicalSaveGameJson(payloadFromSave(save))) !== save.saveFingerprint) {
     throw new SaveGameIntegrityError();
   }
   return save;

@@ -12,10 +12,14 @@ interface ProjectCommandInputs {
   readonly projectPath: string;
   readonly assetManifestPath: string | null;
   readonly sceneInstancesPath: string | null;
+  readonly sceneStagingPath: string | null;
+  readonly indexedAssetsPath: string | null;
+  readonly paletteMapsPath: string | null;
   readonly artDirectionPath: string | null;
   readonly artEvidencePath: string | null;
   readonly bitmapFontsPath: string | null;
   readonly uiSkinsPath: string | null;
+  readonly audioMixPath: string | null;
   readonly format: OutputFormat;
 }
 
@@ -36,12 +40,21 @@ export interface PackageCommand extends ProjectCommandInputs {
   readonly outputDirectory: string;
 }
 
+export interface ArtEvidenceCommand {
+  readonly kind: "art-evidence";
+  readonly projectPath: string;
+  readonly assetManifestPath: string;
+  readonly outputPath: string;
+  readonly format: OutputFormat;
+}
+
 export type CliCommand =
   | HelpCommand
   | VersionCommand
   | ValidateCommand
   | CompileCommand
-  | PackageCommand;
+  | PackageCommand
+  | ArtEvidenceCommand;
 
 export class CliUsageError extends Error {
   constructor(message: string) {
@@ -59,10 +72,14 @@ const VALUE_OPTIONS = new Set([
   "--project",
   "--asset-manifest",
   "--scene-instances",
+  "--scene-staging",
+  "--indexed-assets",
+  "--palette-maps",
   "--art-direction",
   "--art-evidence",
   "--bitmap-fonts",
   "--ui-skins",
+  "--audio-mix",
   "--out",
   "--output",
   "--report",
@@ -130,8 +147,10 @@ const requiredValue = (options: ParsedOptions, key: string): string => {
   return value;
 };
 
-const optionalValue = (options: ParsedOptions, key: string): string | null =>
-  options.values.get(key) ?? null;
+const optionalValue = (
+  options: ParsedOptions,
+  key: string,
+): string | null => options.values.get(key) ?? null;
 
 const outputValue = (options: ParsedOptions): string =>
   optionalValue(options, "--out") ?? requiredValue(options, "--output");
@@ -144,33 +163,49 @@ const PROJECT_INPUT_OPTIONS = [
   "--project",
   "--asset-manifest",
   "--scene-instances",
+  "--scene-staging",
+  "--indexed-assets",
+  "--palette-maps",
   "--art-direction",
   "--art-evidence",
   "--bitmap-fonts",
   "--ui-skins",
+  "--audio-mix",
 ] as const;
 
 const sharedInputs = (
   options: ParsedOptions,
-): Omit<ProjectCommandInputs, "projectPath" | "assetManifestPath" | "format"> => {
+): Omit<
+  ProjectCommandInputs,
+  "projectPath" | "assetManifestPath" | "format"
+> => {
   const artDirectionPath = optionalValue(options, "--art-direction");
   const artEvidencePath = optionalValue(options, "--art-evidence");
+  const indexedAssetsPath = optionalValue(options, "--indexed-assets");
+  const paletteMapsPath = optionalValue(options, "--palette-maps");
+  const hasAssetManifest = options.values.has("--asset-manifest");
   if (artEvidencePath && !artDirectionPath) {
-    throw new CliUsageError(
-      "Option '--art-evidence' requires '--art-direction'.",
-    );
+    throw new CliUsageError("Option '--art-evidence' requires '--art-direction'.");
   }
-  if (artEvidencePath && !options.values.has("--asset-manifest")) {
-    throw new CliUsageError(
-      "Option '--art-evidence' requires '--asset-manifest'.",
-    );
+  if (artEvidencePath && !hasAssetManifest) {
+    throw new CliUsageError("Option '--art-evidence' requires '--asset-manifest'.");
+  }
+  if (indexedAssetsPath && !hasAssetManifest) {
+    throw new CliUsageError("Option '--indexed-assets' requires '--asset-manifest'.");
+  }
+  if (paletteMapsPath && !hasAssetManifest) {
+    throw new CliUsageError("Option '--palette-maps' requires '--asset-manifest'.");
   }
   return {
     sceneInstancesPath: optionalValue(options, "--scene-instances"),
+    sceneStagingPath: optionalValue(options, "--scene-staging"),
+    indexedAssetsPath,
+    paletteMapsPath,
     artDirectionPath,
     artEvidencePath,
     bitmapFontsPath: optionalValue(options, "--bitmap-fonts"),
     uiSkinsPath: optionalValue(options, "--ui-skins"),
+    audioMixPath: optionalValue(options, "--audio-mix"),
   };
 };
 
@@ -200,12 +235,7 @@ export const parseCliArguments = (argv: readonly string[]): CliCommand => {
     case "compile":
       assertAllowedOptions(
         options,
-        new Set([
-          ...PROJECT_INPUT_OPTIONS,
-          "--out",
-          "--output",
-          "--report",
-        ]),
+        new Set([...PROJECT_INPUT_OPTIONS, "--out", "--output", "--report"]),
         JSON_FLAG,
       );
       return {
@@ -231,22 +261,48 @@ export const parseCliArguments = (argv: readonly string[]): CliCommand => {
         outputDirectory: outputValue(options),
         format: outputFormat(options),
       };
+    case "art-evidence":
+      assertAllowedOptions(
+        options,
+        new Set(["--project", "--asset-manifest", "--out", "--output"]),
+        JSON_FLAG,
+      );
+      return {
+        kind: "art-evidence",
+        projectPath: requiredValue(options, "--project"),
+        assetManifestPath: requiredValue(options, "--asset-manifest"),
+        outputPath: outputValue(options),
+        format: outputFormat(options),
+      };
     default:
       throw new CliUsageError(`Unknown command '${command}'.`);
   }
 };
 
+const indexedOptions =
+  " [--indexed-assets <indexed-assets.json>] [--palette-maps <palette-maps.json>]";
+const sharedOptions =
+  " [--scene-instances <scene-instances.json>] [--scene-staging <scene-staging.json>]" +
+  indexedOptions +
+  " [--art-direction <art-direction.json>] [--art-evidence <art-evidence.json>]" +
+  " [--bitmap-fonts <bitmap-fonts.json>] [--ui-skins <ui-skins.json>] [--audio-mix <audio-mix.json>]";
+
 export const CLI_HELP = `EVAVO Adventure Studio CLI
 
 Usage:
-  evavo-adventure validate --project <project.json> [--asset-manifest <assets.json>] [--scene-instances <scene-instances.json>] [--art-direction <art-direction.json>] [--art-evidence <art-evidence.json>] [--bitmap-fonts <bitmap-fonts.json>] [--ui-skins <ui-skins.json>] [--json]
-  evavo-adventure compile --project <project.json> --asset-manifest <assets.json> [--scene-instances <scene-instances.json>] [--art-direction <art-direction.json>] [--art-evidence <art-evidence.json>] [--bitmap-fonts <bitmap-fonts.json>] [--ui-skins <ui-skins.json>] --out <game.bundle.json> [--report <report.json>] [--json]
-  evavo-adventure package --project <project.json> --asset-manifest <assets.json> [--scene-instances <scene-instances.json>] [--art-direction <art-direction.json>] [--art-evidence <art-evidence.json>] [--bitmap-fonts <bitmap-fonts.json>] [--ui-skins <ui-skins.json>] --out <release-directory> [--json]
+  evavo-adventure validate --project <project.json> [--asset-manifest <assets.json>]${sharedOptions} [--json]
+  evavo-adventure compile --project <project.json> --asset-manifest <assets.json>${sharedOptions} --out <game.bundle.json> [--report <report.json>] [--json]
+  evavo-adventure package --project <project.json> --asset-manifest <assets.json>${sharedOptions} --out <release-directory> [--json]
+  evavo-adventure art-evidence --project <project.json> --asset-manifest <assets.json> --out <art-evidence.json> [--json]
   evavo-adventure version
+
+Indexed VGA inputs:
+  --indexed-assets  Versioned one-byte-per-pixel index-map sidecar. Requires --asset-manifest.
+  --palette-maps    Palette-map registry used by staged VGA light zones. Requires --asset-manifest.
 
 Exit codes:
   0  success
-  1  project, asset, scene composition, art, bitmap-font or interface-skin validation failed
+  1  project, asset, indexed-palette, scene, art, font, interface or audio validation failed
   2  invalid command-line usage
   3  unexpected internal failure
 `;

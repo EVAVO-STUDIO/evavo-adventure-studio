@@ -1,15 +1,11 @@
-import type {
-  Action,
-  AdventureProject,
-  Id,
-  Interaction,
-} from "@evavo/adventure-project-schema";
+import type { Action, AdventureProject, Id, Interaction } from "@evavo/adventure-project-schema";
 import type {
   ObjectDefinition,
   ObjectStateDefinition,
   SceneInstanceManifest,
 } from "@evavo/adventure-scene-instances";
 import {
+  type AdventureProgressionRuntimeContext,
   activeAdventureProgressionDialogue,
   applyImmediateAdventureProgressionActions,
   canonicalAdventureProgressionState,
@@ -17,12 +13,8 @@ import {
   evaluateAdventureProgressionCondition,
   processAdventureProgressionRequests,
   transitionAdventureProgressionDialogueChoice,
-  type AdventureProgressionRuntimeContext,
 } from "./progression-runtime.js";
-import type {
-  AdventureProgressionRuntimeState,
-  AdventureProgressionStep,
-} from "./progression-types.js";
+import type { AdventureProgressionRuntimeState, AdventureProgressionStep } from "./progression-types.js";
 
 export interface AdventureProgressionCandidate {
   readonly id: string;
@@ -61,49 +53,31 @@ const actionLabel = (action: Action): string => {
   }
 };
 
-const interactionAvailable = (
-  state: AdventureProgressionRuntimeState,
-  interaction: Interaction,
-): boolean =>
-  (!interaction.once ||
-    !state.consumedInteractionIds.includes(interaction.id)) &&
+const interactionAvailable = (state: AdventureProgressionRuntimeState, interaction: Interaction): boolean =>
+  (!interaction.once || !state.consumedInteractionIds.includes(interaction.id)) &&
   (!interaction.itemId || state.inventoryItemIds.includes(interaction.itemId)) &&
-  (!interaction.when ||
-    evaluateAdventureProgressionCondition(interaction.when, state));
+  (!interaction.when || evaluateAdventureProgressionCondition(interaction.when, state));
 
 const executeInteraction = (
   state: AdventureProgressionRuntimeState,
   interaction: Interaction,
   context: AdventureProgressionRuntimeContext,
 ): AdventureProgressionRuntimeState => {
-  const immediate = applyImmediateAdventureProgressionActions(
-    state,
-    interaction.actions,
-  );
+  const immediate = applyImmediateAdventureProgressionActions(state, interaction.actions);
   const consumed = interaction.once
     ? canonicalAdventureProgressionState({
         ...immediate.state,
-        consumedInteractionIds: sortedUnique([
-          ...immediate.state.consumedInteractionIds,
-          interaction.id,
-        ]),
+        consumedInteractionIds: sortedUnique([...immediate.state.consumedInteractionIds, interaction.id]),
       })
     : immediate.state;
-  return processAdventureProgressionRequests(
-    consumed,
-    immediate.requests,
-    context,
-    [],
-  );
+  return processAdventureProgressionRequests(consumed, immediate.requests, context, []);
 };
 
 const sceneInteractionCandidates = (
   project: AdventureProject,
   state: AdventureProgressionRuntimeState,
 ): AdventureProgressionCandidate[] => {
-  const sceneIndex = project.scenes.findIndex(
-    (scene) => scene.id === state.currentSceneId,
-  );
+  const sceneIndex = project.scenes.findIndex((scene) => scene.id === state.currentSceneId);
   const scene = sceneIndex >= 0 ? project.scenes[sceneIndex] : undefined;
   if (!scene) return [];
   const candidates: AdventureProgressionCandidate[] = [];
@@ -121,8 +95,7 @@ const sceneInteractionCandidates = (
           sceneId: scene.id,
           actionSummary: interaction.actions.map(actionLabel),
         },
-        apply: (current, context) =>
-          executeInteraction(current, interaction, context),
+        apply: (current, context) => executeInteraction(current, interaction, context),
       });
     });
   });
@@ -135,8 +108,7 @@ const effectiveObjectState = (
   initialStateId: Id<"object-state"> | undefined,
   state: AdventureProgressionRuntimeState,
 ): ObjectStateDefinition | undefined => {
-  const stateId =
-    state.objectStates[objectId] ?? initialStateId ?? definition.initialStateId;
+  const stateId = state.objectStates[objectId] ?? initialStateId ?? definition.initialStateId;
   return definition.states.find((candidate) => candidate.id === stateId);
 };
 
@@ -147,45 +119,27 @@ const objectInteractionCandidates = (
   const compositionIndex = manifest.scenes.findIndex(
     (composition) => composition.sceneId === state.currentSceneId,
   );
-  const composition =
-    compositionIndex >= 0 ? manifest.scenes[compositionIndex] : undefined;
+  const composition = compositionIndex >= 0 ? manifest.scenes[compositionIndex] : undefined;
   if (!composition) return [];
   const definitions = new Map(
-    manifest.objectDefinitions.map(
-      (definition) => [definition.id as string, definition] as const,
-    ),
+    manifest.objectDefinitions.map((definition) => [definition.id as string, definition] as const),
   );
   const candidates: AdventureProgressionCandidate[] = [];
   composition.objectInstances.forEach((instance) => {
-    if (
-      instance.visibleWhen &&
-      !evaluateAdventureProgressionCondition(instance.visibleWhen, state)
-    ) {
+    if (instance.visibleWhen && !evaluateAdventureProgressionCondition(instance.visibleWhen, state)) {
       return;
     }
     const definition = definitions.get(instance.definitionId);
     if (!definition) return;
-    const objectState = effectiveObjectState(
-      instance.id,
-      definition,
-      instance.initialStateId,
-      state,
-    );
-    if (
-      !objectState ||
-      objectState.visible === false ||
-      !objectState.interactionShape
-    ) {
+    const objectState = effectiveObjectState(instance.id, definition, instance.initialStateId, state);
+    if (!objectState || objectState.visible === false || !objectState.interactionShape) {
       return;
     }
-    const stateIndex = definition.states.findIndex(
-      (candidate) => candidate.id === objectState.id,
-    );
+    const stateIndex = definition.states.findIndex((candidate) => candidate.id === objectState.id);
     objectState.interactions.forEach((interaction, interactionIndex) => {
       if (!interactionAvailable(state, interaction)) return;
       const sourcePath =
-        `objectDefinitions.${definition.id}.states[${stateIndex}]` +
-        `.interactions[${interactionIndex}]`;
+        `objectDefinitions.${definition.id}.states[${stateIndex}]` + `.interactions[${interactionIndex}]`;
       candidates.push({
         id: `object:${instance.id}:${objectState.id}:${interaction.id}`,
         step: {
@@ -196,8 +150,7 @@ const objectInteractionCandidates = (
           sceneId: state.currentSceneId,
           actionSummary: interaction.actions.map(actionLabel),
         },
-        apply: (current, context) =>
-          executeInteraction(current, interaction, context),
+        apply: (current, context) => executeInteraction(current, interaction, context),
       });
     });
   });
@@ -213,12 +166,9 @@ const dialogueCandidates = (
   const { graph, node } = active;
   const enabled = node.choices.filter(
     (choice) =>
-      (!choice.once ||
-        !state.consumedDialogueChoiceIds.includes(choice.id)) &&
-      (!choice.visibleWhen ||
-        evaluateAdventureProgressionCondition(choice.visibleWhen, state)) &&
-      (!choice.enabledWhen ||
-        evaluateAdventureProgressionCondition(choice.enabledWhen, state)),
+      (!choice.once || !state.consumedDialogueChoiceIds.includes(choice.id)) &&
+      (!choice.visibleWhen || evaluateAdventureProgressionCondition(choice.visibleWhen, state)) &&
+      (!choice.enabledWhen || evaluateAdventureProgressionCondition(choice.enabledWhen, state)),
   );
   if (enabled.length === 0) {
     return [
@@ -232,18 +182,11 @@ const dialogueCandidates = (
           sceneId: state.currentSceneId,
           actionSummary: [
             ...node.exitActions.map(actionLabel),
-            ...(node.autoNextNodeId
-              ? [`node ${node.autoNextNodeId}`]
-              : ["end dialogue"]),
+            ...(node.autoNextNodeId ? [`node ${node.autoNextNodeId}`] : ["end dialogue"]),
           ],
         },
         apply: (current, runtimeContext) =>
-          continueAdventureProgressionDialogue(
-            current,
-            graph,
-            node,
-            runtimeContext,
-          ),
+          continueAdventureProgressionDialogue(current, graph, node, runtimeContext),
       },
     ];
   }
@@ -267,13 +210,7 @@ const dialogueCandidates = (
       ],
     },
     apply: (current, runtimeContext) =>
-      transitionAdventureProgressionDialogueChoice(
-        current,
-        graph,
-        node,
-        choice.id,
-        runtimeContext,
-      ),
+      transitionAdventureProgressionDialogueChoice(current, graph, node, choice.id, runtimeContext),
   }));
 };
 
@@ -292,13 +229,9 @@ export const enumerateAdventureProgressionCandidates = (
 ): readonly AdventureProgressionCandidate[] => {
   const candidates = state.activeDialogue
     ? dialogueCandidates(state, context)
-    : [
-        ...sceneInteractionCandidates(project, state),
-        ...objectInteractionCandidates(manifest, state),
-      ];
+    : [...sceneInteractionCandidates(project, state), ...objectInteractionCandidates(manifest, state)];
   return candidates.sort(
     (left, right) =>
-      candidateOrder[left.step.kind] - candidateOrder[right.step.kind] ||
-      left.id.localeCompare(right.id),
+      candidateOrder[left.step.kind] - candidateOrder[right.step.kind] || left.id.localeCompare(right.id),
   );
 };

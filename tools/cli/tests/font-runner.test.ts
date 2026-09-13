@@ -1,11 +1,5 @@
 import { createHash } from "node:crypto";
-import {
-  mkdir,
-  mkdtemp,
-  readFile,
-  rm,
-  writeFile,
-} from "node:fs/promises";
+import { mkdir, mkdtemp, readFile, rm, writeFile } from "node:fs/promises";
 import { tmpdir } from "node:os";
 import { dirname, join } from "node:path";
 import { afterEach, describe, expect, it } from "vitest";
@@ -18,9 +12,7 @@ const canonicalize = (value: unknown): unknown => {
   if (value && typeof value === "object") {
     const source = value as Readonly<Record<string, unknown>>;
     const output: Record<string, unknown> = {};
-    for (const key of Object.keys(source).sort((left, right) =>
-      left.localeCompare(right),
-    )) {
+    for (const key of Object.keys(source).sort((left, right) => left.localeCompare(right))) {
       const child = source[key];
       if (child !== undefined) output[key] = canonicalize(child);
     }
@@ -29,8 +21,7 @@ const canonicalize = (value: unknown): unknown => {
   return value;
 };
 
-const sha256 = (value: string | Uint8Array): string =>
-  createHash("sha256").update(value).digest("hex");
+const sha256 = (value: string | Uint8Array): string => createHash("sha256").update(value).digest("hex");
 
 const writeJson = async (path: string, value: unknown): Promise<void> => {
   await mkdir(dirname(path), { recursive: true });
@@ -218,9 +209,7 @@ const createFixture = async () => {
 
 afterEach(async () => {
   await Promise.all(
-    temporaryDirectories.splice(0).map((directory) =>
-      rm(directory, { recursive: true, force: true }),
-    ),
+    temporaryDirectories.splice(0).map((directory) => rm(directory, { recursive: true, force: true })),
   );
 });
 
@@ -267,12 +256,8 @@ describe("CLI bitmap font compilation", () => {
         readonly fonts: readonly { readonly id: string }[];
       };
     };
-    expect(bundle.bitmapFonts?.fonts).toEqual([
-      expect.objectContaining({ id: "bitmap-font.dialogue" }),
-    ]);
-    expect(await readFile(fixture.reportPath, "utf8")).toContain(
-      fixture.fontsPath,
-    );
+    expect(bundle.bitmapFonts?.fonts).toEqual([expect.objectContaining({ id: "bitmap-font.dialogue" })]);
+    expect(await readFile(fixture.reportPath, "utf8")).toContain(fixture.fontsPath);
   });
 
   it("blocks stale compiled glyph geometry with exit code one", async () => {

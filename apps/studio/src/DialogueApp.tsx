@@ -1,20 +1,10 @@
-import {
-  useCallback,
-  useEffect,
-  useReducer,
-  type Dispatch,
-  type ReactNode,
-} from "react";
-import type {
-  DialogueChoice,
-  DialogueLine,
-  DialogueNode,
-  Id,
-} from "@evavo/adventure-project-schema";
+import type { DialogueChoice, DialogueLine, DialogueNode, Id } from "@evavo/adventure-project-schema";
+import { type Dispatch, type ReactNode, useCallback, useEffect, useReducer } from "react";
 import { studioDialogueGraph } from "./dialogue-fixture.js";
-import { studioProject } from "./fixture.js";
 import {
   createDialogueWorkspace,
+  type DialogueWorkspaceAction,
+  type DialogueWorkspaceState,
   dialogueGraph,
   dialogueWorkspaceIsDirty,
   dialogueWorkspaceReducer,
@@ -30,9 +20,8 @@ import {
   selectedDialogueChoice,
   selectedDialogueLine,
   selectedDialogueNode,
-  type DialogueWorkspaceAction,
-  type DialogueWorkspaceState,
 } from "./dialogue-workspace.js";
+import { studioProject } from "./fixture.js";
 import "./dialogue.css";
 
 type DialogueDispatch = Dispatch<DialogueWorkspaceAction>;
@@ -48,27 +37,16 @@ const Button = ({
   readonly disabled?: boolean;
   readonly className?: string;
 }) => (
-  <button
-    type="button"
-    className={`button ${className}`}
-    disabled={disabled}
-    onClick={onClick}
-  >
+  <button type="button" className={`button ${className}`} disabled={disabled} onClick={onClick}>
     {children}
   </button>
 );
 
-const Field = ({
-  label,
-  children,
-}: {
-  readonly label: string;
-  readonly children: ReactNode;
-}) => (
-  <label className="field">
+const Field = ({ label, children }: { readonly label: string; readonly children: ReactNode }) => (
+  <div className="field">
     <span>{label}</span>
     {children}
-  </label>
+  </div>
 );
 
 const shortId = (value: string): string => value.split(".").at(-1) ?? value;
@@ -154,11 +132,7 @@ const DialogueInspector = ({
                 value={line.speakerId ?? ""}
                 onChange={(event) => {
                   const value = event.currentTarget.value;
-                  replaceLine(
-                    value
-                      ? { ...line, speakerId: value as Id<"actor"> }
-                      : removeSpeaker(line),
-                  );
+                  replaceLine(value ? { ...line, speakerId: value as Id<"actor"> } : removeSpeaker(line));
                 }}
               >
                 <option value="">Narration / no speaker</option>
@@ -187,11 +161,7 @@ const DialogueInspector = ({
                 placeholder="Optional acting state"
                 onChange={(event) => {
                   const value = event.currentTarget.value.trim();
-                  replaceLine(
-                    value
-                      ? { ...line, animationState: value }
-                      : removeAnimation(line),
-                  );
+                  replaceLine(value ? { ...line, animationState: value } : removeAnimation(line));
                 }}
               />
             </Field>
@@ -276,9 +246,7 @@ const DialogueInspector = ({
               <input
                 type="checkbox"
                 checked={choice.once}
-                onChange={(event) =>
-                  replaceChoice({ ...choice, once: event.currentTarget.checked })
-                }
+                onChange={(event) => replaceChoice({ ...choice, once: event.currentTarget.checked })}
               />
             </label>
             <div className="dialogue-stat-row">
@@ -366,9 +334,7 @@ export const DialogueApp = () => {
         notice: "Removed the dialogue topic.",
       });
     } catch (error) {
-      window.alert(
-        error instanceof Error ? error.message : "Dialogue node removal failed.",
-      );
+      window.alert(error instanceof Error ? error.message : "Dialogue node removal failed.");
     }
   };
 
@@ -409,9 +375,7 @@ export const DialogueApp = () => {
         notice: "Removed dialogue content.",
       });
     } catch (error) {
-      window.alert(
-        error instanceof Error ? error.message : "Dialogue removal failed.",
-      );
+      window.alert(error instanceof Error ? error.message : "Dialogue removal failed.");
     }
   };
 
@@ -462,16 +426,10 @@ export const DialogueApp = () => {
 
       <div className="toolbar dialogue-toolbar">
         <div className="toolbar-group">
-          <Button
-            onClick={() => dispatch({ type: "undo" })}
-            disabled={state.history.undoStack.length === 0}
-          >
+          <Button onClick={() => dispatch({ type: "undo" })} disabled={state.history.undoStack.length === 0}>
             ↶
           </Button>
-          <Button
-            onClick={() => dispatch({ type: "redo" })}
-            disabled={state.history.redoStack.length === 0}
-          >
+          <Button onClick={() => dispatch({ type: "redo" })} disabled={state.history.redoStack.length === 0}>
             ↷
           </Button>
         </div>
@@ -500,12 +458,8 @@ export const DialogueApp = () => {
               <button
                 type="button"
                 key={candidate.id}
-                className={`dialogue-node-row ${
-                  candidate.id === state.nodeId ? "is-active" : ""
-                }`}
-                onClick={() =>
-                  dispatch({ type: "select-node", nodeId: candidate.id })
-                }
+                className={`dialogue-node-row ${candidate.id === state.nodeId ? "is-active" : ""}`}
+                onClick={() => dispatch({ type: "select-node", nodeId: candidate.id })}
               >
                 <span>{String(index + 1).padStart(2, "0")}</span>
                 <span>
@@ -530,12 +484,8 @@ export const DialogueApp = () => {
               <button
                 type="button"
                 key={candidate.id}
-                className={`graph-node-chip ${
-                  candidate.id === state.nodeId ? "is-active" : ""
-                }`}
-                onClick={() =>
-                  dispatch({ type: "select-node", nodeId: candidate.id })
-                }
+                className={`graph-node-chip ${candidate.id === state.nodeId ? "is-active" : ""}`}
+                onClick={() => dispatch({ type: "select-node", nodeId: candidate.id })}
               >
                 <span>{String(index + 1).padStart(2, "0")}</span>
                 <strong>{shortId(candidate.id)}</strong>
@@ -555,18 +505,12 @@ export const DialogueApp = () => {
                   <button
                     type="button"
                     key={line.id}
-                    className={`dialogue-line-row ${
-                      line.id === state.lineId ? "is-active" : ""
-                    }`}
-                    onClick={() =>
-                      dispatch({ type: "select-line", lineId: line.id })
-                    }
+                    className={`dialogue-line-row ${line.id === state.lineId ? "is-active" : ""}`}
+                    onClick={() => dispatch({ type: "select-line", lineId: line.id })}
                   >
                     <span>{String(index + 1).padStart(2, "0")}</span>
                     <strong>
-                      {studioProject.actors.find(
-                        (actor) => actor.id === line.speakerId,
-                      )?.name ?? "Narration"}
+                      {studioProject.actors.find((actor) => actor.id === line.speakerId)?.name ?? "Narration"}
                     </strong>
                     <p>{line.text}</p>
                   </button>
@@ -587,12 +531,8 @@ export const DialogueApp = () => {
                   <button
                     type="button"
                     key={choice.id}
-                    className={`dialogue-choice-row ${
-                      choice.id === state.choiceId ? "is-active" : ""
-                    }`}
-                    onClick={() =>
-                      dispatch({ type: "select-choice", choiceId: choice.id })
-                    }
+                    className={`dialogue-choice-row ${choice.id === state.choiceId ? "is-active" : ""}`}
+                    onClick={() => dispatch({ type: "select-choice", choiceId: choice.id })}
                   >
                     <span>{String(index + 1).padStart(2, "0")}</span>
                     <p>{choice.text}</p>

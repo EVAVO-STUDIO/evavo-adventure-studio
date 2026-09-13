@@ -1,9 +1,9 @@
 import { describe, expect, it } from "vitest";
 import {
+  type AdventureProductionShowcase,
   adventureProductionShowcaseByProfileId,
   adventureProductionShowcases,
   validateAdventureProductionShowcase,
-  type AdventureProductionShowcase,
 } from "../src/production-showcases.js";
 
 const clone = <T>(value: T): T => JSON.parse(JSON.stringify(value)) as T;
@@ -14,6 +14,9 @@ describe("adventure production showcases", () => {
       "storybook-icon-vga",
       "comic-scifi-icon-vga",
       "gothic-investigation-vga",
+      "gothic-rpg-vga",
+      "early-procedural-icon-vga",
+      "procedural-investigation-vga",
       "verb-panel-cartoon-vga",
       "pulp-archaeology-vga",
       "cinematic-pulp-vga",
@@ -38,6 +41,65 @@ describe("adventure production showcases", () => {
     }
   });
 
+  it("keeps early and later procedural proofs visibly and mechanically separate", () => {
+    const nightShift = adventureProductionShowcases.find(
+      (showcase) => showcase.id === "night-shift",
+    );
+    const openCase = adventureProductionShowcases.find(
+      (showcase) => showcase.id === "open-case",
+    );
+    if (!nightShift || !openCase) throw new Error("Procedural showcases are missing.");
+
+    expect(nightShift).toMatchObject({
+      profileId: "early-procedural-icon-vga",
+      title: "Night Shift",
+      originalAssetsOnly: true,
+      motif: "municipal-night-shift",
+    });
+    expect(nightShift.puzzleBeats.map((beat) => beat.grammar)).toEqual([
+      "inventory-chain",
+      "environmental-state",
+    ]);
+    const earlyText = JSON.stringify(nightShift).toLowerCase();
+    expect(earlyText).toContain("briefing");
+    expect(earlyText).toContain("roadside");
+    expect(earlyText).toContain("score");
+    expect(earlyText).not.toContain("caseboard");
+    expect(earlyText).not.toContain("custody");
+
+    expect(openCase).toMatchObject({
+      profileId: "procedural-investigation-vga",
+      title: "Open Case",
+      originalAssetsOnly: true,
+    });
+    expect(openCase.puzzleBeats.map((beat) => beat.grammar)).toEqual([
+      "research-deduction",
+      "topic-investigation",
+    ]);
+    const laterText = JSON.stringify(openCase).toLowerCase();
+    expect(laterText).toContain("custody");
+    expect(laterText).toContain("caseboard");
+  });
+
+  it("keeps the RPG proof materially separate from both procedural lanes", () => {
+    const hollowVale = adventureProductionShowcases.find(
+      (showcase) => showcase.id === "the-hollow-vale",
+    );
+    if (!hollowVale) throw new Error("RPG showcase is missing.");
+
+    expect(hollowVale).toMatchObject({
+      profileId: "gothic-rpg-vga",
+      title: "The Hollow Vale",
+      originalAssetsOnly: true,
+    });
+    expect(hollowVale.puzzleBeats.map((beat) => beat.grammar)).toEqual([
+      "multi-route",
+      "hybrid-action",
+    ]);
+    expect(JSON.stringify(hollowVale)).toContain("resource");
+    expect(JSON.stringify(hollowVale)).toContain("class");
+  });
+
   it("keeps runtime showcase data free of commercial titles and publisher names", () => {
     const serialized = JSON.stringify(adventureProductionShowcases).toLocaleLowerCase("en-US");
     for (const term of [
@@ -45,6 +107,7 @@ describe("adventure production showcases", () => {
       "space quest",
       "quest for glory",
       "gabriel knight",
+      "police quest",
       "gemini rue",
       "monkey island",
       "fate of atlantis",
@@ -103,9 +166,7 @@ describe("adventure production showcases", () => {
     input.originalAssetsOnly = false;
     input.originalityStatement = "Too short.";
 
-    const codes = validateAdventureProductionShowcase(malformed).map(
-      (issue) => issue.code,
-    );
+    const codes = validateAdventureProductionShowcase(malformed).map((issue) => issue.code);
     expect(codes).toEqual(
       expect.arrayContaining([
         "missing-plate-kind",

@@ -1,9 +1,4 @@
-import type {
-  Id,
-  Point,
-  Rectangle,
-  Size,
-} from "@evavo/adventure-project-schema";
+import type { Id, Point, Rectangle, Size } from "@evavo/adventure-project-schema";
 
 export type RenderLayer =
   | "sky"
@@ -67,6 +62,14 @@ export interface SpriteRenderNode extends BaseRenderNode {
   readonly tintRgba?: readonly [number, number, number, number];
 }
 
+export interface IndexedPaletteDitherTransition {
+  readonly targetPaletteAssetId: Id<"asset">;
+  readonly targetPaletteOffset: number;
+  readonly coverage: number;
+  readonly matrix: "bayer-2" | "bayer-4" | "bayer-8";
+  readonly origin: Point;
+}
+
 export interface IndexedSpriteRenderNode extends BaseRenderNode {
   readonly kind: "indexed-sprite";
   readonly indexAssetId: Id<"asset">;
@@ -75,6 +78,7 @@ export interface IndexedSpriteRenderNode extends BaseRenderNode {
   readonly originalSize: Size;
   readonly trimOffset: Point;
   readonly paletteOffset: number;
+  readonly paletteDither?: IndexedPaletteDitherTransition;
 }
 
 export interface BitmapTextRenderNode extends BaseRenderNode {
@@ -141,18 +145,15 @@ export interface RenderFrameIssue {
     | "unknown-mask"
     | "mask-cycle"
     | "invalid-dither-progress"
+    | "invalid-indexed-palette-dither"
     | "invalid-bitmap-text";
   readonly nodeId: Id<"render-node"> | null;
   readonly message: string;
 }
 
-const isFinitePoint = (point: Point): boolean =>
-  Number.isFinite(point.x) && Number.isFinite(point.y);
+const isFinitePoint = (point: Point): boolean => Number.isFinite(point.x) && Number.isFinite(point.y);
 
-const validateMaskCycles = (
-  nodesById: ReadonlyMap<string, RenderNode>,
-  node: RenderNode,
-): boolean => {
+const validateMaskCycles = (nodesById: ReadonlyMap<string, RenderNode>, node: RenderNode): boolean => {
   const visited = new Set<string>();
   let current: RenderNode | undefined = node;
 
@@ -167,9 +168,7 @@ const validateMaskCycles = (
   return true;
 };
 
-export const validateResolvedFrame = (
-  frame: ResolvedFrame,
-): readonly RenderFrameIssue[] => {
+export const validateResolvedFrame = (frame: ResolvedFrame): readonly RenderFrameIssue[] => {
   const issues: RenderFrameIssue[] = [];
   const nodesById = new Map<string, RenderNode>();
 
@@ -199,11 +198,7 @@ export const validateResolvedFrame = (
       nodesById.set(node.id, node);
     }
 
-    if (
-      !Number.isFinite(node.opacity) ||
-      node.opacity < 0 ||
-      node.opacity > 1
-    ) {
+    if (!Number.isFinite(node.opacity) || node.opacity < 0 || node.opacity > 1) {
       issues.push({
         severity: "error",
         code: "invalid-opacity",
@@ -228,9 +223,7 @@ export const validateResolvedFrame = (
 
     if (
       node.kind === "dither-fade" &&
-      (!Number.isFinite(node.progress) ||
-        node.progress < 0 ||
-        node.progress > 1)
+      (!Number.isFinite(node.progress) || node.progress < 0 || node.progress > 1)
     ) {
       issues.push({
         severity: "error",
@@ -238,6 +231,26 @@ export const validateResolvedFrame = (
         nodeId: node.id,
         message: `Dither fade '${node.id}' has progress outside the 0 to 1 range.`,
       });
+    }
+
+    if (node.kind === "indexed-sprite" && node.paletteDither) {
+      const dither = node.paletteDither;
+      if (
+        !Number.isFinite(dither.coverage) ||
+        dither.coverage < 0 ||
+        dither.coverage > 1 ||
+        !Number.isSafeInteger(dither.targetPaletteOffset) ||
+        dither.targetPaletteOffset < 0 ||
+        dither.targetPaletteOffset > 255 ||
+        !isFinitePoint(dither.origin)
+      ) {
+        issues.push({
+          severity: "error",
+          code: "invalid-indexed-palette-dither",
+          nodeId: node.id,
+          message: `Indexed palette dither '${node.id}' requires 0–1 coverage, a byte-range target offset and finite native origin.`,
+        });
+      }
     }
 
     if (
@@ -280,12 +293,8 @@ export const validateResolvedFrame = (
   return issues;
 };
 
-export const compareRenderOrder = (
-  left: RenderOrder,
-  right: RenderOrder,
-): number => {
-  const layerDifference =
-    renderLayerOrder[left.layer] - renderLayerOrder[right.layer];
+export const compareRenderOrder = (left: RenderOrder, right: RenderOrder): number => {
+  const layerDifference = renderLayerOrder[left.layer] - renderLayerOrder[right.layer];
   if (layerDifference !== 0) {
     return layerDifference;
   }
@@ -301,9 +310,7 @@ export const compareRenderOrder = (
   return left.stableId.localeCompare(right.stableId);
 };
 
-export const orderRenderNodes = (
-  nodes: readonly RenderNode[],
-): readonly RenderNode[] =>
+export const orderRenderNodes = (nodes: readonly RenderNode[]): readonly RenderNode[] =>
   [...nodes].sort((left, right) => compareRenderOrder(left.order, right.order));
 
 export interface RendererHost {

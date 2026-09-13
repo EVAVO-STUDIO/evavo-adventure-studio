@@ -12,12 +12,7 @@ export interface PixelBounds {
 }
 
 const checkedPixelCount = (width: number, height: number): number => {
-  if (
-    !Number.isSafeInteger(width) ||
-    !Number.isSafeInteger(height) ||
-    width <= 0 ||
-    height <= 0
-  ) {
+  if (!Number.isSafeInteger(width) || !Number.isSafeInteger(height) || width <= 0 || height <= 0) {
     throw new RangeError("RGBA image dimensions must be positive safe integers.");
   }
 
@@ -66,10 +61,7 @@ const assertAlphaThreshold = (threshold: number): void => {
   }
 };
 
-export const findAlphaBounds = (
-  image: RgbaImage,
-  threshold = 0,
-): PixelBounds | null => {
+export const findAlphaBounds = (image: RgbaImage, threshold = 0): PixelBounds | null => {
   assertRgbaImage(image);
   assertAlphaThreshold(threshold);
 
@@ -147,8 +139,7 @@ export const transparentPixelImage = (): RgbaImage => ({
   data: new Uint8Array(4),
 });
 
-const pixelOffset = (width: number, x: number, y: number): number =>
-  (y * width + x) * 4;
+const pixelOffset = (width: number, x: number, y: number): number => (y * width + x) * 4;
 
 export const extrudeRgba = (image: RgbaImage, padding: number): RgbaImage => {
   assertRgbaImage(image);
@@ -202,16 +193,12 @@ export const blitRgba = (
   for (let y = 0; y < source.height; y += 1) {
     const sourceStart = y * source.width * 4;
     const sourceEnd = sourceStart + source.width * 4;
-    const destinationStart =
-      ((destinationY + y) * destination.width + destinationX) * 4;
+    const destinationStart = ((destinationY + y) * destination.width + destinationX) * 4;
     destination.data.set(source.data.subarray(sourceStart, sourceEnd), destinationStart);
   }
 };
 
-export const countUniqueRgbaColours = (
-  image: RgbaImage,
-  stopAfter = Number.POSITIVE_INFINITY,
-): number => {
+export const countUniqueRgbaColours = (image: RgbaImage, stopAfter = Number.POSITIVE_INFINITY): number => {
   assertRgbaImage(image);
   if (!(Number.isFinite(stopAfter) || stopAfter === Number.POSITIVE_INFINITY) || stopAfter < 1) {
     throw new RangeError("Colour-count limit must be positive.");

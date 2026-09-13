@@ -3,9 +3,7 @@ import { replayExecuteExitCodeForDiagnosticCode } from "../src/replay-execute.js
 
 describe("replay execute exit codes", () => {
   it("reserves exit 3 for unclassified internal or output failures", () => {
-    expect(
-      replayExecuteExitCodeForDiagnosticCode("replay-execute-failed"),
-    ).toBe(3);
+    expect(replayExecuteExitCodeForDiagnosticCode("replay-execute-failed")).toBe(3);
   });
 
   it("keeps recognized replay, limit, output and input failures on exit 1", () => {

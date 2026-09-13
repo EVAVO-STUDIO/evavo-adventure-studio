@@ -1,12 +1,8 @@
-import type {
-  Action,
-  AdventureProject,
-  Id,
-} from "@evavo/adventure-project-schema";
+import type { Action, AdventureProject, Id } from "@evavo/adventure-project-schema";
 import {
   emptySceneInstanceManifest,
-  validateSceneInstanceManifest,
   type SceneInstanceManifest,
+  validateSceneInstanceManifest,
 } from "@evavo/adventure-scene-instances";
 import { validateProjectSemantics } from "@evavo/adventure-validation";
 import { enumerateAdventureProgressionCandidates } from "./progression-candidates.js";
@@ -66,11 +62,7 @@ const milestoneOrder: Readonly<Record<AdventureProgressionMilestoneKind, number>
 const sortedUnique = <T extends string>(values: readonly T[]): T[] =>
   [...new Set(values)].sort((left, right) => left.localeCompare(right));
 
-const positiveSafeInteger = (
-  value: number | undefined,
-  fallback: number,
-  label: string,
-): number => {
+const positiveSafeInteger = (value: number | undefined, fallback: number, label: string): number => {
   const resolved = value ?? fallback;
   if (!Number.isSafeInteger(resolved) || resolved <= 0) {
     throw new RangeError(`${label} must be a positive safe integer.`);
@@ -79,16 +71,8 @@ const positiveSafeInteger = (
 };
 
 const resolvedLimits = (options: AdventureProgressionOptions) => ({
-  maximumStates: positiveSafeInteger(
-    options.maximumStates,
-    DEFAULT_MAXIMUM_STATES,
-    "maximumStates",
-  ),
-  maximumDepth: positiveSafeInteger(
-    options.maximumDepth,
-    DEFAULT_MAXIMUM_DEPTH,
-    "maximumDepth",
-  ),
+  maximumStates: positiveSafeInteger(options.maximumStates, DEFAULT_MAXIMUM_STATES, "maximumStates"),
+  maximumDepth: positiveSafeInteger(options.maximumDepth, DEFAULT_MAXIMUM_DEPTH, "maximumDepth"),
   maximumWitnessSteps: positiveSafeInteger(
     options.maximumWitnessSteps,
     DEFAULT_MAXIMUM_WITNESS_STEPS,
@@ -116,12 +100,9 @@ const extendWitness = (
   witness: readonly AdventureProgressionStep[],
   step: AdventureProgressionStep,
   maximumSteps: number,
-): readonly AdventureProgressionStep[] =>
-  boundedWitness([...witness, step], maximumSteps);
+): readonly AdventureProgressionStep[] => boundedWitness([...witness, step], maximumSteps);
 
-const witness = (
-  steps: readonly AdventureProgressionStep[],
-): AdventureProgressionWitness => ({ steps });
+const witness = (steps: readonly AdventureProgressionStep[]): AdventureProgressionWitness => ({ steps });
 
 const canonicalSceneInstanceContext = (project: AdventureProject) => ({
   projectId: project.id,
@@ -147,9 +128,7 @@ const deriveObjectives = (
   const projectSceneIds = new Set(project.scenes.map((scene) => scene.id as string));
   const requiredSceneIds = sortedUnique(
     design.map.locations.flatMap((location) =>
-      location.sceneId && projectSceneIds.has(location.sceneId)
-        ? [location.sceneId]
-        : [],
+      location.sceneId && projectSceneIds.has(location.sceneId) ? [location.sceneId] : [],
     ),
   );
 
@@ -157,9 +136,7 @@ const deriveObjectives = (
   design.puzzles.forEach((puzzle, puzzleIndex) => {
     if (puzzle.optional) return;
     const alternatives = puzzle.solutions.map((solution) =>
-      sortedUnique(
-        solution.steps.flatMap((step) => (step.itemId ? [step.itemId] : [])),
-      ),
+      sortedUnique(solution.steps.flatMap((step) => (step.itemId ? [step.itemId] : []))),
     );
     if (alternatives.some((alternative) => alternative.length === 0)) return;
     const uniqueAlternatives = new Map<string, readonly Id<"item">[]>();
@@ -180,14 +157,9 @@ const deriveObjectives = (
   return { requiredSceneIds, itemPaths };
 };
 
-const itemPathSatisfied = (
-  objective: ItemPathObjective,
-  acquiredItemIds: readonly Id<"item">[],
-): boolean => {
+const itemPathSatisfied = (objective: ItemPathObjective, acquiredItemIds: readonly Id<"item">[]): boolean => {
   const acquired = new Set(acquiredItemIds);
-  return objective.alternatives.some((alternative) =>
-    alternative.every((itemId) => acquired.has(itemId)),
-  );
+  return objective.alternatives.some((alternative) => alternative.every((itemId) => acquired.has(itemId)));
 };
 
 const objectiveCoverage = (
@@ -197,9 +169,7 @@ const objectiveCoverage = (
   const visited = new Set(state.visitedSceneIds);
   return (
     objectives.requiredSceneIds.filter((sceneId) => visited.has(sceneId)).length +
-    objectives.itemPaths.filter((objective) =>
-      itemPathSatisfied(objective, state.acquiredItemIds),
-    ).length
+    objectives.itemPaths.filter((objective) => itemPathSatisfied(objective, state.acquiredItemIds)).length
   );
 };
 
@@ -209,25 +179,17 @@ const objectiveTotal = (objectives: ProgressionObjectives): number =>
 const coveragePercent = (coverage: number, total: number): number =>
   total === 0 ? 100 : Math.round((coverage / total) * 1000) / 10;
 
-const milestoneKey = (
-  kind: AdventureProgressionMilestoneKind,
-  id: string,
-): string => `${kind}:${id}`;
+const milestoneKey = (kind: AdventureProgressionMilestoneKind, id: string): string => `${kind}:${id}`;
 
-const objectLabels = (
-  manifest: SceneInstanceManifest,
-): ReadonlyMap<string, string> => {
+const objectLabels = (manifest: SceneInstanceManifest): ReadonlyMap<string, string> => {
   const definitions = new Map(
-    manifest.objectDefinitions.map(
-      (definition) => [definition.id as string, definition.name] as const,
-    ),
+    manifest.objectDefinitions.map((definition) => [definition.id as string, definition.name] as const),
   );
   return new Map(
     manifest.scenes.flatMap((composition) =>
-      composition.objectInstances.map((instance) => [
-        instance.id as string,
-        definitions.get(instance.definitionId) ?? instance.id,
-      ] as const),
+      composition.objectInstances.map(
+        (instance) => [instance.id as string, definitions.get(instance.definitionId) ?? instance.id] as const,
+      ),
     ),
   );
 };
@@ -239,12 +201,8 @@ const collectMilestones = (
   milestones: Map<string, AdventureProgressionMilestone>,
 ): void => {
   const route = witness(node.witness);
-  const sceneNames = new Map(
-    project.scenes.map((scene) => [scene.id as string, scene.name] as const),
-  );
-  const itemNames = new Map(
-    project.inventoryItems.map((item) => [item.id as string, item.name] as const),
-  );
+  const sceneNames = new Map(project.scenes.map((scene) => [scene.id as string, scene.name] as const));
+  const itemNames = new Map(project.inventoryItems.map((item) => [item.id as string, item.name] as const));
   const dialogueNames = new Map(
     project.dialogues.map((dialogue) => [dialogue.id as string, dialogue.name] as const),
   );
@@ -315,11 +273,7 @@ const collectMilestones = (
   }
 };
 
-const actionReferences = (
-  action: Action,
-  dialogues: Set<string>,
-  sequences: Set<string>,
-): void => {
+const actionReferences = (action: Action, dialogues: Set<string>, sequences: Set<string>): void => {
   if (action.kind === "start-dialogue") dialogues.add(action.dialogueId);
   if (action.kind === "play-sequence") sequences.add(action.sequenceId);
 };
@@ -430,8 +384,7 @@ export const evaluateAdventureProgression = (
       severity: "error",
       path: issue.path,
       message: issue.message,
-      recommendation:
-        "Resolve the canonical project error before relying on progression analysis.",
+      recommendation: "Resolve the canonical project error before relying on progression analysis.",
     });
   }
   const instanceIssues = validateSceneInstanceManifest(
@@ -444,8 +397,7 @@ export const evaluateAdventureProgression = (
       severity: "error",
       path: issue.path,
       message: issue.message,
-      recommendation:
-        "Resolve the canonical scene-instance error before relying on progression analysis.",
+      recommendation: "Resolve the canonical scene-instance error before relying on progression analysis.",
     });
   }
   if (design && design.projectId !== project.id) {
@@ -460,11 +412,9 @@ export const evaluateAdventureProgression = (
 
   const objectives = deriveObjectives(project, design);
   const totalObjectives = objectiveTotal(objectives);
-  const runtimeContext = createAdventureProgressionRuntimeContext(
-    project,
-    sceneInstances,
-    { maximumNestedRequests: limits.maximumNestedRequests },
-  );
+  const runtimeContext = createAdventureProgressionRuntimeContext(project, sceneInstances, {
+    maximumNestedRequests: limits.maximumNestedRequests,
+  });
   const initialState = createInitialAdventureProgressionState(project, sceneInstances);
   const initialHash = adventureProgressionStateHash(initialState);
   const initialNode: ExplorerNode = {
@@ -517,9 +467,7 @@ export const evaluateAdventureProgression = (
             recommendation:
               "Keep feedback-only actions deliberate, or add a visible state " +
               "consequence when progression is intended.",
-            witness: witness(
-              extendWitness(node.witness, candidate.step, limits.maximumWitnessSteps),
-            ),
+            witness: witness(extendWitness(node.witness, candidate.step, limits.maximumWitnessSteps)),
           });
         }
         continue;
@@ -527,11 +475,7 @@ export const evaluateAdventureProgression = (
 
       changedCandidateCount += 1;
       exploredTransitions += 1;
-      const nextWitness = extendWitness(
-        node.witness,
-        candidate.step,
-        limits.maximumWitnessSteps,
-      );
+      const nextWitness = extendWitness(node.witness, candidate.step, limits.maximumWitnessSteps);
       const edgeTargets = forward.get(hash) ?? new Set<string>();
       edgeTargets.add(nextHash);
       forward.set(hash, edgeTargets);
@@ -540,11 +484,7 @@ export const evaluateAdventureProgression = (
       reverse.set(nextHash, edgeSources);
 
       if (nextState.currentSceneId !== node.state.currentSceneId) {
-        const edgeKey = [
-          node.state.currentSceneId,
-          nextState.currentSceneId,
-          candidate.id,
-        ].join("|");
+        const edgeKey = [node.state.currentSceneId, nextState.currentSceneId, candidate.id].join("|");
         if (!sceneEdges.has(edgeKey)) {
           sceneEdges.set(edgeKey, {
             id: `edge.${sceneEdges.size + 1}`,
@@ -582,24 +522,16 @@ export const evaluateAdventureProgression = (
   const nodeValues = [...nodes.values()];
   const reachableSceneIds = project.scenes
     .map((scene) => scene.id)
-    .filter((sceneId) =>
-      nodeValues.some((node) => node.state.visitedSceneIds.includes(sceneId)),
-    );
+    .filter((sceneId) => nodeValues.some((node) => node.state.visitedSceneIds.includes(sceneId)));
   const obtainableItemIds = project.inventoryItems
     .map((item) => item.id)
-    .filter((itemId) =>
-      nodeValues.some((node) => node.state.acquiredItemIds.includes(itemId)),
-    );
+    .filter((itemId) => nodeValues.some((node) => node.state.acquiredItemIds.includes(itemId)));
   const reachableDialogueIds = project.dialogues
     .map((dialogue) => dialogue.id)
-    .filter((dialogueId) =>
-      nodeValues.some((node) => node.state.reachedDialogueIds.includes(dialogueId)),
-    );
+    .filter((dialogueId) => nodeValues.some((node) => node.state.reachedDialogueIds.includes(dialogueId)));
   const reachableSequenceIds = project.sequences
     .map((sequence) => sequence.id)
-    .filter((sequenceId) =>
-      nodeValues.some((node) => node.state.reachedSequenceIds.includes(sequenceId)),
-    );
+    .filter((sequenceId) => nodeValues.some((node) => node.state.reachedSequenceIds.includes(sequenceId)));
 
   const reachedObjectStatesMutable = new Map<string, Set<string>>();
   for (const node of nodeValues) {
@@ -643,20 +575,15 @@ export const evaluateAdventureProgression = (
 
   const acquiredAcrossGraph = new Set(obtainableItemIds);
   for (const objective of objectives.itemPaths) {
-    const satisfied = nodeValues.some((node) =>
-      itemPathSatisfied(objective, node.state.acquiredItemIds),
-    );
+    const satisfied = nodeValues.some((node) => itemPathSatisfied(objective, node.state.acquiredItemIds));
     if (satisfied) continue;
-    const readable = objective.alternatives
-      .map((alternative) => alternative.join(" + "))
-      .join(" OR ");
+    const readable = objective.alternatives.map((alternative) => alternative.join(" + ")).join(" OR ");
     findings.push({
       code: "required-item-unobtainable",
       severity: "error",
       path: objective.puzzlePath,
       message:
-        `Required puzzle '${objective.puzzleName}' has no fully obtainable ` +
-        `item path (${readable}).`,
+        `Required puzzle '${objective.puzzleName}' has no fully obtainable ` + `item path (${readable}).`,
       recommendation:
         "Guarantee every item in at least one complete alternative solution " +
         "path before the puzzle is required.",
@@ -710,8 +637,7 @@ export const evaluateAdventureProgression = (
       severity: "note",
       path: `project.sequences.${sequenceId}`,
       message: `Looping sequence '${sequenceId}' was explored for one timeline iteration only.`,
-      recommendation:
-        "Model progression-changing loop exits as explicit player or story transitions.",
+      recommendation: "Model progression-changing loop exits as explicit player or story transitions.",
     });
   }
   for (const sequenceId of [...runtimeContext.recursiveSequenceIds].sort()) {
@@ -722,8 +648,7 @@ export const evaluateAdventureProgression = (
       message:
         `Sequence '${sequenceId}' recursively requests narrative playback or ` +
         "exceeds the nested-request bound.",
-      recommendation:
-        "Break the request cycle or introduce a deterministic state guard before re-entry.",
+      recommendation: "Break the request cycle or introduce a deterministic state guard before re-entry.",
     });
   }
   for (const dialogueId of [...runtimeContext.recursiveDialogueIds].sort()) {
@@ -734,8 +659,7 @@ export const evaluateAdventureProgression = (
       message:
         `Dialogue '${dialogueId}' recursively requests narrative playback or ` +
         "exceeds the nested-request bound.",
-      recommendation:
-        "Break the request cycle or introduce a deterministic state guard before re-entry.",
+      recommendation: "Break the request cycle or introduce a deterministic state guard before re-entry.",
     });
   }
   if (truncated) {
@@ -752,10 +676,7 @@ export const evaluateAdventureProgression = (
   }
 
   const coverages = new Map(
-    nodeValues.map(
-      (node) =>
-        [node.hash, objectiveCoverage(node.state, objectives)] as const,
-    ),
+    nodeValues.map((node) => [node.hash, objectiveCoverage(node.state, objectives)] as const),
   );
   const maximumCoverage = Math.max(0, ...coverages.values());
   const recoverySeeds = nodeValues
@@ -781,10 +702,7 @@ export const evaluateAdventureProgression = (
   for (const hash of [...softLockTargets].sort((left, right) => {
     const leftNode = nodes.get(left);
     const rightNode = nodes.get(right);
-    return (
-      (leftNode?.depth ?? 0) - (rightNode?.depth ?? 0) ||
-      left.localeCompare(right)
-    );
+    return (leftNode?.depth ?? 0) - (rightNode?.depth ?? 0) || left.localeCompare(right);
   })) {
     const node = nodes.get(hash);
     if (!node) continue;
@@ -813,10 +731,7 @@ export const evaluateAdventureProgression = (
         left.depth - right.depth ||
         left.stateId.localeCompare(right.stateId),
     );
-  const terminalStates = allTerminalStates.slice(
-    0,
-    limits.maximumTerminalStates,
-  );
+  const terminalStates = allTerminalStates.slice(0, limits.maximumTerminalStates);
   if (allTerminalStates.length > terminalStates.length) {
     findings.push({
       code: "terminal-states-omitted",
@@ -832,19 +747,10 @@ export const evaluateAdventureProgression = (
   }
 
   const finalFindings = uniqueSortedFindings(findings);
-  const hasErrors = finalFindings.some(
-    (finding) => finding.severity === "error",
-  );
-  const hasWarnings = finalFindings.some(
-    (finding) => finding.severity === "warning",
-  );
-  const complete =
-    !truncated && maximumCoverage === totalObjectives && !hasErrors;
-  const status = hasErrors
-    ? "blocked"
-    : hasWarnings || !complete
-      ? "attention"
-      : "ready";
+  const hasErrors = finalFindings.some((finding) => finding.severity === "error");
+  const hasWarnings = finalFindings.some((finding) => finding.severity === "warning");
+  const complete = !truncated && maximumCoverage === totalObjectives && !hasErrors;
+  const status = hasErrors ? "blocked" : hasWarnings || !complete ? "attention" : "ready";
 
   return {
     reportVersion: 1,

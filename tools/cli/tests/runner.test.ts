@@ -1,11 +1,5 @@
 import { createHash } from "node:crypto";
-import {
-  mkdir,
-  mkdtemp,
-  readFile,
-  rm,
-  writeFile,
-} from "node:fs/promises";
+import { mkdir, mkdtemp, readFile, rm, writeFile } from "node:fs/promises";
 import { tmpdir } from "node:os";
 import { dirname, join } from "node:path";
 import { afterEach, describe, expect, it } from "vitest";
@@ -20,9 +14,7 @@ const canonicalize = (value: unknown): unknown => {
   if (value && typeof value === "object") {
     const source = value as Readonly<Record<string, unknown>>;
     const output: Record<string, unknown> = {};
-    for (const key of Object.keys(source).sort((left, right) =>
-      left.localeCompare(right),
-    )) {
+    for (const key of Object.keys(source).sort((left, right) => left.localeCompare(right))) {
       const child = source[key];
       if (child !== undefined) {
         output[key] = canonicalize(child);
@@ -33,8 +25,7 @@ const canonicalize = (value: unknown): unknown => {
   return value;
 };
 
-const sha256 = (value: string | Uint8Array): string =>
-  createHash("sha256").update(value).digest("hex");
+const sha256 = (value: string | Uint8Array): string => createHash("sha256").update(value).digest("hex");
 
 const writeJson = async (path: string, value: unknown): Promise<void> => {
   await mkdir(dirname(path), { recursive: true });
@@ -50,20 +41,8 @@ const createFixture = async () => {
   const detectiveSourcePath = join(root, "art", "detective.aseprite");
   const manifestPath = join(root, "build", "assets.manifest.json");
   const officeRuntimePath = join(root, "build", "assets", "office.png");
-  const detectiveAtlasPath = join(
-    root,
-    "build",
-    "assets",
-    "detective",
-    "atlas.json",
-  );
-  const detectivePagePath = join(
-    root,
-    "build",
-    "assets",
-    "detective",
-    "page-000.png",
-  );
+  const detectiveAtlasPath = join(root, "build", "assets", "detective", "atlas.json");
+  const detectivePagePath = join(root, "build", "assets", "detective", "page-000.png");
   const outputPath = join(root, "dist", "game.bundle.json");
   const reportPath = join(root, "dist", "compile-report.json");
   const releasePath = join(root, "release");
@@ -295,9 +274,7 @@ const createFixture = async () => {
 
 afterEach(async () => {
   await Promise.all(
-    temporaryDirectories.splice(0).map((directory) =>
-      rm(directory, { recursive: true, force: true }),
-    ),
+    temporaryDirectories.splice(0).map((directory) => rm(directory, { recursive: true, force: true })),
   );
 });
 
@@ -353,18 +330,11 @@ describe("cli runner", () => {
         }[];
       };
     };
-    expect(bundle.assets.map((asset) => asset.assetId)).toEqual([
-      "asset.detective",
-      "asset.office",
-    ]);
+    expect(bundle.assets.map((asset) => asset.assetId)).toEqual(["asset.detective", "asset.office"]);
     expect(bundle.assets[0]?.sourceFiles).toBeUndefined();
-    expect(bundle.sceneInstances?.scenes[0]?.actorInstances[0]?.id).toBe(
-      "actor-instance.office.detective",
-    );
+    expect(bundle.sceneInstances?.scenes[0]?.actorInstances[0]?.id).toBe("actor-instance.office.detective");
     expect(bundleText).not.toContain("office-master.png");
-    expect(await readFile(fixture.reportPath, "utf8")).toContain(
-      "bundleFingerprint",
-    );
+    expect(await readFile(fixture.reportPath, "utf8")).toContain("bundleFingerprint");
   });
 
   it("packages a clean composed release and removes stale target files", async () => {
@@ -404,46 +374,32 @@ describe("cli runner", () => {
     expect(report.releaseFingerprint).toHaveLength(64);
     expect(report.fileCount).toBe(5);
 
-    expect(
-      new Uint8Array(
-        await readFile(join(fixture.releasePath, "assets", "office.png")),
-      ),
-    ).toEqual(fixture.officeRuntimeBytes);
-    const bundleText = await readFile(
-      join(fixture.releasePath, "game.bundle.json"),
-      "utf8",
+    expect(new Uint8Array(await readFile(join(fixture.releasePath, "assets", "office.png")))).toEqual(
+      fixture.officeRuntimeBytes,
     );
+    const bundleText = await readFile(join(fixture.releasePath, "game.bundle.json"), "utf8");
     expect(bundleText).not.toContain("office-master.png");
     expect(bundleText).toContain("actor-instance.office.detective");
     const releaseManifest = JSON.parse(
-      await readFile(
-        join(fixture.releasePath, "release.manifest.json"),
-        "utf8",
-      ),
+      await readFile(join(fixture.releasePath, "release.manifest.json"), "utf8"),
     ) as {
       readonly fingerprint: string;
       readonly bundle: { readonly sha256: string };
       readonly files: readonly { readonly path: string }[];
     };
     expect(releaseManifest.fingerprint).toBe(report.releaseFingerprint);
-    expect(releaseManifest.bundle.sha256).toBe(
-      sha256(new TextEncoder().encode(bundleText)),
-    );
+    expect(releaseManifest.bundle.sha256).toBe(sha256(new TextEncoder().encode(bundleText)));
     expect(releaseManifest.files.map((file) => file.path)).toEqual([
       "assets/detective/atlas.json",
       "assets/detective/page-000.png",
       "assets/office.png",
     ]);
-    await expect(
-      readFile(join(fixture.releasePath, "stale.txt")),
-    ).rejects.toMatchObject({ code: "ENOENT" });
+    await expect(readFile(join(fixture.releasePath, "stale.txt"))).rejects.toMatchObject({ code: "ENOENT" });
   });
 
   it("returns scene-specific diagnostics for invalid placements", async () => {
     const fixture = await createFixture();
-    const invalid = JSON.parse(
-      await readFile(fixture.sceneInstancesPath, "utf8"),
-    ) as {
+    const invalid = JSON.parse(await readFile(fixture.sceneInstancesPath, "utf8")) as {
       scenes: { actorInstances: { facing: string }[] }[];
     };
     invalid.scenes[0]!.actorInstances[0]!.facing = "west";
@@ -520,14 +476,7 @@ describe("cli runner", () => {
     let stdout = "";
 
     const exitCode = await runCli(
-      [
-        "validate",
-        "--project",
-        fixture.projectPath,
-        "--asset-manifest",
-        fixture.manifestPath,
-        "--json",
-      ],
+      ["validate", "--project", fixture.projectPath, "--asset-manifest", fixture.manifestPath, "--json"],
       {
         stdout: (text) => {
           stdout += text;
@@ -550,15 +499,12 @@ describe("cli runner", () => {
     await writeFile(fixture.projectPath, "{ not json");
     let stdout = "";
 
-    const exitCode = await runCli(
-      ["validate", "--project", fixture.projectPath, "--json"],
-      {
-        stdout: (text) => {
-          stdout += text;
-        },
-        stderr: () => undefined,
+    const exitCode = await runCli(["validate", "--project", fixture.projectPath, "--json"], {
+      stdout: (text) => {
+        stdout += text;
       },
-    );
+      stderr: () => undefined,
+    });
 
     expect(exitCode).toBe(1);
     expect(JSON.parse(stdout)).toMatchObject({

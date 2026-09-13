@@ -1,3 +1,4 @@
+import { idSchema } from "@evavo/adventure-project-schema";
 import { z } from "zod";
 import {
   audioAssetMetadataSchema,
@@ -8,7 +9,6 @@ import {
   spritesheetAssetMetadataSchema,
   videoAssetMetadataSchema,
 } from "./index.js";
-import { idSchema } from "@evavo/adventure-project-schema";
 
 const runtimeAssetFields = {
   assetId: idSchema("asset"),

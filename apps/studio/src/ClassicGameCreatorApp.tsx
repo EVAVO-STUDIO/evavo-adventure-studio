@@ -1,5 +1,6 @@
-import { useEffect, useMemo, useState } from "react";
 import {
+  type ClassicAdventureCreatorCommand,
+  type ClassicAdventureCreatorHistory,
   classicAdventureCreatorHistoryIsDirty,
   classicAdventureCreatorProjects,
   createClassicAdventureCreatorHistory,
@@ -8,31 +9,23 @@ import {
   redoClassicAdventureCreatorCommand,
   undoClassicAdventureCreatorCommand,
   validateClassicAdventureCreatorProject,
-  type ClassicAdventureCreatorCommand,
-  type ClassicAdventureCreatorHistory,
 } from "@evavo/adventure-design/classic-game-creator";
-import {
-  CreatorNativePreview,
-  type CreatorEntitySelection,
-} from "./classic-game-creator-preview.js";
+import { useEffect, useMemo, useState } from "react";
 import {
   Button,
-  ProjectRailButton,
+  type CreatorSurface,
   downloadProject,
   familyLabel,
   firstScene,
+  ProjectRailButton,
   projectStyle,
   sceneById,
   sceneKindLabel,
   surfaceTabs,
-  type CreatorSurface,
 } from "./classic-game-creator-controls.js";
 import { CreatorInspector } from "./classic-game-creator-inspector.js";
-import {
-  InterfaceSurface,
-  PuzzleSurface,
-  TimingSurface,
-} from "./classic-game-creator-surfaces.js";
+import { type CreatorEntitySelection, CreatorNativePreview } from "./classic-game-creator-preview.js";
+import { InterfaceSurface, PuzzleSurface, TimingSurface } from "./classic-game-creator-surfaces.js";
 import "./classic-game-creator.css";
 
 export const ClassicGameCreatorApp = () => {
@@ -49,10 +42,7 @@ export const ClassicGameCreatorApp = () => {
 
   const project = history.present;
   const scene = sceneById(project, sceneId);
-  const report = useMemo(
-    () => validateClassicAdventureCreatorProject(project),
-    [project],
-  );
+  const report = useMemo(() => validateClassicAdventureCreatorProject(project), [project]);
   const dirty = classicAdventureCreatorHistoryIsDirty(history);
 
   useEffect(() => {
@@ -67,10 +57,7 @@ export const ClassicGameCreatorApp = () => {
       if (event.key.toLowerCase() === "z" && !event.shiftKey) {
         event.preventDefault();
         setHistory((current) => undoClassicAdventureCreatorCommand(current));
-      } else if (
-        event.key.toLowerCase() === "y" ||
-        (event.key.toLowerCase() === "z" && event.shiftKey)
-      ) {
+      } else if (event.key.toLowerCase() === "y" || (event.key.toLowerCase() === "z" && event.shiftKey)) {
         event.preventDefault();
         setHistory((current) => redoClassicAdventureCreatorCommand(current));
       }
@@ -92,9 +79,7 @@ export const ClassicGameCreatorApp = () => {
 
   const execute = (command: ClassicAdventureCreatorCommand): void => {
     try {
-      setHistory((current) =>
-        executeClassicAdventureCreatorCommand(current, command),
-      );
+      setHistory((current) => executeClassicAdventureCreatorCommand(current, command));
       setNotice(null);
     } catch (error) {
       setNotice(error instanceof Error ? error.message : "Creator edit failed.");
@@ -107,19 +92,11 @@ export const ClassicGameCreatorApp = () => {
   };
 
   const selectedActor =
-    selection?.kind === "actor"
-      ? scene.actors.find((actor) => actor.id === selection.id) ?? null
-      : null;
+    selection?.kind === "actor" ? (scene.actors.find((actor) => actor.id === selection.id) ?? null) : null;
   const selectedProp =
-    selection?.kind === "prop"
-      ? scene.props.find((prop) => prop.id === selection.id) ?? null
-      : null;
+    selection?.kind === "prop" ? (scene.props.find((prop) => prop.id === selection.id) ?? null) : null;
 
-  const moveSelection = (
-    entity: CreatorEntitySelection,
-    x: number,
-    y: number,
-  ): void => {
+  const moveSelection = (entity: CreatorEntitySelection, x: number, y: number): void => {
     execute(
       entity.kind === "actor"
         ? {
@@ -137,19 +114,10 @@ export const ClassicGameCreatorApp = () => {
     );
   };
 
-  const nudgeSelection = (
-    entity: CreatorEntitySelection,
-    deltaX: number,
-    deltaY: number,
-  ): void => {
+  const nudgeSelection = (entity: CreatorEntitySelection, deltaX: number, deltaY: number): void => {
     const actor =
-      entity.kind === "actor"
-        ? scene.actors.find((candidate) => candidate.id === entity.id)
-        : null;
-    const prop =
-      entity.kind === "prop"
-        ? scene.props.find((candidate) => candidate.id === entity.id)
-        : null;
+      entity.kind === "actor" ? scene.actors.find((candidate) => candidate.id === entity.id) : null;
+    const prop = entity.kind === "prop" ? scene.props.find((candidate) => candidate.id === entity.id) : null;
     const position = actor?.position ?? prop?.position;
     if (!position) return;
     moveSelection(entity, position.x + deltaX, position.y + deltaY);
@@ -220,8 +188,8 @@ export const ClassicGameCreatorApp = () => {
             <span className="cc-eyebrow">FLAGSHIP ORIGINAL PROJECTS</span>
             <h1>Three complete production languages.</h1>
             <p>
-              Edit native scenes, interface geometry, puzzle causality and logical timing
-              without collapsing every game into one retro template.
+              Edit native scenes, interface geometry, puzzle causality and logical timing without collapsing
+              every game into one retro template.
             </p>
           </header>
           <div className="cc-project-list">
@@ -252,7 +220,9 @@ export const ClassicGameCreatorApp = () => {
             ))}
           </section>
           <footer>
-            <span>{project.nativeSize.width} × {project.nativeSize.height}</span>
+            <span>
+              {project.nativeSize.width} × {project.nativeSize.height}
+            </span>
             <span>{project.palette.maxColours} colours</span>
             <span>{dirty ? "unsaved edits" : "saved"}</span>
           </footer>
@@ -262,11 +232,7 @@ export const ClassicGameCreatorApp = () => {
           <header className="cc-stage-toolbar">
             <nav aria-label="Creator surfaces">
               {surfaceTabs.map((tab) => (
-                <Button
-                  key={tab.id}
-                  active={surface === tab.id}
-                  onClick={() => setSurface(tab.id)}
-                >
+                <Button key={tab.id} active={surface === tab.id} onClick={() => setSurface(tab.id)}>
                   <strong>{tab.label}</strong>
                   <span>{tab.note}</span>
                 </Button>

@@ -412,7 +412,11 @@
   border: 1px solid color-mix(in srgb, var(--ppf-paper) 26%, black);
   background:
     linear-gradient(180deg, transparent 18%, color-mix(in srgb, var(--ppf-ink) 88%, transparent) 72%),
-    repeating-linear-gradient(0deg, transparent 0 7px, color-mix(in srgb, var(--ppf-mid) 14%, transparent) 8px);
+    repeating-linear-gradient(
+      0deg,
+      transparent 0 7px,
+      color-mix(in srgb, var(--ppf-mid) 14%, transparent) 8px
+    );
   pointer-events: none;
 }
 

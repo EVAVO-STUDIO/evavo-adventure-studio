@@ -1,9 +1,7 @@
-import { describe, expect, it } from "vitest";
-import type {
-  RuntimeAssetRecord,
-} from "@evavo/adventure-asset-contract";
+import type { RuntimeAssetRecord } from "@evavo/adventure-asset-contract";
 import type { Id } from "@evavo/adventure-project-schema";
 import type { Texture } from "pixi.js";
+import { describe, expect, it } from "vitest";
 import {
   PixiAssetTextureStore,
   PixiRuntimeAssetOutputError,
@@ -13,10 +11,7 @@ import {
 const id = <T extends string>(value: string) => value as Id<T>;
 const hash = "0".repeat(64);
 
-const imageAsset: Extract<
-  RuntimeAssetRecord,
-  { readonly kind: "image" }
-> = {
+const imageAsset: Extract<RuntimeAssetRecord, { readonly kind: "image" }> = {
   assetId: id<"asset">("asset.office"),
   kind: "image",
   outputFiles: [
@@ -37,10 +32,7 @@ const imageAsset: Extract<
   },
 };
 
-const spritesheetAsset: Extract<
-  RuntimeAssetRecord,
-  { readonly kind: "spritesheet" }
-> = {
+const spritesheetAsset: Extract<RuntimeAssetRecord, { readonly kind: "spritesheet" }> = {
   assetId: id<"asset">("asset.detective"),
   kind: "spritesheet",
   outputFiles: [
@@ -110,10 +102,7 @@ describe("runtime texture planning", () => {
   it("loads atlas pages in stable role order and maps frames to pages", () => {
     const plan = planRuntimeTextureLoads(spritesheetAsset);
 
-    expect(plan.requests.map((request) => request.role)).toEqual([
-      "page-000",
-      "page-001",
-    ]);
+    expect(plan.requests.map((request) => request.role)).toEqual(["page-000", "page-001"]);
     expect(plan.frameRoleById).toEqual(
       new Map([
         ["frame.walk.2", "page-001"],
@@ -125,14 +114,10 @@ describe("runtime texture planning", () => {
   it("fails rather than guessing a missing atlas page", () => {
     const broken: typeof spritesheetAsset = {
       ...spritesheetAsset,
-      outputFiles: spritesheetAsset.outputFiles.filter(
-        (output) => output.role !== "page-001",
-      ),
+      outputFiles: spritesheetAsset.outputFiles.filter((output) => output.role !== "page-001"),
     };
 
-    expect(() => planRuntimeTextureLoads(broken)).toThrow(
-      PixiRuntimeAssetOutputError,
-    );
+    expect(() => planRuntimeTextureLoads(broken)).toThrow(PixiRuntimeAssetOutputError);
   });
 
   it("resolves registered frame textures before image fallbacks", () => {
@@ -140,24 +125,10 @@ describe("runtime texture planning", () => {
     const primary = {} as Texture;
     const frame = {} as Texture;
     store.registerTexture(imageAsset.assetId, primary);
-    store.registerFrameTexture(
-      imageAsset.assetId,
-      id<"sprite-frame">("frame.office.detail"),
-      frame,
-    );
+    store.registerFrameTexture(imageAsset.assetId, id<"sprite-frame">("frame.office.detail"), frame);
 
     expect(store.getTexture(imageAsset.assetId)).toBe(primary);
-    expect(
-      store.getTexture(
-        imageAsset.assetId,
-        id<"sprite-frame">("frame.office.detail"),
-      ),
-    ).toBe(frame);
-    expect(
-      store.getTexture(
-        imageAsset.assetId,
-        id<"sprite-frame">("frame.office.other"),
-      ),
-    ).toBe(primary);
+    expect(store.getTexture(imageAsset.assetId, id<"sprite-frame">("frame.office.detail"))).toBe(frame);
+    expect(store.getTexture(imageAsset.assetId, id<"sprite-frame">("frame.office.other"))).toBe(primary);
   });
 });

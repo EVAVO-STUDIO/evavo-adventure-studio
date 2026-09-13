@@ -7,7 +7,7 @@ export type CanonicalInspectorValue =
   | number
   | string
   | readonly CanonicalInspectorValue[]
-  | Readonly<Record<string, CanonicalInspectorValue>>;
+  | { readonly [key: string]: CanonicalInspectorValue };
 
 export interface CanonicalSaveDifference {
   readonly kind: "added" | "removed" | "changed";
@@ -29,8 +29,7 @@ export interface CanonicalSaveDiffOptions {
   readonly maxDifferences?: number;
 }
 
-const compareText = (left: string, right: string): number =>
-  left.localeCompare(right);
+const compareText = (left: string, right: string): number => left.localeCompare(right);
 
 const canonicalValue = (value: unknown): CanonicalInspectorValue => {
   if (
@@ -49,15 +48,11 @@ const canonicalValue = (value: unknown): CanonicalInspectorValue => {
         .sort(compareText)
         .flatMap((key) => {
           const child = source[key];
-          return child === undefined
-            ? []
-            : [[key, canonicalValue(child)] as const];
+          return child === undefined ? [] : [[key, canonicalValue(child)] as const];
         }),
     );
   }
-  throw new TypeError(
-    `Playtest state contains unsupported value type '${typeof value}'.`,
-  );
+  throw new TypeError(`Playtest state contains unsupported value type '${typeof value}'.`);
 };
 
 const isRecord = (
@@ -66,11 +61,7 @@ const isRecord = (
   value !== null && typeof value === "object" && !Array.isArray(value);
 
 const childPath = (path: string, key: string | number): string =>
-  typeof key === "number"
-    ? `${path}[${key}]`
-    : path
-      ? `${path}.${key}`
-      : key;
+  typeof key === "number" ? `${path}[${key}]` : path ? `${path}.${key}` : key;
 
 export const diffCanonicalSaveGames = (
   bundle: RuntimeBundle,
@@ -142,12 +133,10 @@ export const diffCanonicalSaveGames = (
     }
 
     if (isRecord(beforeValue) && isRecord(afterValue)) {
-      const keys = [
-        ...new Set([...Object.keys(beforeValue), ...Object.keys(afterValue)]),
-      ].sort(compareText);
+      const keys = [...new Set([...Object.keys(beforeValue), ...Object.keys(afterValue)])].sort(compareText);
       for (const key of keys) {
-        const hasBefore = Object.prototype.hasOwnProperty.call(beforeValue, key);
-        const hasAfter = Object.prototype.hasOwnProperty.call(afterValue, key);
+        const hasBefore = Object.hasOwn(beforeValue, key);
+        const hasAfter = Object.hasOwn(afterValue, key);
         if (!hasBefore) {
           append({
             kind: "added",

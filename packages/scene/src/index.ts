@@ -10,10 +10,8 @@ import type {
 
 const EPSILON = 1e-7;
 
-const sortCopy = <T>(
-  values: readonly T[],
-  compare: (left: T, right: T) => number,
-): T[] => [...values].sort(compare);
+const sortCopy = <T>(values: readonly T[], compare: (left: T, right: T) => number): T[] =>
+  [...values].sort(compare);
 
 const squaredDistance = (left: Point, right: Point): number => {
   const x = left.x - right.x;
@@ -22,16 +20,12 @@ const squaredDistance = (left: Point, right: Point): number => {
 };
 
 export const pointOnSegment = (point: Point, start: Point, end: Point): boolean => {
-  const cross =
-    (point.y - start.y) * (end.x - start.x) -
-    (point.x - start.x) * (end.y - start.y);
+  const cross = (point.y - start.y) * (end.x - start.x) - (point.x - start.x) * (end.y - start.y);
   if (Math.abs(cross) > EPSILON) {
     return false;
   }
 
-  const dot =
-    (point.x - start.x) * (end.x - start.x) +
-    (point.y - start.y) * (end.y - start.y);
+  const dot = (point.x - start.x) * (end.x - start.x) + (point.y - start.y) * (end.y - start.y);
   if (dot < -EPSILON) {
     return false;
   }
@@ -43,11 +37,7 @@ export const pointInPolygon = (point: Point, polygon: Polygon): boolean => {
   const points = polygon.points;
   let inside = false;
 
-  for (
-    let index = 0, previous = points.length - 1;
-    index < points.length;
-    previous = index++
-  ) {
+  for (let index = 0, previous = points.length - 1; index < points.length; previous = index++) {
     const currentPoint = points[index];
     const previousPoint = points[previous];
     if (!currentPoint || !previousPoint) {
@@ -109,10 +99,7 @@ const distanceToBand = (band: DepthBand, y: number): number => {
 
 const bandSpan = (band: DepthBand): number => Math.abs(band.nearY - band.farY);
 
-export const resolveScaleAtY = (
-  bands: readonly DepthBand[],
-  y: number,
-): ScaleSolution | null => {
+export const resolveScaleAtY = (bands: readonly DepthBand[], y: number): ScaleSolution | null => {
   const selected = sortCopy(bands, (left, right) => {
     const distanceDifference = distanceToBand(left, y) - distanceToBand(right, y);
     if (Math.abs(distanceDifference) > EPSILON) {
@@ -132,12 +119,8 @@ export const resolveScaleAtY = (
   }
 
   const denominator = selected.nearY - selected.farY;
-  const progress =
-    Math.abs(denominator) <= EPSILON
-      ? 0
-      : clamp01((y - selected.farY) / denominator);
-  const scale =
-    selected.farScale + (selected.nearScale - selected.farScale) * progress;
+  const progress = Math.abs(denominator) <= EPSILON ? 0 : clamp01((y - selected.farY) / denominator);
+  const scale = selected.farScale + (selected.nearScale - selected.farScale) * progress;
 
   return {
     bandId: selected.id,
@@ -170,18 +153,11 @@ export const compareDepthKeys = (left: DepthKey, right: DepthKey): number => {
   return left.stableId.localeCompare(right.stableId);
 };
 
-export const sortByDepth = <T>(
-  values: readonly T[],
-  getDepthKey: (value: T) => DepthKey,
-): readonly T[] =>
-  sortCopy(values, (left, right) =>
-    compareDepthKeys(getDepthKey(left), getDepthKey(right)),
-  );
+export const sortByDepth = <T>(values: readonly T[], getDepthKey: (value: T) => DepthKey): readonly T[] =>
+  sortCopy(values, (left, right) => compareDepthKeys(getDepthKey(left), getDepthKey(right)));
 
-export const isActorBehindBaseline = (
-  actorFootY: number,
-  occluder: Pick<Occluder, "baselineY">,
-): boolean => actorFootY < occluder.baselineY - EPSILON;
+export const isActorBehindBaseline = (actorFootY: number, occluder: Pick<Occluder, "baselineY">): boolean =>
+  actorFootY < occluder.baselineY - EPSILON;
 
 export const occluderMaskContainsPoint = (
   pointInScene: Point,
@@ -209,12 +185,9 @@ export const quantizeNativePoint = (
 ): Point => {
   const shouldQuantize =
     policy === "strict" ||
-    (policy === "camera-strict" &&
-      (subject === "camera" || subject === "ui" || subject === "cursor"));
+    (policy === "camera-strict" && (subject === "camera" || subject === "ui" || subject === "cursor"));
 
-  return shouldQuantize
-    ? { x: Math.round(point.x), y: Math.round(point.y) }
-    : point;
+  return shouldQuantize ? { x: Math.round(point.x), y: Math.round(point.y) } : point;
 };
 
 export interface PresentationTransform {
@@ -233,19 +206,11 @@ export const createIntegerPresentationTransform = (
   hostWidth: number,
   hostHeight: number,
 ): PresentationTransform => {
-  if (
-    nativeWidth <= 0 ||
-    nativeHeight <= 0 ||
-    hostWidth <= 0 ||
-    hostHeight <= 0
-  ) {
+  if (nativeWidth <= 0 || nativeHeight <= 0 || hostWidth <= 0 || hostHeight <= 0) {
     throw new RangeError("Presentation dimensions must be positive.");
   }
 
-  const scale = Math.max(
-    1,
-    Math.floor(Math.min(hostWidth / nativeWidth, hostHeight / nativeHeight)),
-  );
+  const scale = Math.max(1, Math.floor(Math.min(hostWidth / nativeWidth, hostHeight / nativeHeight)));
   const displayWidth = nativeWidth * scale;
   const displayHeight = nativeHeight * scale;
 
@@ -260,19 +225,11 @@ export const createIntegerPresentationTransform = (
   };
 };
 
-export const hostPointToNative = (
-  point: Point,
-  transform: PresentationTransform,
-): Point | null => {
+export const hostPointToNative = (point: Point, transform: PresentationTransform): Point | null => {
   const x = (point.x - transform.offsetX) / transform.scale;
   const y = (point.y - transform.offsetY) / transform.scale;
 
-  if (
-    x < 0 ||
-    y < 0 ||
-    x >= transform.nativeWidth ||
-    y >= transform.nativeHeight
-  ) {
+  if (x < 0 || y < 0 || x >= transform.nativeWidth || y >= transform.nativeHeight) {
     return null;
   }
 

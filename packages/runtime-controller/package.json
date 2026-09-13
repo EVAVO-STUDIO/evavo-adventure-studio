@@ -4,30 +4,27 @@
   "private": true,
   "type": "module",
   "exports": {
-    ".": {
-      "types": "./dist/src/index.d.ts",
-      "import": "./dist/src/index.js"
-    },
-    "./input": {
-      "types": "./dist/src/input.d.ts",
-      "import": "./dist/src/input.js"
-    },
-    "./parser": {
-      "types": "./dist/src/parser.d.ts",
-      "import": "./dist/src/parser.js"
-    },
-    "./runtime-ui": {
-      "types": "./dist/src/runtime-ui.d.ts",
-      "import": "./dist/src/runtime-ui.js"
-    },
-    "./native-status": {
-      "types": "./dist/src/native-status.d.ts",
-      "import": "./dist/src/native-status.js"
-    },
-    "./profiled-camera": {
-      "types": "./dist/src/profiled-camera.d.ts",
-      "import": "./dist/src/profiled-camera.js"
-    }
+    ".": { "types": "./dist/src/index.d.ts", "import": "./dist/src/index.js" },
+    "./input": { "types": "./dist/src/input.d.ts", "import": "./dist/src/input.js" },
+    "./parser": { "types": "./dist/src/parser.d.ts", "import": "./dist/src/parser.js" },
+    "./runtime-ui": { "types": "./dist/src/runtime-ui.d.ts", "import": "./dist/src/runtime-ui.js" },
+    "./native-status": { "types": "./dist/src/native-status.d.ts", "import": "./dist/src/native-status.js" },
+    "./profiled-camera": { "types": "./dist/src/profiled-camera.d.ts", "import": "./dist/src/profiled-camera.js" },
+    "./investigation-controller": { "types": "./dist/src/investigation-controller.d.ts", "import": "./dist/src/investigation-controller.js" },
+    "./investigation-session-controller": { "types": "./dist/src/investigation-session-controller.d.ts", "import": "./dist/src/investigation-session-controller.js" },
+    "./multi-protagonist-controller": { "types": "./dist/src/multi-protagonist-controller.d.ts", "import": "./dist/src/multi-protagonist-controller.js" },
+    "./multi-protagonist-switcher-controller": { "types": "./dist/src/multi-protagonist-switcher-controller.d.ts", "import": "./dist/src/multi-protagonist-switcher-controller.js" },
+    "./protagonist-switcher": { "types": "./dist/src/protagonist-switcher.d.ts", "import": "./dist/src/protagonist-switcher.js" },
+    "./multi-protagonist-projection": { "types": "./dist/src/multi-protagonist-projection.d.ts", "import": "./dist/src/multi-protagonist-projection.js" },
+    "./multi-protagonist-actor": { "types": "./dist/src/multi-protagonist-actor.d.ts", "import": "./dist/src/multi-protagonist-actor.js" },
+    "./sentence-controller": { "types": "./dist/src/sentence-controller.d.ts", "import": "./dist/src/sentence-controller.js" },
+    "./room-script-controller": { "types": "./dist/src/room-script-controller.d.ts", "import": "./dist/src/room-script-controller.js" },
+    "./route-topology-controller": { "types": "./dist/src/route-topology-controller.d.ts", "import": "./dist/src/route-topology-controller.js" },
+    "./rpg-controller": { "types": "./dist/src/rpg-controller.d.ts", "import": "./dist/src/rpg-controller.js" },
+    "./specialized-mode-controller": { "types": "./dist/src/specialized-mode-controller.d.ts", "import": "./dist/src/specialized-mode-controller.js" },
+    "./session-controller": { "types": "./dist/src/session-controller.d.ts", "import": "./dist/src/session-controller.js" },
+    "./feature-session": { "types": "./dist/src/feature-session.d.ts", "import": "./dist/src/feature-session.js" },
+    "./save-companions": { "types": "./dist/src/save-companions.d.ts", "import": "./dist/src/save-companions.js" }
   },
   "files": ["dist"],
   "scripts": {

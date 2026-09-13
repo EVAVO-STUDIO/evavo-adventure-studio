@@ -1,0 +1,118 @@
+.ppf-stage-set.is-early-procedural-icon .ppf-stage-sky {
+  background:
+    linear-gradient(180deg, color-mix(in srgb, var(--ppf-ink) 88%, #17212a), var(--ppf-deep));
+}
+
+.ppf-stage-set.is-early-procedural-icon .ppf-stage-architecture {
+  inset: 20% 4% 31%;
+}
+
+.ppf-stage-set.is-early-procedural-icon .ppf-stage-architecture i {
+  border-radius: 0;
+  background:
+    repeating-linear-gradient(90deg, transparent 0 22px, rgb(0 0 0 / 16%) 22px 24px),
+    color-mix(in srgb, var(--ppf-mid) 52%, var(--ppf-deep));
+  box-shadow: inset 0 -10px 0 color-mix(in srgb, var(--ppf-ink) 44%, transparent);
+}
+
+.ppf-stage-set.is-early-procedural-icon .ppf-stage-architecture .is-left {
+  width: 31%;
+  height: 67%;
+  clip-path: polygon(0 0, 92% 0, 100% 100%, 0 100%);
+}
+
+.ppf-stage-set.is-early-procedural-icon .ppf-stage-architecture .is-centre {
+  left: 31%;
+  width: 39%;
+  height: 76%;
+  clip-path: polygon(0 0, 100% 0, 96% 100%, 3% 100%);
+}
+
+.ppf-stage-set.is-early-procedural-icon .ppf-stage-architecture .is-right {
+  width: 29%;
+  height: 63%;
+  clip-path: polygon(8% 0, 100% 0, 100% 100%, 0 100%);
+}
+
+.ppf-stage-set.is-early-procedural-icon .ppf-stage-light {
+  top: 26%;
+  left: 43%;
+  width: 24%;
+  height: 8%;
+  background: color-mix(in srgb, var(--ppf-paper) 76%, var(--ppf-warm));
+  box-shadow: none;
+  clip-path: none;
+}
+
+.ppf-stage-set.is-early-procedural-icon .ppf-stage-ground {
+  inset: 61% 0 0;
+  background:
+    repeating-linear-gradient(0deg, transparent 0 12px, rgb(255 255 255 / 4%) 12px 13px),
+    color-mix(in srgb, var(--ppf-mid) 38%, var(--ppf-ink));
+  clip-path: polygon(0 10%, 100% 0, 100% 100%, 0 100%);
+}
+
+.ppf-stage-set.is-early-procedural-icon .ppf-stage-actor.is-player {
+  left: 31%;
+  bottom: 17%;
+  width: 5.4%;
+  height: 23%;
+}
+
+.ppf-stage-set.is-early-procedural-icon .ppf-stage-actor.is-npc {
+  right: 31%;
+  bottom: 21%;
+  width: 5%;
+  height: 20%;
+}
+
+.ppf-stage-set.is-early-procedural-icon .ppf-stage-actor::before {
+  box-shadow: -2px 1px 0 var(--ppf-ink);
+}
+
+.ppf-stage-set.is-early-procedural-icon .ppf-stage-prop.is-primary {
+  right: 18%;
+  bottom: 19%;
+  width: 20%;
+  height: 19%;
+  border-width: 1px;
+  clip-path: polygon(0 4%, 100% 0, 96% 100%, 2% 96%);
+}
+
+.ppf-stage-set.is-early-procedural-icon .ppf-stage-prop.is-secondary {
+  left: 10%;
+  bottom: 17%;
+  width: 9%;
+  height: 9%;
+  border-width: 1px;
+}
+
+.ppf-stage-set.is-early-procedural-icon .ppf-stage-rain {
+  opacity: 0.42;
+}
+
+.ppf-stage-set.is-procedural-investigation .ppf-stage-architecture {
+  inset: 10% 3% 25%;
+}
+
+.ppf-stage-set.is-procedural-investigation .ppf-stage-architecture .is-centre {
+  height: 94%;
+}
+
+.ppf-stage-set.is-procedural-investigation .ppf-stage-prop.is-primary {
+  right: 12%;
+  bottom: 21%;
+  width: 24%;
+  height: 29%;
+}
+
+.ppf-stage-set.is-procedural-investigation .ppf-stage-prop.is-secondary {
+  left: 8%;
+  bottom: 23%;
+  width: 18%;
+  height: 16%;
+}
+
+.ppf-stage-set.is-procedural-investigation .ppf-stage-rain {
+  opacity: 0.5;
+}

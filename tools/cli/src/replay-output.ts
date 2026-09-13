@@ -1,6 +1,6 @@
 import { mkdir, writeFile } from "node:fs/promises";
 import { dirname } from "node:path";
-import { serializeSaveGame, type SaveGame } from "@evavo/adventure-save-game";
+import { type SaveGame, serializeSaveGame } from "@evavo/adventure-save-game";
 
 export class ReplayOutputCollisionError extends Error {
   readonly outputPath: string;
@@ -22,19 +22,13 @@ export class ReplayOutputExistsError extends Error {
   }
 }
 
-export const assertReplayOutputPath = (
-  outputPath: string,
-  inputPaths: readonly string[],
-): void => {
+export const assertReplayOutputPath = (outputPath: string, inputPaths: readonly string[]): void => {
   if (inputPaths.includes(outputPath)) {
     throw new ReplayOutputCollisionError(outputPath);
   }
 };
 
-export const writeReplayOutputSave = async (
-  outputPath: string,
-  save: SaveGame,
-): Promise<void> => {
+export const writeReplayOutputSave = async (outputPath: string, save: SaveGame): Promise<void> => {
   await mkdir(dirname(outputPath), { recursive: true });
   try {
     await writeFile(outputPath, serializeSaveGame(save), {

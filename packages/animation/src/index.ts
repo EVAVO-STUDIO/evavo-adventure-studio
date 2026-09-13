@@ -1,9 +1,4 @@
-import type {
-  Actor,
-  AnimationClip,
-  Id,
-  SpriteFrame,
-} from "@evavo/adventure-project-schema";
+import type { Actor, AnimationClip, Id, SpriteFrame } from "@evavo/adventure-project-schema";
 
 export interface AnimationPlaybackState {
   readonly clipId: Id<"animation-clip">;
@@ -44,10 +39,7 @@ export interface AnimationTransition {
 
 const MAX_FRAME_TRANSITIONS_PER_ADVANCE = 4096;
 
-const findClip = (
-  actor: Actor,
-  clipId: Id<"animation-clip">,
-): AnimationClip => {
+const findClip = (actor: Actor, clipId: Id<"animation-clip">): AnimationClip => {
   const clip = actor.animations.find((candidate) => candidate.id === clipId);
   if (!clip) {
     throw new Error(`Actor '${actor.id}' has no animation clip '${clipId}'.`);
@@ -55,19 +47,12 @@ const findClip = (
   return clip;
 };
 
-const framesForClip = (
-  actor: Actor,
-  clip: AnimationClip,
-): readonly SpriteFrame[] => {
-  const framesById = new Map(
-    actor.frames.map((frame) => [frame.id as string, frame]),
-  );
+const framesForClip = (actor: Actor, clip: AnimationClip): readonly SpriteFrame[] => {
+  const framesById = new Map(actor.frames.map((frame) => [frame.id as string, frame]));
   return clip.frameIds.map((frameId) => {
     const frame = framesById.get(frameId);
     if (!frame) {
-      throw new Error(
-        `Animation clip '${clip.id}' references missing frame '${frameId}'.`,
-      );
+      throw new Error(`Animation clip '${clip.id}' references missing frame '${frameId}'.`);
     }
     return frame;
   });
@@ -115,10 +100,7 @@ const assertPlaybackState = (
   }
 };
 
-export const startAnimation = (
-  actor: Actor,
-  clipId: Id<"animation-clip">,
-): AnimationTransition => {
+export const startAnimation = (actor: Actor, clipId: Id<"animation-clip">): AnimationTransition => {
   const clip = findClip(actor, clipId);
   const frames = framesForClip(actor, clip);
   const frame = frames[0];
@@ -139,10 +121,7 @@ export const startAnimation = (
   };
 };
 
-export const currentAnimationFrame = (
-  actor: Actor,
-  state: AnimationPlaybackState,
-): SpriteFrame => {
+export const currentAnimationFrame = (actor: Actor, state: AnimationPlaybackState): SpriteFrame => {
   const clip = findClip(actor, state.clipId);
   const frames = framesForClip(actor, clip);
   assertPlaybackState(state, clip, frames);

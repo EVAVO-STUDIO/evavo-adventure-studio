@@ -1,6 +1,6 @@
-import { describe, expect, it } from "vitest";
 import type { Id } from "@evavo/adventure-project-schema";
 import { parseRuntimeBundle } from "@evavo/adventure-runtime-bundle";
+import { describe, expect, it } from "vitest";
 import {
   advanceInteractiveRuntimeWorld,
   createInitialInteractiveRuntimeWorldState,
@@ -310,19 +310,13 @@ describe("deferred object commands", () => {
       throw new Error("Expected the object command to queue.");
     }
     expect(queued.state.pendingObjectCommands["actor-instance.detective"]).toBeDefined();
-    expect(queued.state.story.objectStates["object.office.cabinet"]).toBe(
-      "object-state.cabinet.closed",
-    );
+    expect(queued.state.story.objectStates["object.office.cabinet"]).toBe("object-state.cabinet.closed");
 
     const advanced = advanceInteractiveRuntimeWorld(bundle, queued.state, 25);
-    expect(advanced.state.story.objectStates["object.office.cabinet"]).toBe(
-      "object-state.cabinet.open",
-    );
+    expect(advanced.state.story.objectStates["object.office.cabinet"]).toBe("object-state.cabinet.open");
     expect(advanced.state.pendingObjectCommands["actor-instance.detective"]).toBeUndefined();
     expect(advanced.commandEvents).toEqual(
-      expect.arrayContaining([
-        expect.objectContaining({ kind: "object-command-executed" }),
-      ]),
+      expect.arrayContaining([expect.objectContaining({ kind: "object-command-executed" })]),
     );
   });
 
@@ -350,12 +344,16 @@ describe("deferred object commands", () => {
     if (result.kind === "resolved") {
       expect(result.event).toMatchObject({
         kind: "object-command-executed",
-        runtimeEvents: [
+        runtimeEvents: expect.arrayContaining([
           expect.objectContaining({
             kind: "speech-requested",
             text: "The drawer is empty.",
           }),
-        ],
+          expect.objectContaining({
+            kind: "interaction-completed",
+            interactionId: "interaction.cabinet.look",
+          }),
+        ]),
       });
     }
   });
@@ -392,8 +390,6 @@ describe("deferred object commands", () => {
         }),
       ]),
     );
-    expect(advanced.state.story.objectStates["object.office.cabinet"]).toBe(
-      "object-state.cabinet.hidden",
-    );
+    expect(advanced.state.story.objectStates["object.office.cabinet"]).toBe("object-state.cabinet.hidden");
   });
 });

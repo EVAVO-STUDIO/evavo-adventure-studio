@@ -7,9 +7,35 @@
     ".": {
       "types": "./dist/src/index.d.ts",
       "import": "./dist/src/index.js"
+    },
+    "./front-end": {
+      "types": "./dist/src/front-end.d.ts",
+      "import": "./dist/src/front-end.js"
+    },
+    "./front-end-editor": {
+      "types": "./dist/src/front-end-editor.d.ts",
+      "import": "./dist/src/front-end-editor.js"
+    },
+    "./lifecycle": {
+      "types": "./dist/src/lifecycle.d.ts",
+      "import": "./dist/src/lifecycle.js"
+    },
+    "./lifecycle-editor": {
+      "types": "./dist/src/lifecycle-editor.d.ts",
+      "import": "./dist/src/lifecycle-editor.js"
+    },
+    "./localisation": {
+      "types": "./dist/src/localisation.d.ts",
+      "import": "./dist/src/localisation.js"
+    },
+    "./opening": {
+      "types": "./dist/src/opening.d.ts",
+      "import": "./dist/src/opening.js"
     }
   },
-  "files": ["dist"],
+  "files": [
+    "dist"
+  ],
   "scripts": {
     "build": "tsc -b",
     "typecheck": "tsc -b --pretty false"

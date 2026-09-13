@@ -1,16 +1,26 @@
-import { StrictMode, type ReactNode } from "react";
+import { type ReactNode, StrictMode } from "react";
 import { createRoot } from "react-dom/client";
-import { App } from "./App.js";
 import { AdventureAuthenticityApp } from "./AdventureAuthenticityApp.js";
 import { AdventureDesignApp } from "./AdventureDesignApp.js";
 import { AdventureEvidenceApp } from "./AdventureEvidenceApp.js";
 import { AnimationApp } from "./AnimationApp.js";
+import { App } from "./App.js";
 import { ArtDirectionApp } from "./ArtDirectionApp.js";
+import { AudioApp } from "./AudioApp.js";
+import { ClassicExperienceApp } from "./ClassicExperienceApp.js";
 import { ClassicGameCreatorApp } from "./ClassicGameCreatorApp.js";
+import { CompatibilityLabApp } from "./CompatibilityLabApp.js";
+import { CreativeProductionApp } from "./CreativeProductionApp.js";
 import { DialogueApp } from "./DialogueApp.js";
+import { DynamixCinematicLabApp } from "./DynamixCinematicLabApp.js";
 import { StudioErrorBoundary } from "./ErrorBoundary.js";
 import { FontApp } from "./FontApp.js";
+import { FrontEndApp } from "./FrontEndApp.js";
+import { FullGameCapabilityApp } from "./FullGameCapabilityApp.js";
 import { GeometryApp } from "./GeometryApp.js";
+import { InvestigationApp } from "./InvestigationApp.js";
+import { LifecycleApp } from "./LifecycleApp.js";
+import { LocalisationApp } from "./LocalisationApp.js";
 import { MotionFeelApp } from "./MotionFeelApp.js";
 import { ObjectApp } from "./ObjectApp.js";
 import { PlaytestApp } from "./PlaytestApp.js";
@@ -25,53 +35,40 @@ import "./style.css";
 import "./switcher.css";
 
 const root = document.querySelector<HTMLElement>("#root");
-if (!root) {
-  throw new Error("Adventure Studio root element was not found.");
-}
+if (!root) throw new Error("Adventure Studio root element was not found.");
 
 const workspace = new URLSearchParams(window.location.search).get("workspace");
 const application: ReactNode =
-  workspace === "creator" ? (
-    <ClassicGameCreatorApp />
-  ) : workspace === "feel" ? (
-    <MotionFeelApp />
-  ) : workspace === "showcases" ? (
-    <ShowcaseGalleryApp />
-  ) : workspace === "profiles" ? (
-    <ProductionProfilesApp />
-  ) : workspace === "progression" ? (
-    <ProgressionApp />
-  ) : workspace === "staging" ? (
-    <SceneStagingApp />
-  ) : workspace === "composition" ? (
-    <SceneReadabilityApp />
-  ) : workspace === "evidence" ? (
-    <AdventureEvidenceApp />
-  ) : workspace === "authenticity" ? (
-    <AdventureAuthenticityApp />
-  ) : workspace === "design" ? (
-    <AdventureDesignApp />
-  ) : workspace === "geometry" ? (
-    <GeometryApp />
-  ) : workspace === "objects" ? (
-    <ObjectApp />
-  ) : workspace === "animation" ? (
-    <AnimationApp />
-  ) : workspace === "art" ? (
-    <ArtDirectionApp />
-  ) : workspace === "fonts" ? (
-    <FontApp />
-  ) : workspace === "interface" ? (
-    <UiSkinApp />
-  ) : workspace === "dialogue" ? (
-    <DialogueApp />
-  ) : workspace === "playtest" ? (
-    <PlaytestApp />
-  ) : workspace === "validation" ? (
-    <ValidationApp />
-  ) : (
-    <App />
-  );
+  workspace === "creator" ? <ClassicGameCreatorApp />
+  : workspace === "compatibility" ? <CompatibilityLabApp />
+  : workspace === "dynamix" ? <DynamixCinematicLabApp />
+  : workspace === "front-end" ? <FrontEndApp />
+  : workspace === "lifecycle" ? <LifecycleApp />
+  : workspace === "polish" ? <ClassicExperienceApp />
+  : workspace === "feel" ? <MotionFeelApp />
+  : workspace === "showcases" ? <ShowcaseGalleryApp />
+  : workspace === "profiles" ? <ProductionProfilesApp />
+  : workspace === "full-game" ? <FullGameCapabilityApp />
+  : workspace === "investigation" ? <InvestigationApp />
+  : workspace === "creative-production" ? <CreativeProductionApp />
+  : workspace === "progression" ? <ProgressionApp />
+  : workspace === "staging" ? <SceneStagingApp />
+  : workspace === "composition" ? <SceneReadabilityApp />
+  : workspace === "evidence" ? <AdventureEvidenceApp />
+  : workspace === "authenticity" ? <AdventureAuthenticityApp />
+  : workspace === "design" ? <AdventureDesignApp />
+  : workspace === "geometry" ? <GeometryApp />
+  : workspace === "objects" ? <ObjectApp />
+  : workspace === "animation" ? <AnimationApp />
+  : workspace === "art" ? <ArtDirectionApp />
+  : workspace === "fonts" ? <FontApp />
+  : workspace === "localisation" ? <LocalisationApp />
+  : workspace === "interface" ? <UiSkinApp />
+  : workspace === "audio" ? <AudioApp />
+  : workspace === "dialogue" ? <DialogueApp />
+  : workspace === "playtest" ? <PlaytestApp />
+  : workspace === "validation" ? <ValidationApp />
+  : <App />;
 
 const switcher = document.createElement("nav");
 switcher.className = "workspace-switcher";
@@ -79,47 +76,39 @@ switcher.setAttribute("aria-label", "Adventure Studio workspaces");
 const workspaces = [
   { id: "composer", href: "/", label: "Composer" },
   { id: "creator", href: "/?workspace=creator", label: "Creator" },
+  { id: "compatibility", href: "/?workspace=compatibility", label: "Fidelity" },
+  { id: "dynamix", href: "/?workspace=dynamix", label: "DGDS" },
+  { id: "front-end", href: "/?workspace=front-end", label: "Front End" },
+  { id: "lifecycle", href: "/?workspace=lifecycle", label: "Endings" },
+  { id: "polish", href: "/?workspace=polish", label: "Polish" },
   { id: "profiles", href: "/?workspace=profiles", label: "Profiles" },
+  { id: "full-game", href: "/?workspace=full-game", label: "Full Game" },
+  { id: "investigation", href: "/?workspace=investigation", label: "Investigation" },
+  { id: "creative-production", href: "/?workspace=creative-production", label: "Creative" },
   { id: "showcases", href: "/?workspace=showcases", label: "Showcases" },
   { id: "feel", href: "/?workspace=feel", label: "Feel" },
   { id: "design", href: "/?workspace=design", label: "Design" },
   { id: "authenticity", href: "/?workspace=authenticity", label: "Authenticity" },
   { id: "evidence", href: "/?workspace=evidence", label: "Proof" },
   { id: "composition", href: "/?workspace=composition", label: "Composition" },
-  { id: "staging", href: "/?workspace=staging", label: "Staging" },
+  { id: "staging", href: "/?workspace=staging", label: "Director" },
   { id: "progression", href: "/?workspace=progression", label: "Flow" },
   { id: "geometry", href: "/?workspace=geometry", label: "Geometry" },
   { id: "objects", href: "/?workspace=objects", label: "Objects" },
   { id: "animation", href: "/?workspace=animation", label: "Animation" },
   { id: "art", href: "/?workspace=art", label: "Art" },
   { id: "fonts", href: "/?workspace=fonts", label: "Fonts" },
+  { id: "localisation", href: "/?workspace=localisation", label: "Localise" },
   { id: "interface", href: "/?workspace=interface", label: "Interface" },
+  { id: "audio", href: "/?workspace=audio", label: "Audio" },
   { id: "dialogue", href: "/?workspace=dialogue", label: "Dialogue" },
   { id: "playtest", href: "/?workspace=playtest", label: "Playtest" },
   { id: "validation", href: "/?workspace=validation", label: "Validate" },
 ] as const;
-const activeWorkspace =
-  workspace === "creator" ||
-  workspace === "feel" ||
-  workspace === "showcases" ||
-  workspace === "profiles" ||
-  workspace === "progression" ||
-  workspace === "staging" ||
-  workspace === "composition" ||
-  workspace === "evidence" ||
-  workspace === "authenticity" ||
-  workspace === "design" ||
-  workspace === "geometry" ||
-  workspace === "objects" ||
-  workspace === "animation" ||
-  workspace === "art" ||
-  workspace === "fonts" ||
-  workspace === "interface" ||
-  workspace === "dialogue" ||
-  workspace === "playtest" ||
-  workspace === "validation"
-    ? workspace
-    : "composer";
+const knownWorkspaceIds = new Set(workspaces.map((item) => item.id));
+const activeWorkspace = workspace && knownWorkspaceIds.has(workspace as (typeof workspaces)[number]["id"])
+  ? workspace
+  : "composer";
 for (const item of workspaces) {
   const link = document.createElement("a");
   link.href = item.href;

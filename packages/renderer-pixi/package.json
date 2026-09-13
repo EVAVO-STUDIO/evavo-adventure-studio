@@ -8,12 +8,38 @@
       "types": "./dist/src/index.d.ts",
       "import": "./dist/src/index.js"
     },
+    "./indexed-renderer": {
+      "types": "./dist/src/indexed-renderer.d.ts",
+      "import": "./dist/src/indexed-renderer.js"
+    },
+    "./indexed-pixels": {
+      "types": "./dist/src/indexed-pixels.d.ts",
+      "import": "./dist/src/indexed-pixels.js"
+    },
+    "./indexed-dither": {
+      "types": "./dist/src/indexed-dither.d.ts",
+      "import": "./dist/src/indexed-dither.js"
+    },
+    "./indexed-runtime": {
+      "types": "./dist/src/indexed-runtime.d.ts",
+      "import": "./dist/src/indexed-runtime.js"
+    },
+    "./indexed-texture-cache": {
+      "types": "./dist/src/indexed-texture-cache.d.ts",
+      "import": "./dist/src/indexed-texture-cache.js"
+    },
+    "./indexed-buffer-texture": {
+      "types": "./dist/src/indexed-buffer-texture.d.ts",
+      "import": "./dist/src/indexed-buffer-texture.js"
+    },
     "./texture-store": {
       "types": "./dist/src/texture-store.d.ts",
       "import": "./dist/src/texture-store.js"
     }
   },
-  "files": ["dist"],
+  "files": [
+    "dist"
+  ],
   "scripts": {
     "build": "tsc -b",
     "typecheck": "tsc -b --pretty false"

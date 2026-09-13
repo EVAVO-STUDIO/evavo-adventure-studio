@@ -8,9 +8,7 @@ const directories: string[] = [];
 
 afterEach(async () => {
   await Promise.all(
-    directories.splice(0).map((directory) =>
-      rm(directory, { recursive: true, force: true }),
-    ),
+    directories.splice(0).map((directory) => rm(directory, { recursive: true, force: true })),
   );
 });
 
@@ -22,14 +20,7 @@ describe("replay execute input preflight", () => {
     let stderr = "";
 
     const exitCode = await runReplayExecuteCli(
-      [
-        "replay-execute",
-        "--bundle",
-        directory,
-        "--replay",
-        "missing.replay.json",
-        "--json",
-      ],
+      ["replay-execute", "--bundle", directory, "--replay", "missing.replay.json", "--json"],
       {
         stdout: (text) => {
           stdout += text;

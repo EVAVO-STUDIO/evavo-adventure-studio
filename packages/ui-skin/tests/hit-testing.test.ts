@@ -1,14 +1,14 @@
-import { describe, expect, it } from "vitest";
-import type { Id } from "@evavo/adventure-project-schema";
 import type { BitmapFontManifest } from "@evavo/adventure-bitmap-font";
+import type { Id } from "@evavo/adventure-project-schema";
+import { describe, expect, it } from "vitest";
 import type { UiRuntimeState } from "../src/compose.js";
-import type { UiSkin } from "../src/index.js";
 import {
   hitTestUiSkin,
   uiInventorySlotRects,
   uiVerbButtonRects,
   uiVerbCoinRects,
 } from "../src/hit-testing.js";
+import type { UiSkin } from "../src/index.js";
 
 const id = <T extends string>(value: string): Id<T> => value as Id<T>;
 const panel = { fill: 0, border: 0xffffff, borderWidth: 1 } as const;
@@ -167,7 +167,7 @@ describe("interface skin hit testing", () => {
     } as UiSkin;
     const coinState: UiRuntimeState = {
       ...state,
-      verbCoinPosition: { x: 160, y: 110 },
+      verbCoinPosition: { x: 160, y: 145 },
       dialogueChoices: [
         {
           choiceId: id<"dialogue-choice">("choice.one"),
@@ -177,9 +177,7 @@ describe("interface skin hit testing", () => {
       ],
     };
 
-    expect(
-      hitTestUiSkin(coinSkin, fonts, coinState, { x: 42, y: 42 }),
-    ).toEqual({
+    expect(hitTestUiSkin(coinSkin, fonts, coinState, { x: 42, y: 42 })).toEqual({
       kind: "dialogue-choice",
       choiceId: "choice.one",
       enabled: true,

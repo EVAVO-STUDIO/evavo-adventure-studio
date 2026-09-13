@@ -2,54 +2,46 @@ import type { BitmapFontResolver } from "@evavo/adventure-bitmap-font/render";
 import { expandBitmapTextFrame } from "@evavo/adventure-bitmap-font/render";
 import type { Id } from "@evavo/adventure-project-schema";
 import {
-  validateResolvedFrame,
   type NativeCanvas,
-  type RenderFrameIssue,
-  type RenderNode,
   type RendererAdapter,
   type RendererHost,
+  type RenderFrameIssue,
+  type RenderNode,
   type ResolvedFrame,
   type SolidRectangleRenderNode,
   type SpriteRenderNode,
+  validateResolvedFrame,
 } from "@evavo/adventure-render-contract";
 import { createIntegerPresentationTransform } from "@evavo/adventure-scene";
+import { Application, Container, Graphics, Rectangle, Sprite, Texture } from "pixi.js";
 import {
-  Application,
-  Container,
-  Graphics,
-  Rectangle,
-  Sprite,
-  Texture,
-} from "pixi.js";
+  defaultPixelPresentationPolicy,
+  type PixelPresentationPolicy,
+  presentPixelPoint,
+  resolvePixelSampling,
+} from "./pixel-presentation.js";
+
+export * from "./pixel-presentation.js";
 
 export interface PixiTextureResolver {
-  getTexture(
-    assetId: Id<"asset">,
-    frameId?: Id<"sprite-frame"> | null,
-  ): Texture | null;
+  getTexture(assetId: Id<"asset">, frameId?: Id<"sprite-frame"> | null): Texture | null;
   getBitmapFontResolver?(): BitmapFontResolver | null;
 }
 
 export interface PixiRendererOptions {
   readonly textures: PixiTextureResolver;
   readonly bitmapFonts?: BitmapFontResolver;
+  readonly pixelPresentation?: PixelPresentationPolicy;
 }
 
-export type UnsupportedPixiNodeKind = Exclude<
-  RenderNode["kind"],
-  "sprite" | "solid-rectangle"
->;
+export type UnsupportedPixiNodeKind = Exclude<RenderNode["kind"], "sprite" | "solid-rectangle">;
 
 export class PixiRendererCapabilityError extends Error {
   readonly nodeId: Id<"render-node">;
   readonly nodeKind: UnsupportedPixiNodeKind;
 
-  constructor(
-    node: Exclude<RenderNode, SpriteRenderNode | SolidRectangleRenderNode>,
-  ) {
-    super(
-      `PixiJS renderer capability '${node.kind}' is not implemented for node '${node.id}'.`,
-    );
+  constructor(node: Exclude<RenderNode, SpriteRenderNode | SolidRectangleRenderNode>) {
+    super(`PixiJS renderer capability '${node.kind}' is not implemented for node '${node.id}'.`);
     this.name = "PixiRendererCapabilityError";
     this.nodeId = node.id;
     this.nodeKind = node.kind;
@@ -60,10 +52,7 @@ export class PixiTextureResolutionError extends Error {
   readonly assetId: Id<"asset">;
   readonly frameId: Id<"sprite-frame"> | null;
 
-  constructor(
-    assetId: Id<"asset">,
-    frameId: Id<"sprite-frame"> | null = null,
-  ) {
+  constructor(assetId: Id<"asset">, frameId: Id<"sprite-frame"> | null = null) {
     super(
       frameId
         ? `No loaded PixiJS texture is available for asset '${assetId}' frame '${frameId}'.`
@@ -111,14 +100,10 @@ const assertByte = (value: number, label: string): number => {
   return value;
 };
 
-export const toPixiFill = (
-  value: number | readonly [number, number, number, number],
-): PixiFill => {
+export const toPixiFill = (value: number | readonly [number, number, number, number]): PixiFill => {
   if (typeof value === "number") {
     if (!Number.isInteger(value) || value < 0 || value > 0xffffff) {
-      throw new RangeError(
-        "Packed colours must be integers from 0x000000 to 0xFFFFFF.",
-      );
+      throw new RangeError("Packed colours must be integers from 0x000000 to 0xFFFFFF.");
     }
     return { color: value, alpha: 1 };
   }
@@ -134,9 +119,7 @@ export const toPixiFill = (
   };
 };
 
-export const pixiSupportsNode = (
-  node: RenderNode,
-): node is SpriteRenderNode | SolidRectangleRenderNode =>
+export const pixiSupportsNode = (node: RenderNode): node is SpriteRenderNode | SolidRectangleRenderNode =>
   node.kind === "sprite" || node.kind === "solid-rectangle";
 
 const isHtmlCanvasElement = (value: unknown): value is HTMLCanvasElement =>
@@ -172,6 +155,7 @@ const isWorldNode = (node: RenderNode): boolean =>
 export class PixiWebGLRenderer implements RendererAdapter {
   private readonly textures: PixiTextureResolver;
   private readonly bitmapFonts: BitmapFontResolver | null;
+  private readonly pixelPresentation: PixelPresentationPolicy;
   private readonly textureViews = new Map<string, Texture>();
   private application: Application | null = null;
   private clearRoot: Container | null = null;
@@ -185,10 +169,8 @@ export class PixiWebGLRenderer implements RendererAdapter {
 
   constructor(options: PixiRendererOptions) {
     this.textures = options.textures;
-    this.bitmapFonts =
-      options.bitmapFonts ??
-      options.textures.getBitmapFontResolver?.() ??
-      null;
+    this.bitmapFonts = options.bitmapFonts ?? options.textures.getBitmapFontResolver?.() ?? null;
+    this.pixelPresentation = options.pixelPresentation ?? defaultPixelPresentationPolicy;
   }
 
   async initialize(host: RendererHost, canvas: NativeCanvas): Promise<void> {
@@ -196,15 +178,10 @@ export class PixiWebGLRenderer implements RendererAdapter {
       throw new Error("PixiJS renderer is already initialized.");
     }
 
-    const suppliedCanvas = isHtmlCanvasElement(host.target)
-      ? host.target
-      : null;
-    const hostElement =
-      !suppliedCanvas && isHtmlElement(host.target) ? host.target : null;
+    const suppliedCanvas = isHtmlCanvasElement(host.target) ? host.target : null;
+    const hostElement = !suppliedCanvas && isHtmlElement(host.target) ? host.target : null;
     if (!suppliedCanvas && !hostElement) {
-      throw new TypeError(
-        "PixiJS renderer host target must be an HTMLCanvasElement or HTMLElement.",
-      );
+      throw new TypeError("PixiJS renderer host target must be an HTMLCanvasElement or HTMLElement.");
     }
 
     const application = new Application();
@@ -216,6 +193,7 @@ export class PixiWebGLRenderer implements RendererAdapter {
       antialias: false,
       autoDensity: false,
       autoStart: false,
+      roundPixels: this.pixelPresentation.roundPixels,
       backgroundColor: 0x000000,
       backgroundAlpha: 0,
       ...(suppliedCanvas ? { canvas: suppliedCanvas } : {}),
@@ -225,9 +203,7 @@ export class PixiWebGLRenderer implements RendererAdapter {
     const renderedCanvas = application.canvas;
     if (!isHtmlCanvasElement(renderedCanvas)) {
       application.destroy({ removeView: true }, true);
-      throw new TypeError(
-        "PixiJS WebGL renderer did not create an HTMLCanvasElement.",
-      );
+      throw new TypeError("PixiJS WebGL renderer did not create an HTMLCanvasElement.");
     }
 
     const clearRoot = new Container();
@@ -258,9 +234,7 @@ export class PixiWebGLRenderer implements RendererAdapter {
   }
 
   render(frame: ResolvedFrame): void {
-    const resolvedFrame = this.bitmapFonts
-      ? expandBitmapTextFrame(frame, this.bitmapFonts)
-      : frame;
+    const resolvedFrame = this.bitmapFonts ? expandBitmapTextFrame(frame, this.bitmapFonts) : frame;
     const issues = validateResolvedFrame(resolvedFrame);
     if (issues.length > 0) {
       throw new PixiFrameValidationError(issues);
@@ -311,24 +285,18 @@ export class PixiWebGLRenderer implements RendererAdapter {
       object.mask = mask;
     }
 
-    worldRoot.position.set(
-      -resolvedFrame.camera.position.x + resolvedFrame.camera.shakeOffset.x,
-      -resolvedFrame.camera.position.y + resolvedFrame.camera.shakeOffset.y,
-    );
+    const cameraPosition = presentPixelPoint(this.pixelPresentation, {
+      x: -resolvedFrame.camera.position.x + resolvedFrame.camera.shakeOffset.x,
+      y: -resolvedFrame.camera.position.y + resolvedFrame.camera.shakeOffset.y,
+    });
+    worldRoot.position.set(cameraPosition.x, cameraPosition.y);
     screenRoot.position.set(0, 0);
     application.renderer.render(application.stage);
   }
 
   resize(hostWidth: number, hostHeight: number): void {
-    if (
-      !Number.isFinite(hostWidth) ||
-      !Number.isFinite(hostHeight) ||
-      hostWidth <= 0 ||
-      hostHeight <= 0
-    ) {
-      throw new RangeError(
-        "Renderer host dimensions must be positive finite numbers.",
-      );
+    if (!Number.isFinite(hostWidth) || !Number.isFinite(hostHeight) || hostWidth <= 0 || hostHeight <= 0) {
+      throw new RangeError("Renderer host dimensions must be positive finite numbers.");
     }
 
     this.hostWidth = Math.floor(hostWidth);
@@ -343,10 +311,7 @@ export class PixiWebGLRenderer implements RendererAdapter {
     this.textureViews.clear();
 
     if (this.application) {
-      this.application.destroy(
-        { removeView: this.hostElement !== null },
-        true,
-      );
+      this.application.destroy({ removeView: this.hostElement !== null }, true);
     }
 
     this.application = null;
@@ -376,10 +341,7 @@ export class PixiWebGLRenderer implements RendererAdapter {
 
   private ensureNativeCanvas(canvas: NativeCanvas): void {
     const application = this.requireApplication();
-    if (
-      this.nativeCanvas?.width !== canvas.width ||
-      this.nativeCanvas?.height !== canvas.height
-    ) {
+    if (this.nativeCanvas?.width !== canvas.width || this.nativeCanvas?.height !== canvas.height) {
       application.renderer.resize(canvas.width, canvas.height);
     }
     this.nativeCanvas = canvas;
@@ -451,12 +413,12 @@ export class PixiWebGLRenderer implements RendererAdapter {
 
     const base = this.textures.getTexture(node.assetId, node.frameId ?? null);
     if (!base) {
-      throw new PixiTextureResolutionError(
-        node.assetId,
-        node.frameId ?? null,
-      );
+      throw new PixiTextureResolutionError(node.assetId, node.frameId ?? null);
     }
-    base.source.scaleMode = node.sampling;
+    base.source.scaleMode = resolvePixelSampling(this.pixelPresentation, node.sampling);
+    if (this.pixelPresentation.disableMipmaps) {
+      base.source.autoGenerateMipmaps = false;
+    }
 
     const texture = new Texture({
       source: base.source,
@@ -466,12 +428,7 @@ export class PixiWebGLRenderer implements RendererAdapter {
         node.sourceRect.width,
         node.sourceRect.height,
       ),
-      orig: new Rectangle(
-        0,
-        0,
-        node.originalSize.width,
-        node.originalSize.height,
-      ),
+      orig: new Rectangle(0, 0, node.originalSize.width, node.originalSize.height),
       trim: new Rectangle(
         node.trimOffset.x,
         node.trimOffset.y,
@@ -485,17 +442,12 @@ export class PixiWebGLRenderer implements RendererAdapter {
   }
 
   private applyNodeTransform(object: Container, node: RenderNode): void {
-    object.position.set(
-      node.transform.position.x,
-      node.transform.position.y,
-    );
+    const position = presentPixelPoint(this.pixelPresentation, node.transform.position);
+    object.position.set(position.x, position.y);
     object.pivot.set(node.transform.pivot.x, node.transform.pivot.y);
     object.scale.set(node.transform.scale.x, node.transform.scale.y);
     object.rotation = node.transform.rotationRadians;
-    const tintAlpha =
-      node.kind === "sprite" && node.tintRgba
-        ? toPixiFill(node.tintRgba).alpha
-        : 1;
+    const tintAlpha = node.kind === "sprite" && node.tintRgba ? toPixiFill(node.tintRgba).alpha : 1;
     object.alpha = node.opacity * tintAlpha;
     object.visible = node.visible;
   }

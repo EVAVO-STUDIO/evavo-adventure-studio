@@ -1,0 +1,31 @@
+{
+  "manifestVersion": 1,
+  "projectId": "project.red-ledger.playable-slice",
+  "outcomes": [
+    {
+      "id": "outcome.red-ledger.case-proved",
+      "kind": "success",
+      "priority": 100,
+      "when": {
+        "kind": "flag",
+        "flag": "red-ledger.slice-complete",
+        "equals": true
+      },
+      "title": "CASE PROVED",
+      "message": "THE FALSE DEBT EXPOSED A ROUTE THROUGH THE FLOODED WARDS. THE RED LEDGER CASE IS CLOSED.",
+      "menu": {
+        "allowQuickRetry": false,
+        "allowLoad": true,
+        "allowRestart": true,
+        "allowTitle": true,
+        "labels": {
+          "quickRetry": "QUICK RETRY",
+          "loadGame": "LOAD A SAVE",
+          "restartGame": "REOPEN THE CASE",
+          "returnToTitle": "RETURN TO TITLE",
+          "back": "BACK"
+        }
+      }
+    }
+  ]
+}

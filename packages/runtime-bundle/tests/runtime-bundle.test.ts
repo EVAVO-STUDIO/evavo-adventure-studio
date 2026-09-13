@@ -1,9 +1,5 @@
 import { describe, expect, it } from "vitest";
-import {
-  parseRuntimeBundle,
-  RuntimeBundleValidationError,
-  runtimeBundleSchema,
-} from "../src/index.js";
+import { parseRuntimeBundle, RuntimeBundleValidationError, runtimeBundleSchema } from "../src/index.js";
 
 const hash = "0".repeat(64);
 
@@ -220,18 +216,14 @@ describe("runtime bundle contract", () => {
   it("rejects missing runtime start state", () => {
     const bundle = { ...createBundle(), startSceneId: "scene.missing" };
 
-    expect(() => parseRuntimeBundle(bundle)).toThrow(
-      RuntimeBundleValidationError,
-    );
+    expect(() => parseRuntimeBundle(bundle)).toThrow(RuntimeBundleValidationError);
     try {
       parseRuntimeBundle(bundle);
     } catch (error) {
       if (!(error instanceof RuntimeBundleValidationError)) {
         throw error;
       }
-      expect(error.issues.map((issue) => issue.code)).toContain(
-        "missing-start-scene",
-      );
+      expect(error.issues.map((issue) => issue.code)).toContain("missing-start-scene");
     }
   });
 
@@ -257,10 +249,7 @@ describe("runtime bundle contract", () => {
         throw error;
       }
       expect(error.issues.map((issue) => issue.code)).toEqual(
-        expect.arrayContaining([
-          "invalid-dialogue-node-index",
-          "invalid-sequence-cue-count",
-        ]),
+        expect.arrayContaining(["invalid-dialogue-node-index", "invalid-sequence-cue-count"]),
       );
     }
   });
@@ -285,9 +274,7 @@ describe("runtime bundle contract", () => {
       if (!(error instanceof RuntimeBundleValidationError)) {
         throw error;
       }
-      expect(error.issues.map((issue) => issue.code)).toContain(
-        "runtime-frame-geometry-mismatch",
-      );
+      expect(error.issues.map((issue) => issue.code)).toContain("runtime-frame-geometry-mismatch");
     }
   });
 });

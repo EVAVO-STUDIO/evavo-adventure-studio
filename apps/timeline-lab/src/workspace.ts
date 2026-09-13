@@ -1,19 +1,16 @@
+import type { Id, Sequence, SequenceCue, SequenceTrack } from "@evavo/adventure-project-schema";
 import {
   createSequenceEditorHistory,
   executeSequenceEditorCommand,
   isSequenceEditorDocumentDirty,
   markSequenceEditorHistorySaved,
   redoSequenceEditorCommand,
-  undoSequenceEditorCommand,
   type SequenceEditorCommand,
   type SequenceEditorHistoryState,
+  undoSequenceEditorCommand,
 } from "@evavo/adventure-sequence-editor-core";
-import type {
-  Id,
-  Sequence,
-  SequenceCue,
-  SequenceTrack,
-} from "@evavo/adventure-project-schema";
+
+const id = <T extends string>(value: string): Id<T> => value as Id<T>;
 
 export interface TimelineSelection {
   readonly trackId: Id<"sequence-track">;
@@ -47,9 +44,7 @@ export type TimelineWorkspaceAction =
   | { readonly type: "set-snap"; readonly snapTicks: number }
   | { readonly type: "set-playhead"; readonly playheadTick: number };
 
-export const createTimelineWorkspace = (
-  sequence: Sequence,
-): TimelineWorkspaceState => ({
+export const createTimelineWorkspace = (sequence: Sequence): TimelineWorkspaceState => ({
   history: createSequenceEditorHistory(sequence),
   selection: null,
   pixelsPerTick: 1.6,
@@ -70,8 +65,7 @@ export const timelineWorkspaceReducer = (
       return {
         ...state,
         history: executeSequenceEditorCommand(state.history, action.command),
-        selection:
-          action.selection === undefined ? state.selection : action.selection,
+        selection: action.selection === undefined ? state.selection : action.selection,
         notice: action.notice ?? null,
       };
     case "undo":
@@ -117,13 +111,11 @@ export const timelineWorkspaceReducer = (
   }
 };
 
-export const timelineSequenceDocument = (
-  state: TimelineWorkspaceState,
-): Sequence => state.history.document.sequence;
+export const timelineSequenceDocument = (state: TimelineWorkspaceState): Sequence =>
+  state.history.document.sequence;
 
-export const timelineWorkspaceIsDirty = (
-  state: TimelineWorkspaceState,
-): boolean => isSequenceEditorDocumentDirty(state.history.document);
+export const timelineWorkspaceIsDirty = (state: TimelineWorkspaceState): boolean =>
+  isSequenceEditorDocumentDirty(state.history.document);
 
 export const selectedTimelineCue = (
   state: TimelineWorkspaceState,
@@ -137,19 +129,13 @@ export const selectedTimelineCue = (
   return track && cue ? { track, cue } : null;
 };
 
-export const snapTick = (
-  state: TimelineWorkspaceState,
-  tick: number,
-): number =>
+export const snapTick = (state: TimelineWorkspaceState, tick: number): number =>
   Math.min(
     timelineSequenceDocument(state).durationTicks - 1,
     Math.max(0, Math.round(tick / state.snapTicks) * state.snapTicks),
   );
 
-const insertionIndex = (
-  cues: readonly SequenceCue[],
-  tick: number,
-): number => {
+const insertionIndex = (cues: readonly SequenceCue[], tick: number): number => {
   const index = cues.findIndex((cue) => cue.atTick > tick);
   return index < 0 ? cues.length : index;
 };
@@ -168,9 +154,7 @@ export const moveSelectedCueCommand = (
   }
   const atTick = snapTick(state, targetTick);
   const cue = { ...selected.cue, atTick } as SequenceCue;
-  const remaining = selected.track.cues.filter(
-    (_candidate, index) => index !== selection.cueIndex,
-  );
+  const remaining = selected.track.cues.filter((_candidate, index) => index !== selection.cueIndex);
   const index = insertionIndex(remaining, atTick);
   return {
     command: {
@@ -215,9 +199,7 @@ export const replaceSelectedCueCommand = (
   };
 };
 
-export const removeSelectedCueCommand = (
-  state: TimelineWorkspaceState,
-): SequenceEditorCommand => {
+export const removeSelectedCueCommand = (state: TimelineWorkspaceState): SequenceEditorCommand => {
   const selection = state.selection;
   if (!selection) {
     throw new Error("Select a timeline cue before removing it.");
@@ -230,16 +212,13 @@ export const removeSelectedCueCommand = (
   };
 };
 
-const defaultCueForTrack = (
-  track: SequenceTrack,
-  atTick: number,
-): SequenceCue => {
+const defaultCueForTrack = (track: SequenceTrack, atTick: number): SequenceCue => {
   switch (track.kind) {
     case "actor":
       return {
         kind: "actor-animation",
         atTick,
-        actorId: "actor.detective",
+        actorId: id<"actor">("actor.detective"),
         animationState: "idle",
         facing: "east",
         awaitCompletion: false,

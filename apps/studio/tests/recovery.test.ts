@@ -1,13 +1,13 @@
-import { describe, expect, it } from "vitest";
 import { createEditorDocument } from "@evavo/adventure-editor-core";
+import { describe, expect, it } from "vitest";
 import { studioProject, studioSceneInstances } from "../src/fixture.js";
 import {
   clearStudioRecoverySnapshot,
   createStudioRecoverySnapshot,
   loadStudioRecoverySnapshot,
+  type StudioRecoveryStorage,
   saveStudioRecoverySnapshot,
   studioRecoveryKey,
-  type StudioRecoveryStorage,
 } from "../src/recovery.js";
 
 class MemoryStorage implements StudioRecoveryStorage {
@@ -33,11 +33,7 @@ describe("studio recovery snapshots", () => {
       ...createEditorDocument(studioSceneInstances),
       operationRevision: 7,
     };
-    const snapshot = createStudioRecoverySnapshot(
-      studioProject.id,
-      document,
-      "2026-07-29T09:00:00.000Z",
-    );
+    const snapshot = createStudioRecoverySnapshot(studioProject.id, document, "2026-07-29T09:00:00.000Z");
 
     saveStudioRecoverySnapshot(storage, snapshot);
     const loaded = loadStudioRecoverySnapshot(storage, studioProject.id);

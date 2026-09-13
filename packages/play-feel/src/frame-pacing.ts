@@ -1,7 +1,4 @@
-import {
-  advanceFixedStepClock,
-  createFixedStepClock,
-} from "@evavo/adventure-core/fixed-step";
+import { advanceFixedStepClock, createFixedStepClock } from "@evavo/adventure-core/fixed-step";
 import type {
   AdventureFramePacingAdvance,
   AdventureFramePacingState,
@@ -30,14 +27,11 @@ export const advanceAdventureFramePacing = (
     {
       ticksPerSecond: profile.logicalTicksPerSecond,
       maxCatchUpTicks: profile.presentation.maximumCatchUpTicks,
-      maxFrameDeltaMilliseconds:
-        profile.presentation.maximumFrameDeltaMilliseconds,
+      maxFrameDeltaMilliseconds: profile.presentation.maximumFrameDeltaMilliseconds,
     },
   );
   const interpolationAlpha =
-    profile.presentation.renderInterpolation === "none"
-      ? 0
-      : advanced.interpolationAlpha;
+    profile.presentation.renderInterpolation === "none" ? 0 : advanced.interpolationAlpha;
   const logicalTick = state.logicalTick + advanced.ticksToRun;
   return {
     state: { logicalTick, ...advanced.state },

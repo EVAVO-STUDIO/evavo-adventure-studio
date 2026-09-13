@@ -1,15 +1,17 @@
+import { type Id, parseAdventureProject } from "@evavo/adventure-project-schema";
 import { describe, expect, it } from "vitest";
-import { parseAdventureProject } from "@evavo/adventure-project-schema";
+import { parseNarrativeLibraryCommand } from "../src/command-schema.js";
 import {
   createNarrativeLibraryHistory,
   executeNarrativeLibraryCommand,
   isNarrativeLibraryDocumentDirty,
   markNarrativeLibraryHistorySaved,
-  NarrativeLibraryCommandError,
+  type NarrativeLibraryCommandError,
   redoNarrativeLibraryCommand,
   undoNarrativeLibraryCommand,
 } from "../src/index.js";
-import { parseNarrativeLibraryCommand } from "../src/command-schema.js";
+
+const id = <T extends string>(value: string) => value as Id<T>;
 
 const project = parseAdventureProject({
   schemaVersion: 1,
@@ -157,21 +159,15 @@ describe("narrative library history", () => {
       },
     });
 
-    expect(history.document.project.dialogues[0]?.name).toBe(
-      "Receptionist interrogation",
-    );
+    expect(history.document.project.dialogues[0]?.name).toBe("Receptionist interrogation");
     expect(isNarrativeLibraryDocumentDirty(history.document)).toBe(true);
 
     history = undoNarrativeLibraryCommand(history);
-    expect(history.document.project.dialogues[0]?.name).toBe(
-      "Receptionist interview",
-    );
+    expect(history.document.project.dialogues[0]?.name).toBe("Receptionist interview");
     expect(isNarrativeLibraryDocumentDirty(history.document)).toBe(false);
 
     history = redoNarrativeLibraryCommand(history);
-    expect(history.document.project.dialogues[0]?.name).toBe(
-      "Receptionist interrogation",
-    );
+    expect(history.document.project.dialogues[0]?.name).toBe("Receptionist interrogation");
 
     history = markNarrativeLibraryHistorySaved(history);
     expect(isNarrativeLibraryDocumentDirty(history.document)).toBe(false);
@@ -214,22 +210,19 @@ describe("narrative library history", () => {
         })),
       })),
     });
-    const history = executeNarrativeLibraryCommand(
-      createNarrativeLibraryHistory(detached),
-      {
-        kind: "batch",
-        commands: [
-          {
-            kind: "remove-dialogue",
-            dialogueId: detached.dialogues[0]!.id,
-          },
-          {
-            kind: "remove-sequence",
-            sequenceId: detached.sequences[0]!.id,
-          },
-        ],
-      },
-    );
+    const history = executeNarrativeLibraryCommand(createNarrativeLibraryHistory(detached), {
+      kind: "batch",
+      commands: [
+        {
+          kind: "remove-dialogue",
+          dialogueId: detached.dialogues[0]!.id,
+        },
+        {
+          kind: "remove-sequence",
+          sequenceId: detached.sequences[0]!.id,
+        },
+      ],
+    });
 
     expect(history.document.project.dialogues).toEqual([]);
     expect(history.document.project.sequences).toEqual([]);
@@ -244,19 +237,22 @@ describe("narrative library history", () => {
         kind: "insert-dialogue",
         index: 1,
         dialogue: {
-          id: "dialogue.porter",
+          id: id<"dialogue">("dialogue.porter"),
           name: "Porter interview",
-          startNodeId: "dialogue-node.porter.opening",
+          startNodeId: id<"dialogue-node">("dialogue-node.porter.opening"),
           nodes: [
             {
-              id: "dialogue-node.porter.opening",
+              id: id<"dialogue-node">("dialogue-node.porter.opening"),
+              enterActions: [],
               lines: [
                 {
                   id: project.dialogues[0]!.nodes[0]!.lines[0]!.id,
                   text: "Duplicate nested line ID.",
+                  interruptible: true,
                 },
               ],
               choices: [],
+              exitActions: [],
             },
           ],
         },
@@ -291,8 +287,6 @@ describe("narrative library command schema", () => {
   });
 
   it("rejects empty narrative batches", () => {
-    expect(() =>
-      parseNarrativeLibraryCommand({ kind: "batch", commands: [] }),
-    ).toThrow();
+    expect(() => parseNarrativeLibraryCommand({ kind: "batch", commands: [] })).toThrow();
   });
 });

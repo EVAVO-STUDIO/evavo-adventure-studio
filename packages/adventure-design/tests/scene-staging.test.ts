@@ -1,6 +1,6 @@
-import { describe, expect, it } from "vitest";
 import type { AdventureProject, Id } from "@evavo/adventure-project-schema";
 import type { SceneInstanceManifest } from "@evavo/adventure-scene-instances";
+import { describe, expect, it } from "vitest";
 import {
   AdventureSceneStagingError,
   createAdventureSceneStagingReports,
@@ -280,11 +280,7 @@ describe("scene staging audit", () => {
   it("produces a deterministic ready report for coherent initial staging", () => {
     const sourceProject = project();
     const sourceManifest = manifest();
-    const report = evaluateAdventureSceneStaging(
-      sourceProject,
-      sourceManifest,
-      sourceProject.startSceneId,
-    );
+    const report = evaluateAdventureSceneStaging(sourceProject, sourceManifest, sourceProject.startSceneId);
 
     expect(report.status).toBe("ready");
     expect(report.score).toBe(100);
@@ -297,13 +293,9 @@ describe("scene staging audit", () => {
       portalCount: 1,
       unresolvedVisualCount: 0,
     });
-    expect(
-      evaluateAdventureSceneStaging(
-        sourceProject,
-        sourceManifest,
-        sourceProject.startSceneId,
-      ),
-    ).toEqual(report);
+    expect(evaluateAdventureSceneStaging(sourceProject, sourceManifest, sourceProject.startSceneId)).toEqual(
+      report,
+    );
   });
 
   it("blocks ambiguous control and overlapping actor silhouettes", () => {
@@ -328,11 +320,7 @@ describe("scene staging audit", () => {
       ],
     };
 
-    const report = evaluateAdventureSceneStaging(
-      sourceProject,
-      broken,
-      sourceProject.startSceneId,
-    );
+    const report = evaluateAdventureSceneStaging(sourceProject, broken, sourceProject.startSceneId);
     expect(report.status).toBe("blocked");
     expect(report.findings.map((finding) => finding.id)).toEqual(
       expect.arrayContaining([
@@ -377,11 +365,7 @@ describe("scene staging audit", () => {
       ],
     };
 
-    const report = evaluateAdventureSceneStaging(
-      sourceProject,
-      broken,
-      sourceProject.startSceneId,
-    );
+    const report = evaluateAdventureSceneStaging(sourceProject, broken, sourceProject.startSceneId);
     expect(report.findings.map((finding) => finding.id)).toEqual(
       expect.arrayContaining([
         "object-walk-to-unreachable-object.office.lamp",
@@ -420,11 +404,7 @@ describe("scene staging audit", () => {
       ],
     };
 
-    const report = evaluateAdventureSceneStaging(
-      sourceProject,
-      broken,
-      sourceProject.startSceneId,
-    );
+    const report = evaluateAdventureSceneStaging(sourceProject, broken, sourceProject.startSceneId);
     expect(report.status).toBe("blocked");
     expect(report.findings.map((finding) => finding.id)).toEqual(
       expect.arrayContaining([
@@ -454,11 +434,7 @@ describe("scene staging audit", () => {
       ],
     };
 
-    const report = evaluateAdventureSceneStaging(
-      sourceProject,
-      broken,
-      sourceProject.startSceneId,
-    );
+    const report = evaluateAdventureSceneStaging(sourceProject, broken, sourceProject.startSceneId);
     expect(report.status).toBe("blocked");
     expect(report.findings.some((finding) => finding.id.includes("missing-object-definition"))).toBe(true);
   });
@@ -472,17 +448,12 @@ describe("scene staging audit", () => {
       sourceProject.startSceneId,
     );
     expect(report.status).toBe("blocked");
-    expect(report.findings.map((finding) => finding.id)).toContain(
-      "manifest-scene-composition-missing",
-    );
+    expect(report.findings.map((finding) => finding.id)).toContain("manifest-scene-composition-missing");
   });
 
   it("preserves canonical project scene order", () => {
     const reports = createAdventureSceneStagingReports(project(), manifest());
-    expect(reports.map((report) => report.sceneId)).toEqual([
-      "scene.office",
-      "scene.alley",
-    ]);
+    expect(reports.map((report) => report.sceneId)).toEqual(["scene.office", "scene.alley"]);
   });
 
   it("transforms mirrored object shapes and approach offsets", () => {
@@ -499,12 +470,8 @@ describe("scene staging audit", () => {
   });
 
   it("rejects unknown project scenes", () => {
-    expect(() =>
-      evaluateAdventureSceneStaging(
-        project(),
-        manifest(),
-        id<"scene">("scene.missing"),
-      ),
-    ).toThrow(AdventureSceneStagingError);
+    expect(() => evaluateAdventureSceneStaging(project(), manifest(), id<"scene">("scene.missing"))).toThrow(
+      AdventureSceneStagingError,
+    );
   });
 });

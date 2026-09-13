@@ -1,4 +1,3 @@
-import type { CSSProperties, ReactNode } from "react";
 import type { AdventureProductionProfile } from "@evavo/adventure-design/production-profiles";
 import type {
   AdventureCameraState,
@@ -6,6 +5,7 @@ import type {
   AdventureMotionTraceSample,
   AdventurePlayFeelProfile,
 } from "@evavo/adventure-play-feel";
+import type { CSSProperties, ReactNode } from "react";
 
 export type MotionFeelView = "motion" | "camera" | "timing" | "contract";
 
@@ -18,18 +18,12 @@ export const MotionFeelButton = ({
   readonly active?: boolean;
   readonly onClick: () => void;
 }) => (
-  <button
-    type="button"
-    className={`mfl-button${active ? " is-active" : ""}`}
-    onClick={onClick}
-  >
+  <button type="button" className={`mfl-button${active ? " is-active" : ""}`} onClick={onClick}>
     {children}
   </button>
 );
 
-export const motionFeelStyle = (
-  productionProfile: AdventureProductionProfile,
-): CSSProperties => {
+export const motionFeelStyle = (productionProfile: AdventureProductionProfile): CSSProperties => {
   const colours = productionProfile.palette.keyColours;
   return {
     "--mfl-ink": colours[0] ?? "#07090d",
@@ -57,16 +51,11 @@ export const Metric = ({
   </div>
 );
 
-const phaseColourClass = (phase: AdventureMotionTraceSample["phase"]): string =>
-  `is-${phase}`;
+const phaseColourClass = (phase: AdventureMotionTraceSample["phase"]): string => `is-${phase}`;
 
-const sampledGhosts = (
-  trace: AdventureMotionTrace,
-): readonly AdventureMotionTraceSample[] => {
+const sampledGhosts = (trace: AdventureMotionTrace): readonly AdventureMotionTraceSample[] => {
   const interval = Math.max(1, Math.floor(trace.arrivalTick / 12));
-  return trace.samples.filter(
-    (sample) => sample.tick % interval === 0 || sample.tick === trace.arrivalTick,
-  );
+  return trace.samples.filter((sample) => sample.tick % interval === 0 || sample.tick === trace.arrivalTick);
 };
 
 export const MotionStage = ({
@@ -80,57 +69,30 @@ export const MotionStage = ({
   readonly sample: AdventureMotionTraceSample;
   readonly camera: AdventureCameraState;
 }) => {
-  const path = trace.route.points
-    .map((point) => `${point.x},${point.y}`)
-    .join(" ");
+  const path = trace.route.points.map((point) => `${point.x},${point.y}`).join(" ");
   const ghosts = sampledGhosts(trace);
   const cameraWidth = 220;
   const cameraHeight = 138;
   return (
     <div className="mfl-native-shell">
-      <svg
-        viewBox="0 0 480 240"
-        role="img"
-        aria-label={`${profile.label} deterministic motion stage`}
-      >
+      <svg viewBox="0 0 480 240" role="img" aria-label={`${profile.label} deterministic motion stage`}>
         <defs>
-          <pattern
-            id={`mfl-grid-${profile.id}`}
-            width="8"
-            height="8"
-            patternUnits="userSpaceOnUse"
-          >
+          <pattern id={`mfl-grid-${profile.id}`} width="8" height="8" patternUnits="userSpaceOnUse">
             <path d="M8 0H0V8" className="mfl-grid-line" fill="none" />
           </pattern>
-          <linearGradient
-            id={`mfl-ground-${profile.id}`}
-            x1="0"
-            y1="0"
-            x2="0"
-            y2="1"
-          >
+          <linearGradient id={`mfl-ground-${profile.id}`} x1="0" y1="0" x2="0" y2="1">
             <stop offset="0" className="mfl-ground-start" />
             <stop offset="1" className="mfl-ground-end" />
           </linearGradient>
         </defs>
         <rect width="480" height="240" className="mfl-stage-background" />
-        <rect
-          width="480"
-          height="240"
-          fill={`url(#mfl-grid-${profile.id})`}
-        />
+        <rect width="480" height="240" fill={`url(#mfl-grid-${profile.id})`} />
         <path
           d="M0 119C80 96 144 101 218 117C302 135 388 116 480 93V240H0Z"
           fill={`url(#mfl-ground-${profile.id})`}
         />
-        <path
-          d="M32 86H119V136H32ZM330 60H438V130H330Z"
-          className="mfl-architecture"
-        />
-        <path
-          d="M58 86V45H95V86M352 60V31H405V60"
-          className="mfl-architecture-detail"
-        />
+        <path d="M32 86H119V136H32ZM330 60H438V130H330Z" className="mfl-architecture" />
+        <path d="M58 86V45H95V86M352 60V31H405V60" className="mfl-architecture-detail" />
         <polyline points={path} className="mfl-route" />
         {trace.route.points.map((point, index) => (
           <g key={`${point.x}.${point.y}.${index}`} className="mfl-route-node">
@@ -160,10 +122,7 @@ export const MotionStage = ({
           <path d="M-5 -27L-13 -14M6 -27L14 -17" />
           <path d="M-3 -5L-8 9M4 -5L9 9" />
         </g>
-        <g
-          className="mfl-camera-frame"
-          transform={`translate(${camera.position.x} ${camera.position.y})`}
-        >
+        <g className="mfl-camera-frame" transform={`translate(${camera.position.x} ${camera.position.y})`}>
           <rect width={cameraWidth} height={cameraHeight} />
           <path
             d={
@@ -173,7 +132,9 @@ export const MotionStage = ({
               `V${cameraHeight - 12}`
             }
           />
-          <text x="8" y="15">CAMERA</text>
+          <text x="8" y="15">
+            CAMERA
+          </text>
         </g>
         <g className="mfl-stage-hud">
           <rect x="8" y="8" width="132" height="32" />
@@ -181,16 +142,14 @@ export const MotionStage = ({
             TICK {sample.tick.toString().padStart(4, "0")}
           </text>
           <text x="16" y="34">
-            {sample.phase.toLocaleUpperCase("en-US")} ·{" "}
-            {sample.velocityPixelsPerSecond.toFixed(1)} PX/S
+            {sample.phase.toLocaleUpperCase("en-US")} · {sample.velocityPixelsPerSecond.toFixed(1)} PX/S
           </text>
         </g>
       </svg>
       <div className="mfl-native-footer">
         <span>canonical route position</span>
         <code>
-          {sample.unquantizedPosition.x.toFixed(3)},{" "}
-          {sample.unquantizedPosition.y.toFixed(3)}
+          {sample.unquantizedPosition.x.toFixed(3)}, {sample.unquantizedPosition.y.toFixed(3)}
         </code>
         <span>display position</span>
         <code>
@@ -210,17 +169,11 @@ export const VelocityGraph = ({
 }) => {
   const width = 640;
   const height = 150;
-  const maximum = Math.max(
-    1,
-    ...trace.samples.map((sample) => sample.velocityPixelsPerSecond),
-  );
+  const maximum = Math.max(1, ...trace.samples.map((sample) => sample.velocityPixelsPerSecond));
   const points = trace.samples
     .map((sample) => {
       const x = (sample.tick / trace.arrivalTick) * width;
-      const y =
-        height -
-        (sample.velocityPixelsPerSecond / maximum) * (height - 20) -
-        10;
+      const y = height - (sample.velocityPixelsPerSecond / maximum) * (height - 20) - 10;
       return `${x},${y}`;
     })
     .join(" ");
@@ -231,37 +184,23 @@ export const VelocityGraph = ({
         <span>Velocity envelope</span>
         <strong>{maximum.toFixed(1)} PX/S</strong>
       </header>
-      <svg
-        viewBox={`0 0 ${width} ${height}`}
-        role="img"
-        aria-label="Deterministic velocity envelope"
-      >
+      <svg viewBox={`0 0 ${width} ${height}`} role="img" aria-label="Deterministic velocity envelope">
         <path d={`M0 ${height - 10}H${width}`} className="mfl-chart-axis" />
         <polyline points={points} className="mfl-chart-line" />
-        <line
-          x1={activeX}
-          x2={activeX}
-          y1="0"
-          y2={height}
-          className="mfl-chart-cursor"
-        />
+        <line x1={activeX} x2={activeX} y1="0" y2={height} className="mfl-chart-cursor" />
       </svg>
     </div>
   );
 };
 
-export const TimingContract = ({
-  profile,
-}: {
-  readonly profile: AdventurePlayFeelProfile;
-}) => (
+export const TimingContract = ({ profile }: { readonly profile: AdventurePlayFeelProfile }) => (
   <div className="mfl-contract-grid">
     <article>
       <span>MOVEMENT</span>
       <h3>{profile.movement.topSpeedPixelsPerSecond} px/s</h3>
       <p>
-        {profile.movement.accelerationPixelsPerSecondSquared} px/s²
-        acceleration · {profile.movement.decelerationPixelsPerSecondSquared}
+        {profile.movement.accelerationPixelsPerSecondSquared} px/s² acceleration ·{" "}
+        {profile.movement.decelerationPixelsPerSecondSquared}
         px/s² braking
       </p>
       <dl>
@@ -286,10 +225,7 @@ export const TimingContract = ({
     <article>
       <span>ANIMATION</span>
       <h3>{profile.animation.pixelsPerWalkCycle} px cycle</h3>
-      <p>
-        Distance-locked performance keeps footfalls independent of render
-        cadence.
-      </p>
+      <p>Distance-locked performance keeps footfalls independent of render cadence.</p>
       <dl>
         <div>
           <dt>Start pose</dt>
@@ -313,8 +249,7 @@ export const TimingContract = ({
       <span>CAMERA</span>
       <h3>{profile.camera.mode}</h3>
       <p>
-        {profile.camera.lookAheadPixels} px look-ahead ·{" "}
-        {profile.camera.settleTicks} tick settle
+        {profile.camera.lookAheadPixels} px look-ahead · {profile.camera.settleTicks} tick settle
       </p>
       <dl>
         <div>
@@ -338,10 +273,7 @@ export const TimingContract = ({
     <article>
       <span>INPUT + TRANSITIONS</span>
       <h3>{profile.input.commandBufferTicks} tick buffer</h3>
-      <p>
-        Intent is acknowledged immediately while canonical consequences remain
-        tick ordered.
-      </p>
+      <p>Intent is acknowledged immediately while canonical consequences remain tick ordered.</p>
       <dl>
         <div>
           <dt>Hover commit</dt>

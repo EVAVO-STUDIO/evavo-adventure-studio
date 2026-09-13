@@ -1,31 +1,24 @@
-import { describe, expect, it } from "vitest";
 import { assetBuildManifestSchema } from "@evavo/adventure-asset-contract";
 import type { Id } from "@evavo/adventure-project-schema";
-import {
-  compileImage,
-  encodeRgbaPng,
-  type RgbaImage,
-} from "../src/index.js";
-import { compileAtlas } from "../src/atlas-compiler.js";
+import { describe, expect, it } from "vitest";
 import {
   createArtVisualEvidenceFromAssetManifest,
   createArtVisualEvidenceManifest,
   createImageArtVisualEvidence,
   createSpritesheetArtVisualEvidence,
 } from "../src/art-evidence.js";
-import {
-  analysePngEvidence,
-  classifyAlphaMode,
-} from "../src/png-evidence.js";
+import { compileAtlas } from "../src/atlas-compiler.js";
+import { compileImage, encodeRgbaPng, type RgbaImage } from "../src/index.js";
+import { analysePngEvidence, classifyAlphaMode } from "../src/png-evidence.js";
 
 const id = <T extends string>(value: string): Id<T> => value as Id<T>;
 const hash = "0".repeat(64);
 
-const image = (
-  pixels: readonly (readonly [number, number, number, number])[],
-): RgbaImage => {
+const image = (pixels: readonly (readonly [number, number, number, number])[]): RgbaImage => {
   const data = new Uint8Array(pixels.length * 4);
-  pixels.forEach((pixel, index) => data.set(pixel, index * 4));
+  pixels.forEach((pixel, index) => {
+    data.set(pixel, index * 4);
+  });
   return { width: pixels.length, height: 1, data };
 };
 
@@ -104,10 +97,7 @@ describe("art evidence builders", () => {
       },
     );
 
-    const evidence = await createSpritesheetArtVisualEvidence(
-      id<"asset">("asset.actor"),
-      atlas,
-    );
+    const evidence = await createSpritesheetArtVisualEvidence(id<"asset">("asset.actor"), atlas);
     expect(evidence).toMatchObject({
       assetId: "asset.actor",
       kind: "spritesheet",
@@ -121,11 +111,7 @@ describe("art evidence builders", () => {
     });
 
     expect(
-      createArtVisualEvidenceManifest(
-        id<"project">("project.evidence"),
-        [evidence],
-        "1.2.3",
-      ),
+      createArtVisualEvidenceManifest(id<"project">("project.evidence"), [evidence], "1.2.3"),
     ).toMatchObject({
       manifestVersion: 1,
       projectId: "project.evidence",
@@ -158,9 +144,7 @@ describe("art evidence builders", () => {
         {
           assetId: "asset.z-actor",
           kind: "spritesheet",
-          sourceFiles: [
-            { path: "art/actor.aseprite", sha256: hash, byteLength: 10 },
-          ],
+          sourceFiles: [{ path: "art/actor.aseprite", sha256: hash, byteLength: 10 }],
           outputFiles: [
             {
               role: "atlas-manifest",
@@ -195,9 +179,7 @@ describe("art evidence builders", () => {
         {
           assetId: "asset.a-office",
           kind: "image",
-          sourceFiles: [
-            { path: "art/office.png", sha256: hash, byteLength: 10 },
-          ],
+          sourceFiles: [{ path: "art/office.png", sha256: hash, byteLength: 10 }],
           outputFiles: [
             {
               role: "primary",
@@ -223,20 +205,14 @@ describe("art evidence builders", () => {
     ]);
     const reads: string[] = [];
 
-    const evidence = await createArtVisualEvidenceFromAssetManifest(
-      manifest,
-      async (_assetId, output) => {
-        reads.push(output.runtimePath);
-        const bytes = bytesByPath.get(output.runtimePath);
-        if (!bytes) throw new Error(`Unexpected output '${output.runtimePath}'.`);
-        return bytes;
-      },
-    );
+    const evidence = await createArtVisualEvidenceFromAssetManifest(manifest, async (_assetId, output) => {
+      reads.push(output.runtimePath);
+      const bytes = bytesByPath.get(output.runtimePath);
+      if (!bytes) throw new Error(`Unexpected output '${output.runtimePath}'.`);
+      return bytes;
+    });
 
-    expect(reads).toEqual([
-      "assets/office.png",
-      "assets/actor/page.png",
-    ]);
+    expect(reads).toEqual(["assets/office.png", "assets/actor/page.png"]);
     expect(evidence).toMatchObject({
       projectId: "project.manifest-evidence",
       compilerVersion: "2.0.0",

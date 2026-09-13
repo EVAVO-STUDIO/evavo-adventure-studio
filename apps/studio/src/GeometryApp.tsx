@@ -1,12 +1,3 @@
-import {
-  useCallback,
-  useEffect,
-  useReducer,
-  useState,
-  type Dispatch,
-  type PointerEvent as ReactPointerEvent,
-  type ReactNode,
-} from "react";
 import type { ProjectEditorCommand } from "@evavo/adventure-project-editor-core";
 import type {
   DepthBand,
@@ -16,10 +7,23 @@ import type {
   NavigationArea,
   Point,
 } from "@evavo/adventure-project-schema";
+import {
+  type Dispatch,
+  type ReactNode,
+  type PointerEvent as ReactPointerEvent,
+  useCallback,
+  useEffect,
+  useReducer,
+  useState,
+} from "react";
 import { studioProject } from "./fixture.js";
 import {
   createGeometryWorkspace,
   deleteGeometrySelectionCommand,
+  type GeometrySelection,
+  type GeometryTool,
+  type GeometryWorkspaceAction,
+  type GeometryWorkspaceState,
   geometryProject,
   geometryScene,
   geometryWorkspaceIsDirty,
@@ -29,10 +33,6 @@ import {
   replaceHotspotVertexCommand,
   replaceNavigationVertexCommand,
   selectedGeometryEntity,
-  type GeometrySelection,
-  type GeometryTool,
-  type GeometryWorkspaceAction,
-  type GeometryWorkspaceState,
 } from "./geometry-workspace.js";
 import "./geometry.css";
 
@@ -66,26 +66,15 @@ const Button = ({
   </button>
 );
 
-const scenePoint = (
-  event: ReactPointerEvent<SVGSVGElement>,
-  width: number,
-  height: number,
-): Point => {
+const scenePoint = (event: ReactPointerEvent<SVGSVGElement>, width: number, height: number): Point => {
   const bounds = event.currentTarget.getBoundingClientRect();
   return {
-    x: Math.min(
-      width - 1,
-      Math.max(0, ((event.clientX - bounds.left) / bounds.width) * width),
-    ),
-    y: Math.min(
-      height - 1,
-      Math.max(0, ((event.clientY - bounds.top) / bounds.height) * height),
-    ),
+    x: Math.min(width - 1, Math.max(0, ((event.clientX - bounds.left) / bounds.width) * width)),
+    y: Math.min(height - 1, Math.max(0, ((event.clientY - bounds.top) / bounds.height) * height)),
   };
 };
 
-const points = (value: readonly Point[]): string =>
-  value.map((point) => `${point.x},${point.y}`).join(" ");
+const points = (value: readonly Point[]): string => value.map((point) => `${point.x},${point.y}`).join(" ");
 
 const GeometryBackdrop = ({ sceneId }: { readonly sceneId: Id<"scene"> }) =>
   sceneId === "scene.alley" ? (
@@ -163,11 +152,7 @@ const GeometryCanvas = ({
         drag.point,
       );
     } else {
-      command = replaceEntrancePositionCommand(
-        state,
-        asId<"entrance">(drag.entityId),
-        drag.point,
-      );
+      command = replaceEntrancePositionCommand(state, asId<"entrance">(drag.entityId), drag.point);
     }
     dispatch({
       type: "execute",
@@ -189,9 +174,7 @@ const GeometryCanvas = ({
   };
 
   const previewEntrance = (entrance: Entrance): Point =>
-    drag?.kind === "entrance" && drag.entityId === entrance.id
-      ? drag.point
-      : entrance.position;
+    drag?.kind === "entrance" && drag.entityId === entrance.id ? drag.point : entrance.position;
 
   return (
     <div className="geometry-viewport-scroll">
@@ -214,31 +197,13 @@ const GeometryCanvas = ({
         >
           <GeometryBackdrop sceneId={scene.id} />
           {state.showGrid ? (
-            <g className="grid-overlay" aria-hidden="true">
-              {Array.from(
-                { length: Math.floor(scene.width / 16) + 1 },
-                (_, index) => (
-                  <line
-                    key={`x-${index}`}
-                    x1={index * 16}
-                    y1="0"
-                    x2={index * 16}
-                    y2={scene.height}
-                  />
-                ),
-              )}
-              {Array.from(
-                { length: Math.floor(scene.height / 16) + 1 },
-                (_, index) => (
-                  <line
-                    key={`y-${index}`}
-                    x1="0"
-                    y1={index * 16}
-                    x2={scene.width}
-                    y2={index * 16}
-                  />
-                ),
-              )}
+            <g className="grid-overlay">
+              {Array.from({ length: Math.floor(scene.width / 16) + 1 }, (_, index) => (
+                <line key={`x-${index}`} x1={index * 16} y1="0" x2={index * 16} y2={scene.height} />
+              ))}
+              {Array.from({ length: Math.floor(scene.height / 16) + 1 }, (_, index) => (
+                <line key={`y-${index}`} x1="0" y1={index * 16} x2={scene.width} y2={index * 16} />
+              ))}
             </g>
           ) : null}
 
@@ -246,13 +211,8 @@ const GeometryCanvas = ({
             <g className="walkmesh-editor-layer">
               {scene.navigationAreas.map((area) => {
                 const selected =
-                  state.selection?.kind === "navigation-area" &&
-                  state.selection.id === area.id;
-                const displayPoints = previewPolygon(
-                  area.id,
-                  "navigation-area",
-                  area.shape.points,
-                );
+                  state.selection?.kind === "navigation-area" && state.selection.id === area.id;
+                const displayPoints = previewPolygon(area.id, "navigation-area", area.shape.points);
                 return (
                   <g key={area.id} className={selected ? "is-selected" : ""}>
                     <polygon
@@ -292,14 +252,8 @@ const GeometryCanvas = ({
           {state.tool === "hotspots" ? (
             <g className="hotspot-editor-layer">
               {scene.hotspots.map((hotspot) => {
-                const selected =
-                  state.selection?.kind === "hotspot" &&
-                  state.selection.id === hotspot.id;
-                const displayPoints = previewPolygon(
-                  hotspot.id,
-                  "hotspot",
-                  hotspot.shape.points,
-                );
+                const selected = state.selection?.kind === "hotspot" && state.selection.id === hotspot.id;
+                const displayPoints = previewPolygon(hotspot.id, "hotspot", hotspot.shape.points);
                 return (
                   <g key={hotspot.id} className={selected ? "is-selected" : ""}>
                     <polygon
@@ -339,9 +293,7 @@ const GeometryCanvas = ({
           {state.tool === "depth" ? (
             <g className="depth-editor-layer">
               {scene.depthBands.map((band) => {
-                const selected =
-                  state.selection?.kind === "depth-band" &&
-                  state.selection.id === band.id;
+                const selected = state.selection?.kind === "depth-band" && state.selection.id === band.id;
                 return (
                   <g
                     key={band.id}
@@ -378,9 +330,7 @@ const GeometryCanvas = ({
             <g className="entrance-editor-layer">
               {scene.entrances.map((entrance) => {
                 const position = previewEntrance(entrance);
-                const selected =
-                  state.selection?.kind === "entrance" &&
-                  state.selection.id === entrance.id;
+                const selected = state.selection?.kind === "entrance" && state.selection.id === entrance.id;
                 return (
                   <g key={entrance.id} className={selected ? "is-selected" : ""}>
                     <circle
@@ -401,18 +351,8 @@ const GeometryCanvas = ({
                         });
                       }}
                     />
-                    <line
-                      x1={position.x - 10}
-                      y1={position.y}
-                      x2={position.x + 10}
-                      y2={position.y}
-                    />
-                    <line
-                      x1={position.x}
-                      y1={position.y - 10}
-                      x2={position.x}
-                      y2={position.y + 10}
-                    />
+                    <line x1={position.x - 10} y1={position.y} x2={position.x + 10} y2={position.y} />
+                    <line x1={position.x} y1={position.y - 10} x2={position.x} y2={position.y + 10} />
                   </g>
                 );
               })}
@@ -424,17 +364,11 @@ const GeometryCanvas = ({
   );
 };
 
-const Field = ({
-  label,
-  children,
-}: {
-  readonly label: string;
-  readonly children: ReactNode;
-}) => (
-  <label className="field">
+const Field = ({ label, children }: { readonly label: string; readonly children: ReactNode }) => (
+  <div className="field">
     <span>{label}</span>
     {children}
-  </label>
+  </div>
 );
 
 const NumberInput = ({
@@ -531,9 +465,7 @@ const GeometryInspector = ({
             <Field label="Elevation">
               <NumberInput
                 value={entity.value.elevation}
-                onChange={(elevation) =>
-                  replaceArea({ ...entity.value, elevation })
-                }
+                onChange={(elevation) => replaceArea({ ...entity.value, elevation })}
               />
             </Field>
             <div className="geometry-stat-row">
@@ -564,18 +496,14 @@ const GeometryInspector = ({
                 <NumberInput
                   value={entity.value.farScale}
                   step={0.05}
-                  onChange={(farScale) =>
-                    replaceBand({ ...entity.value, farScale })
-                  }
+                  onChange={(farScale) => replaceBand({ ...entity.value, farScale })}
                 />
               </Field>
               <Field label="Near scale">
                 <NumberInput
                   value={entity.value.nearScale}
                   step={0.05}
-                  onChange={(nearScale) =>
-                    replaceBand({ ...entity.value, nearScale })
-                  }
+                  onChange={(nearScale) => replaceBand({ ...entity.value, nearScale })}
                 />
               </Field>
             </div>
@@ -708,10 +636,7 @@ const downloadProject = (state: GeometryWorkspaceState): void => {
 };
 
 export const GeometryApp = () => {
-  const [state, dispatch] = useReducer(
-    geometryWorkspaceReducer,
-    createGeometryWorkspace(studioProject),
-  );
+  const [state, dispatch] = useReducer(geometryWorkspaceReducer, createGeometryWorkspace(studioProject));
   const scene = geometryScene(state);
   const project = geometryProject(state);
   const dirty = geometryWorkspaceIsDirty(state);
@@ -733,9 +658,7 @@ export const GeometryApp = () => {
       dispatch({ type: "execute", command, notice: "Removed project geometry." });
       dispatch({ type: "select", selection: null });
     } catch (error) {
-      window.alert(
-        error instanceof Error ? error.message : "Geometry removal failed.",
-      );
+      window.alert(error instanceof Error ? error.message : "Geometry removal failed.");
     }
   }, [state]);
 
@@ -792,16 +715,10 @@ export const GeometryApp = () => {
 
       <div className="toolbar geometry-toolbar">
         <div className="toolbar-group">
-          <Button
-            onClick={() => dispatch({ type: "undo" })}
-            disabled={state.history.undoStack.length === 0}
-          >
+          <Button onClick={() => dispatch({ type: "undo" })} disabled={state.history.undoStack.length === 0}>
             ↶
           </Button>
-          <Button
-            onClick={() => dispatch({ type: "redo" })}
-            disabled={state.history.redoStack.length === 0}
-          >
+          <Button onClick={() => dispatch({ type: "redo" })} disabled={state.history.redoStack.length === 0}>
             ↷
           </Button>
           <span className="toolbar-divider" />
@@ -811,40 +728,23 @@ export const GeometryApp = () => {
           </Button>
         </div>
         <div className="toolbar-group center-tools">
-          {(["walkmesh", "depth", "hotspots", "entrances"] as const).map(
-            (tool) => (
-              <Button
-                key={tool}
-                active={state.tool === tool}
-                onClick={() => dispatch({ type: "set-tool", tool })}
-              >
-                {toolLabel(tool)}
-              </Button>
-            ),
-          )}
+          {(["walkmesh", "depth", "hotspots", "entrances"] as const).map((tool) => (
+            <Button
+              key={tool}
+              active={state.tool === tool}
+              onClick={() => dispatch({ type: "set-tool", tool })}
+            >
+              {toolLabel(tool)}
+            </Button>
+          ))}
         </div>
         <div className="toolbar-group zoom-tools">
-          <Button
-            onClick={() => dispatch({ type: "toggle-grid" })}
-            active={state.showGrid}
-          >
+          <Button onClick={() => dispatch({ type: "toggle-grid" })} active={state.showGrid}>
             Grid
           </Button>
-          <Button
-            onClick={() =>
-              dispatch({ type: "set-zoom", zoom: state.zoom - 0.25 })
-            }
-          >
-            −
-          </Button>
+          <Button onClick={() => dispatch({ type: "set-zoom", zoom: state.zoom - 0.25 })}>−</Button>
           <span>{Math.round(state.zoom * 100)}%</span>
-          <Button
-            onClick={() =>
-              dispatch({ type: "set-zoom", zoom: state.zoom + 0.25 })
-            }
-          >
-            +
-          </Button>
+          <Button onClick={() => dispatch({ type: "set-zoom", zoom: state.zoom + 0.25 })}>+</Button>
         </div>
       </div>
 
@@ -861,21 +761,14 @@ export const GeometryApp = () => {
               <button
                 type="button"
                 key={candidate.id}
-                className={`scene-row ${
-                  candidate.id === state.activeSceneId ? "is-active" : ""
-                }`}
-                onClick={() =>
-                  dispatch({ type: "select-scene", sceneId: candidate.id })
-                }
+                className={`scene-row ${candidate.id === state.activeSceneId ? "is-active" : ""}`}
+                onClick={() => dispatch({ type: "select-scene", sceneId: candidate.id })}
               >
-                <span className="scene-index">
-                  {String(index + 1).padStart(2, "0")}
-                </span>
+                <span className="scene-index">{String(index + 1).padStart(2, "0")}</span>
                 <span className="scene-copy">
                   <strong>{candidate.name}</strong>
                   <span>
-                    {candidate.navigationAreas.length} areas ·{" "}
-                    {candidate.hotspots.length} hotspots
+                    {candidate.navigationAreas.length} areas · {candidate.hotspots.length} hotspots
                   </span>
                 </span>
                 <span className="scene-dot" />
@@ -885,8 +778,8 @@ export const GeometryApp = () => {
           <div className="geometry-help">
             <span className="section-label">AUTHORING RULE</span>
             <p>
-              Drag native vertices. Every commit becomes one reversible project
-              command; start scenes and entrances remain protected.
+              Drag native vertices. Every commit becomes one reversible project command; start scenes and
+              entrances remain protected.
             </p>
           </div>
           <div className="sidebar-footer">

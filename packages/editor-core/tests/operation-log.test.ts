@@ -1,13 +1,7 @@
-import { describe, expect, it } from "vitest";
 import { parseSceneInstanceManifest } from "@evavo/adventure-scene-instances";
-import {
-  parseEditorCommand,
-  parseEditorOperationLog,
-} from "../src/command-schema.js";
-import {
-  EditorOperationLogError,
-  replayEditorOperationLog,
-} from "../src/operation-log.js";
+import { describe, expect, it } from "vitest";
+import { parseEditorCommand, parseEditorOperationLog } from "../src/command-schema.js";
+import { type EditorOperationLogError, replayEditorOperationLog } from "../src/operation-log.js";
 
 const manifest = parseSceneInstanceManifest({
   manifestVersion: 1,
@@ -50,9 +44,7 @@ describe("editor command schemas", () => {
   });
 
   it("rejects malformed recursive batches", () => {
-    expect(() =>
-      parseEditorCommand({ kind: "batch", commands: [] }),
-    ).toThrow();
+    expect(() => parseEditorCommand({ kind: "batch", commands: [] })).toThrow();
   });
 });
 
@@ -87,13 +79,11 @@ describe("editor operation logs", () => {
 
     const replayed = replayEditorOperationLog(manifest, log);
 
-    expect(replayed.appliedOperationIds).toEqual([
-      "operation.move-detective",
-      "operation.fix-detective",
-    ]);
-    expect(
-      replayed.history.document.manifest.scenes[0]?.actorInstances[0]?.position,
-    ).toEqual({ x: 118, y: 170 });
+    expect(replayed.appliedOperationIds).toEqual(["operation.move-detective", "operation.fix-detective"]);
+    expect(replayed.history.document.manifest.scenes[0]?.actorInstances[0]?.position).toEqual({
+      x: 118,
+      y: 170,
+    });
     expect(replayed.history.undoStack).toHaveLength(2);
   });
 

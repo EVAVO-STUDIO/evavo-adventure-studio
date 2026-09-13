@@ -1,22 +1,23 @@
+import type { AudioMixManifest } from "@evavo/adventure-audio";
 import type { AssetBuildManifest } from "@evavo/adventure-asset-contract";
 import type { BitmapFontManifest } from "@evavo/adventure-bitmap-font";
 import type { AdventureProject } from "@evavo/adventure-project-schema";
 import { parseRuntimeBundle } from "@evavo/adventure-runtime-bundle";
 import {
   emptySceneInstanceManifest,
-  validateSceneInstanceManifest,
   type SceneInstanceIssue,
   type SceneInstanceManifest,
+  validateSceneInstanceManifest,
 } from "@evavo/adventure-scene-instances";
 import {
-  validateCompiledObjectVisualMappings,
   type CompiledObjectVisualIssue,
+  validateCompiledObjectVisualMappings,
 } from "@evavo/adventure-scene-instances/compiled-mapping";
 import type { UiSkinManifest } from "@evavo/adventure-ui-skin";
 import {
+  type CompiledProject,
   canonicalStringify,
   compileProject,
-  type CompiledProject,
 } from "./index.js";
 
 export type SceneInstanceCompilationIssue =
@@ -77,9 +78,12 @@ const fnv1a64 = (value: string): string => {
 export const compileProjectWithInstances = (
   project: AdventureProject,
   assetManifest: AssetBuildManifest,
-  sceneInstances: SceneInstanceManifest = emptySceneInstanceManifest(project.id),
+  sceneInstances: SceneInstanceManifest = emptySceneInstanceManifest(
+    project.id,
+  ),
   bitmapFonts?: BitmapFontManifest,
   uiSkins?: UiSkinManifest,
+  audioMix?: AudioMixManifest,
 ): CompiledProject => {
   const instanceIssues = validateSceneInstanceManifest(
     {
@@ -110,6 +114,7 @@ export const compileProjectWithInstances = (
     assetManifest,
     bitmapFonts,
     uiSkins,
+    audioMix,
   );
   const bundle = parseRuntimeBundle({
     ...base.bundle,
@@ -138,6 +143,7 @@ export const tryCompileProjectWithInstances = (
   sceneInstances?: SceneInstanceManifest,
   bitmapFonts?: BitmapFontManifest,
   uiSkins?: UiSkinManifest,
+  audioMix?: AudioMixManifest,
 ): SceneInstanceCompilationResult => {
   try {
     return {
@@ -148,6 +154,7 @@ export const tryCompileProjectWithInstances = (
         sceneInstances,
         bitmapFonts,
         uiSkins,
+        audioMix,
       ),
     };
   } catch (error) {

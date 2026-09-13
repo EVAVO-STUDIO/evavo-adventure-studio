@@ -1,8 +1,4 @@
-import {
-  colourLuminance,
-  colourSaturation,
-  validHexColour,
-} from "./authenticity-colour.js";
+import { colourLuminance, colourSaturation, validHexColour } from "./authenticity-colour.js";
 import {
   addAuthenticityCheck,
   createAuthenticityDimension,
@@ -11,18 +7,14 @@ import {
 import type { AdventureDesignDocument } from "./types.js";
 
 const distinctStrings = (values: readonly string[]): boolean =>
-  new Set(values.map((value) => value.trim().toLocaleLowerCase("en-US"))).size ===
-  values.length;
+  new Set(values.map((value) => value.trim().toLocaleLowerCase("en-US"))).size === values.length;
 
-const nativeCanvas = (
-  document: AdventureDesignDocument,
-): MutableAuthenticityDimension => {
+const nativeCanvas = (document: AdventureDesignDocument): MutableAuthenticityDimension => {
   const result = createAuthenticityDimension("native-canvas");
   const size = document.creativeDirection.nativeSize;
   addAuthenticityCheck(
     result,
-    (size.width === 320 && size.height === 200) ||
-      (size.width === 640 && size.height === 480),
+    (size.width === 320 && size.height === 200) || (size.width === 640 && size.height === 480),
     4,
     {
       id: "native-canvas-nonstandard",
@@ -34,32 +26,22 @@ const nativeCanvas = (
     },
   );
   const palette = document.creativeDirection.palette;
-  addAuthenticityCheck(
-    result,
-    palette.maxColours >= 16 && palette.maxColours <= 256,
-    3,
-    {
-      id: "native-canvas-colour-budget",
-      severity: "warning",
-      path: "creativeDirection.palette.maxColours",
-      message: "The colour budget is outside the common 16-to-256-colour authored range.",
-      recommendation:
-        "For a VGA identity, build around a controlled indexed budget no greater than 256 colours.",
-    },
-  );
-  addAuthenticityCheck(
-    result,
-    palette.keyColours.length >= 6 && palette.keyColours.length <= 24,
-    2,
-    {
-      id: "native-canvas-anchor-count",
-      severity: "warning",
-      path: "creativeDirection.palette.keyColours",
-      message: "The anchor palette is too sparse or too diffuse to guide production.",
-      recommendation:
-        "Define six to twenty-four anchors for shadow, material, skin, environmental light and UI accents.",
-    },
-  );
+  addAuthenticityCheck(result, palette.maxColours >= 16 && palette.maxColours <= 256, 3, {
+    id: "native-canvas-colour-budget",
+    severity: "warning",
+    path: "creativeDirection.palette.maxColours",
+    message: "The colour budget is outside the common 16-to-256-colour authored range.",
+    recommendation:
+      "For a VGA identity, build around a controlled indexed budget no greater than 256 colours.",
+  });
+  addAuthenticityCheck(result, palette.keyColours.length >= 6 && palette.keyColours.length <= 24, 2, {
+    id: "native-canvas-anchor-count",
+    severity: "warning",
+    path: "creativeDirection.palette.keyColours",
+    message: "The anchor palette is too sparse or too diffuse to guide production.",
+    recommendation:
+      "Define six to twenty-four anchors for shadow, material, skin, environmental light and UI accents.",
+  });
   addAuthenticityCheck(
     result,
     document.creativeDirection.authenticityRules.some((rule) =>
@@ -78,9 +60,7 @@ const nativeCanvas = (
   return result;
 };
 
-const paletteValues = (
-  document: AdventureDesignDocument,
-): MutableAuthenticityDimension => {
+const paletteValues = (document: AdventureDesignDocument): MutableAuthenticityDimension => {
   const result = createAuthenticityDimension("palette-values");
   const colours = document.creativeDirection.palette.keyColours;
   const valid = colours.filter(validHexColour);
@@ -88,16 +68,13 @@ const paletteValues = (
     .map(colourLuminance)
     .filter((value): value is number => value !== null)
     .sort((left, right) => left - right);
-  const saturations = valid
-    .map(colourSaturation)
-    .filter((value): value is number => value !== null);
+  const saturations = valid.map(colourSaturation).filter((value): value is number => value !== null);
   addAuthenticityCheck(result, valid.length === colours.length, 2, {
     id: "palette-invalid-anchor",
     severity: "error",
     path: "creativeDirection.palette.keyColours",
     message: "One or more anchors are not six-digit hexadecimal colours.",
-    recommendation:
-      "Store deterministic #RRGGBB anchors so value and saturation review is reproducible.",
+    recommendation: "Store deterministic #RRGGBB anchors so value and saturation review is reproducible.",
   });
   addAuthenticityCheck(
     result,
@@ -126,23 +103,25 @@ const paletteValues = (
     severity: "note",
     path: "creativeDirection.palette.keyColours",
     message: "The palette lacks a strong shadow or readable highlight anchor.",
-    recommendation:
-      "Reserve extreme values for silhouettes, faces, exits and consequential props.",
+    recommendation: "Reserve extreme values for silhouettes, faces, exits and consequential props.",
   });
-  addAuthenticityCheck(result, saturations.some((value) => value >= 0.55), 1, {
-    id: "palette-accent-missing",
-    severity: "note",
-    path: "creativeDirection.palette.keyColours",
-    message: "No anchor provides a decisive chromatic accent.",
-    recommendation:
-      "Reserve one saturated family for interaction, danger, magic or another project meaning.",
-  });
+  addAuthenticityCheck(
+    result,
+    saturations.some((value) => value >= 0.55),
+    1,
+    {
+      id: "palette-accent-missing",
+      severity: "note",
+      path: "creativeDirection.palette.keyColours",
+      message: "No anchor provides a decisive chromatic accent.",
+      recommendation:
+        "Reserve one saturated family for interaction, danger, magic or another project meaning.",
+    },
+  );
   return result;
 };
 
-const sceneComposition = (
-  document: AdventureDesignDocument,
-): MutableAuthenticityDimension => {
+const sceneComposition = (document: AdventureDesignDocument): MutableAuthenticityDimension => {
   const result = createAuthenticityDimension("scene-composition");
   const size = document.creativeDirection.nativeSize;
   addAuthenticityCheck(
@@ -203,8 +182,7 @@ const sceneComposition = (
       severity: "note",
       path: "map.locations",
       message: "Every location uses the same spatial role.",
-      recommendation:
-        "Mix hubs, interiors, travel beats, close-ups and set pieces to vary visual rhythm.",
+      recommendation: "Mix hubs, interiors, travel beats, close-ups and set pieces to vary visual rhythm.",
     },
   );
   addAuthenticityCheck(
@@ -222,9 +200,7 @@ const sceneComposition = (
   return result;
 };
 
-const actorPerformance = (
-  document: AdventureDesignDocument,
-): MutableAuthenticityDimension => {
+const actorPerformance = (document: AdventureDesignDocument): MutableAuthenticityDimension => {
   const result = createAuthenticityDimension("actor-performance");
   const direction = document.creativeDirection;
   addAuthenticityCheck(result, direction.actorSilhouette.length >= 40, 3, {
@@ -248,8 +224,7 @@ const actorPerformance = (
     severity: "warning",
     path: "creativeDirection.animationCadence",
     message: "Animation cadence lacks enough key-pose direction.",
-    recommendation:
-      "Define anticipation, contact, reaction, held poses, loop closure and frame budgets.",
+    recommendation: "Define anticipation, contact, reaction, held poses, loop closure and frame budgets.",
   });
   addAuthenticityCheck(result, direction.authenticityRules.length >= 4, 1, {
     id: "actor-authenticity-rules-sparse",
@@ -268,9 +243,7 @@ const actorPerformance = (
   return result;
 };
 
-const interfaceIdentity = (
-  document: AdventureDesignDocument,
-): MutableAuthenticityDimension => {
+const interfaceIdentity = (document: AdventureDesignDocument): MutableAuthenticityDimension => {
   const result = createAuthenticityDimension("interface-identity");
   const direction = document.creativeDirection;
   addAuthenticityCheck(result, direction.interfaceTreatment.length >= 48, 4, {
@@ -292,8 +265,7 @@ const interfaceIdentity = (
       severity: "note",
       path: "creativeDirection.prohibitedShortcuts",
       message: "No shortcut rule protects the interface from generic modern treatment.",
-      recommendation:
-        "Ban the overlays, glass panels, vector type or markers that break this fiction.",
+      recommendation: "Ban the overlays, glass panels, vector type or markers that break this fiction.",
     },
   );
   addAuthenticityCheck(result, direction.palette.keyColours.length >= 6, 2, {
@@ -313,9 +285,7 @@ const interfaceIdentity = (
   return result;
 };
 
-const audioIdentity = (
-  document: AdventureDesignDocument,
-): MutableAuthenticityDimension => {
+const audioIdentity = (document: AdventureDesignDocument): MutableAuthenticityDimension => {
   const result = createAuthenticityDimension("audio-identity");
   const direction = document.creativeDirection;
   addAuthenticityCheck(result, direction.musicDirection.length >= 40, 3, {
@@ -323,40 +293,33 @@ const audioIdentity = (
     severity: "warning",
     path: "creativeDirection.musicDirection",
     message: "Music direction cannot yet guide thematic and dramatic continuity.",
-    recommendation:
-      "Define instrumentation, motif ownership, transitions and when silence leads.",
+    recommendation: "Define instrumentation, motif ownership, transitions and when silence leads.",
   });
   addAuthenticityCheck(result, direction.ambienceDirection.length >= 40, 3, {
     id: "audio-ambience-thin",
     severity: "warning",
     path: "creativeDirection.ambienceDirection",
     message: "Ambience direction cannot yet create a coherent environmental identity.",
-    recommendation:
-      "Define room tone, weather, machinery, wildlife, crowds and state changes.",
+    recommendation: "Define room tone, weather, machinery, wildlife, crowds and state changes.",
   });
   const locations = document.map.locations;
   const cueCoverage =
-    locations.length === 0
-      ? 0
-      : locations.filter((location) => location.musicCue).length / locations.length;
+    locations.length === 0 ? 0 : locations.filter((location) => location.musicCue).length / locations.length;
   addAuthenticityCheck(result, cueCoverage >= 0.5, 2, {
     id: "audio-location-cue-coverage",
     severity: "note",
     path: "map.locations",
     message: "Fewer than half of the locations define a musical arrival cue.",
-    recommendation:
-      "Assign cues to major locations and deliberately mark ambience-led or silent spaces.",
+    recommendation: "Assign cues to major locations and deliberately mark ambience-led or silent spaces.",
   });
   const shots = document.cutscenes.flatMap((cutscene) => cutscene.shots);
-  const soundCoverage =
-    shots.length === 0 ? 0 : shots.filter((shot) => shot.sound).length / shots.length;
+  const soundCoverage = shots.length === 0 ? 0 : shots.filter((shot) => shot.sound).length / shots.length;
   addAuthenticityCheck(result, soundCoverage >= 0.5, 2, {
     id: "audio-storyboard-sound-coverage",
     severity: "note",
     path: "cutscenes",
     message: "Fewer than half of storyboard shots carry explicit sound intent.",
-    recommendation:
-      "Mark dialogue, music, ambience, sync effects or intentional silence per shot.",
+    recommendation: "Mark dialogue, music, ambience, sync effects or intentional silence per shot.",
   });
   return result;
 };

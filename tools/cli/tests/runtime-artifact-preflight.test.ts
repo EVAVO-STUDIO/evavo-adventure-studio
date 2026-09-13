@@ -8,9 +8,7 @@ const directories: string[] = [];
 
 afterEach(async () => {
   await Promise.all(
-    directories.splice(0).map((directory) =>
-      rm(directory, { recursive: true, force: true }),
-    ),
+    directories.splice(0).map((directory) => rm(directory, { recursive: true, force: true })),
   );
 });
 
@@ -22,14 +20,7 @@ describe("runtime artifact preflight wrapper", () => {
     let stderr = "";
 
     const exitCode = await runRuntimeArtifactCli(
-      [
-        "save-validate",
-        "--bundle",
-        directory,
-        "--save",
-        "missing.save.json",
-        "--json",
-      ],
+      ["save-validate", "--bundle", directory, "--save", "missing.save.json", "--json"],
       {
         stdout: (text) => {
           stdout += text;
@@ -58,15 +49,12 @@ describe("runtime artifact preflight wrapper", () => {
 
   it("delegates malformed usage to the established command parser", async () => {
     let stdout = "";
-    const exitCode = await runRuntimeArtifactCli(
-      ["replay-validate", "--json", "--json"],
-      {
-        stdout: (text) => {
-          stdout += text;
-        },
-        stderr: () => undefined,
+    const exitCode = await runRuntimeArtifactCli(["replay-validate", "--json", "--json"], {
+      stdout: (text) => {
+        stdout += text;
       },
-    );
+      stderr: () => undefined,
+    });
 
     expect(exitCode).toBe(2);
     expect(JSON.parse(stdout)).toMatchObject({

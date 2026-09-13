@@ -1,9 +1,4 @@
-import type {
-  Id,
-  NavigationArea,
-  Point,
-  Polygon,
-} from "@evavo/adventure-project-schema";
+import type { Id, NavigationArea, Point, Polygon } from "@evavo/adventure-project-schema";
 import { pointInPolygon } from "./index.js";
 
 const EPSILON = 1e-7;
@@ -91,35 +86,25 @@ const squaredDistance = (left: Point, right: Point): number => {
   return x * x + y * y;
 };
 
-const distance = (left: Point, right: Point): number =>
-  Math.sqrt(squaredDistance(left, right));
+const distance = (left: Point, right: Point): number => Math.sqrt(squaredDistance(left, right));
 
 const clamp01 = (value: number): number => Math.max(0, Math.min(1, value));
 
-export const closestPointOnSegment = (
-  point: Point,
-  start: Point,
-  end: Point,
-): Point => {
+export const closestPointOnSegment = (point: Point, start: Point, end: Point): Point => {
   const x = end.x - start.x;
   const y = end.y - start.y;
   const lengthSquared = x * x + y * y;
   if (lengthSquared <= EPSILON) {
     return start;
   }
-  const progress = clamp01(
-    ((point.x - start.x) * x + (point.y - start.y) * y) / lengthSquared,
-  );
+  const progress = clamp01(((point.x - start.x) * x + (point.y - start.y) * y) / lengthSquared);
   return {
     x: start.x + x * progress,
     y: start.y + y * progress,
   };
 };
 
-export const closestPointOnPolygon = (
-  point: Point,
-  polygon: Polygon,
-): Point => {
+export const closestPointOnPolygon = (point: Point, polygon: Polygon): Point => {
   if (pointInPolygon(point, polygon)) {
     return point;
   }
@@ -138,8 +123,7 @@ export const closestPointOnPolygon = (
       candidateDistance < selectedDistance - EPSILON ||
       (Math.abs(candidateDistance - selectedDistance) <= EPSILON &&
         selected !== null &&
-        (candidate.x < selected.x ||
-          (candidate.x === selected.x && candidate.y < selected.y)))
+        (candidate.x < selected.x || (candidate.x === selected.x && candidate.y < selected.y)))
     ) {
       selected = candidate;
       selectedDistance = candidateDistance;
@@ -152,8 +136,7 @@ export const closestPointOnPolygon = (
   return selected;
 };
 
-const cross = (left: Point, right: Point): number =>
-  left.x * right.y - left.y * right.x;
+const cross = (left: Point, right: Point): number => left.x * right.y - left.y * right.x;
 
 const subtract = (left: Point, right: Point): Point => ({
   x: left.x - right.x,
@@ -196,15 +179,12 @@ const segmentIntersectionParameters = (
     return [0];
   }
   const project = (point: Point): number =>
-    ((point.x - start.x) * route.x + (point.y - start.y) * route.y) /
-    routeLengthSquared;
+    ((point.x - start.x) * route.x + (point.y - start.y) * route.y) / routeLengthSquared;
   const first = project(edgeStart);
   const second = project(edgeEnd);
   const minimum = Math.max(0, Math.min(first, second));
   const maximum = Math.min(1, Math.max(first, second));
-  return minimum <= maximum + EPSILON
-    ? [clamp01(minimum), clamp01(maximum)]
-    : [];
+  return minimum <= maximum + EPSILON ? [clamp01(minimum), clamp01(maximum)] : [];
 };
 
 const uniqueSorted = (values: readonly number[]): readonly number[] => {
@@ -218,11 +198,7 @@ const uniqueSorted = (values: readonly number[]): readonly number[] => {
   return result;
 };
 
-export const segmentInsidePolygon = (
-  start: Point,
-  end: Point,
-  polygon: Polygon,
-): boolean => {
+export const segmentInsidePolygon = (start: Point, end: Point, polygon: Polygon): boolean => {
   if (!pointInPolygon(start, polygon) || !pointInPolygon(end, polygon)) {
     return false;
   }
@@ -235,9 +211,7 @@ export const segmentInsidePolygon = (
     const edgeStart = polygon.points[index];
     const edgeEnd = polygon.points[(index + 1) % polygon.points.length];
     if (edgeStart && edgeEnd) {
-      intersections.push(
-        ...segmentIntersectionParameters(start, end, edgeStart, edgeEnd),
-      );
+      intersections.push(...segmentIntersectionParameters(start, end, edgeStart, edgeEnd));
     }
   }
 
@@ -294,9 +268,7 @@ const resolvePoint = (
       }
       return left.area.id.localeCompare(right.area.id);
     })[0];
-  return selected
-    ? { point: selected.point, areaIds: [selected.area.id], snapped: true }
-    : null;
+  return selected ? { point: selected.point, areaIds: [selected.area.id], snapped: true } : null;
 };
 
 const buildGraph = (
@@ -340,13 +312,13 @@ const buildGraph = (
   );
 
   for (const area of areas) {
-    area.shape.points.forEach((point, index) =>
+    area.shape.points.forEach((point, index) => {
       addNode({
         key: `vertex:${area.id}:${index}`,
         point,
         areaId: area.id,
-      }),
-    );
+      });
+    });
   }
 
   const validPortals: {
@@ -354,9 +326,7 @@ const buildGraph = (
     readonly to: GraphNode;
     readonly portal: NavigationPortal;
   }[] = [];
-  for (const portal of [...portals].sort((left, right) =>
-    left.id.localeCompare(right.id),
-  )) {
+  for (const portal of [...portals].sort((left, right) => left.id.localeCompare(right.id))) {
     const fromArea = areaMap.get(portal.fromAreaId);
     const toArea = areaMap.get(portal.toAreaId);
     if (
@@ -391,18 +361,10 @@ const buildGraph = (
     }
     areaNodes.sort((left, right) => left.key.localeCompare(right.key));
     for (let leftIndex = 0; leftIndex < areaNodes.length; leftIndex += 1) {
-      for (
-        let rightIndex = leftIndex + 1;
-        rightIndex < areaNodes.length;
-        rightIndex += 1
-      ) {
+      for (let rightIndex = leftIndex + 1; rightIndex < areaNodes.length; rightIndex += 1) {
         const left = areaNodes[leftIndex];
         const right = areaNodes[rightIndex];
-        if (
-          !left ||
-          !right ||
-          !segmentInsidePolygon(left.point, right.point, area.shape)
-        ) {
+        if (!left || !right || !segmentInsidePolygon(left.point, right.point, area.shape)) {
           continue;
         }
         const cost = distance(left.point, right.point);
@@ -427,8 +389,7 @@ const buildGraph = (
   }
 
   for (const { from, to, portal } of validPortals) {
-    const cost =
-      distance(from.point, to.point) + (portal.traversalCost ?? 0);
+    const cost = distance(from.point, to.point) + (portal.traversalCost ?? 0);
     addEdge({
       fromKey: from.key,
       toKey: to.key,
@@ -484,9 +445,7 @@ const solveGraph = (
       const difference =
         (distances.get(left) ?? Number.POSITIVE_INFINITY) -
         (distances.get(right) ?? Number.POSITIVE_INFINITY);
-      return Math.abs(difference) > EPSILON
-        ? difference
-        : left.localeCompare(right);
+      return Math.abs(difference) > EPSILON ? difference : left.localeCompare(right);
     })[0];
     if (!currentKey) {
       break;
@@ -516,8 +475,7 @@ const solveGraph = (
           (existingOrigin === undefined ||
             candidateOrigin < existingOrigin ||
             (candidateOrigin === existingOrigin &&
-              (!existingPrevious ||
-                currentKey < existingPrevious.previousKey))))
+              (!existingPrevious || currentKey < existingPrevious.previousKey))))
       ) {
         distances.set(edge.toKey, candidate);
         origins.set(edge.toKey, candidateOrigin);
@@ -609,12 +567,7 @@ export const findNavigationRoute = (
   }
 
   const graph = buildGraph(areas, portals, start, end);
-  const solution = solveGraph(
-    graph.nodes,
-    graph.edges,
-    graph.startKeys,
-    graph.endKeys,
-  );
+  const solution = solveGraph(graph.nodes, graph.edges, graph.startKeys, graph.endKeys);
   if (!solution) {
     return { kind: "unreachable", reason: "no-connected-route" };
   }
@@ -630,10 +583,7 @@ export const findNavigationRoute = (
     route: {
       points: reconstructed.points,
       segments: reconstructed.segments,
-      distance: reconstructed.segments.reduce(
-        (total, segment) => total + segment.distance,
-        0,
-      ),
+      distance: reconstructed.segments.reduce((total, segment) => total + segment.distance, 0),
       startAreaId: startNode.areaId,
       endAreaId: endNode.areaId,
       snappedStart: start.snapped,

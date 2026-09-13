@@ -1,29 +1,22 @@
-import { describe, expect, it } from "vitest";
 import type { Id } from "@evavo/adventure-project-schema";
 import type { RuntimeBundle } from "@evavo/adventure-runtime-bundle";
-import {
-  createSaveGame,
-  loadSaveGame,
-  type SaveGame,
-} from "@evavo/adventure-save-game";
-import {
-  beginActorMovement,
-} from "@evavo/adventure-scene-runtime/movement";
+import { createSaveGame, loadSaveGame, type SaveGame } from "@evavo/adventure-save-game";
 import {
   advanceInteractiveRuntimeWorld,
   createInitialInteractiveRuntimeWorldState,
   type InteractiveRuntimeWorldState,
 } from "@evavo/adventure-scene-runtime/commands";
+import { beginActorMovement } from "@evavo/adventure-scene-runtime/movement";
+import { describe, expect, it } from "vitest";
 import {
   createReplayLog,
   executeReplay,
   parseReplayLog,
-  serializeReplayLog,
   type ReplayRuntimeAdapter,
+  serializeReplayLog,
 } from "../src/index.js";
 
-const actorInstanceId =
-  "actor-instance.traveller" as Id<"actor-instance">;
+const actorInstanceId = "actor-instance.traveller" as Id<"actor-instance">;
 
 const actorFrame = (frameId: string, x: number) => ({
   id: frameId,
@@ -64,11 +57,7 @@ const bundle = {
     {
       id: "actor.traveller",
       name: "Traveller",
-      frames: [
-        actorFrame("frame.idle", 0),
-        actorFrame("frame.walk-a", 14),
-        actorFrame("frame.walk-b", 28),
-      ],
+      frames: [actorFrame("frame.idle", 0), actorFrame("frame.walk-a", 14), actorFrame("frame.walk-b", 28)],
       animations: [
         {
           id: "animation.idle-east",
@@ -159,18 +148,9 @@ const interfaceState = {
 
 const startedWorld = (): InteractiveRuntimeWorldState => {
   const initial = createInitialInteractiveRuntimeWorldState(bundle);
-  const started = beginActorMovement(
-    bundle,
-    initial,
-    actorInstanceId,
-    { x: 270, y: 160 },
-  );
+  const started = beginActorMovement(bundle, initial, actorInstanceId, { x: 270, y: 160 });
   if (started.kind !== "started") throw new Error("Expected movement start.");
-  return advanceInteractiveRuntimeWorld(
-    bundle,
-    started.state as InteractiveRuntimeWorldState,
-    23,
-  ).state;
+  return advanceInteractiveRuntimeWorld(bundle, started.state as InteractiveRuntimeWorldState, 23).state;
 };
 
 class ProfiledReplayRuntime implements ReplayRuntimeAdapter {
@@ -209,38 +189,22 @@ describe("profiled movement replay convergence", () => {
     const initialWorld = startedWorld();
     const initialSave = createSaveGame(bundle, initialWorld, interfaceState);
     const additionalTicks = 91;
-    const finalWorld = advanceInteractiveRuntimeWorld(
-      bundle,
-      initialWorld,
-      additionalTicks,
-    ).state;
-    const expectedFinalSave = createSaveGame(
-      bundle,
-      finalWorld,
-      interfaceState,
-    );
+    const finalWorld = advanceInteractiveRuntimeWorld(bundle, initialWorld, additionalTicks).state;
+    const expectedFinalSave = createSaveGame(bundle, finalWorld, interfaceState);
     const replay = createReplayLog(bundle, initialSave, {
       events: [],
       finalTick: initialSave.world.story.tick + additionalTicks,
       expectedFinalSaveFingerprint: expectedFinalSave.saveFingerprint,
     });
-    const parsed = parseReplayLog(
-      JSON.parse(serializeReplayLog(replay)) as unknown,
+    const parsed = parseReplayLog(JSON.parse(serializeReplayLog(replay)) as unknown);
+
+    expect(parsed.initialSave.world.movements[actorInstanceId]?.profiled).toEqual(
+      initialSave.world.movements[actorInstanceId]?.profiled,
     );
 
-    expect(
-      parsed.initialSave.world.movements[actorInstanceId]?.profiled,
-    ).toEqual(initialSave.world.movements[actorInstanceId]?.profiled);
+    const result = executeReplay(bundle, parsed, new ProfiledReplayRuntime());
 
-    const result = executeReplay(
-      bundle,
-      parsed,
-      new ProfiledReplayRuntime(),
-    );
-
-    expect(result.finalSaveFingerprint).toBe(
-      expectedFinalSave.saveFingerprint,
-    );
+    expect(result.finalSaveFingerprint).toBe(expectedFinalSave.saveFingerprint);
     expect(result.finalTick).toBe(expectedFinalSave.world.story.tick);
     expect(result.eventCount).toBe(0);
   });

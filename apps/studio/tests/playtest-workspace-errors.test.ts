@@ -1,5 +1,5 @@
-import { describe, expect, it } from "vitest";
 import { parseRuntimeBundle } from "@evavo/adventure-runtime-bundle";
+import { describe, expect, it } from "vitest";
 import {
   clearPlaytestArtifact,
   createPlaytestInspectorWorkspace,
@@ -70,7 +70,6 @@ const bundle = parseRuntimeBundle({
         },
       ],
       fallbackText: "Nothing happens.",
-      interactionIndex: {},
     },
   ],
   dialogues: [],
@@ -89,12 +88,7 @@ describe("Studio playtest workspace error lifecycle", () => {
     );
     expect(state.errors.beforeSave).toContain("not valid JSON");
 
-    state = loadPlaytestArtifactText(
-      state,
-      "before-save",
-      "{}",
-      "replacement.save.json",
-    );
+    state = loadPlaytestArtifactText(state, "before-save", "{}", "replacement.save.json");
 
     expect(state.beforeSaveInput).toEqual({});
     expect(state.beforeSaveName).toBe("replacement.save.json");
@@ -110,24 +104,14 @@ describe("Studio playtest workspace error lifecycle", () => {
       "broken.save.json",
     );
 
-    state = loadPlaytestArtifactText(
-      state,
-      "bundle",
-      json(bundle),
-      "game.bundle.json",
-    );
+    state = loadPlaytestArtifactText(state, "bundle", json(bundle), "game.bundle.json");
 
     expect(state.bundle?.projectId).toBe("project.workspace-errors");
     expect(state.beforeSaveInput).toBeNull();
     expect(state.beforeSaveName).toBe("broken.save.json");
     expect(state.errors.beforeSave).toContain("not valid JSON");
 
-    state = loadPlaytestArtifactText(
-      state,
-      "before-save",
-      "{}",
-      "invalid.save.json",
-    );
+    state = loadPlaytestArtifactText(state, "before-save", "{}", "invalid.save.json");
     expect(state.errors.beforeSave).not.toContain("not valid JSON");
     expect(state.errors.beforeSave).not.toBeNull();
   });

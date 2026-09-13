@@ -1,4 +1,4 @@
-import type { ReactNode } from "react";
+import type { AdventureDesignDocument } from "@evavo/adventure-design";
 import type {
   AdventureProgressionFinding,
   AdventureProgressionMilestone,
@@ -6,8 +6,8 @@ import type {
   AdventureProgressionSeverity,
   AdventureProgressionTerminalState,
 } from "@evavo/adventure-design/progression";
-import type { AdventureDesignDocument } from "@evavo/adventure-design";
 import type { AdventureProject } from "@evavo/adventure-project-schema";
+import type { ReactNode } from "react";
 
 export type ProgressionView = "flow" | "milestones" | "risks";
 export type ProgressionFindingFilter = "all" | AdventureProgressionSeverity;
@@ -21,11 +21,7 @@ export const ProgressionButton = ({
   readonly active?: boolean;
   readonly onClick: () => void;
 }) => (
-  <button
-    type="button"
-    className={`prg-button${active ? " is-active" : ""}`}
-    onClick={onClick}
-  >
+  <button type="button" className={`prg-button${active ? " is-active" : ""}`} onClick={onClick}>
     {children}
   </button>
 );
@@ -34,13 +30,7 @@ export const StatusPip = ({ status }: { readonly status: string }) => (
   <span className={`prg-status-pip is-${status}`} aria-hidden="true" />
 );
 
-export const Metric = ({
-  label,
-  value,
-}: {
-  readonly label: string;
-  readonly value: string | number;
-}) => (
+export const Metric = ({ label, value }: { readonly label: string; readonly value: string | number }) => (
   <div>
     <dt>{label}</dt>
     <dd>{value}</dd>
@@ -49,11 +39,7 @@ export const Metric = ({
 
 const shortId = (value: string): string => value.split(".").at(-1) ?? value;
 
-const Witness = ({
-  steps,
-}: {
-  readonly steps: AdventureProgressionMilestone["witness"]["steps"];
-}) =>
+const Witness = ({ steps }: { readonly steps: AdventureProgressionMilestone["witness"]["steps"] }) =>
   steps.length === 0 ? (
     <p className="prg-witness-empty">Initial canonical state.</p>
   ) : (
@@ -79,9 +65,7 @@ const locationByScene = (
     ),
   );
 
-const sceneNameById = (
-  project: AdventureProject,
-): ReadonlyMap<string, string> =>
+const sceneNameById = (project: AdventureProject): ReadonlyMap<string, string> =>
   new Map(project.scenes.map((scene) => [scene.id as string, scene.name] as const));
 
 export const WorldFlowView = ({
@@ -105,9 +89,7 @@ export const WorldFlowView = ({
       name: location?.name ?? scene.name,
     };
   });
-  const points = new Map(
-    graphLocations.map((location) => [location.scene.id as string, location] as const),
-  );
+  const points = new Map(graphLocations.map((location) => [location.scene.id as string, location] as const));
 
   return (
     <section className="prg-flow-view">
@@ -116,8 +98,8 @@ export const WorldFlowView = ({
           <span className="prg-eyebrow">BOUNDED RUNTIME EXPLORATION</span>
           <h1>World and state flow</h1>
           <p>
-            Edges are proven by executable hotspot, object, dialogue or sequence state
-            transitions, not by an illustrated route line alone.
+            Edges are proven by executable hotspot, object, dialogue or sequence state transitions, not by an
+            illustrated route line alone.
           </p>
         </div>
         <div className="prg-coverage-chip">
@@ -155,13 +137,7 @@ export const WorldFlowView = ({
             const middleY = (from.y + to.y) / 2;
             return (
               <g key={edge.id} className="prg-edge">
-                <line
-                  x1={from.x}
-                  y1={from.y}
-                  x2={to.x}
-                  y2={to.y}
-                  markerEnd="url(#prg-arrow)"
-                />
+                <line x1={from.x} y1={from.y} x2={to.x} y2={to.y} markerEnd="url(#prg-arrow)" />
                 <text x={middleX} y={middleY - 7}>
                   {shortId(edge.via)}
                 </text>
@@ -223,11 +199,7 @@ export const WorldFlowView = ({
   );
 };
 
-const MilestoneCard = ({
-  milestone,
-}: {
-  readonly milestone: AdventureProgressionMilestone;
-}) => (
+const MilestoneCard = ({ milestone }: { readonly milestone: AdventureProgressionMilestone }) => (
   <article className={`prg-milestone is-${milestone.kind}`}>
     <header>
       <div>
@@ -241,19 +213,15 @@ const MilestoneCard = ({
   </article>
 );
 
-export const MilestonesView = ({
-  report,
-}: {
-  readonly report: AdventureProgressionReport;
-}) => (
+export const MilestonesView = ({ report }: { readonly report: AdventureProgressionReport }) => (
   <section className="prg-milestones-view">
     <header>
       <div>
         <span className="prg-eyebrow">SHORTEST PROVEN WITNESSES</span>
         <h1>{report.milestones.length} progression milestones</h1>
         <p>
-          Each witness is the shortest explored sequence that first reaches a scene,
-          item, dialogue, sequence or object state.
+          Each witness is the shortest explored sequence that first reaches a scene, item, dialogue, sequence
+          or object state.
         </p>
       </div>
     </header>
@@ -265,11 +233,7 @@ export const MilestonesView = ({
   </section>
 );
 
-const FindingCard = ({
-  finding,
-}: {
-  readonly finding: AdventureProgressionFinding;
-}) => (
+const FindingCard = ({ finding }: { readonly finding: AdventureProgressionFinding }) => (
   <article className={`prg-finding is-${finding.severity}`}>
     <div className="prg-finding-rank">
       <span>{finding.severity}</span>
@@ -335,9 +299,7 @@ export const RisksView = ({
   readonly filter: ProgressionFindingFilter;
   readonly onFilter: (filter: ProgressionFindingFilter) => void;
 }) => {
-  const findings = report.findings.filter(
-    (finding) => filter === "all" || finding.severity === filter,
-  );
+  const findings = report.findings.filter((finding) => filter === "all" || finding.severity === filter);
   const names = sceneNameById(project);
   return (
     <section className="prg-risks-view">
@@ -346,17 +308,13 @@ export const RisksView = ({
           <span className="prg-eyebrow">SOFT-LOCK AND COVERAGE REVIEW</span>
           <h1>{report.findings.length} findings</h1>
           <p>
-            Required objectives block the report. Optional draft content remains visible
-            without pretending every unused branch is a release defect.
+            Required objectives block the report. Optional draft content remains visible without pretending
+            every unused branch is a release defect.
           </p>
         </div>
         <div className="prg-filter-row">
           {(["all", "error", "warning", "note"] as const).map((value) => (
-            <ProgressionButton
-              key={value}
-              active={filter === value}
-              onClick={() => onFilter(value)}
-            >
+            <ProgressionButton key={value} active={filter === value} onClick={() => onFilter(value)}>
               {value}
             </ProgressionButton>
           ))}
@@ -366,10 +324,7 @@ export const RisksView = ({
       {findings.length > 0 ? (
         <div className="prg-finding-list">
           {findings.map((finding, index) => (
-            <FindingCard
-              key={`${finding.code}.${finding.path}.${index}`}
-              finding={finding}
-            />
+            <FindingCard key={`${finding.code}.${finding.path}.${index}`} finding={finding} />
           ))}
         </div>
       ) : (

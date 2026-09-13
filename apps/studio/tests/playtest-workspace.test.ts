@@ -1,11 +1,8 @@
-import { describe, expect, it } from "vitest";
 import { createReplayLog } from "@evavo/adventure-replay";
 import { parseRuntimeBundle } from "@evavo/adventure-runtime-bundle";
 import { createSaveGame } from "@evavo/adventure-save-game";
-import {
-  createPlaytestInspectorWorkspace,
-  loadPlaytestArtifactText,
-} from "../src/playtest-workspace.js";
+import { describe, expect, it } from "vitest";
+import { createPlaytestInspectorWorkspace, loadPlaytestArtifactText } from "../src/playtest-workspace.js";
 
 const hash = "0".repeat(64);
 const bundle = parseRuntimeBundle({
@@ -71,7 +68,6 @@ const bundle = parseRuntimeBundle({
         },
       ],
       fallbackText: "Nothing happens.",
-      interactionIndex: {},
     },
   ],
   dialogues: [],
@@ -116,9 +112,7 @@ const saveAt = (tick: number, statusText: string) =>
 const before = saveAt(0, "READY");
 const after = saveAt(20, "COMPLETE");
 const replay = createReplayLog(bundle, before, {
-  events: [
-    { kind: "activate", tick: 4, sequence: 0, position: { x: 40, y: 80 } },
-  ],
+  events: [{ kind: "activate", tick: 4, sequence: 0, position: { x: 40, y: 80 } }],
   finalTick: 20,
   expectedFinalSaveFingerprint: after.saveFingerprint,
 });
@@ -128,30 +122,10 @@ const json = (value: unknown): string => JSON.stringify(value);
 describe("Studio playtest inspector workspace", () => {
   it("loads a bundle, two saves and a replay into semantic views", () => {
     let state = createPlaytestInspectorWorkspace();
-    state = loadPlaytestArtifactText(
-      state,
-      "bundle",
-      json(bundle),
-      "game.bundle.json",
-    );
-    state = loadPlaytestArtifactText(
-      state,
-      "before-save",
-      json(before),
-      "before.save.json",
-    );
-    state = loadPlaytestArtifactText(
-      state,
-      "after-save",
-      json(after),
-      "after.save.json",
-    );
-    state = loadPlaytestArtifactText(
-      state,
-      "replay",
-      json(replay),
-      "playtest.replay.json",
-    );
+    state = loadPlaytestArtifactText(state, "bundle", json(bundle), "game.bundle.json");
+    state = loadPlaytestArtifactText(state, "before-save", json(before), "before.save.json");
+    state = loadPlaytestArtifactText(state, "after-save", json(after), "after.save.json");
+    state = loadPlaytestArtifactText(state, "replay", json(replay), "playtest.replay.json");
 
     expect(state.errors).toEqual({
       bundle: null,
@@ -162,11 +136,7 @@ describe("Studio playtest inspector workspace", () => {
     expect(state.beforeInspection).toMatchObject({ tick: 0, statusText: "READY" });
     expect(state.afterInspection).toMatchObject({ tick: 20, statusText: "COMPLETE" });
     expect(state.diff?.entries.map((entry) => entry.path)).toEqual(
-      expect.arrayContaining([
-        "interface.statusText",
-        "world.story.flags.visited",
-        "world.story.tick",
-      ]),
+      expect.arrayContaining(["interface.statusText", "world.story.flags.visited", "world.story.tick"]),
     );
     expect(state.replayInspection).toMatchObject({
       eventCount: 1,
@@ -178,20 +148,10 @@ describe("Studio playtest inspector workspace", () => {
 
   it("retains artifact inputs loaded before the bundle and recomputes later", () => {
     let state = createPlaytestInspectorWorkspace();
-    state = loadPlaytestArtifactText(
-      state,
-      "before-save",
-      json(before),
-      "before.save.json",
-    );
+    state = loadPlaytestArtifactText(state, "before-save", json(before), "before.save.json");
     expect(state.beforeInspection).toBeNull();
 
-    state = loadPlaytestArtifactText(
-      state,
-      "bundle",
-      json(bundle),
-      "game.bundle.json",
-    );
+    state = loadPlaytestArtifactText(state, "bundle", json(bundle), "game.bundle.json");
     expect(state.beforeInspection?.tick).toBe(0);
   });
 
@@ -202,12 +162,7 @@ describe("Studio playtest inspector workspace", () => {
       json(bundle),
       "game.bundle.json",
     );
-    state = loadPlaytestArtifactText(
-      state,
-      "before-save",
-      "not json",
-      "broken.save.json",
-    );
+    state = loadPlaytestArtifactText(state, "before-save", "not json", "broken.save.json");
 
     expect(state.bundle?.projectId).toBe("project.studio-inspector");
     expect(state.errors.beforeSave).toContain("not valid JSON");

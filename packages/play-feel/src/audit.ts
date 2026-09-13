@@ -1,9 +1,9 @@
 import type {
+  AdventureMotionTrace,
   AdventurePlayFeelAuditInput,
   AdventurePlayFeelAuditReport,
   AdventurePlayFeelIssue,
   AdventurePlayFeelProfile,
-  AdventureMotionTrace,
 } from "./types.js";
 import { validateAdventurePlayFeelProfile } from "./validate.js";
 
@@ -28,9 +28,7 @@ export const auditAdventurePlayFeelProfile = (
   profile: AdventurePlayFeelProfile,
   input: AdventurePlayFeelAuditInput = {},
 ): AdventurePlayFeelAuditReport => {
-  const issues: AdventurePlayFeelIssue[] = [
-    ...validateAdventurePlayFeelProfile(profile),
-  ];
+  const issues: AdventurePlayFeelIssue[] = [...validateAdventurePlayFeelProfile(profile)];
   if (
     input.logicalTicksPerSecond !== undefined &&
     input.logicalTicksPerSecond !== profile.logicalTicksPerSecond
@@ -47,8 +45,7 @@ export const auditAdventurePlayFeelProfile = (
   }
   if (input.pixelMotionPolicy !== undefined) {
     const requiresNative =
-      profile.movement.quantization === "native-pixel" ||
-      profile.camera.quantization === "native-pixel";
+      profile.movement.quantization === "native-pixel" || profile.camera.quantization === "native-pixel";
     if (requiresNative && input.pixelMotionPolicy === "free") {
       issues.push(
         issue(
@@ -80,8 +77,7 @@ export const auditAdventurePlayFeelProfile = (
     0,
     100 -
       result.reduce(
-        (total, entry) =>
-          total + (entry.severity === "error" ? 20 : entry.severity === "warning" ? 7 : 2),
+        (total, entry) => total + (entry.severity === "error" ? 20 : entry.severity === "warning" ? 7 : 2),
         0,
       ),
   );
@@ -149,10 +145,7 @@ export const auditAdventureMotionTrace = (
         ),
       );
     }
-    if (
-      sample.velocityPixelsPerSecond >
-      profile.movement.topSpeedPixelsPerSecond + 0.001
-    ) {
+    if (sample.velocityPixelsPerSecond > profile.movement.topSpeedPixelsPerSecond + 0.001) {
       issues.push(
         issue(
           "error",
@@ -171,10 +164,8 @@ export const auditAdventureMotionTrace = (
     !final ||
     !destination ||
     final.phase !== "arrived" ||
-    Math.hypot(
-      final.unquantizedPosition.x - destination.x,
-      final.unquantizedPosition.y - destination.y,
-    ) > 1e-6
+    Math.hypot(final.unquantizedPosition.x - destination.x, final.unquantizedPosition.y - destination.y) >
+      1e-6
   ) {
     issues.push(
       issue(

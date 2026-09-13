@@ -1,9 +1,5 @@
 import type { Id } from "@evavo/adventure-project-schema";
-import {
-  glyphByCodePoint,
-  type BitmapFontDefinition,
-  type BitmapGlyph,
-} from "./index.js";
+import { type BitmapFontDefinition, type BitmapGlyph, glyphByCodePoint } from "./index.js";
 
 export type BitmapTextAlignment = "left" | "center" | "right";
 
@@ -54,16 +50,10 @@ type TextToken =
   | { readonly kind: "word"; readonly codePoints: readonly number[] };
 
 const assertLayoutOptions = (options: BitmapTextLayoutOptions): void => {
-  if (
-    options.maxWidth !== undefined &&
-    (!Number.isSafeInteger(options.maxWidth) || options.maxWidth <= 0)
-  ) {
+  if (options.maxWidth !== undefined && (!Number.isSafeInteger(options.maxWidth) || options.maxWidth <= 0)) {
     throw new RangeError("Bitmap text maximum width must be a positive integer.");
   }
-  if (
-    options.lineSpacing !== undefined &&
-    !Number.isSafeInteger(options.lineSpacing)
-  ) {
+  if (options.lineSpacing !== undefined && !Number.isSafeInteger(options.lineSpacing)) {
     throw new RangeError("Bitmap text line spacing must be an integer.");
   }
   if (
@@ -115,15 +105,8 @@ const tokenize = (text: string, tabSpaces: number): readonly TextToken[] => {
   return tokens;
 };
 
-const kerningMap = (
-  font: BitmapFontDefinition,
-): ReadonlyMap<string, number> =>
-  new Map(
-    font.kernings.map((entry) => [
-      `${entry.leftCodePoint}:${entry.rightCodePoint}`,
-      entry.adjustment,
-    ]),
-  );
+const kerningMap = (font: BitmapFontDefinition): ReadonlyMap<string, number> =>
+  new Map(font.kernings.map((entry) => [`${entry.leftCodePoint}:${entry.rightCodePoint}`, entry.adjustment]));
 
 const kerningAdjustment = (
   kernings: ReadonlyMap<string, number>,
@@ -131,10 +114,8 @@ const kerningAdjustment = (
   right: number,
 ): number => (left === null ? 0 : (kernings.get(`${left}:${right}`) ?? 0));
 
-const glyphAdvance = (
-  font: BitmapFontDefinition,
-  glyph: BitmapGlyph,
-): number => glyph.advance + font.letterSpacing;
+const glyphAdvance = (font: BitmapFontDefinition, glyph: BitmapGlyph): number =>
+  glyph.advance + font.letterSpacing;
 
 const wordWidth = (
   font: BitmapFontDefinition,
@@ -195,23 +176,12 @@ export const layoutBitmapText = (
   };
 
   const placeCodePoint = (codePoint: number, allowWrap: boolean): void => {
-    const directGlyph = font.glyphs.find(
-      (candidate) => candidate.codePoint === codePoint,
-    );
+    const directGlyph = font.glyphs.find((candidate) => candidate.codePoint === codePoint);
     const glyph = directGlyph ?? glyphByCodePoint(font, codePoint);
     if (!directGlyph) fallbackCodePoints.add(codePoint);
-    const adjustment = kerningAdjustment(
-      kernings,
-      previousCodePoint,
-      glyph.codePoint,
-    );
+    const adjustment = kerningAdjustment(kernings, previousCodePoint, glyph.codePoint);
     const advance = glyphAdvance(font, glyph);
-    if (
-      allowWrap &&
-      maxWidth !== null &&
-      penX > 0 &&
-      penX + adjustment + advance > maxWidth
-    ) {
+    if (allowWrap && maxWidth !== null && penX > 0 && penX + adjustment + advance > maxWidth) {
       finishLine();
       placeCodePoint(codePoint, false);
       return;
@@ -225,10 +195,7 @@ export const layoutBitmapText = (
       glyph,
     });
     penX += advance;
-    currentLine.width = Math.max(
-      currentLine.width,
-      penX - font.letterSpacing,
-    );
+    currentLine.width = Math.max(currentLine.width, penX - font.letterSpacing);
     previousCodePoint = glyph.codePoint;
   };
 
@@ -259,10 +226,7 @@ export const layoutBitmapText = (
   }
   finishLine();
 
-  const contentWidth = lines.reduce(
-    (maximum, line) => Math.max(maximum, line.width),
-    0,
-  );
+  const contentWidth = lines.reduce((maximum, line) => Math.max(maximum, line.width), 0);
   const alignmentWidth = maxWidth ?? contentWidth;
   const alignedPlacements = placements.map((placement) => ({ ...placement }));
   for (const line of lines) {
@@ -272,11 +236,7 @@ export const layoutBitmapText = (
         : alignment === "right"
           ? alignmentWidth - line.width
           : 0;
-    for (
-      let index = line.placementStart;
-      index < line.placementEnd;
-      index += 1
-    ) {
+    for (let index = line.placementStart; index < line.placementEnd; index += 1) {
       const placement = alignedPlacements[index];
       if (placement) alignedPlacements[index] = { ...placement, x: placement.x + offset };
     }
@@ -286,13 +246,9 @@ export const layoutBitmapText = (
     fontId: font.id,
     text,
     width: alignmentWidth,
-    height:
-      lines.length * font.lineHeight +
-      Math.max(0, lines.length - 1) * lineSpacing,
+    height: lines.length * font.lineHeight + Math.max(0, lines.length - 1) * lineSpacing,
     placements: alignedPlacements,
     lines: lines.map((line) => ({ ...line })),
-    fallbackCodePoints: [...fallbackCodePoints].sort(
-      (left, right) => left - right,
-    ),
+    fallbackCodePoints: [...fallbackCodePoints].sort((left, right) => left - right),
   };
 };

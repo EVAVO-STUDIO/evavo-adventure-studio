@@ -1,17 +1,9 @@
-import { describe, expect, it } from "vitest";
 import { bitmapFontManifestSchema } from "@evavo/adventure-bitmap-font";
 import type { Id } from "@evavo/adventure-project-schema";
 import { parseAdventureProject } from "@evavo/adventure-project-schema";
-import {
-  parseUiSkinManifest,
-  uiSkinById,
-  validateUiSkinManifest,
-} from "../src/index.js";
-import {
-  appendUiSkinFrame,
-  composeUiSkinNodes,
-  type UiAssetGeometryResolver,
-} from "../src/compose.js";
+import { describe, expect, it } from "vitest";
+import { appendUiSkinFrame, composeUiSkinNodes, type UiAssetGeometryResolver } from "../src/compose.js";
+import { parseUiSkinManifest, uiSkinById, validateUiSkinManifest } from "../src/index.js";
 
 const id = <T extends string>(value: string): Id<T> => value as Id<T>;
 
@@ -172,6 +164,11 @@ const skinInput = {
   ],
 };
 
+const [baseSkin] = skinInput.skins;
+if (!baseSkin) {
+  throw new Error("Expected the UI skin fixture to contain its base skin.");
+}
+
 const manifest = parseUiSkinManifest(skinInput);
 
 describe("UI skin validation", () => {
@@ -185,16 +182,16 @@ describe("UI skin validation", () => {
       ...skinInput,
       skins: [
         {
-          ...skinInput.skins[0],
+          ...baseSkin,
           interactionMode: "parser-assisted",
           status: {
-            ...skinInput.skins[0].status,
-            rect: { x: -2, y: 190, width: 330, height: 20 },
+            ...baseSkin.status,
+            rect: { x: 2, y: 190, width: 330, height: 20 },
           },
           fonts: {
-            ...skinInput.skins[0].fonts,
+            ...baseSkin.fonts,
             status: {
-              ...skinInput.skins[0].fonts.status,
+              ...baseSkin.fonts.status,
               fontId: "bitmap-font.missing",
             },
           },
@@ -202,9 +199,7 @@ describe("UI skin validation", () => {
       ],
     });
 
-    expect(
-      validateUiSkinManifest(project, fonts, broken).map((issue) => issue.code),
-    ).toEqual(
+    expect(validateUiSkinManifest(project, fonts, broken).map((issue) => issue.code)).toEqual(
       expect.arrayContaining([
         "default-mode-mismatch",
         "region-out-of-bounds",
@@ -220,10 +215,10 @@ describe("UI skin validation", () => {
       defaultSkinId: "ui-skin.two-button",
       skins: [
         {
-          ...skinInput.skins[0],
+          ...baseSkin,
           id: "ui-skin.two-button",
           interactionMode: "two-button",
-          verbs: skinInput.skins[0].verbs.map((verb) => ({
+          verbs: baseSkin.verbs.map((verb) => ({
             ...verb,
             primary: false,
           })),
@@ -249,7 +244,7 @@ describe("UI skin validation", () => {
       defaultSkinId: "ui-skin.icon",
       skins: [
         {
-          ...skinInput.skins[0],
+          ...baseSkin,
           id: "ui-skin.icon",
           interactionMode: "icon-bar",
         },
@@ -302,10 +297,10 @@ describe("UI skin composition", () => {
       defaultSkinId: "ui-skin.icon",
       skins: [
         {
-          ...skinInput.skins[0],
+          ...baseSkin,
           id: "ui-skin.icon",
           interactionMode: "icon-bar",
-          verbs: skinInput.skins[0].verbs.map((verb) => ({
+          verbs: baseSkin.verbs.map((verb) => ({
             ...verb,
             iconAssetId: "asset.icon.look",
             iconFrameId: "frame.icon.look",
@@ -373,12 +368,7 @@ describe("UI skin composition", () => {
         },
       ],
     };
-    const composed = appendUiSkinFrame(
-      sceneFrame,
-      uiSkinById(manifest),
-      fonts,
-      { statusText: "READY" },
-    );
+    const composed = appendUiSkinFrame(sceneFrame, uiSkinById(manifest), fonts, { statusText: "READY" });
 
     expect(composed.nodes[0]?.id).toBe("scene.background");
     expect(composed.nodes.length).toBeGreaterThan(sceneFrame.nodes.length);

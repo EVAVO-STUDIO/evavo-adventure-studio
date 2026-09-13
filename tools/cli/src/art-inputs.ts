@@ -1,24 +1,19 @@
 import { readFile } from "node:fs/promises";
 import { resolve } from "node:path";
-import type { AssetBuildManifest } from "@evavo/adventure-asset-contract";
 import {
+  type ArtDirectionManifest,
   evaluateCompiledArtDirection,
   parseArtDirectionManifest,
   validateArtDirectionManifest,
-  type ArtDirectionManifest,
 } from "@evavo/adventure-art-direction";
 import {
+  type ArtVisualEvidenceManifest,
   evaluateArtDirectionWithVisualEvidence,
   parseArtVisualEvidenceManifest,
-  type ArtVisualEvidenceManifest,
 } from "@evavo/adventure-art-direction/evidence";
+import type { AssetBuildManifest } from "@evavo/adventure-asset-contract";
 import type { AdventureProject } from "@evavo/adventure-project-schema";
-import {
-  CliDataError,
-  errorCode,
-  sortDiagnostics,
-  type CliDiagnostic,
-} from "./diagnostics.js";
+import { CliDataError, type CliDiagnostic, errorCode, sortDiagnostics } from "./diagnostics.js";
 
 export interface LoadedArtInputs {
   readonly artDirectionPath: string | null;
@@ -31,12 +26,7 @@ export interface LoadedArtInputs {
 const schemaPath = (path: readonly PropertyKey[]): string => {
   let output = "";
   for (const segment of path) {
-    output +=
-      typeof segment === "number"
-        ? `[${segment}]`
-        : output
-          ? `.${String(segment)}`
-          : String(segment);
+    output += typeof segment === "number" ? `[${segment}]` : output ? `.${String(segment)}` : String(segment);
   }
   return output || "$";
 };
@@ -51,22 +41,20 @@ const schemaDiagnostics = (
     "issues" in error &&
     Array.isArray((error as { readonly issues: unknown }).issues)
   ) {
-    return (error as { readonly issues: readonly unknown[] }).issues.map(
-      (issue) => {
-        const candidate = issue as {
-          readonly code?: unknown;
-          readonly path?: readonly PropertyKey[];
-          readonly message?: unknown;
-        };
-        return {
-          severity: "error" as const,
-          source,
-          code: String(candidate.code ?? "schema-invalid"),
-          path: schemaPath(candidate.path ?? []),
-          message: String(candidate.message ?? "Schema validation failed."),
-        };
-      },
-    );
+    return (error as { readonly issues: readonly unknown[] }).issues.map((issue) => {
+      const candidate = issue as {
+        readonly code?: unknown;
+        readonly path?: readonly PropertyKey[];
+        readonly message?: unknown;
+      };
+      return {
+        severity: "error" as const,
+        source,
+        code: String(candidate.code ?? "schema-invalid"),
+        path: schemaPath(candidate.path ?? []),
+        message: String(candidate.message ?? "Schema validation failed."),
+      };
+    });
   }
   return [
     {
@@ -93,9 +81,7 @@ const readJson = async (
         source,
         code: errorCode(error) ?? "read-failed",
         path,
-        message: `Unable to read '${path}': ${
-          error instanceof Error ? error.message : String(error)
-        }`,
+        message: `Unable to read '${path}': ${error instanceof Error ? error.message : String(error)}`,
       },
     ]);
   }
@@ -108,9 +94,7 @@ const readJson = async (
         source,
         code: "invalid-json",
         path,
-        message: `Invalid JSON in '${path}': ${
-          error instanceof Error ? error.message : String(error)
-        }`,
+        message: `Invalid JSON in '${path}': ${error instanceof Error ? error.message : String(error)}`,
       },
     ]);
   }
@@ -125,9 +109,7 @@ const loadArtManifest = async (path: string): Promise<ArtDirectionManifest> => {
   }
 };
 
-const loadVisualEvidence = async (
-  path: string,
-): Promise<ArtVisualEvidenceManifest> => {
+const loadVisualEvidence = async (path: string): Promise<ArtVisualEvidenceManifest> => {
   const input = await readJson(path, "art-evidence-file");
   try {
     return parseArtVisualEvidenceManifest(input);
@@ -154,30 +136,20 @@ export const loadArtInputs = async (
 
   const artDirectionPath = resolve(artDirectionInputPath);
   const manifest = await loadArtManifest(artDirectionPath);
-  const artEvidencePath = artEvidenceInputPath
-    ? resolve(artEvidenceInputPath)
-    : null;
-  const visualEvidence = artEvidencePath
-    ? await loadVisualEvidence(artEvidencePath)
-    : null;
+  const artEvidencePath = artEvidenceInputPath ? resolve(artEvidenceInputPath) : null;
+  const visualEvidence = artEvidencePath ? await loadVisualEvidence(artEvidencePath) : null;
 
   const rawIssues = assetManifest
     ? visualEvidence
-      ? evaluateArtDirectionWithVisualEvidence(
-          project,
-          manifest,
-          assetManifest,
-          visualEvidence,
-        )
+      ? evaluateArtDirectionWithVisualEvidence(project, manifest, assetManifest, visualEvidence)
       : evaluateCompiledArtDirection(project, manifest, assetManifest)
     : validateArtDirectionManifest(project, manifest);
   const diagnostics = rawIssues.map(
     (issue): CliDiagnostic => ({
       severity: issue.severity,
-      source:
-        issue.code.startsWith("visual-evidence-")
-          ? "art-evidence-semantics"
-          : "art-direction-semantics",
+      source: issue.code.startsWith("visual-evidence-")
+        ? "art-evidence-semantics"
+        : "art-direction-semantics",
       code: issue.code,
       path: issue.path,
       message: issue.message,
@@ -203,9 +175,7 @@ export const loadArtInputs = async (
   };
 };
 
-export const artInputPaths = (
-  loaded: LoadedArtInputs,
-): readonly string[] => [
+export const artInputPaths = (loaded: LoadedArtInputs): readonly string[] => [
   ...(loaded.artDirectionPath ? [loaded.artDirectionPath] : []),
   ...(loaded.artEvidencePath ? [loaded.artEvidencePath] : []),
 ];

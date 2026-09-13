@@ -1,5 +1,6 @@
-import { describe, expect, it } from "vitest";
 import type { Id } from "@evavo/adventure-project-schema";
+import { describe, expect, it } from "vitest";
+import { studioUiBitmapFonts, studioUiProject, studioUiSkins } from "../src/ui-skin-fixture.js";
 import {
   createUiSkinWorkspace,
   replaceSelectedUiSkinCommand,
@@ -10,25 +11,14 @@ import {
   uiSkinWorkspacePreviewNodes,
   uiSkinWorkspaceReducer,
 } from "../src/ui-skin-workspace.js";
-import {
-  studioUiBitmapFonts,
-  studioUiProject,
-  studioUiSkins,
-} from "../src/ui-skin-fixture.js";
 
 const skinId = (value: string): Id<"ui-skin"> => value as Id<"ui-skin">;
 
 describe("interface skin Studio workspace", () => {
   it("loads six valid interaction modes with a context default", () => {
-    const state = createUiSkinWorkspace(
-      studioUiProject,
-      studioUiBitmapFonts,
-      studioUiSkins,
-    );
+    const state = createUiSkinWorkspace(studioUiProject, studioUiBitmapFonts, studioUiSkins);
 
-    expect(
-      state.history.document.manifest.skins.map((skin) => skin.interactionMode),
-    ).toEqual([
+    expect(state.history.document.manifest.skins.map((skin) => skin.interactionMode)).toEqual([
       "context",
       "verb-list",
       "icon-bar",
@@ -40,33 +30,21 @@ describe("interface skin Studio workspace", () => {
       id: "ui-skin.context-noir",
       interactionMode: "context",
     });
-    expect(
-      uiSkinWorkspaceIssues(state).filter((issue) => issue.severity === "error"),
-    ).toEqual([]);
+    expect(uiSkinWorkspaceIssues(state).filter((issue) => issue.severity === "error")).toEqual([]);
   });
 
   it("composes status score inventory and dialogue nodes from the runtime composer", () => {
-    const state = createUiSkinWorkspace(
-      studioUiProject,
-      studioUiBitmapFonts,
-      studioUiSkins,
-    );
+    const state = createUiSkinWorkspace(studioUiProject, studioUiBitmapFonts, studioUiSkins);
     const ids = uiSkinWorkspacePreviewNodes(state).map((node) => node.id);
 
     expect(ids).toContain("studio.ui-preview.status.text");
     expect(ids).toContain("studio.ui-preview.score.text");
     expect(ids).toContain("studio.ui-preview.inventory.item.item.notebook");
-    expect(ids).toContain(
-      "studio.ui-preview.dialogue.choice.dialogue-choice.preview.ledger.text",
-    );
+    expect(ids).toContain("studio.ui-preview.dialogue.choice.dialogue-choice.preview.ledger.text");
   });
 
   it("composes parser and verb-coin modes from preview state", () => {
-    let state = createUiSkinWorkspace(
-      studioUiProject,
-      studioUiBitmapFonts,
-      studioUiSkins,
-    );
+    let state = createUiSkinWorkspace(studioUiProject, studioUiBitmapFonts, studioUiSkins);
     state = uiSkinWorkspaceReducer(state, {
       type: "select-skin",
       skinId: skinId("ui-skin.parser-assisted"),
@@ -87,11 +65,7 @@ describe("interface skin Studio workspace", () => {
   });
 
   it("edits native regions with undo redo and save tracking", () => {
-    let state = createUiSkinWorkspace(
-      studioUiProject,
-      studioUiBitmapFonts,
-      studioUiSkins,
-    );
+    let state = createUiSkinWorkspace(studioUiProject, studioUiBitmapFonts, studioUiSkins);
     const current = selectedUiSkin(state);
     state = uiSkinWorkspaceReducer(state, {
       type: "execute",
@@ -117,11 +91,7 @@ describe("interface skin Studio workspace", () => {
   });
 
   it("preserves authored verb order while editing labels", () => {
-    let state = createUiSkinWorkspace(
-      studioUiProject,
-      studioUiBitmapFonts,
-      studioUiSkins,
-    );
+    let state = createUiSkinWorkspace(studioUiProject, studioUiBitmapFonts, studioUiSkins);
     state = uiSkinWorkspaceReducer(state, {
       type: "select-skin",
       skinId: skinId("ui-skin.verb-list"),
@@ -136,17 +106,11 @@ describe("interface skin Studio workspace", () => {
     });
 
     expect(selectedUiSkin(state).verbs.map((verb) => verb.id)).toEqual(order);
-    expect(
-      selectedUiSkin(state).verbs.find((verb) => verb.id === talk.id)?.label,
-    ).toBe("SPEAK");
+    expect(selectedUiSkin(state).verbs.find((verb) => verb.id === talk.id)?.label).toBe("SPEAK");
   });
 
   it("keeps rejected interface edits out of history and reports a notice", () => {
-    const state = createUiSkinWorkspace(
-      studioUiProject,
-      studioUiBitmapFonts,
-      studioUiSkins,
-    );
+    const state = createUiSkinWorkspace(studioUiProject, studioUiBitmapFonts, studioUiSkins);
     const current = selectedUiSkin(state);
     const rejected = uiSkinWorkspaceReducer(state, {
       type: "execute",

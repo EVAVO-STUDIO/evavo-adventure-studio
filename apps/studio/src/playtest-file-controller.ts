@@ -1,10 +1,6 @@
-import type {
-  PlaytestArtifactKind,
-  PlaytestInspectorWorkspaceState,
-} from "./playtest-workspace.js";
+import type { PlaytestArtifactKind, PlaytestInspectorWorkspaceState } from "./playtest-workspace.js";
 
-const errorMessage = (error: unknown): string =>
-  error instanceof Error ? error.message : String(error);
+const errorMessage = (error: unknown): string => (error instanceof Error ? error.message : String(error));
 
 export const reportPlaytestArtifactReadFailure = (
   state: PlaytestInspectorWorkspaceState,

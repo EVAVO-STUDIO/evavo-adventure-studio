@@ -1,20 +1,12 @@
-import type {
-  AdventurePlayFeelProfileId,
-} from "@evavo/adventure-play-feel";
+import type { AdventurePlayFeelProfileId } from "@evavo/adventure-play-feel";
 import type { Id, Point } from "@evavo/adventure-project-schema";
-import type {
-  NavigationRoute,
-  NavigationRouteResult,
-} from "@evavo/adventure-scene/navigation";
+import type { NavigationRoute, NavigationRouteResult } from "@evavo/adventure-scene/navigation";
+import type { ActorInstanceAnimationEvent, RuntimeWorldState } from "./index.js";
 import type {
   ProfiledNavigationFallbackReason,
   ProfiledNavigationMovementEvent,
   ProfiledNavigationMovementState,
 } from "./profiled-movement.js";
-import type {
-  ActorInstanceAnimationEvent,
-  RuntimeWorldState,
-} from "./index.js";
 
 export interface ActorMovementState {
   readonly actorInstanceId: Id<"actor-instance">;
@@ -62,6 +54,9 @@ export type ActorMovementEvent =
       readonly position: Point;
       readonly movementTick: number;
       readonly storyTick: number;
+      readonly surface?: "wood" | "carpet" | "stone" | "dirt" | "grass" | "water" | "metal" | "stairs" | "custom";
+      readonly customSurfaceId?: string;
+      readonly footstepCueId?: string;
     }
   | {
       readonly kind: "movement-segment-completed";
@@ -100,10 +95,7 @@ export type BeginActorMovementResult =
       readonly route: NavigationRoute;
       readonly movementMode: "legacy" | "profiled";
       readonly profileFallbackReason?: ProfiledNavigationFallbackReason;
-      readonly event: Extract<
-        ActorMovementEvent,
-        { readonly kind: "movement-started" }
-      >;
+      readonly event: Extract<ActorMovementEvent, { readonly kind: "movement-started" }>;
     }
   | {
       readonly kind: "already-there";
@@ -117,10 +109,7 @@ export type BeginActorMovementResult =
     }
   | {
       readonly kind: "unreachable";
-      readonly routeResult: Exclude<
-        NavigationRouteResult,
-        { readonly kind: "route" }
-      >;
+      readonly routeResult: Exclude<NavigationRouteResult, { readonly kind: "route" }>;
       readonly state: NavigableRuntimeWorldState;
     };
 

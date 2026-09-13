@@ -1,19 +1,13 @@
-import { describe, expect, it } from "vitest";
-import {
-  compileAtlas,
-} from "@evavo/adventure-asset-pipeline/atlas-compiler";
+import { compileImage, encodeRgbaPng, sha256Hex } from "@evavo/adventure-asset-pipeline";
+import { compileAtlas } from "@evavo/adventure-asset-pipeline/atlas-compiler";
 import {
   createAssetBuildManifest,
   createImageAssetRecord,
   createSpritesheetAssetRecord,
 } from "@evavo/adventure-asset-pipeline/manifest-builders";
-import {
-  compileImage,
-  encodeRgbaPng,
-  sha256Hex,
-} from "@evavo/adventure-asset-pipeline";
 import { compileProject } from "@evavo/adventure-compiler";
 import { parseAdventureProject } from "@evavo/adventure-project-schema";
+import { describe, expect, it } from "vitest";
 import { fixtureId } from "../src/index.js";
 
 const rgba = (
@@ -93,7 +87,7 @@ const authored = (assetId: string) => {
 };
 
 const buildManifest = async (reverse: boolean) => {
-  const officeSource = await encodeRgbaPng(rgba(8, 6, [24, 26, 38, 255]));
+  const officeSource = await encodeRgbaPng(rgba(320, 200, [24, 26, 38, 255]));
   const office = createImageAssetRecord(
     authored("asset.office"),
     await compileImage(officeSource, {
@@ -122,25 +116,18 @@ const buildManifest = async (reverse: boolean) => {
     },
   );
   const detectiveSource = new TextEncoder().encode("detective-source");
-  const detective = createSpritesheetAssetRecord(
-    authored("asset.detective"),
-    atlas,
-    {
-      sourceFiles: [
-        {
-          path: "authoring/art/detective-master.aseprite",
-          sha256: await sha256Hex(detectiveSource),
-          byteLength: detectiveSource.byteLength,
-        },
-      ],
-      runtimeDirectory: "assets/detective",
-    },
-  );
+  const detective = createSpritesheetAssetRecord(authored("asset.detective"), atlas, {
+    sourceFiles: [
+      {
+        path: "authoring/art/detective-master.aseprite",
+        sha256: await sha256Hex(detectiveSource),
+        byteLength: detectiveSource.byteLength,
+      },
+    ],
+    runtimeDirectory: "assets/detective",
+  });
 
-  return createAssetBuildManifest(
-    project.id,
-    reverse ? [detective, office] : [office, detective],
-  );
+  return createAssetBuildManifest(project.id, reverse ? [detective, office] : [office, detective]);
 };
 
 describe("asset build to runtime bundle", () => {
@@ -148,10 +135,7 @@ describe("asset build to runtime bundle", () => {
     const manifest = await buildManifest(false);
     const compiled = compileProject(project, manifest);
 
-    expect(compiled.bundle.assets.map((asset) => asset.assetId)).toEqual([
-      "asset.detective",
-      "asset.office",
-    ]);
+    expect(compiled.bundle.assets.map((asset) => asset.assetId)).toEqual(["asset.detective", "asset.office"]);
     expect(compiled.bundle.assetManifestFingerprint).toBe(manifest.fingerprint);
     expect(compiled.canonicalJson).not.toContain("authoring/art");
     expect(compiled.canonicalJson).toContain("assets/office.png");

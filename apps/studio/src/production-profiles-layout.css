@@ -5,8 +5,7 @@
   padding: 25px;
   background:
     linear-gradient(rgb(255 255 255 / 1.4%) 1px, transparent 1px),
-    linear-gradient(90deg, rgb(255 255 255 / 1.4%) 1px, transparent 1px),
-    #0a0c11;
+    linear-gradient(90deg, rgb(255 255 255 / 1.4%) 1px, transparent 1px), #0a0c11;
   background-size: 32px 32px;
 }
 

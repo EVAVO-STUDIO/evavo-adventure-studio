@@ -1,26 +1,18 @@
-import { assetBuildManifestSchema } from "@evavo/adventure-asset-contract";
+import { artDirectionManifestSchema, createArtDirectionManifest } from "@evavo/adventure-art-direction";
 import {
-  artDirectionManifestSchema,
-  createArtDirectionManifest,
-} from "@evavo/adventure-art-direction";
-import { artVisualEvidenceManifestSchema } from "@evavo/adventure-art-direction/evidence";
-import type {
-  Id,
-  Rectangle,
-  Size,
-} from "@evavo/adventure-project-schema";
+  type ArtVisualEvidenceRecord,
+  artVisualEvidenceManifestSchema,
+} from "@evavo/adventure-art-direction/evidence";
+import { assetBuildManifestSchema } from "@evavo/adventure-asset-contract";
+import type { Id, Rectangle, Size } from "@evavo/adventure-project-schema";
 import { studioProject, studioSceneInstances } from "./fixture.js";
 
 const hash = "0".repeat(64);
 
 export const studioArtDirectionManifest = artDirectionManifestSchema.parse({
   ...createArtDirectionManifest(studioProject, "vga-256-320x200"),
-  assets: createArtDirectionManifest(
-    studioProject,
-    "vga-256-320x200",
-  ).assets.map((rule) =>
-    rule.assetId === "asset.object.lamp" ||
-    rule.assetId === "asset.object.door"
+  assets: createArtDirectionManifest(studioProject, "vga-256-320x200").assets.map((rule) =>
+    rule.assetId === "asset.object.lamp" || rule.assetId === "asset.object.door"
       ? {
           ...rule,
           role: "object",
@@ -54,21 +46,20 @@ const framesForAsset = (assetId: Id<"asset">): readonly CompiledFrameFixture[] =
         : [],
     ),
   );
-  const objectFrames = studioSceneInstances.objectDefinitions.flatMap(
-    (definition) =>
-      definition.states.flatMap((state) => {
-        const visual = state.visual;
-        return visual?.kind === "sprite-frame" && visual.assetId === assetId
-          ? [
-              {
-                frameId: visual.frameId,
-                sourceRect: visual.sourceRect,
-                originalSize: visual.sourceSize,
-                trimOffset: visual.trimOffset,
-              },
-            ]
-          : [];
-      }),
+  const objectFrames = studioSceneInstances.objectDefinitions.flatMap((definition) =>
+    definition.states.flatMap((state) => {
+      const visual = state.visual;
+      return visual?.kind === "sprite-frame" && visual.assetId === assetId
+        ? [
+            {
+              frameId: visual.frameId,
+              sourceRect: visual.sourceRect,
+              originalSize: visual.sourceSize,
+              trimOffset: visual.trimOffset,
+            },
+          ]
+        : [];
+    }),
   );
   return [...actorFrames, ...objectFrames];
 };
@@ -102,9 +93,7 @@ export const studioCompiledAssetManifest = assetBuildManifestSchema.parse({
       return {
         assetId: asset.id,
         kind: "image",
-        sourceFiles: [
-          { path: asset.path, sha256: hash, byteLength: 64_000 },
-        ],
+        sourceFiles: [{ path: asset.path, sha256: hash, byteLength: 64_000 }],
         outputFiles: [
           {
             role: "primary",
@@ -119,8 +108,7 @@ export const studioCompiledAssetManifest = assetBuildManifestSchema.parse({
           width: 320,
           height: 200,
           palette: true,
-          colourCount:
-            asset.id === "asset.background.office" ? 224 : 196,
+          colourCount: asset.id === "asset.background.office" ? 224 : 196,
         },
       };
     }
@@ -133,9 +121,7 @@ export const studioCompiledAssetManifest = assetBuildManifestSchema.parse({
       return {
         assetId: asset.id,
         kind: "spritesheet",
-        sourceFiles: [
-          { path: asset.path, sha256: hash, byteLength: 24_000 },
-        ],
+        sourceFiles: [{ path: asset.path, sha256: hash, byteLength: 24_000 }],
         outputFiles: [
           {
             role: "atlas-manifest",
@@ -168,38 +154,38 @@ export const studioCompiledAssetManifest = assetBuildManifestSchema.parse({
   }),
 });
 
+const studioArtVisualAssets: ArtVisualEvidenceRecord[] = studioCompiledAssetManifest.assets.map(
+  (asset): ArtVisualEvidenceRecord => {
+    if (asset.kind === "image") {
+      return {
+        assetId: asset.assetId,
+        kind: "image",
+        palette: asset.metadata.palette,
+        colourCount: asset.metadata.colourCount,
+        alphaMode: "opaque",
+      };
+    }
+    if (asset.kind === "spritesheet") {
+      return {
+        assetId: asset.assetId,
+        kind: "spritesheet",
+        pages: asset.metadata.pages.map((page) => ({
+          outputRole: page.outputRole,
+          palette: true,
+          colourCount: atlasColourCount(asset.assetId),
+          alphaMode: "binary",
+        })),
+      };
+    }
+    throw new Error(`Unexpected compiled Studio fixture asset kind '${asset.kind}'.`);
+  },
+);
+
 export const studioArtVisualEvidence = artVisualEvidenceManifestSchema.parse({
   manifestVersion: 1,
   projectId: studioProject.id,
   compilerVersion: "0.1.0-studio-fixture",
-  assets: studioCompiledAssetManifest.assets.flatMap((asset) => {
-    if (asset.kind === "image") {
-      return [
-        {
-          assetId: asset.assetId,
-          kind: "image",
-          palette: asset.metadata.palette,
-          colourCount: asset.metadata.colourCount,
-          alphaMode: "opaque",
-        },
-      ];
-    }
-    if (asset.kind === "spritesheet") {
-      return [
-        {
-          assetId: asset.assetId,
-          kind: "spritesheet",
-          pages: asset.metadata.pages.map((page) => ({
-            outputRole: page.outputRole,
-            palette: true,
-            colourCount: atlasColourCount(asset.assetId),
-            alphaMode: "binary",
-          })),
-        },
-      ];
-    }
-    return [];
-  }),
+  assets: studioArtVisualAssets,
 });
 
 export const studioCompiledArtEvidence = {

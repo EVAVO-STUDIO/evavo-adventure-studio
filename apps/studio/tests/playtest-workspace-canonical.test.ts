@@ -1,6 +1,6 @@
-import { describe, expect, it } from "vitest";
 import { parseRuntimeBundle } from "@evavo/adventure-runtime-bundle";
 import { createSaveGame } from "@evavo/adventure-save-game";
+import { describe, expect, it } from "vitest";
 import {
   clearPlaytestArtifact,
   createPlaytestInspectorWorkspace,
@@ -71,7 +71,6 @@ const bundle = parseRuntimeBundle({
         },
       ],
       fallbackText: "Nothing happens.",
-      interactionIndex: {},
     },
   ],
   dialogues: [],
@@ -120,24 +119,9 @@ describe("Studio canonical playtest audit", () => {
     const before = saveWithRandomState(1);
     const after = saveWithRandomState(2);
     let state = createPlaytestInspectorWorkspace();
-    state = loadPlaytestArtifactText(
-      state,
-      "bundle",
-      json(bundle),
-      "game.bundle.json",
-    );
-    state = loadPlaytestArtifactText(
-      state,
-      "before-save",
-      json(before),
-      "before.save.json",
-    );
-    state = loadPlaytestArtifactText(
-      state,
-      "after-save",
-      json(after),
-      "after.save.json",
-    );
+    state = loadPlaytestArtifactText(state, "bundle", json(bundle), "game.bundle.json");
+    state = loadPlaytestArtifactText(state, "before-save", json(before), "before.save.json");
+    state = loadPlaytestArtifactText(state, "after-save", json(after), "after.save.json");
 
     expect(state.errors.afterSave).toBeNull();
     expect(state.diff).toMatchObject({ changed: false, entries: [] });
@@ -161,24 +145,9 @@ describe("Studio canonical playtest audit", () => {
   it("clears the canonical result when either comparison save is removed", () => {
     const save = saveWithRandomState(1);
     let state = createPlaytestInspectorWorkspace();
-    state = loadPlaytestArtifactText(
-      state,
-      "bundle",
-      json(bundle),
-      "game.bundle.json",
-    );
-    state = loadPlaytestArtifactText(
-      state,
-      "before-save",
-      json(save),
-      "before.save.json",
-    );
-    state = loadPlaytestArtifactText(
-      state,
-      "after-save",
-      json(save),
-      "after.save.json",
-    );
+    state = loadPlaytestArtifactText(state, "bundle", json(bundle), "game.bundle.json");
+    state = loadPlaytestArtifactText(state, "before-save", json(save), "before.save.json");
+    state = loadPlaytestArtifactText(state, "after-save", json(save), "after.save.json");
     expect(state.canonicalDiff).toMatchObject({ changed: false, entries: [] });
 
     state = clearPlaytestArtifact(state, "after-save");

@@ -1,5 +1,9 @@
-import type { AssetBuildManifest } from "@evavo/adventure-asset-contract";
 import {
+  type ArtAssetRule,
+  type ArtDirectionEditorCommand,
+  type ArtDirectionEditorHistoryState,
+  type ArtDirectionIssue,
+  type ArtPreset,
   createArtDirectionEditorHistory,
   createArtDirectionManifest,
   evaluateCompiledArtDirection,
@@ -9,17 +13,13 @@ import {
   redoArtDirectionEditorCommand,
   undoArtDirectionEditorCommand,
   validateArtDirectionManifest,
-  type ArtAssetRule,
-  type ArtDirectionEditorCommand,
-  type ArtDirectionEditorHistoryState,
-  type ArtDirectionIssue,
-  type ArtPreset,
 } from "@evavo/adventure-art-direction";
 import {
-  evaluateArtDirectionWithVisualEvidence,
   type ArtVisualEvidenceIssue,
   type ArtVisualEvidenceManifest,
+  evaluateArtDirectionWithVisualEvidence,
 } from "@evavo/adventure-art-direction/evidence";
+import type { AssetBuildManifest } from "@evavo/adventure-asset-contract";
 import type { AdventureProject, Id } from "@evavo/adventure-project-schema";
 
 export type ArtWorkspaceIssue = ArtDirectionIssue | ArtVisualEvidenceIssue;
@@ -50,9 +50,7 @@ export type ArtDirectionWorkspaceAction =
   | { readonly type: "mark-saved" }
   | { readonly type: "clear-notice" };
 
-const firstRule = (
-  history: ArtDirectionEditorHistoryState,
-): ArtAssetRule => {
+const firstRule = (history: ArtDirectionEditorHistoryState): ArtAssetRule => {
   const rule = history.document.manifest.assets[0];
   if (!rule) throw new Error("Art direction manifests require at least one rule.");
   return rule;
@@ -95,9 +93,7 @@ export const createArtDirectionWorkspace = (
   };
 };
 
-export const selectedArtDirectionRule = (
-  state: ArtDirectionWorkspaceState,
-): ArtAssetRule => {
+export const selectedArtDirectionRule = (state: ArtDirectionWorkspaceState): ArtAssetRule => {
   const rule = state.history.document.manifest.assets.find(
     (candidate) => candidate.assetId === state.selectedAssetId,
   );
@@ -125,23 +121,18 @@ export const artDirectionWorkspaceIssues = (
       state.compiledEvidence,
     );
   }
-  return validateArtDirectionManifest(
-    state.project,
-    state.history.document.manifest,
-  );
+  return validateArtDirectionManifest(state.project, state.history.document.manifest);
 };
 
-export const artDirectionWorkspaceIsDirty = (
-  state: ArtDirectionWorkspaceState,
-): boolean => isArtDirectionEditorDocumentDirty(state.history.document);
+export const artDirectionWorkspaceIsDirty = (state: ArtDirectionWorkspaceState): boolean =>
+  isArtDirectionEditorDocumentDirty(state.history.document);
 
 export const artDirectionIssuesForAsset = (
   state: ArtDirectionWorkspaceState,
   assetId: Id<"asset">,
 ): readonly ArtWorkspaceIssue[] =>
   artDirectionWorkspaceIssues(state).filter(
-    (entry) =>
-      entry.path.includes(assetId) || entry.message.includes(`'${assetId}'`),
+    (entry) => entry.path.includes(assetId) || entry.message.includes(`'${assetId}'`),
   );
 
 export const artDirectionWorkspaceReducer = (
@@ -154,11 +145,7 @@ export const artDirectionWorkspaceReducer = (
     case "execute":
       return {
         ...state,
-        history: executeArtDirectionEditorCommand(
-          state.project,
-          state.history,
-          action.command,
-        ),
+        history: executeArtDirectionEditorCommand(state.project, state.history, action.command),
         notice: action.notice ?? null,
       };
     case "undo":

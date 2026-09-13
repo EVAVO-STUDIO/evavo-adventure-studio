@@ -1,8 +1,8 @@
-import { describe, expect, it } from "vitest";
 import type { AdventureProject } from "@evavo/adventure-project-schema";
 import type { SceneInstanceManifest } from "@evavo/adventure-scene-instances";
-import type { AdventureDesignDocument } from "../src/types.js";
+import { describe, expect, it } from "vitest";
 import { evaluateAdventureProgression } from "../src/progression-analysis.js";
+import type { AdventureDesignDocument } from "../src/types.js";
 
 interface ProjectOptions {
   readonly loopingSequence?: boolean;
@@ -272,9 +272,7 @@ const visual = (assetId: string, frameId: string) => ({
   pivot: { x: 10, y: 19 },
 });
 
-const manifestFixture = (
-  options: ManifestOptions = {},
-): SceneInstanceManifest =>
+const manifestFixture = (options: ManifestOptions = {}): SceneInstanceManifest =>
   ({
     manifestVersion: 1,
     projectId: "project.flow",
@@ -301,9 +299,7 @@ const manifestFixture = (
                 verb: "open",
                 once: true,
                 actions: [
-                  ...(options.giveKey === false
-                    ? []
-                    : [{ kind: "give-item", itemId: "item.key" }]),
+                  ...(options.giveKey === false ? [] : [{ kind: "give-item", itemId: "item.key" }]),
                   {
                     kind: "set-object-state",
                     objectId: "object.drawer",
@@ -441,11 +437,7 @@ const designFixture = (
   ({
     projectId: "project.flow",
     map: {
-      locations: [
-        { sceneId: "scene.archive" },
-        { sceneId: "scene.alley" },
-        { sceneId: "scene.quay" },
-      ],
+      locations: [{ sceneId: "scene.archive" }, { sceneId: "scene.alley" }, { sceneId: "scene.quay" }],
     },
     puzzles: [
       {
@@ -465,21 +457,13 @@ const designFixture = (
 
 describe("adventure progression flow", () => {
   it("proves the complete object, inventory, dialogue and sequence route", () => {
-    const report = evaluateAdventureProgression(
-      projectFixture(),
-      designFixture(),
-      manifestFixture(),
-    );
+    const report = evaluateAdventureProgression(projectFixture(), designFixture(), manifestFixture());
 
     expect(report.status).toBe("ready");
     expect(report.complete).toBe(true);
     expect(report.metrics.objectiveCoverage).toBe(4);
     expect(report.metrics.objectiveTotal).toBe(4);
-    expect(report.reachableSceneIds).toEqual([
-      "scene.archive",
-      "scene.alley",
-      "scene.quay",
-    ]);
+    expect(report.reachableSceneIds).toEqual(["scene.archive", "scene.alley", "scene.quay"]);
     expect(report.obtainableItemIds).toEqual(["item.key"]);
     expect(report.reachableDialogueIds).toEqual(["dialogue.witness"]);
     expect(report.reachableSequenceIds).toEqual(["sequence.route"]);
@@ -487,9 +471,7 @@ describe("adventure progression flow", () => {
 
   it("is deterministic across repeated exploration", () => {
     const input = [projectFixture(), designFixture(), manifestFixture()] as const;
-    expect(evaluateAdventureProgression(...input)).toEqual(
-      evaluateAdventureProgression(...input),
-    );
+    expect(evaluateAdventureProgression(...input)).toEqual(evaluateAdventureProgression(...input));
   });
 
   it("blocks a required route when its key is never awarded", () => {
@@ -501,10 +483,7 @@ describe("adventure progression flow", () => {
 
     expect(report.status).toBe("blocked");
     expect(report.findings.map((finding) => finding.code)).toEqual(
-      expect.arrayContaining([
-        "required-item-unobtainable",
-        "required-scene-unreachable",
-      ]),
+      expect.arrayContaining(["required-item-unobtainable", "required-scene-unreachable"]),
     );
   });
 
@@ -516,11 +495,7 @@ describe("adventure progression flow", () => {
     );
 
     expect(report.complete).toBe(true);
-    expect(
-      report.findings.some(
-        (finding) => finding.code === "required-item-unobtainable",
-      ),
-    ).toBe(false);
+    expect(report.findings.some((finding) => finding.code === "required-item-unobtainable")).toBe(false);
   });
 
   it("detects a branch that consumes the one recoverable route key", () => {
@@ -530,9 +505,7 @@ describe("adventure progression flow", () => {
       manifestFixture({ discardBranch: true }),
     );
 
-    expect(
-      report.findings.some((finding) => finding.code === "potential-soft-lock"),
-    ).toBe(true);
+    expect(report.findings.some((finding) => finding.code === "potential-soft-lock")).toBe(true);
   });
 
   it("uses runtime-default false flags for visibility conditions", () => {
@@ -574,40 +547,25 @@ describe("adventure progression flow", () => {
       manifestFixture(),
     );
 
-    expect(looping.findings.map((finding) => finding.code)).toContain(
-      "analysis-looping-sequence",
-    );
+    expect(looping.findings.map((finding) => finding.code)).toContain("analysis-looping-sequence");
     expect(recursive.findings.map((finding) => finding.code)).toEqual(
-      expect.arrayContaining([
-        "analysis-sequence-recursion",
-        "analysis-dialogue-recursion",
-      ]),
+      expect.arrayContaining(["analysis-sequence-recursion", "analysis-dialogue-recursion"]),
     );
   });
 
   it("never claims exhaustive completion after state-space truncation", () => {
-    const report = evaluateAdventureProgression(
-      projectFixture(),
-      designFixture(),
-      manifestFixture(),
-      { maximumStates: 1 },
-    );
+    const report = evaluateAdventureProgression(projectFixture(), designFixture(), manifestFixture(), {
+      maximumStates: 1,
+    });
 
     expect(report.truncated).toBe(true);
     expect(report.complete).toBe(false);
-    expect(report.findings.map((finding) => finding.code)).toContain(
-      "analysis-truncated",
-    );
+    expect(report.findings.map((finding) => finding.code)).toContain("analysis-truncated");
   });
 
   it("rejects unsafe explorer limits", () => {
     expect(() =>
-      evaluateAdventureProgression(
-        projectFixture(),
-        designFixture(),
-        manifestFixture(),
-        { maximumDepth: 0 },
-      ),
+      evaluateAdventureProgression(projectFixture(), designFixture(), manifestFixture(), { maximumDepth: 0 }),
     ).toThrow(/positive safe integer/);
   });
 });

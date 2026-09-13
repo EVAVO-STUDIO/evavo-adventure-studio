@@ -1,21 +1,19 @@
-import { describe, expect, it } from "vitest";
 import type { AdventureProject, Id } from "@evavo/adventure-project-schema";
-import type { AdventureDesignDocument } from "../src/types.js";
+import { describe, expect, it } from "vitest";
 import {
+  type AdventureProductionProfile,
   adventureProductionProfileById,
   adventureProductionProfileIds,
   adventureProductionProfiles,
   auditAdventureProductionProfile,
   createAdventureProductionProfileSeed,
   validateAdventureProductionProfile,
-  type AdventureProductionProfile,
 } from "../src/production-profiles.js";
+import type { AdventureDesignDocument } from "../src/types.js";
 
 const projectId = "project.production-profile-test" as Id<"project">;
 
-const matchingDesign = (
-  profile: AdventureProductionProfile,
-): AdventureDesignDocument => {
+const matchingDesign = (profile: AdventureProductionProfile): AdventureDesignDocument => {
   const seed = createAdventureProductionProfileSeed(profile);
   return {
     documentVersion: 1,
@@ -48,17 +46,20 @@ const matchingProject = (
 const clone = <T>(value: T): T => JSON.parse(JSON.stringify(value)) as T;
 
 describe("adventure production profiles", () => {
-  it("ships seven valid, distinct and original production families", () => {
+  it("ships ten valid, distinct and original production families", () => {
     expect(adventureProductionProfileIds()).toEqual([
       "storybook-icon-vga",
       "comic-scifi-icon-vga",
       "gothic-investigation-vga",
+      "gothic-rpg-vga",
+      "early-procedural-icon-vga",
+      "procedural-investigation-vga",
       "verb-panel-cartoon-vga",
       "pulp-archaeology-vga",
       "cinematic-pulp-vga",
       "neo-noir-lowres",
     ]);
-    expect(new Set(adventureProductionProfiles.map((entry) => entry.family)).size).toBe(7);
+    expect(new Set(adventureProductionProfiles.map((entry) => entry.family)).size).toBe(10);
     expect(
       adventureProductionProfiles.flatMap((entry) =>
         validateAdventureProductionProfile(entry),
@@ -71,6 +72,7 @@ describe("adventure production profiles", () => {
       "space quest",
       "quest for glory",
       "gabriel knight",
+      "police quest",
       "gemini rue",
       "monkey island",
       "fate of atlantis",
@@ -111,6 +113,53 @@ describe("adventure production profiles", () => {
         }),
       );
     }
+  });
+
+  it("keeps RPG, investigation, early procedure and later procedure materially separate", () => {
+    const rpg = adventureProductionProfileById("gothic-rpg-vga");
+    const investigation = adventureProductionProfileById("gothic-investigation-vga");
+    const earlyProcedure = adventureProductionProfileById("early-procedural-icon-vga");
+    const laterProcedure = adventureProductionProfileById("procedural-investigation-vga");
+
+    expect(rpg.family).toBe("gothic-rpg");
+    expect(rpg.puzzleGrammars).toEqual(
+      expect.arrayContaining(["multi-route", "hybrid-action", "relationship-branch"]),
+    );
+    expect(rpg.showcase.title).toBe("The Hollow Vale");
+
+    expect(investigation.family).toBe("portrait-investigation");
+    expect(investigation.puzzleGrammars).toContain("topic-investigation");
+    expect(investigation.showcase.title).toBe("The Red Ledger");
+
+    expect(earlyProcedure.family).toBe("early-procedural-icon");
+    expect(earlyProcedure.showcase.title).toBe("Night Shift");
+    expect(earlyProcedure.interface.family).toBe("top-icon-bar");
+    expect(earlyProcedure.interface.primaryInteractionMode).toBe("icon-bar");
+    expect(earlyProcedure.interface.showScore).toBe(true);
+    expect(earlyProcedure.actors.relativeHeightPercent).toEqual([22, 38]);
+    expect(earlyProcedure.puzzleGrammars).toEqual(
+      expect.arrayContaining(["environmental-state", "inventory-chain"]),
+    );
+    expect(earlyProcedure.puzzleGrammars).not.toContain("topic-investigation");
+
+    expect(laterProcedure.family).toBe("procedural-investigation");
+    expect(laterProcedure.actors.relativeHeightPercent).toEqual([25, 43]);
+    expect(earlyProcedure.actors.relativeHeightPercent[1]).toBeLessThan(
+      laterProcedure.actors.relativeHeightPercent[1],
+    );
+    expect(laterProcedure.puzzleGrammars).toEqual(
+      expect.arrayContaining(["research-deduction", "topic-investigation"]),
+    );
+    expect(laterProcedure.showcase.title).toBe("Open Case");
+    expect(laterProcedure.interface.showScore).toBe(false);
+
+    expect(earlyProcedure.scene.cameraDoctrine).not.toBe(laterProcedure.scene.cameraDoctrine);
+    expect(earlyProcedure.interface.statusPresentation).not.toBe(
+      laterProcedure.interface.statusPresentation,
+    );
+    expect(rpg.interface.persistentChromePercent).toBe(0);
+    expect(earlyProcedure.interface.persistentChromePercent).toBe(0);
+    expect(laterProcedure.interface.persistentChromePercent).toBe(0);
   });
 
   it("blocks incompatible canvas, rendering, interaction and art doctrine", () => {
@@ -170,10 +219,13 @@ describe("adventure production profiles", () => {
     }
 
     const storybook = adventureProductionProfileById("storybook-icon-vga");
+    const earlyProcedure = adventureProductionProfileById("early-procedural-icon-vga");
     const cartoon = adventureProductionProfileById("verb-panel-cartoon-vga");
     const cinematic = adventureProductionProfileById("cinematic-pulp-vga");
     const noir = adventureProductionProfileById("neo-noir-lowres");
     expect(storybook.interface.family).toBe("top-icon-bar");
+    expect(earlyProcedure.interface.family).toBe("top-icon-bar");
+    expect(earlyProcedure.interface.showScore).toBe(true);
     expect(cartoon.interface.family).toBe("bottom-verb-panel");
     expect(cartoon.interface.sentenceLine).toBe(true);
     expect(cinematic.interface.family).toBe("cinematic-dossier");

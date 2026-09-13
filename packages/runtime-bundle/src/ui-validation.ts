@@ -1,11 +1,8 @@
 import type { AdventureProject } from "@evavo/adventure-project-schema";
+import { type UiSkinIssue, validateUiSkinManifest } from "@evavo/adventure-ui-skin";
 import {
-  validateUiSkinManifest,
-  type UiSkinIssue,
-} from "@evavo/adventure-ui-skin";
-import {
-  validateCompiledUiSkinMappings,
   type UiSkinCompiledIssue,
+  validateCompiledUiSkinMappings,
 } from "@evavo/adventure-ui-skin/compiled-mapping";
 import type { RuntimeBundle } from "./index.js";
 
@@ -34,18 +31,11 @@ const runtimeProjectView = (
 });
 
 export const validateRuntimeUiSkins = (
-  bundle: Pick<
-    RuntimeBundle,
-    "projectId" | "presentation" | "assets" | "bitmapFonts" | "uiSkins"
-  >,
+  bundle: Pick<RuntimeBundle, "projectId" | "presentation" | "assets" | "bitmapFonts" | "uiSkins">,
 ): readonly RuntimeUiSkinIssue[] => {
   if (!bundle.uiSkins) return [];
   return [
-    ...validateUiSkinManifest(
-      runtimeProjectView(bundle),
-      bundle.bitmapFonts ?? null,
-      bundle.uiSkins,
-    ),
+    ...validateUiSkinManifest(runtimeProjectView(bundle), bundle.bitmapFonts ?? null, bundle.uiSkins),
     ...validateCompiledUiSkinMappings(bundle.uiSkins, bundle),
   ];
 };

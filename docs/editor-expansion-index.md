@@ -5,7 +5,11 @@ This index maps the current authoring and inspection surfaces to their canonical
 | Workspace | Route or app | Canonical document | Command or service package |
 | --- | --- | --- | --- |
 | Scene Composer | `/?workspace=composer` | scene composition manifest | `@evavo/adventure-editor-core` |
+| Classic Game Creator | `/?workspace=creator` | guided production profile and project seed | `@evavo/adventure-design/production-profiles` |
+| Classic Experience Polish | `/?workspace=polish` | experience and presentation review | `@evavo/adventure-design` and runtime services |
 | Production Profile Atelier | `/?workspace=profiles` | profile contract, canonical seed, original splash and showcase brief | `@evavo/adventure-design/production-profiles` |
+| Native Showcase Gallery | `/?workspace=showcases` | original profile showcase plates | `@evavo/adventure-design/production-profiles` |
+| Motion & Feel | `/?workspace=feel` | deterministic movement and camera profile | `@evavo/adventure-play-feel` |
 | Adventure Design Director | `/?workspace=design` | production bible, map, chapters, puzzles, clues and storyboards | `@evavo/adventure-design` |
 | Authenticity Lab | `/?workspace=authenticity` | deterministic production audit and native scene briefs | `@evavo/adventure-design/authenticity` |
 | Compiled Proof Lab | `/?workspace=evidence` | project, art policy, build manifest, pixel evidence, fonts and UI skins | `@evavo/adventure-design/compiled-evidence` |
@@ -18,15 +22,18 @@ This index maps the current authoring and inspection surfaces to their canonical
 | Art Direction | `/?workspace=art` | art policy plus compiled pixel evidence | `@evavo/adventure-art-direction` |
 | Bitmap Fonts | `/?workspace=fonts` | project bitmap-font sidecar | `@evavo/adventure-bitmap-font-editor-core` |
 | Interface Skins | `/?workspace=interface` | project UI-skin sidecar | `@evavo/adventure-ui-skin-editor-core` |
+| Audio Studio | `/?workspace=audio` | project audio-mix sidecar | `@evavo/adventure-audio-editor-core` |
 | Dialogue | `/?workspace=dialogue` | focused dialogue graph | `@evavo/adventure-dialogue-editor-core` |
 | Playtest Inspector | `/?workspace=playtest` | runtime bundle, saves and replay logs | `@evavo/adventure-playtest-inspector` |
-| Validation | `/?workspace=validation` | source project plus scene composition | canonical validators |
+| Validation | `/?workspace=validation` | source project plus canonical sidecars | canonical validators |
 | Cinematic Timeline Lab | port `5175` | focused sequence | `@evavo/adventure-sequence-editor-core` |
 | Narrative Project Library | service layer | project dialogues and sequences | `@evavo/adventure-narrative-library-editor-core` |
 
 ## Shared rules
 
-Production profiles establish one coherent visual, interface, puzzle, audio and splash language before content authoring begins. Adventure Design Director then provides a deterministic 100-point authored-intent audit and native scene-production briefs. The separate Compiled Proof Lab validates corresponding build manifests, encoded pixel evidence, bitmap fonts and native interface geometry. The Native Composition Lab audits canonical walk, depth, entrance, hotspot and occlusion geometry at the exact scene canvas. The Native Staging Lab audits the actors, stateful props, portal handoffs, player-control candidates and layer order that inhabit that geometry. The Progression Flow Lab explores the actual state-changing consequences that connect scenes, inventory, dialogue, sequences and object states. A document score cannot stand in for compiled evidence, and a technically valid build cannot stand in for artistic or playtest review.
+Production profiles establish one coherent visual, interface, puzzle, audio and splash language before content authoring begins. Adventure Design Director then provides a deterministic authored-intent audit and native scene-production briefs. The separate Compiled Proof Lab validates corresponding build manifests, encoded pixel evidence, bitmap fonts and native interface geometry. The Native Composition Lab audits canonical walk, depth, entrance, hotspot and occlusion geometry at the exact scene canvas. The Native Staging Lab audits the actors, stateful props, portal handoffs, player-control candidates and layer order that inhabit that geometry. The Progression Flow Lab explores the actual state-changing consequences that connect scenes, inventory, dialogue, sequences and object states. Audio Studio connects those same scenes, sequences and dialogue lines to deterministic soundscapes, cue policy, speech recordings and bus behavior.
+
+A document score cannot stand in for compiled evidence, and a technically valid build cannot stand in for artistic, listening or playtest review.
 
 All command packages use:
 
@@ -36,6 +43,7 @@ All command packages use:
 - schema-compatible immutable collection clones;
 - deterministic dirty-state comparison;
 - recursive batch commands;
+- validation after a complete atomic batch;
 - tests that do not require a browser.
 
 Inspection services use the same principle without mutation: parse canonical artifacts, validate exact project and bundle identity, produce deterministic summaries and sort findings by stable evidence path.
@@ -88,7 +96,7 @@ The package protects referenced locations, chapters, clues, puzzles and cutscene
 
 `@evavo/adventure-design/compiled-evidence` combines the existing canonical validators and adds adventure-specific production gates. It checks exact project identity, native canvas alignment, integer nearest-neighbour presentation, indexed colour policy, background dimensions, actor atlas completeness, binary alpha, bitmap-font coverage, interface geometry and encoded visual-evidence coverage.
 
-The browser workspace reads all files locally and performs no mutation. A report is verified only when all six required artifacts agree and every visual asset carries encoded pixel evidence. Human 1× native-size review and deterministic playtesting remain required after the technical gate passes.
+The browser workspace reads all files locally and performs no mutation. A report is verified only when all required artifacts agree and every visual asset carries encoded pixel evidence. Human 1× native-size review and deterministic playtesting remain required after the technical gate passes.
 
 ## Native scene composition
 
@@ -140,6 +148,25 @@ State exploration is deliberately bounded by maximum states and decision depth. 
 
 `@evavo/adventure-scene-runtime/commands` advances interactive movement, pending object commands and blocking narrative playback one logical tick at a time. Scene changes clear stale movement and command state from the previous room.
 
+## Deterministic audio production
+
+`AudioMixManifest` is a project-scoped sidecar containing:
+
+- required master and content buses;
+- bus volume, mute, voice-limit and stealing policy;
+- reusable cues with offsets, fades, loop regions, crossfades, priorities and polyphony;
+- ordered music, ambience and room-tone layers for each scene;
+- dialogue-line speech bindings and ordered performance markers;
+- deterministic ducking relationships.
+
+`@evavo/adventure-audio-editor-core` protects stable IDs and referenced cues, applies immutable serializable commands, validates after complete batches and produces exact inverse commands. A cue and every caller can therefore migrate atomically without exposing a broken intermediate document.
+
+The compiler validates the mix against source project entities and compiled audio evidence, then embeds a canonically ordered copy in the source-free runtime bundle. `@evavo/adventure-audio-controller` derives soundscape, dialogue and sequence commands from fixed-tick game state. `@evavo/adventure-audio-web` is only the host output adapter: autoplay recovery, decoded buffers and device scheduling never become story authority.
+
+Audio state participates in save restoration and renderer-free replay execution. The browser player stops stale output and reconstructs voices from canonical saved state.
+
+See [Audio Studio and deterministic sound production](audio-studio.md).
+
 ## Focused documents and project integration
 
 Dialogue graphs, cinematic sequences and actors are edited as focused documents for usable tooling. They are not independent shipping formats.
@@ -153,6 +180,8 @@ Art direction is a project-scoped sidecar rather than a focused replacement docu
 Bitmap fonts compile into the runtime bundle only after project-atlas and compiled-glyph validation. The player renders glyph sprites from validated runtime assets and never substitutes CSS or vector text.
 
 Interface skins bind the canonical interaction mode to native regions, verbs, bitmap-font roles, inventory, parser, score, dialogue choices and verb coins. They compile only after source validation and compiled icon-frame validation, then drive the same renderer-neutral composer in Studio and packaged gameplay.
+
+Audio mixes bind canonical scenes, dialogue lines, sequence sound requests and compiled audio assets. They compile only after source and compiled-evidence validation, then drive deterministic runtime state and replaceable platform output adapters.
 
 Save games and replay logs are packaged-runtime artifacts. Their payload fingerprints and exact runtime-bundle fingerprints are validated before inspection, loading, replay execution or semantic diffing.
 
@@ -172,6 +201,7 @@ The expansion verification includes:
 - art-direction policy and evidence tests;
 - bitmap-font layout, authoring, compilation and runtime tests;
 - interface-skin schema, editor, compiler, runtime, hit-testing and player tests;
+- audio schema, editor, controller, browser adapter, compiler, runtime-bundle, save and Studio tests;
 - save-game, deterministic replay and playtest-inspector tests;
 - browser Player, Studio, Timeline Lab and CLI builds.
 
@@ -196,6 +226,10 @@ packages/bitmap-font/tests
 packages/bitmap-font-editor-core/tests
 packages/ui-skin/tests
 packages/ui-skin-editor-core/tests
+packages/audio/tests
+packages/audio-editor-core/tests
+packages/audio-controller/tests
+packages/audio-web/tests
 packages/scene-runtime/tests
 packages/save-game/tests
 packages/replay/tests

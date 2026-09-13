@@ -1,15 +1,12 @@
 import {
   ADVENTURE_MOTION_UNITS_PER_PIXEL,
+  type AdventureKinematicRoute,
+  type AdventureNativePoint,
   adventureKinematicRouteFingerprint,
   adventurePlayFeelProfileById,
   createAdventureKinematicRoute,
-  type AdventureKinematicRoute,
-  type AdventureNativePoint,
 } from "@evavo/adventure-play-feel";
-import type {
-  NavigationRoute,
-  NavigationRouteSegment,
-} from "@evavo/adventure-scene/navigation";
+import type { NavigationRoute, NavigationRouteSegment } from "@evavo/adventure-scene/navigation";
 import { parseProfiledNavigationMovementState } from "./profiled-movement-save.js";
 import type {
   BeginProfiledNavigationMovementResult,
@@ -43,9 +40,7 @@ const samePoint = (left: AdventureNativePoint, right: AdventureNativePoint): boo
 const geometricDistance = (segment: NavigationRouteSegment): number =>
   Math.hypot(segment.to.x - segment.from.x, segment.to.y - segment.from.y);
 
-export const inspectProfiledNavigationRoute = (
-  route: NavigationRoute,
-): ProfiledNavigationRouteInspection => {
+export const inspectProfiledNavigationRoute = (route: NavigationRoute): ProfiledNavigationRouteInspection => {
   if (route.points.length < 2) return { kind: "fallback", reason: "route-too-short" };
   if (route.segments.length !== route.points.length - 1) {
     return { kind: "fallback", reason: "route-point-segment-mismatch" };
@@ -76,10 +71,7 @@ const locateRouteDistance = (
   route: AdventureKinematicRoute,
   distanceMicropixels: number,
 ): LocatedRouteDistance => {
-  const distance = Math.min(
-    Math.max(0, distanceMicropixels),
-    route.totalMicropixels,
-  );
+  const distance = Math.min(Math.max(0, distanceMicropixels), route.totalMicropixels);
   let segmentIndex = route.segmentLengthsMicropixels.length - 1;
   for (let index = 0; index < route.segmentLengthsMicropixels.length; index += 1) {
     const end = route.cumulativeMicropixels[index + 1];
@@ -95,10 +87,7 @@ const locateRouteDistance = (
   if (!from || !to || !segmentLength) {
     throw new RangeError("Kinematic route geometry is incomplete.");
   }
-  const distanceAlongSegmentMicropixels = Math.min(
-    segmentLength,
-    Math.max(0, distance - segmentStart),
-  );
+  const distanceAlongSegmentMicropixels = Math.min(segmentLength, Math.max(0, distance - segmentStart));
   const progress = distanceAlongSegmentMicropixels / segmentLength;
   return {
     point: {
@@ -152,10 +141,7 @@ export const validateProfiledNavigationMovementCompatibility = (
     );
   }
   const fingerprint = adventureKinematicRouteFingerprint(inspected.kinematic);
-  if (
-    state.routeFingerprint !== fingerprint ||
-    state.extension.routeFingerprint !== fingerprint
-  ) {
+  if (state.routeFingerprint !== fingerprint || state.extension.routeFingerprint !== fingerprint) {
     issue(
       issues,
       "route-fingerprint-mismatch",
@@ -183,14 +169,10 @@ export const validateProfiledNavigationMovementCompatibility = (
       "Saved motion distance or fixed-step remainder is outside the route contract.",
     );
   }
-  const located = locateRouteDistance(
-    inspected.kinematic,
-    motion.distanceMicropixels,
-  );
+  const located = locateRouteDistance(inspected.kinematic, motion.distanceMicropixels);
   if (
     motion.segmentIndex !== located.segmentIndex ||
-    motion.distanceAlongSegmentMicropixels !==
-      located.distanceAlongSegmentMicropixels
+    motion.distanceAlongSegmentMicropixels !== located.distanceAlongSegmentMicropixels
   ) {
     issue(
       issues,
@@ -199,10 +181,9 @@ export const validateProfiledNavigationMovementCompatibility = (
       "Saved segment progress does not match the deterministic route distance.",
     );
   }
-  const expectedCompletedSegmentCount =
-    inspected.kinematic.cumulativeMicropixels
-      .slice(1)
-      .filter((boundary) => motion.distanceMicropixels >= boundary).length;
+  const expectedCompletedSegmentCount = inspected.kinematic.cumulativeMicropixels
+    .slice(1)
+    .filter((boundary) => motion.distanceMicropixels >= boundary).length;
   if (state.completedSegmentCount !== expectedCompletedSegmentCount) {
     issue(
       issues,
@@ -211,13 +192,7 @@ export const validateProfiledNavigationMovementCompatibility = (
       "Completed segment count does not match the deterministic route distance.",
     );
   }
-  if (
-    !samePointWithin(
-      motion.unquantizedPosition,
-      located.point,
-      POSITION_EPSILON,
-    )
-  ) {
+  if (!samePointWithin(motion.unquantizedPosition, located.point, POSITION_EPSILON)) {
     issue(
       issues,
       "invalid-motion-position",
@@ -229,13 +204,7 @@ export const validateProfiledNavigationMovementCompatibility = (
     profile.movement.quantization === "native-pixel"
       ? { x: Math.round(located.point.x), y: Math.round(located.point.y) }
       : located.point;
-  if (
-    !samePointWithin(
-      motion.position,
-      expectedDisplayPosition,
-      POSITION_EPSILON,
-    )
-  ) {
+  if (!samePointWithin(motion.position, expectedDisplayPosition, POSITION_EPSILON)) {
     issue(
       issues,
       "invalid-motion-display-position",
@@ -252,14 +221,10 @@ export const validateProfiledNavigationMovementCompatibility = (
     );
   }
   const walkCycleMicropixels = Math.round(
-    profile.animation.pixelsPerWalkCycle *
-      ADVENTURE_MOTION_UNITS_PER_PIXEL,
+    profile.animation.pixelsPerWalkCycle * ADVENTURE_MOTION_UNITS_PER_PIXEL,
   );
   const expectedWalkCyclePhase =
-    walkCycleMicropixels > 0
-      ? (motion.distanceMicropixels % walkCycleMicropixels) /
-        walkCycleMicropixels
-      : 0;
+    walkCycleMicropixels > 0 ? (motion.distanceMicropixels % walkCycleMicropixels) / walkCycleMicropixels : 0;
   if (Math.abs(motion.walkCyclePhase - expectedWalkCyclePhase) > 1e-9) {
     issue(
       issues,
@@ -268,11 +233,9 @@ export const validateProfiledNavigationMovementCompatibility = (
       "Saved walk-cycle phase does not match the travelled native distance.",
     );
   }
-  const atRouteEnd =
-    motion.distanceMicropixels === inspected.kinematic.totalMicropixels;
+  const atRouteEnd = motion.distanceMicropixels === inspected.kinematic.totalMicropixels;
   if (
-    (motion.phase === "arrived" &&
-      (!atRouteEnd || motion.velocityMicropixelsPerSecond !== 0)) ||
+    (motion.phase === "arrived" && (!atRouteEnd || motion.velocityMicropixelsPerSecond !== 0)) ||
     (atRouteEnd && motion.phase !== "arrived")
   ) {
     issue(
@@ -283,8 +246,7 @@ export const validateProfiledNavigationMovementCompatibility = (
     );
   }
   return issues.sort(
-    (left, right) =>
-      left.path.localeCompare(right.path) || left.code.localeCompare(right.code),
+    (left, right) => left.path.localeCompare(right.path) || left.code.localeCompare(right.code),
   );
 };
 
@@ -292,8 +254,7 @@ const samePointWithin = (
   left: AdventureNativePoint,
   right: AdventureNativePoint,
   tolerance: number,
-): boolean =>
-  Math.abs(left.x - right.x) <= tolerance && Math.abs(left.y - right.y) <= tolerance;
+): boolean => Math.abs(left.x - right.x) <= tolerance && Math.abs(left.y - right.y) <= tolerance;
 
 export class ProfiledNavigationMovementCompatibilityError extends Error {
   readonly issues: readonly ProfiledNavigationCompatibilityIssue[];

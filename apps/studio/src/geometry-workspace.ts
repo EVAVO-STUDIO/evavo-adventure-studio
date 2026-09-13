@@ -3,10 +3,10 @@ import {
   executeProjectEditorCommand,
   isProjectEditorDocumentDirty,
   markProjectEditorHistorySaved,
-  redoProjectEditorCommand,
-  undoProjectEditorCommand,
   type ProjectEditorCommand,
   type ProjectEditorHistoryState,
+  redoProjectEditorCommand,
+  undoProjectEditorCommand,
 } from "@evavo/adventure-project-editor-core";
 import type {
   AdventureProject,
@@ -56,9 +56,7 @@ export type GeometryWorkspaceAction =
 
 const asId = <T extends string>(value: string): Id<T> => value as Id<T>;
 
-export const createGeometryWorkspace = (
-  project: AdventureProject,
-): GeometryWorkspaceState => ({
+export const createGeometryWorkspace = (project: AdventureProject): GeometryWorkspaceState => ({
   history: createProjectEditorHistory(project),
   activeSceneId: project.startSceneId,
   tool: "walkmesh",
@@ -88,8 +86,7 @@ export const geometryWorkspaceReducer = (
       return {
         ...state,
         history: executeProjectEditorCommand(state.history, action.command),
-        selection:
-          action.selection === undefined ? state.selection : action.selection,
+        selection: action.selection === undefined ? state.selection : action.selection,
         notice: action.notice ?? null,
       };
     case "undo":
@@ -119,23 +116,19 @@ export const geometryWorkspaceReducer = (
   }
 };
 
-export const geometryProject = (
-  state: GeometryWorkspaceState,
-): AdventureProject => state.history.document.project;
+export const geometryProject = (state: GeometryWorkspaceState): AdventureProject =>
+  state.history.document.project;
 
 export const geometryScene = (state: GeometryWorkspaceState): Scene => {
-  const scene = geometryProject(state).scenes.find(
-    (candidate) => candidate.id === state.activeSceneId,
-  );
+  const scene = geometryProject(state).scenes.find((candidate) => candidate.id === state.activeSceneId);
   if (!scene) {
     throw new Error(`Scene '${state.activeSceneId}' does not exist.`);
   }
   return scene;
 };
 
-export const geometryWorkspaceIsDirty = (
-  state: GeometryWorkspaceState,
-): boolean => isProjectEditorDocumentDirty(state.history.document);
+export const geometryWorkspaceIsDirty = (state: GeometryWorkspaceState): boolean =>
+  isProjectEditorDocumentDirty(state.history.document);
 
 export type SelectedGeometryEntity =
   | { readonly kind: "navigation-area"; readonly value: NavigationArea }
@@ -144,9 +137,7 @@ export type SelectedGeometryEntity =
   | { readonly kind: "entrance"; readonly value: Entrance }
   | null;
 
-export const selectedGeometryEntity = (
-  state: GeometryWorkspaceState,
-): SelectedGeometryEntity => {
+export const selectedGeometryEntity = (state: GeometryWorkspaceState): SelectedGeometryEntity => {
   const selection = state.selection;
   if (!selection) {
     return null;
@@ -154,27 +145,19 @@ export const selectedGeometryEntity = (
   const scene = geometryScene(state);
   switch (selection.kind) {
     case "navigation-area": {
-      const value = scene.navigationAreas.find(
-        (candidate) => candidate.id === selection.id,
-      );
+      const value = scene.navigationAreas.find((candidate) => candidate.id === selection.id);
       return value ? { kind: "navigation-area", value } : null;
     }
     case "depth-band": {
-      const value = scene.depthBands.find(
-        (candidate) => candidate.id === selection.id,
-      );
+      const value = scene.depthBands.find((candidate) => candidate.id === selection.id);
       return value ? { kind: "depth-band", value } : null;
     }
     case "hotspot": {
-      const value = scene.hotspots.find(
-        (candidate) => candidate.id === selection.id,
-      );
+      const value = scene.hotspots.find((candidate) => candidate.id === selection.id);
       return value ? { kind: "hotspot", value } : null;
     }
     case "entrance": {
-      const value = scene.entrances.find(
-        (candidate) => candidate.id === selection.id,
-      );
+      const value = scene.entrances.find((candidate) => candidate.id === selection.id);
       return value ? { kind: "entrance", value } : null;
     }
   }
@@ -198,9 +181,7 @@ export const replaceNavigationVertexCommand = (
   }
   const vertex = area.shape.points[vertexIndex];
   if (!vertex) {
-    throw new RangeError(
-      `Navigation area '${areaId}' has no vertex ${vertexIndex}.`,
-    );
+    throw new RangeError(`Navigation area '${areaId}' has no vertex ${vertexIndex}.`);
   }
   const points = [...area.shape.points];
   points[vertexIndex] = clampPoint(scene, point);
@@ -219,9 +200,7 @@ export const replaceHotspotVertexCommand = (
   point: Point,
 ): ProjectEditorCommand => {
   const scene = geometryScene(state);
-  const hotspot = scene.hotspots.find(
-    (candidate) => candidate.id === hotspotId,
-  );
+  const hotspot = scene.hotspots.find((candidate) => candidate.id === hotspotId);
   if (!hotspot) {
     throw new Error(`Hotspot '${hotspotId}' does not exist.`);
   }
@@ -245,9 +224,7 @@ export const replaceEntrancePositionCommand = (
   point: Point,
 ): ProjectEditorCommand => {
   const scene = geometryScene(state);
-  const entrance = scene.entrances.find(
-    (candidate) => candidate.id === entranceId,
-  );
+  const entrance = scene.entrances.find((candidate) => candidate.id === entranceId);
   if (!entrance) {
     throw new Error(`Entrance '${entranceId}' does not exist.`);
   }
@@ -288,9 +265,7 @@ export const insertGeometryEntityCommand = (
   const ids = projectIds(project);
   switch (state.tool) {
     case "walkmesh": {
-      const id = asId<"navigation-area">(
-        uniqueId(ids, `navigation.${scene.id}.area`),
-      );
+      const id = asId<"navigation-area">(uniqueId(ids, `navigation.${scene.id}.area`));
       return {
         command: {
           kind: "insert-navigation-area",
@@ -331,12 +306,8 @@ export const insertGeometryEntityCommand = (
       };
     }
     case "hotspots": {
-      const id = asId<"hotspot">(
-        uniqueId(ids, `hotspot.${scene.id}.target`),
-      );
-      const interactionId = asId<"interaction">(
-        uniqueId(ids, `interaction.${scene.id}.target.look`),
-      );
+      const id = asId<"hotspot">(uniqueId(ids, `hotspot.${scene.id}.target`));
+      const interactionId = asId<"interaction">(uniqueId(ids, `interaction.${scene.id}.target.look`));
       return {
         command: {
           kind: "insert-hotspot",
@@ -366,9 +337,7 @@ export const insertGeometryEntityCommand = (
       };
     }
     case "entrances": {
-      const id = asId<"entrance">(
-        uniqueId(ids, `entrance.${scene.id}.entry`),
-      );
+      const id = asId<"entrance">(uniqueId(ids, `entrance.${scene.id}.entry`));
       return {
         command: {
           kind: "insert-entrance",

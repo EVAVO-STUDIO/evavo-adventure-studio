@@ -1,23 +1,50 @@
-import { z } from "zod";
+import type { AudioRuntimeState } from "@evavo/adventure-audio/runtime";
+import { audioRuntimeStateSchema } from "@evavo/adventure-audio/runtime-schema";
 import {
+  type Id,
   idSchema,
   pointSchema,
   scalarSchema,
-  type Id,
 } from "@evavo/adventure-project-schema";
-import {
-  parseProfiledNavigationMovementState,
-  type ProfiledNavigationMovementState,
-} from "@evavo/adventure-scene-runtime/profiled-movement";
 import type { InteractiveRuntimeWorldState } from "@evavo/adventure-scene-runtime/commands";
+import type { RuntimeInvestigationState } from "@evavo/adventure-scene-runtime/investigation-runtime";
+import type { MultiProtagonistState } from "@evavo/adventure-scene-runtime/multi-protagonist";
 import {
-  saveGameProfiledRuntimeCameraStateSchema,
+  type ProfiledNavigationMovementState,
+  parseProfiledNavigationMovementState,
+} from "@evavo/adventure-scene-runtime/profiled-movement";
+import type { RuntimeRoomScriptState } from "@evavo/adventure-scene-runtime/room-scripts";
+import type { AdventureRouteTopologyState } from "@evavo/adventure-scene-runtime/route-topology";
+import type { AdventureRpgState } from "@evavo/adventure-scene-runtime/rpg";
+import type { AdventureRpgEconomyState } from "@evavo/adventure-scene-runtime/rpg-economy";
+import type { SpecializedAdventureModeSessionState } from "@evavo/adventure-scene-runtime/specialized-mode-session";
+import { z } from "zod";
+import { saveGameInvestigationStateSchema } from "./investigation.js";
+import {
+  type SaveGameItemCombinationState,
+  saveGameItemCombinationStateSchema,
+} from "./item-combinations.js";
+import { saveGameMultiProtagonistStateSchema } from "./multi-protagonist.js";
+import {
   type SaveGameProfiledRuntimeCameraState,
+  saveGameProfiledRuntimeCameraStateSchema,
 } from "./profiled-camera.js";
+import { saveGameRoomScriptStateSchema } from "./room-scripts.js";
+import { saveGameRouteTopologyStateSchema } from "./route-topology.js";
+import { saveGameAdventureRpgStateSchema } from "./rpg.js";
+import { saveGameAdventureRpgEconomyStateSchema } from "./rpg-economy.js";
+import {
+  type SaveGameSentenceState,
+  saveGameSentenceStateSchema,
+} from "./sentence.js";
+import { saveGameSpecializedModeSessionStateSchema } from "./specialized-modes.js";
 
 const fnvFingerprintSchema = z
   .string()
-  .regex(/^fnv1a64:[0-9a-f]{16}$/u, "Expected an FNV-1a 64-bit fingerprint.");
+  .regex(
+    /^fnv1a64:[0-9a-f]{16}$/u,
+    "Expected an FNV-1a 64-bit fingerprint.",
+  );
 const sha256Schema = z
   .string()
   .regex(/^[0-9a-f]{64}$/u, "Expected a lowercase SHA-256 digest.");
@@ -111,25 +138,29 @@ const navigationRouteSchema = z
   })
   .strict();
 
-const profiledMovementStateSchema = z.unknown().transform(
-  (
-    value: unknown,
-    context: { addIssue(issue: { code: "custom"; message: string }): void },
-  ): ProfiledNavigationMovementState => {
-    try {
-      return parseProfiledNavigationMovementState(value);
-    } catch (error) {
-      context.addIssue({
-        code: "custom",
-        message:
-          error instanceof Error
-            ? error.message
-            : "Profiled movement state is invalid.",
-      });
-      return z.NEVER;
-    }
-  },
-);
+const profiledMovementStateSchema = z
+  .unknown()
+  .transform(
+    (
+      value: unknown,
+      context: {
+        addIssue(issue: { code: "custom"; message: string }): void;
+      },
+    ): ProfiledNavigationMovementState => {
+      try {
+        return parseProfiledNavigationMovementState(value);
+      } catch (error) {
+        context.addIssue({
+          code: "custom",
+          message:
+            error instanceof Error
+              ? error.message
+              : "Profiled movement state is invalid.",
+        });
+        return z.NEVER;
+      }
+    },
+  );
 
 const actorMovementSchema = z
   .object({
@@ -151,15 +182,57 @@ const pendingCommandSchema = z
     objectInstanceId: idSchema("object"),
     verb: z.string().min(1),
     itemId: idSchema("item").nullable(),
+    approachSlotId: idSchema("approach-slot").optional(),
+    approachFacing: z.string().min(1).optional(),
+    approachAnimationState: z.string().min(1).optional(),
+  })
+  .strict();
+
+const activeInteractionChoreographySchema = z
+  .object({
+    choreographyId: idSchema("interaction-choreography"),
+    interactionId: idSchema("interaction"),
+    actorInstanceId: idSchema("actor-instance"),
+    beatIndex: z.number().int().nonnegative(),
+    holdTicksRemaining: z.number().int().nonnegative(),
+    waitingForAnimation: z.boolean(),
+  })
+  .strict();
+
+const activeEntryChoreographySchema = z
+  .object({
+    actorInstanceId: idSchema("actor-instance"),
+    sceneId: idSchema("scene"),
+    entranceId: idSchema("entrance"),
+    points: z.array(pointSchema),
+    nextPointIndex: z.number().int().nonnegative(),
+    speedPixelsPerSecond: z.number().finite().positive(),
+    entryAnimationState: z.string().min(1).nullable(),
+    arrivalFacing: z.string().min(1).nullable(),
+    arrivalAnimationState: z.string().min(1).nullable(),
+    unlockControlAt: z.enum(["spawn", "path-end", "animation-end"]),
+    waitingForArrivalAnimation: z.boolean(),
   })
   .strict();
 
 export const interactiveWorldSaveSchema = z
   .object({
     story: runtimeStorySchema,
-    actorInstances: z.record(z.string().min(1), actorInstanceRuntimeSchema),
+    actorInstances: z.record(
+      z.string().min(1),
+      actorInstanceRuntimeSchema,
+    ),
     movements: z.record(z.string().min(1), actorMovementSchema),
-    pendingObjectCommands: z.record(z.string().min(1), pendingCommandSchema),
+    pendingObjectCommands: z.record(
+      z.string().min(1),
+      pendingCommandSchema,
+    ),
+    activeInteractionChoreographies: z
+      .record(z.string().min(1), activeInteractionChoreographySchema)
+      .default({}),
+    activeEntryChoreographies: z
+      .record(z.string().min(1), activeEntryChoreographySchema)
+      .default({}),
   })
   .strict() as z.ZodType<InteractiveRuntimeWorldState>;
 
@@ -173,6 +246,7 @@ export interface SaveGameInterfaceState {
     readonly history: readonly string[];
   };
   readonly profiledCamera?: SaveGameProfiledRuntimeCameraState;
+  readonly sentence?: SaveGameSentenceState;
 }
 
 export const saveGameInterfaceStateSchema = z
@@ -188,6 +262,7 @@ export const saveGameInterfaceStateSchema = z
       })
       .strict(),
     profiledCamera: saveGameProfiledRuntimeCameraStateSchema.optional(),
+    sentence: saveGameSentenceStateSchema.optional(),
   })
   .strict() as z.ZodType<SaveGameInterfaceState>;
 
@@ -198,6 +273,15 @@ export interface SaveGamePayload {
   readonly assetManifestFingerprint: string;
   readonly world: InteractiveRuntimeWorldState;
   readonly interface: SaveGameInterfaceState;
+  readonly audio?: AudioRuntimeState;
+  readonly investigation?: RuntimeInvestigationState;
+  readonly itemCombinations?: SaveGameItemCombinationState;
+  readonly multiProtagonist?: MultiProtagonistState;
+  readonly roomScripts?: RuntimeRoomScriptState;
+  readonly routeTopology?: AdventureRouteTopologyState;
+  readonly rpg?: AdventureRpgState;
+  readonly rpgEconomy?: AdventureRpgEconomyState;
+  readonly specializedModes?: SpecializedAdventureModeSessionState;
 }
 
 const saveGamePayloadObjectSchema = z
@@ -208,6 +292,15 @@ const saveGamePayloadObjectSchema = z
     assetManifestFingerprint: sha256Schema,
     world: interactiveWorldSaveSchema,
     interface: saveGameInterfaceStateSchema,
+    audio: audioRuntimeStateSchema.optional(),
+    investigation: saveGameInvestigationStateSchema.optional(),
+    itemCombinations: saveGameItemCombinationStateSchema.optional(),
+    multiProtagonist: saveGameMultiProtagonistStateSchema.optional(),
+    roomScripts: saveGameRoomScriptStateSchema.optional(),
+    routeTopology: saveGameRouteTopologyStateSchema.optional(),
+    rpg: saveGameAdventureRpgStateSchema.optional(),
+    rpgEconomy: saveGameAdventureRpgEconomyStateSchema.optional(),
+    specializedModes: saveGameSpecializedModeSessionStateSchema.optional(),
   })
   .strict();
 

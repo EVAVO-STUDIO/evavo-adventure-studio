@@ -1,7 +1,4 @@
-import type {
-  AdventureProject,
-  Size,
-} from "@evavo/adventure-project-schema";
+import type { AdventureProject, Size } from "@evavo/adventure-project-schema";
 import {
   adventurePolygonArea,
   hotspotChangesScene,
@@ -10,10 +7,10 @@ import {
   polygonInsideSceneCanvas,
 } from "./scene-readability-geometry.js";
 import {
-  addSceneReadabilityFinding,
   type AdventureScene,
   type AdventureSceneDesignLink,
   type AdventureSceneReadabilityFinding,
+  addSceneReadabilityFinding,
 } from "./scene-readability-types.js";
 import type { AdventureDesignDocument } from "./types.js";
 
@@ -93,8 +90,7 @@ export const evaluateSceneHotspots = (
         severity: "note",
         path: `scenes.${scene.id}.hotspots[${index}]`,
         message: `Hotspot '${hotspot.name}' has no action or authored fallback response.`,
-        recommendation:
-          "Remove decorative hit geometry or give observation a project-specific response.",
+        recommendation: "Remove decorative hit geometry or give observation a project-specific response.",
         impact: 2,
       });
     }
@@ -111,9 +107,7 @@ export const evaluateSceneHotspots = (
       impact: 5,
     });
   }
-  const hasSceneChange = scene.hotspots.some((_, index) =>
-    hotspotChangesScene(scene, index),
-  );
+  const hasSceneChange = scene.hotspots.some((_, index) => hotspotChangesScene(scene, index));
   if (project.scenes.length > 1 && !hasSceneChange) {
     addSceneReadabilityFinding(findings, {
       id: "scene-exit-not-in-source-hotspots",
@@ -153,8 +147,7 @@ export const evaluateSceneOcclusion = (
         severity: "error",
         path: `scenes.${scene.id}.occluders[${index}].baselineY`,
         message: `Occluder '${occluder.id}' has a baseline outside the scene.`,
-        recommendation:
-          "Set the baseline where the actor should pass behind the foreground element.",
+        recommendation: "Set the baseline where the actor should pass behind the foreground element.",
         impact: 8,
       });
     }

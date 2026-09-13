@@ -4,14 +4,14 @@ import type {
   ClassicAdventureCreatorReport,
   ClassicAdventureCreatorScene,
 } from "@evavo/adventure-design/classic-game-creator";
-import type { CreatorEntitySelection } from "./classic-game-creator-preview.js";
 import {
   Button,
   CommitText,
+  type CreatorSurface,
   RangeField,
   timingControls,
-  type CreatorSurface,
 } from "./classic-game-creator-controls.js";
+import type { CreatorEntitySelection } from "./classic-game-creator-preview.js";
 
 export const CreatorInspector = ({
   project,
@@ -35,11 +35,7 @@ export const CreatorInspector = ({
   readonly selectedProp: ClassicAdventureCreatorScene["props"][number] | null;
   readonly report: ClassicAdventureCreatorReport;
   readonly execute: (command: ClassicAdventureCreatorCommand) => void;
-  readonly moveSelection: (
-    entity: CreatorEntitySelection,
-    x: number,
-    y: number,
-  ) => void;
+  readonly moveSelection: (entity: CreatorEntitySelection, x: number, y: number) => void;
   readonly duplicateScene: () => void;
   readonly removeScene: () => void;
   readonly onSelect: (selection: CreatorEntitySelection) => void;
@@ -52,10 +48,22 @@ export const CreatorInspector = ({
         <span>/100</span>
       </div>
       <dl>
-        <div><dt>Scenes</dt><dd>{report.metrics.sceneCount}</dd></div>
-        <div><dt>Targets</dt><dd>{report.metrics.interactivePropCount}</dd></div>
-        <div><dt>Topics</dt><dd>{report.metrics.dialogueTopicCount}</dd></div>
-        <div><dt>Proofs</dt><dd>{report.metrics.nativeReviewProofCount}</dd></div>
+        <div>
+          <dt>Scenes</dt>
+          <dd>{report.metrics.sceneCount}</dd>
+        </div>
+        <div>
+          <dt>Targets</dt>
+          <dd>{report.metrics.interactivePropCount}</dd>
+        </div>
+        <div>
+          <dt>Topics</dt>
+          <dd>{report.metrics.dialogueTopicCount}</dd>
+        </div>
+        <div>
+          <dt>Proofs</dt>
+          <dd>{report.metrics.nativeReviewProofCount}</dd>
+        </div>
       </dl>
     </section>
 
@@ -63,15 +71,13 @@ export const CreatorInspector = ({
       <>
         <section>
           <span className="cc-eyebrow">SCENE GEOMETRY</span>
-          <label className="cc-text-field">
+          <div className="cc-text-field">
             <span>Name</span>
             <CommitText
               value={scene.name}
-              onCommit={(name) =>
-                execute({ kind: "rename-scene", sceneId: scene.id, name })
-              }
+              onCommit={(name) => execute({ kind: "rename-scene", sceneId: scene.id, name })}
             />
-          </label>
+          </div>
           <RangeField
             label="Horizon"
             value={scene.horizonY}
@@ -143,32 +149,28 @@ export const CreatorInspector = ({
               <button
                 type="button"
                 key={actor.id}
-                className={
-                  selection?.kind === "actor" && selection.id === actor.id
-                    ? "is-selected"
-                    : ""
-                }
+                className={selection?.kind === "actor" && selection.id === actor.id ? "is-selected" : ""}
                 onClick={() => onSelect({ kind: "actor", id: actor.id })}
               >
                 <span>ACTOR · {actor.role}</span>
                 <strong>{actor.name}</strong>
-                <small>{actor.position.x}, {actor.position.y}</small>
+                <small>
+                  {actor.position.x}, {actor.position.y}
+                </small>
               </button>
             ))}
             {scene.props.map((prop) => (
               <button
                 type="button"
                 key={prop.id}
-                className={
-                  selection?.kind === "prop" && selection.id === prop.id
-                    ? "is-selected"
-                    : ""
-                }
+                className={selection?.kind === "prop" && selection.id === prop.id ? "is-selected" : ""}
                 onClick={() => onSelect({ kind: "prop", id: prop.id })}
               >
                 <span>PROP · {prop.role}</span>
                 <strong>{prop.name}</strong>
-                <small>{prop.position.x}, {prop.position.y}</small>
+                <small>
+                  {prop.position.x}, {prop.position.y}
+                </small>
               </button>
             ))}
           </div>
@@ -178,9 +180,7 @@ export const CreatorInspector = ({
           <section className="cc-selected-entity">
             <span className="cc-eyebrow">SELECTED ENTITY</span>
             <h2>{selectedActor?.name ?? selectedProp?.name}</h2>
-            <p>
-              {selectedActor?.silhouetteNote ?? selectedProp?.description}
-            </p>
+            <p>{selectedActor?.silhouetteNote ?? selectedProp?.description}</p>
             <RangeField
               label="Native X"
               value={(selectedActor ?? selectedProp)?.position.x ?? 0}
@@ -230,16 +230,26 @@ export const CreatorInspector = ({
             value={project.interface.chromeHeight}
             minimum={52}
             maximum={72}
-            onChange={(chromeHeight) =>
-              execute({ kind: "set-interface-chrome", chromeHeight })
-            }
+            onChange={(chromeHeight) => execute({ kind: "set-interface-chrome", chromeHeight })}
           />
         ) : (
           <dl className="cc-detail-list">
-            <div><dt>Open</dt><dd>{project.interface.openBehaviour}</dd></div>
-            <div><dt>Overlay</dt><dd>{project.interface.overlayHeight}px</dd></div>
-            <div><dt>Portraits</dt><dd>{project.interface.portraitSlots}</dd></div>
-            <div><dt>Topics</dt><dd>{project.interface.topicRows}</dd></div>
+            <div>
+              <dt>Open</dt>
+              <dd>{project.interface.openBehaviour}</dd>
+            </div>
+            <div>
+              <dt>Overlay</dt>
+              <dd>{project.interface.overlayHeight}px</dd>
+            </div>
+            <div>
+              <dt>Portraits</dt>
+              <dd>{project.interface.portraitSlots}</dd>
+            </div>
+            <div>
+              <dt>Topics</dt>
+              <dd>{project.interface.topicRows}</dd>
+            </div>
           </dl>
         )}
       </section>
@@ -249,8 +259,14 @@ export const CreatorInspector = ({
         <h2>No silent dead ends.</h2>
         <p>{project.puzzles[0]?.recovery}</p>
         <dl className="cc-detail-list">
-          <div><dt>Puzzles</dt><dd>{project.puzzles.length}</dd></div>
-          <div><dt>Dialogs</dt><dd>{project.dialogues.length}</dd></div>
+          <div>
+            <dt>Puzzles</dt>
+            <dd>{project.puzzles.length}</dd>
+          </div>
+          <div>
+            <dt>Dialogs</dt>
+            <dd>{project.dialogues.length}</dd>
+          </div>
           <div>
             <dt>Required props</dt>
             <dd>{project.puzzles[0]?.requiredPropIds.length ?? 0}</dd>
@@ -287,8 +303,7 @@ export const CreatorInspector = ({
       <span className="cc-eyebrow">FINDINGS</span>
       {report.issues.length === 0 ? (
         <p className="is-clean">
-          Native geometry, interface grammar, causal recovery and originality
-          boundaries are coherent.
+          Native geometry, interface grammar, causal recovery and originality boundaries are coherent.
         </p>
       ) : (
         report.issues.slice(0, 8).map((finding) => (

@@ -1,0 +1,137 @@
+import type {
+  AdventureCreativeAcceptedDeliveryV3,
+  AdventureCreativeHandoffIssueV3,
+  AdventureCreativeReviewV3,
+  AdventureCreativeTaskKindV3,
+  AdventureCreativeWorkOrderV3,
+} from "./creative-production-handoff-v3.js";
+import { validateAdventureCreativeReviewV3 } from "./creative-production-handoff-v3.js";
+import {
+  type AdventureCreativeMeasuredEvidenceV3,
+  validateAdventureCreativeMeasuredEvidenceV3,
+} from "./creative-production-evidence-v3.js";
+
+const animationKinds = new Set<AdventureCreativeTaskKindV3>([
+  "animation-sequence",
+  "cutscene-shot",
+  "effects-sequence",
+]);
+
+const nonEmpty = (value: string | undefined): boolean => Boolean(value?.trim());
+
+export const validateAdventureCreativeAcceptedDeliveryV3 = (
+  order: AdventureCreativeWorkOrderV3,
+  review: AdventureCreativeReviewV3,
+  delivery: AdventureCreativeAcceptedDeliveryV3,
+): readonly AdventureCreativeHandoffIssueV3[] => {
+  const issues: AdventureCreativeHandoffIssueV3[] = [
+    ...validateAdventureCreativeReviewV3(order, review),
+  ];
+  if (review.disposition !== "accepted") {
+    issues.push({ code: "review-not-accepted", message: "Only an accepted review may produce an Adventure Studio delivery." });
+  }
+  if (
+    delivery.deliveryVersion !== 3 ||
+    delivery.workOrderId !== order.workOrderId ||
+    delivery.revision !== order.revision ||
+    delivery.assetId !== order.assetId
+  ) {
+    issues.push({ code: "delivery-authority-mismatch", message: "Delivery must target the exact v3 work order revision and asset." });
+  }
+  if (delivery.approvedArtifactDigest !== review.candidateArtifactDigest) {
+    issues.push({ code: "delivery-byte-mismatch", message: "The delivered artifact digest must be the exact artifact digest accepted by review." });
+  }
+  if (!Number.isSafeInteger(delivery.approvedByteLength) || delivery.approvedByteLength <= 0 || !nonEmpty(delivery.mediaType)) {
+    issues.push({ code: "invalid-delivery-bytes", message: "Delivery requires positive byte length and media type." });
+  }
+  if (
+    delivery.nativeSize.width !== order.nativeSize.width ||
+    delivery.nativeSize.height !== order.nativeSize.height
+  ) {
+    issues.push({ code: "delivery-size-mismatch", message: "Delivery dimensions must exactly match the approved native work-order canvas." });
+  }
+  if (!nonEmpty(delivery.reviewEvidenceDigest) || delivery.reviewEvidenceDigest !== review.reviewerEvidenceDigest) {
+    issues.push({ code: "review-evidence-mismatch", message: "Delivery must retain the exact review evidence digest that accepted the candidate." });
+  }
+  if (order.alphaPolicy !== "opaque") {
+    if (!review.alphaEvidenceDigest || delivery.alphaEvidenceDigest !== review.alphaEvidenceDigest) {
+      issues.push({ code: "alpha-evidence-mismatch", message: "Transparent delivery must retain the exact accepted alpha evidence." });
+    }
+  }
+  if (animationKinds.has(order.taskKind)) {
+    if (!review.sequenceEvidenceDigest || delivery.sequenceEvidenceDigest !== review.sequenceEvidenceDigest) {
+      issues.push({ code: "sequence-evidence-mismatch", message: "Animation delivery must retain the exact accepted sequence evidence." });
+    }
+  }
+  const requiredLineage = [
+    order.sourceRevisionDigest,
+    order.authorities.styleDigest,
+    order.authorities.paletteDigest,
+    order.authorities.modelSheetDigest,
+    order.authorities.environmentLayoutDigest,
+    order.authorities.xSheetDigest,
+    order.authorities.previousApprovedArtifactDigest,
+    ...order.authorities.referenceDigests,
+  ].filter((value): value is string => Boolean(value));
+  const lineage = new Set(delivery.sourceLineageDigests);
+  for (const digest of requiredLineage) {
+    if (!lineage.has(digest)) {
+      issues.push({ code: "missing-source-lineage", message: `Delivery is missing governing lineage digest '${digest}'.` });
+    }
+  }
+  return issues;
+};
+
+export const validateAdventureCreativeProductionAcceptanceV3 = (
+  order: AdventureCreativeWorkOrderV3,
+  review: AdventureCreativeReviewV3,
+  delivery: AdventureCreativeAcceptedDeliveryV3,
+  evidence: AdventureCreativeMeasuredEvidenceV3 | null | undefined,
+): readonly AdventureCreativeHandoffIssueV3[] => {
+  const issues: AdventureCreativeHandoffIssueV3[] = [
+    ...validateAdventureCreativeAcceptedDeliveryV3(order, review, delivery),
+  ];
+  if (!evidence) {
+    issues.push({
+      code: "missing-measured-evidence",
+      message: "Production acceptance requires measured decoded alpha/frame/style evidence; digest-only evidence is not sufficient.",
+    });
+    return issues;
+  }
+  for (const measuredIssue of validateAdventureCreativeMeasuredEvidenceV3(order, evidence)) {
+    issues.push({
+      code: `measured-${measuredIssue.code}`,
+      message: measuredIssue.frameIds.length > 0
+        ? `${measuredIssue.message} Frames: ${measuredIssue.frameIds.join(", ")}.`
+        : measuredIssue.message,
+    });
+  }
+  if (evidence.artifactByteLength !== delivery.approvedByteLength) {
+    issues.push({
+      code: "measured-byte-length-mismatch",
+      message: `Measured byte length ${evidence.artifactByteLength} does not match accepted delivery byte length ${delivery.approvedByteLength}.`,
+    });
+  }
+  return issues;
+};
+
+export const assertAdventureCreativeAcceptedDeliveryV3 = (
+  order: AdventureCreativeWorkOrderV3,
+  review: AdventureCreativeReviewV3,
+  delivery: AdventureCreativeAcceptedDeliveryV3,
+): AdventureCreativeAcceptedDeliveryV3 => {
+  const issues = validateAdventureCreativeAcceptedDeliveryV3(order, review, delivery);
+  if (issues.length > 0) throw new Error(issues.map((issue) => issue.message).join(" "));
+  return delivery;
+};
+
+export const assertAdventureCreativeProductionAcceptanceV3 = (
+  order: AdventureCreativeWorkOrderV3,
+  review: AdventureCreativeReviewV3,
+  delivery: AdventureCreativeAcceptedDeliveryV3,
+  evidence: AdventureCreativeMeasuredEvidenceV3,
+): AdventureCreativeAcceptedDeliveryV3 => {
+  const issues = validateAdventureCreativeProductionAcceptanceV3(order, review, delivery, evidence);
+  if (issues.length > 0) throw new Error(issues.map((issue) => issue.message).join(" "));
+  return delivery;
+};

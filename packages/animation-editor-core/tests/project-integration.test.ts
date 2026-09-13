@@ -1,5 +1,5 @@
-import { describe, expect, it } from "vitest";
 import { parseAdventureProject } from "@evavo/adventure-project-schema";
+import { describe, expect, it } from "vitest";
 import {
   ActorProjectIntegrationError,
   mergeActorsIntoProject,
@@ -171,9 +171,7 @@ describe("actor project integration", () => {
       ...project.actors[0]!,
       name: "Detective Vale",
       frames: project.actors[0]!.frames.map((frame) =>
-        frame.id === "frame.detective.talk"
-          ? { ...frame, durationTicks: 10 }
-          : frame,
+        frame.id === "frame.detective.talk" ? { ...frame, durationTicks: 10 } : frame,
       ),
     };
 
@@ -189,33 +187,25 @@ describe("actor project integration", () => {
   it("rejects removal of performance states used by dialogue", () => {
     const edited = {
       ...project.actors[0]!,
-      animations: project.actors[0]!.animations.filter(
-        (animation) => animation.state !== "talk",
-      ),
+      animations: project.actors[0]!.animations.filter((animation) => animation.state !== "talk"),
     };
 
     expect(validateActorProjectIntegration(project, edited).map((issue) => issue.code)).toContain(
       "missing-dialogue-animation-state",
     );
-    expect(() => replaceActorInProject(project, edited)).toThrowError(
-      ActorProjectIntegrationError,
-    );
+    expect(() => replaceActorInProject(project, edited)).toThrowError(ActorProjectIntegrationError);
   });
 
   it("rejects sequence facings without a matching state-facing clip", () => {
     const edited = {
       ...project.actors[0]!,
       animations: project.actors[0]!.animations.map((animation) =>
-        animation.state === "talk"
-          ? { ...animation, facing: "west" }
-          : animation,
+        animation.state === "talk" ? { ...animation, facing: "west" } : animation,
       ),
     };
 
     expect(validateActorProjectIntegration(project, edited).map((issue) => issue.code)).toEqual(
-      expect.arrayContaining([
-        "missing-sequence-animation-facing",
-      ]),
+      expect.arrayContaining(["missing-sequence-animation-facing"]),
     );
   });
 
@@ -228,9 +218,7 @@ describe("actor project integration", () => {
       animations: project.actors[0]!.animations.map((animation) => ({
         ...animation,
         frameIds: animation.frameIds.map((frameId) =>
-          frameId === "frame.detective.idle"
-            ? ("asset.office" as typeof frameId)
-            : frameId,
+          frameId === "frame.detective.idle" ? ("asset.office" as typeof frameId) : frameId,
         ),
       })),
     };
@@ -242,9 +230,7 @@ describe("actor project integration", () => {
 
   it("merges all focused actor documents and rejects unknown actors", () => {
     const edited = { ...project.actors[0]!, name: "Mara Vale" };
-    expect(mergeActorsIntoProject(project, [edited]).actors[0]?.name).toBe(
-      "Mara Vale",
-    );
+    expect(mergeActorsIntoProject(project, [edited]).actors[0]?.name).toBe("Mara Vale");
 
     expect(() =>
       mergeActorsIntoProject(project, [

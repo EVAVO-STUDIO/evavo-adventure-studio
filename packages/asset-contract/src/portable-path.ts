@@ -1,22 +1,19 @@
 import type { AssetBuildManifest } from "./index.js";
 
 const WINDOWS_RESERVED_SEGMENT = /^(?:con|prn|aux|nul|com[1-9]|lpt[1-9])(?:\..*)?$/i;
-const WINDOWS_INVALID_CHARACTERS = /[<>:"|?*\u0000-\u001f]/;
+const WINDOWS_INVALID_CHARACTERS = /[<>:"|?*]/;
+
+const containsWindowsControlCharacter = (value: string): boolean =>
+  [...value].some((character) => character.charCodeAt(0) <= 0x1f);
 
 export const portablePathKey = (relativePath: string): string =>
   relativePath.normalize("NFC").toLocaleLowerCase("en-US");
 
-export const portableRelativePathError = (
-  relativePath: string,
-): string | null => {
+export const portableRelativePathError = (relativePath: string): string | null => {
   if (!relativePath) {
     return "Runtime path cannot be empty.";
   }
-  if (
-    relativePath.startsWith("/") ||
-    relativePath.startsWith("\\") ||
-    relativePath.includes("\\")
-  ) {
+  if (relativePath.startsWith("/") || relativePath.startsWith("\\") || relativePath.includes("\\")) {
     return "Runtime paths must be relative and use forward slashes.";
   }
 
@@ -27,7 +24,7 @@ export const portableRelativePathError = (
     if (segment.endsWith(".") || segment.endsWith(" ")) {
       return `Path segment '${segment}' cannot end with a dot or space.`;
     }
-    if (WINDOWS_INVALID_CHARACTERS.test(segment)) {
+    if (WINDOWS_INVALID_CHARACTERS.test(segment) || containsWindowsControlCharacter(segment)) {
       return `Path segment '${segment}' contains a character that is invalid on Windows.`;
     }
     if (WINDOWS_RESERVED_SEGMENT.test(segment)) {
@@ -38,9 +35,7 @@ export const portableRelativePathError = (
   return null;
 };
 
-export type PortableRuntimePathIssueCode =
-  | "non-portable-runtime-path"
-  | "portable-runtime-path-collision";
+export type PortableRuntimePathIssueCode = "non-portable-runtime-path" | "portable-runtime-path-collision";
 
 export interface PortableRuntimePathIssue {
   readonly severity: "error";

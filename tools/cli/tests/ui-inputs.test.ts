@@ -1,9 +1,9 @@
 import { mkdir, mkdtemp, rm, writeFile } from "node:fs/promises";
 import { tmpdir } from "node:os";
 import { dirname, join } from "node:path";
-import { afterEach, describe, expect, it } from "vitest";
 import { bitmapFontManifestSchema } from "@evavo/adventure-bitmap-font";
 import { parseAdventureProject } from "@evavo/adventure-project-schema";
+import { afterEach, describe, expect, it } from "vitest";
 import { CliDataError } from "../src/diagnostics.js";
 import { loadUiSkins } from "../src/ui-inputs.js";
 
@@ -124,9 +124,7 @@ const skinManifest = (
 
 afterEach(async () => {
   await Promise.all(
-    temporaryDirectories.splice(0).map((directory) =>
-      rm(directory, { recursive: true, force: true }),
-    ),
+    temporaryDirectories.splice(0).map((directory) => rm(directory, { recursive: true, force: true })),
   );
 });
 
@@ -147,24 +145,19 @@ describe("CLI interface skin inputs", () => {
     const root = await mkdtemp(join(tmpdir(), "evavo-cli-ui-"));
     temporaryDirectories.push(root);
     const path = join(root, "ui-skins.json");
-    await writeJson(path, skinManifest({
-      interactionMode: "verb-list",
-      fontId: "bitmap-font.missing",
-    }));
+    await writeJson(
+      path,
+      skinManifest({
+        interactionMode: "verb-list",
+        fontId: "bitmap-font.missing",
+      }),
+    );
 
     const loaded = await loadUiSkins(path, project, fonts);
     expect(loaded.diagnostics.map((diagnostic) => diagnostic.code)).toEqual(
-      expect.arrayContaining([
-        "unknown-font",
-        "verb-bar-required",
-        "default-mode-mismatch",
-      ]),
+      expect.arrayContaining(["unknown-font", "missing-verb-bar", "default-mode-mismatch"]),
     );
-    expect(
-      loaded.diagnostics.every(
-        (diagnostic) => diagnostic.source === "ui-skins-semantics",
-      ),
-    ).toBe(true);
+    expect(loaded.diagnostics.every((diagnostic) => diagnostic.source === "ui-skins-semantics")).toBe(true);
   });
 
   it("returns stable schema diagnostics and file errors", async () => {
@@ -173,20 +166,12 @@ describe("CLI interface skin inputs", () => {
     const invalidPath = join(root, "invalid.json");
     await writeJson(invalidPath, { manifestVersion: 1, skins: [] });
 
-    await expect(
-      loadUiSkins(invalidPath, project, fonts),
-    ).rejects.toMatchObject<Partial<CliDataError>>({
-      diagnostics: expect.arrayContaining([
-        expect.objectContaining({ source: "ui-skins-schema" }),
-      ]),
+    await expect(loadUiSkins(invalidPath, project, fonts)).rejects.toMatchObject({
+      diagnostics: expect.arrayContaining([expect.objectContaining({ source: "ui-skins-schema" })]),
     });
 
-    await expect(
-      loadUiSkins(join(root, "missing.json"), project, fonts),
-    ).rejects.toMatchObject<Partial<CliDataError>>({
-      diagnostics: expect.arrayContaining([
-        expect.objectContaining({ source: "ui-skins-file" }),
-      ]),
+    await expect(loadUiSkins(join(root, "missing.json"), project, fonts)).rejects.toMatchObject({
+      diagnostics: expect.arrayContaining([expect.objectContaining({ source: "ui-skins-file" })]),
     });
   });
 });

@@ -22,12 +22,7 @@ export interface AdventureProgressionWitness {
   readonly steps: readonly AdventureProgressionStep[];
 }
 
-export type AdventureProgressionMilestoneKind =
-  | "scene"
-  | "item"
-  | "dialogue"
-  | "sequence"
-  | "object-state";
+export type AdventureProgressionMilestoneKind = "scene" | "item" | "dialogue" | "sequence" | "object-state";
 
 export interface AdventureProgressionMilestone {
   readonly kind: AdventureProgressionMilestoneKind;

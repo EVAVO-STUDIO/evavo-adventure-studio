@@ -1,12 +1,12 @@
+import { cinematicPlayFeelProfiles } from "./preset-cinematic.js";
+import { foundationPlayFeelProfiles } from "./preset-foundation.js";
+import { iconPlayFeelProfiles } from "./preset-icon.js";
+import { interactionPlayFeelProfiles } from "./preset-interaction.js";
 import type {
   AdventurePlayFeelProfile,
   AdventurePlayFeelProfileId,
   AdventureProductionProfileReference,
 } from "./types.js";
-import { cinematicPlayFeelProfiles } from "./preset-cinematic.js";
-import { foundationPlayFeelProfiles } from "./preset-foundation.js";
-import { iconPlayFeelProfiles } from "./preset-icon.js";
-import { interactionPlayFeelProfiles } from "./preset-interaction.js";
 
 export const adventurePlayFeelProfiles: readonly AdventurePlayFeelProfile[] = [
   ...foundationPlayFeelProfiles,
@@ -15,9 +15,7 @@ export const adventurePlayFeelProfiles: readonly AdventurePlayFeelProfile[] = [
   ...cinematicPlayFeelProfiles,
 ];
 
-const profilesById = new Map(
-  adventurePlayFeelProfiles.map((profile) => [profile.id, profile] as const),
-);
+const profilesById = new Map(adventurePlayFeelProfiles.map((profile) => [profile.id, profile] as const));
 
 const productionProfileMap: Readonly<
   Record<AdventureProductionProfileReference, AdventurePlayFeelProfileId>
@@ -31,9 +29,7 @@ const productionProfileMap: Readonly<
   "neo-noir-lowres": "noir-restrained",
 };
 
-export const adventurePlayFeelProfileById = (
-  id: AdventurePlayFeelProfileId,
-): AdventurePlayFeelProfile => {
+export const adventurePlayFeelProfileById = (id: AdventurePlayFeelProfileId): AdventurePlayFeelProfile => {
   const profile = profilesById.get(id);
   if (!profile) throw new RangeError(`Unknown adventure play-feel profile '${id}'.`);
   return profile;

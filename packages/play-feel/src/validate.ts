@@ -1,27 +1,14 @@
-import type {
-  AdventurePlayFeelIssue,
-  AdventurePlayFeelProfile,
-} from "./types.js";
+import type { AdventurePlayFeelIssue, AdventurePlayFeelProfile } from "./types.js";
 
 const finite = (value: number): boolean => Number.isFinite(value);
-const safeNonnegativeInteger = (value: number): boolean =>
-  Number.isSafeInteger(value) && value >= 0;
-const safePositiveInteger = (value: number): boolean =>
-  Number.isSafeInteger(value) && value > 0;
+const safeNonnegativeInteger = (value: number): boolean => Number.isSafeInteger(value) && value >= 0;
+const safePositiveInteger = (value: number): boolean => Number.isSafeInteger(value) && value > 0;
 
-const add = (
-  issues: AdventurePlayFeelIssue[],
-  path: string,
-  message: string,
-): void => {
+const add = (issues: AdventurePlayFeelIssue[], path: string, message: string): void => {
   issues.push({ severity: "error", code: "invalid-profile", path, message });
 };
 
-const positiveFinite = (
-  issues: AdventurePlayFeelIssue[],
-  value: number,
-  path: string,
-): void => {
+const positiveFinite = (issues: AdventurePlayFeelIssue[], value: number, path: string): void => {
   if (!finite(value) || value <= 0) add(issues, path, "Expected a positive finite number.");
 };
 
@@ -37,11 +24,7 @@ const bounded = (
   }
 };
 
-const nonemptyStrings = (
-  issues: AdventurePlayFeelIssue[],
-  values: readonly string[],
-  path: string,
-): void => {
+const nonemptyStrings = (issues: AdventurePlayFeelIssue[], values: readonly string[], path: string): void => {
   if (values.length === 0) add(issues, path, "Expected at least one authored rule.");
   values.forEach((value, index) => {
     if (value.trim().length < 12) {
@@ -62,15 +45,13 @@ export const validateAdventurePlayFeelProfile = (
   }
 
   const movement = profile.movement;
-  if (!(new Set(["native-pixel", "subpixel"])).has(movement.quantization)) {
+  if (!new Set(["native-pixel", "subpixel"]).has(movement.quantization)) {
     add(issues, "movement.quantization", "Expected a supported motion quantization mode.");
   }
   if (
-    !(new Set([
-      "replace-immediately",
-      "cancel-and-settle",
-      "finish-current-segment",
-    ])).has(movement.retargetPolicy)
+    !new Set(["replace-immediately", "cancel-and-settle", "finish-current-segment"]).has(
+      movement.retargetPolicy,
+    )
   ) {
     add(issues, "movement.retargetPolicy", "Expected a supported retarget policy.");
   }
@@ -125,10 +106,10 @@ export const validateAdventurePlayFeelProfile = (
     if (!safeNonnegativeInteger(value)) add(issues, path, "Expected a non-negative safe integer.");
   }
 
-  if (!(new Set(["fixed", "dead-zone-follow", "shot-led"])).has(profile.camera.mode)) {
+  if (!new Set(["fixed", "dead-zone-follow", "shot-led"]).has(profile.camera.mode)) {
     add(issues, "camera.mode", "Expected a supported camera mode.");
   }
-  if (!(new Set(["native-pixel", "subpixel"])).has(profile.camera.quantization)) {
+  if (!new Set(["native-pixel", "subpixel"]).has(profile.camera.quantization)) {
     add(issues, "camera.quantization", "Expected a supported camera quantization mode.");
   }
   const deadZone = profile.camera.deadZone;
@@ -142,11 +123,7 @@ export const validateAdventurePlayFeelProfile = (
   }
   if (deadZone.left >= deadZone.right) add(issues, "camera.deadZone", "Left must be less than right.");
   if (deadZone.top >= deadZone.bottom) add(issues, "camera.deadZone", "Top must be less than bottom.");
-  positiveFinite(
-    issues,
-    profile.camera.maximumSpeedPixelsPerSecond,
-    "camera.maximumSpeedPixelsPerSecond",
-  );
+  positiveFinite(issues, profile.camera.maximumSpeedPixelsPerSecond, "camera.maximumSpeedPixelsPerSecond");
   positiveFinite(
     issues,
     profile.camera.accelerationPixelsPerSecondSquared,
@@ -157,12 +134,8 @@ export const validateAdventurePlayFeelProfile = (
     add(issues, "camera.settleTicks", "Expected a non-negative safe integer.");
   }
 
-  if (!(new Set(["none", "camera-only"])).has(profile.presentation.renderInterpolation)) {
-    add(
-      issues,
-      "presentation.renderInterpolation",
-      "Expected a supported render interpolation policy.",
-    );
+  if (!new Set(["none", "camera-only"]).has(profile.presentation.renderInterpolation)) {
+    add(issues, "presentation.renderInterpolation", "Expected a supported render interpolation policy.");
   }
 
   for (const [path, value] of [

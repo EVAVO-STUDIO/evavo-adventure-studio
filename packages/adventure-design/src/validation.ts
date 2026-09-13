@@ -122,9 +122,7 @@ export const adventurePuzzleDependencyOrder = (
     const id = ready.shift();
     if (!id) break;
     output.push(id as AdventurePuzzle["id"]);
-    for (const dependentId of (outgoing.get(id) ?? []).sort((left, right) =>
-      left.localeCompare(right),
-    )) {
+    for (const dependentId of (outgoing.get(id) ?? []).sort((left, right) => left.localeCompare(right))) {
       const next = (incoming.get(dependentId) ?? 0) - 1;
       incoming.set(dependentId, next);
       if (next === 0) {
@@ -144,11 +142,7 @@ export const adventurePuzzleDependencyOrder = (
   return output;
 };
 
-const validateHintLadder = (
-  issues: AdventureDesignIssue[],
-  puzzle: AdventurePuzzle,
-  path: string,
-): void => {
+const validateHintLadder = (issues: AdventureDesignIssue[], puzzle: AdventurePuzzle, path: string): void => {
   if (puzzle.hints.length < 3 || puzzle.hints.length > 6) {
     addIssue(
       issues,
@@ -161,13 +155,7 @@ const validateHintLadder = (
   const levels = puzzle.hints.map((hint) => hint.level);
   const unique = new Set(levels);
   if (unique.size !== levels.length) {
-    addIssue(
-      issues,
-      "error",
-      "hint-level-duplicate",
-      `${path}.hints`,
-      "Hint levels must be unique.",
-    );
+    addIssue(issues, "error", "hint-level-duplicate", `${path}.hints`, "Hint levels must be unique.");
   }
   const sorted = [...unique].sort((left, right) => left - right);
   sorted.forEach((level, index) => {
@@ -490,8 +478,7 @@ export const validateAdventureDesignDocument = (
     validateHintLadder(issues, puzzle, path);
     if (
       puzzle.failure.mode === "death" &&
-      (puzzle.failure.warning.trim().length < 8 ||
-        puzzle.failure.recovery.trim().length < 8)
+      (puzzle.failure.warning.trim().length < 8 || puzzle.failure.recovery.trim().length < 8)
     ) {
       addIssue(
         issues,
@@ -578,13 +565,7 @@ export const validateAdventureDesignDocument = (
     adventurePuzzleDependencyOrder(document);
   } catch (error) {
     if (error instanceof AdventurePuzzleCycleError) {
-      addIssue(
-        issues,
-        "error",
-        "puzzle-cycle",
-        "puzzles",
-        error.message,
-      );
+      addIssue(issues, "error", "puzzle-cycle", "puzzles", error.message);
     } else {
       throw error;
     }
@@ -665,10 +646,7 @@ const projectActionIssues = (
           `${path}.dialogueId`,
           `Completion action references unknown dialogue '${action.dialogueId}'.`,
         );
-      } else if (
-        action.nodeId &&
-        !dialogue.nodes.some((node) => node.id === action.nodeId)
-      ) {
+      } else if (action.nodeId && !dialogue.nodes.some((node) => node.id === action.nodeId)) {
         addIssue(
           issues,
           "error",
@@ -772,19 +750,17 @@ export const validateAdventureDesignAgainstProject = (
         `Cutscene trigger references unknown dialogue choice '${cutscene.trigger.dialogueChoiceId}'.`,
       );
     }
-    cutscene.completionActions.forEach((action, actionIndex) =>
+    cutscene.completionActions.forEach((action, actionIndex) => {
       projectActionIssues(
         project,
         action,
         `cutscenes[${cutsceneIndex}].completionActions[${actionIndex}]`,
         issues,
-      ),
-    );
+      );
+    });
   });
 
   return issues.sort((left, right) => left.path.localeCompare(right.path));
 };
 
-export const adventureDesignProjectShell = (
-  project: AdventureProject,
-): AdventureProjectShell => project;
+export const adventureDesignProjectShell = (project: AdventureProject): AdventureProjectShell => project;

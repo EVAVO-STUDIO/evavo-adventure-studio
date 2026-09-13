@@ -4,19 +4,16 @@ import type {
   BitmapGlyph,
   BitmapKerning,
 } from "@evavo/adventure-bitmap-font";
+import { type BitmapTextLayout, layoutBitmapText } from "@evavo/adventure-bitmap-font/layout";
 import {
-  layoutBitmapText,
-  type BitmapTextLayout,
-} from "@evavo/adventure-bitmap-font/layout";
-import {
+  type BitmapFontEditorCommand,
+  type BitmapFontEditorHistoryState,
   createBitmapFontEditorHistory,
   executeBitmapFontEditorCommand,
   isBitmapFontEditorDocumentDirty,
   markBitmapFontEditorHistorySaved,
   redoBitmapFontEditorCommand,
   undoBitmapFontEditorCommand,
-  type BitmapFontEditorCommand,
-  type BitmapFontEditorHistoryState,
 } from "@evavo/adventure-bitmap-font-editor-core";
 import type { AdventureProject, Id } from "@evavo/adventure-project-schema";
 
@@ -75,9 +72,7 @@ export const createBitmapFontWorkspace = (
   };
 };
 
-export const selectedBitmapFont = (
-  state: BitmapFontWorkspaceState,
-): BitmapFontDefinition => {
+export const selectedBitmapFont = (state: BitmapFontWorkspaceState): BitmapFontDefinition => {
   const font = state.history.document.manifest.fonts.find(
     (candidate) => candidate.id === state.selectedFontId,
   );
@@ -85,45 +80,32 @@ export const selectedBitmapFont = (
   return font;
 };
 
-export const selectedBitmapGlyph = (
-  state: BitmapFontWorkspaceState,
-): BitmapGlyph => {
+export const selectedBitmapGlyph = (state: BitmapFontWorkspaceState): BitmapGlyph => {
   const font = selectedBitmapFont(state);
-  const glyph = font.glyphs.find(
-    (candidate) => candidate.id === state.selectedGlyphId,
-  );
+  const glyph = font.glyphs.find((candidate) => candidate.id === state.selectedGlyphId);
   if (!glyph) {
-    throw new Error(
-      `Bitmap glyph '${state.selectedGlyphId}' does not exist in '${font.id}'.`,
-    );
+    throw new Error(`Bitmap glyph '${state.selectedGlyphId}' does not exist in '${font.id}'.`);
   }
   return glyph;
 };
 
-export const bitmapFontPreviewLayout = (
-  state: BitmapFontWorkspaceState,
-): BitmapTextLayout =>
+export const bitmapFontPreviewLayout = (state: BitmapFontWorkspaceState): BitmapTextLayout =>
   layoutBitmapText(selectedBitmapFont(state), state.previewText, {
     maxWidth: state.previewWidth,
     alignment: "left",
     lineSpacing: 1,
   });
 
-export const bitmapFontWorkspaceIsDirty = (
-  state: BitmapFontWorkspaceState,
-): boolean => isBitmapFontEditorDocumentDirty(state.history.document);
+export const bitmapFontWorkspaceIsDirty = (state: BitmapFontWorkspaceState): boolean =>
+  isBitmapFontEditorDocumentDirty(state.history.document);
 
 const selectionAfterHistory = (
   state: BitmapFontWorkspaceState,
   history: BitmapFontEditorHistoryState,
 ): Pick<BitmapFontWorkspaceState, "selectedFontId" | "selectedGlyphId"> => {
-  const selectedFont = history.document.manifest.fonts.find(
-    (font) => font.id === state.selectedFontId,
-  );
+  const selectedFont = history.document.manifest.fonts.find((font) => font.id === state.selectedFontId);
   const font = selectedFont ?? firstFont(history.document.manifest);
-  const selectedGlyph = font.glyphs.find(
-    (glyph) => glyph.id === state.selectedGlyphId,
-  );
+  const selectedGlyph = font.glyphs.find((glyph) => glyph.id === state.selectedGlyphId);
   return {
     selectedFontId: font.id,
     selectedGlyphId: (selectedGlyph ?? firstGlyph(font)).id,
@@ -136,9 +118,7 @@ export const bitmapFontWorkspaceReducer = (
 ): BitmapFontWorkspaceState => {
   switch (action.type) {
     case "select-font": {
-      const font = state.history.document.manifest.fonts.find(
-        (candidate) => candidate.id === action.fontId,
-      );
+      const font = state.history.document.manifest.fonts.find((candidate) => candidate.id === action.fontId);
       if (!font) return state;
       return {
         ...state,
@@ -150,19 +130,13 @@ export const bitmapFontWorkspaceReducer = (
     case "select-glyph":
       return { ...state, selectedGlyphId: action.glyphId, notice: null };
     case "execute": {
-      const history = executeBitmapFontEditorCommand(
-        state.project,
-        state.history,
-        action.command,
-      );
+      const history = executeBitmapFontEditorCommand(state.project, state.history, action.command);
       const selection = selectionAfterHistory(state, history);
       return {
         ...state,
         history,
         ...selection,
-        ...(action.selectedGlyphId
-          ? { selectedGlyphId: action.selectedGlyphId }
-          : {}),
+        ...(action.selectedGlyphId ? { selectedGlyphId: action.selectedGlyphId } : {}),
         notice: action.notice ?? null,
       };
     }
@@ -259,11 +233,7 @@ export const insertBitmapGlyphCommand = (
 } => {
   const font = selectedBitmapFont(state);
   const codePoint = nextGlyphCodePoint(font);
-  const glyphId = uniqueGlyphId(
-    state.history.document.manifest,
-    font,
-    codePoint,
-  );
+  const glyphId = uniqueGlyphId(state.history.document.manifest, font, codePoint);
   const glyph: BitmapGlyph = {
     id: glyphId,
     codePoint,
@@ -282,17 +252,13 @@ export const insertBitmapGlyphCommand = (
   };
 };
 
-export const removeSelectedGlyphCommand = (
-  state: BitmapFontWorkspaceState,
-): BitmapFontEditorCommand => ({
+export const removeSelectedGlyphCommand = (state: BitmapFontWorkspaceState): BitmapFontEditorCommand => ({
   kind: "remove-glyph",
   fontId: state.selectedFontId,
   glyphId: state.selectedGlyphId,
 });
 
-export const insertKerningCommand = (
-  state: BitmapFontWorkspaceState,
-): BitmapFontEditorCommand => {
+export const insertKerningCommand = (state: BitmapFontWorkspaceState): BitmapFontEditorCommand => {
   const font = selectedBitmapFont(state);
   const selected = selectedBitmapGlyph(state);
   const right = font.glyphs.find(
@@ -300,8 +266,7 @@ export const insertKerningCommand = (
       glyph.codePoint !== selected.codePoint &&
       !font.kernings.some(
         (kerning) =>
-          kerning.leftCodePoint === selected.codePoint &&
-          kerning.rightCodePoint === glyph.codePoint,
+          kerning.leftCodePoint === selected.codePoint && kerning.rightCodePoint === glyph.codePoint,
       ),
   );
   if (!right) {

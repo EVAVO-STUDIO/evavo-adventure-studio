@@ -30,8 +30,7 @@ const toMicropixels = (pixels: number): number => {
   return value;
 };
 
-const toPixels = (micropixels: number): number =>
-  micropixels / ADVENTURE_MOTION_UNITS_PER_PIXEL;
+const toPixels = (micropixels: number): number => micropixels / ADVENTURE_MOTION_UNITS_PER_PIXEL;
 
 const quantizePoint = (
   point: AdventureNativePoint,
@@ -74,9 +73,7 @@ export const createAdventureKinematicRoute = (
       );
     }
     if (!Number.isSafeInteger(totalMicropixels + length)) {
-      throw new AdventureKinematicRouteError(
-        "Route length exceeds the deterministic fixed-unit range.",
-      );
+      throw new AdventureKinematicRouteError("Route length exceeds the deterministic fixed-unit range.");
     }
     totalMicropixels += length;
     segmentLengthsMicropixels.push(length);
@@ -90,10 +87,7 @@ export const createAdventureKinematicRoute = (
   };
 };
 
-const segmentIndexAtDistance = (
-  route: AdventureKinematicRoute,
-  distanceMicropixels: number,
-): number => {
+const segmentIndexAtDistance = (route: AdventureKinematicRoute, distanceMicropixels: number): number => {
   if (distanceMicropixels >= route.totalMicropixels) {
     return route.segmentLengthsMicropixels.length - 1;
   }
@@ -133,10 +127,7 @@ const pointAtDistance = (
   };
 };
 
-const angleBetweenSegments = (
-  route: AdventureKinematicRoute,
-  firstSegmentIndex: number,
-): number | null => {
+const angleBetweenSegments = (route: AdventureKinematicRoute, firstSegmentIndex: number): number | null => {
   const firstFrom = route.points[firstSegmentIndex];
   const pivot = route.points[firstSegmentIndex + 1];
   const secondTo = route.points[firstSegmentIndex + 2];
@@ -148,11 +139,7 @@ const angleBetweenSegments = (
   const firstLength = Math.hypot(firstX, firstY);
   const secondLength = Math.hypot(secondX, secondY);
   if (firstLength <= EPSILON || secondLength <= EPSILON) return null;
-  const cosine = clamp(
-    (firstX * secondX + firstY * secondY) / (firstLength * secondLength),
-    -1,
-    1,
-  );
+  const cosine = clamp((firstX * secondX + firstY * secondY) / (firstLength * secondLength), -1, 1);
   return (Math.acos(cosine) * 180) / Math.PI;
 };
 
@@ -204,9 +191,7 @@ const targetVelocityForTurn = (
   const distanceToTurn = Math.max(0, boundary - state.distanceMicropixels);
   const cornerVelocity = Math.round(topVelocity * profile.movement.turnSpeedMultiplier);
   const permitted = Math.floor(
-    Math.sqrt(
-      cornerVelocity * cornerVelocity + 2 * deceleration * distanceToTurn,
-    ),
+    Math.sqrt(cornerVelocity * cornerVelocity + 2 * deceleration * distanceToTurn),
   );
   return { limit: Math.min(topVelocity, permitted), cornering: permitted < topVelocity };
 };
@@ -231,9 +216,7 @@ export const createAdventureMotionState = (
   profile: AdventurePlayFeelProfile,
 ): AdventureMotionState => {
   const located = pointAtDistance(route, 0);
-  const startVelocity = toMicropixels(
-    profile.movement.minimumStartSpeedPixelsPerSecond,
-  );
+  const startVelocity = toMicropixels(profile.movement.minimumStartSpeedPixelsPerSecond);
   return {
     stateVersion: 1,
     tick: 0,
@@ -265,21 +248,14 @@ const advanceOneTick = (
     };
   }
   const ticksPerSecond = profile.logicalTicksPerSecond;
-  const tunedTopSpeed =
-    tuning.topSpeedPixelsPerSecond ?? profile.movement.topSpeedPixelsPerSecond;
+  const tunedTopSpeed = tuning.topSpeedPixelsPerSecond ?? profile.movement.topSpeedPixelsPerSecond;
   if (!Number.isFinite(tunedTopSpeed) || tunedTopSpeed <= 0) {
     throw new RangeError("Motion top-speed tuning must be a positive finite number.");
   }
   const topVelocity = toMicropixels(tunedTopSpeed);
-  const arrivalVelocity = toMicropixels(
-    profile.movement.arrivalSpeedPixelsPerSecond,
-  );
-  const acceleration = toMicropixels(
-    profile.movement.accelerationPixelsPerSecondSquared,
-  );
-  const deceleration = toMicropixels(
-    profile.movement.decelerationPixelsPerSecondSquared,
-  );
+  const arrivalVelocity = toMicropixels(profile.movement.arrivalSpeedPixelsPerSecond);
+  const acceleration = toMicropixels(profile.movement.accelerationPixelsPerSecondSquared);
+  const deceleration = toMicropixels(profile.movement.decelerationPixelsPerSecondSquared);
   const remaining = Math.max(0, route.totalMicropixels - state.distanceMicropixels);
   const arrivalLimit = Math.floor(
     Math.sqrt(arrivalVelocity * arrivalVelocity + 2 * deceleration * remaining),
@@ -295,10 +271,7 @@ const advanceOneTick = (
   const distanceNumerator = state.distanceRemainder + velocity;
   const requestedStep = Math.max(1, Math.floor(distanceNumerator / ticksPerSecond));
   const nextRemainder = distanceNumerator % ticksPerSecond;
-  const nextDistance = Math.min(
-    route.totalMicropixels,
-    state.distanceMicropixels + requestedStep,
-  );
+  const nextDistance = Math.min(route.totalMicropixels, state.distanceMicropixels + requestedStep);
   const located = pointAtDistance(route, nextDistance);
   const cycleLength = toMicropixels(profile.animation.pixelsPerWalkCycle);
   const nextWalkCyclePhase = cycleLength > 0 ? (nextDistance % cycleLength) / cycleLength : 0;
@@ -329,11 +302,7 @@ const advanceOneTick = (
   };
   return {
     state: nextState,
-    crossedSegmentIndexes: crossedSegments(
-      route,
-      state.distanceMicropixels,
-      nextDistance,
-    ),
+    crossedSegmentIndexes: crossedSegments(route, state.distanceMicropixels, nextDistance),
     distanceAdvancedPixels: toPixels(nextDistance - state.distanceMicropixels),
     arrived,
     footfall,

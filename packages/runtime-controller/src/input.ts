@@ -1,22 +1,22 @@
 import type { Id } from "@evavo/adventure-project-schema";
 import type { RuntimeBundle } from "@evavo/adventure-runtime-bundle";
 import {
-  selectControlledActorInstance as selectBrowserControlledActorInstance,
   type ControlledActorSelection as BrowserControlledActorSelection,
+  selectControlledActorInstance as selectBrowserControlledActorInstance,
 } from "./input-base.js";
 
 export {
   appendSoftwareCursor,
+  type ClientPoint,
   createSoftwareCursorNodes,
   cursorIdForObjectTarget,
+  type HostBounds,
   mapClientPointToNative,
   nativeScreenPointToWorld,
   requestedActorFromSearch,
+  type SoftwareCursorState,
   verbForCursorId,
   walkDestinationForTarget,
-  type ClientPoint,
-  type HostBounds,
-  type SoftwareCursorState,
 } from "./input-base.js";
 
 export type ControlledActorSelection =
@@ -30,18 +30,12 @@ export type ControlledActorSelection =
 const SAVE_ACTOR_PREFIX = "\u0000evavo-save-actor:";
 const SAVE_VIEW_ONLY_REQUEST = "\u0000evavo-save-view-only";
 
-export const controlledActorRequestFromSave = (
-  actorInstanceId: Id<"actor-instance"> | null,
-): string =>
-  actorInstanceId === null
-    ? SAVE_VIEW_ONLY_REQUEST
-    : `${SAVE_ACTOR_PREFIX}${actorInstanceId}`;
+export const controlledActorRequestFromSave = (actorInstanceId: Id<"actor-instance"> | null): string =>
+  actorInstanceId === null ? SAVE_VIEW_ONLY_REQUEST : `${SAVE_ACTOR_PREFIX}${actorInstanceId}`;
 
 const savedActorRequest = (request: string): string | null | undefined => {
   if (request === SAVE_VIEW_ONLY_REQUEST) return null;
-  return request.startsWith(SAVE_ACTOR_PREFIX)
-    ? request.slice(SAVE_ACTOR_PREFIX.length)
-    : undefined;
+  return request.startsWith(SAVE_ACTOR_PREFIX) ? request.slice(SAVE_ACTOR_PREFIX.length) : undefined;
 };
 
 const selectSavedControlledActor = (

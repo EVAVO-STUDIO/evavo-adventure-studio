@@ -1,7 +1,4 @@
-import type {
-  AdventureProject,
-  Size,
-} from "@evavo/adventure-project-schema";
+import type { AdventureProject, Size } from "@evavo/adventure-project-schema";
 import {
   adventurePolygonArea,
   pointInsideSceneCanvas,
@@ -9,9 +6,9 @@ import {
   polygonInsideSceneCanvas,
 } from "./scene-readability-geometry.js";
 import {
-  addSceneReadabilityFinding,
   type AdventureScene,
   type AdventureSceneReadabilityFinding,
+  addSceneReadabilityFinding,
 } from "./scene-readability-types.js";
 
 export const evaluateSceneCanvas = (
@@ -42,8 +39,7 @@ export const evaluateSceneCanvas = (
       severity: "note",
       path: `scenes.${scene.id}`,
       message: "The scene is not using the classic 320 × 200 VGA canvas.",
-      recommendation:
-        "Keep the chosen canvas intentional and review every interaction at 1× native size.",
+      recommendation: "Keep the chosen canvas intentional and review every interaction at 1× native size.",
       impact: 1,
     });
   }
@@ -144,10 +140,8 @@ export const evaluateSceneNavigation = (
       area: "navigation",
       severity: "note",
       path: `scenes.${scene.id}.navigationAreas`,
-      message:
-        "Walk areas overlap heavily and may make elevation or routing intent difficult to review.",
-      recommendation:
-        "Use separate areas only where elevation, conditions or portal routing require them.",
+      message: "Walk areas overlap heavily and may make elevation or routing intent difficult to review.",
+      recommendation: "Use separate areas only where elevation, conditions or portal routing require them.",
       impact: 2,
     });
   }
@@ -212,8 +206,7 @@ export const evaluateSceneDepth = (
         severity: "error",
         path: `scenes.${scene.id}.depthBands[${index}]`,
         message: `Depth band '${band.id}' has an invalid far-to-near range.`,
-        recommendation:
-          "Keep farY above nearY numerically and both boundaries inside the native canvas.",
+        recommendation: "Keep farY above nearY numerically and both boundaries inside the native canvas.",
         impact: 10,
       });
     }
@@ -230,9 +223,7 @@ export const evaluateSceneDepth = (
       });
     }
   });
-  const navigationYs = scene.navigationAreas.flatMap((area) =>
-    area.shape.points.map((point) => point.y),
-  );
+  const navigationYs = scene.navigationAreas.flatMap((area) => area.shape.points.map((point) => point.y));
   if (navigationYs.length > 0) {
     const minimum = Math.min(...navigationYs);
     const maximum = Math.max(...navigationYs);

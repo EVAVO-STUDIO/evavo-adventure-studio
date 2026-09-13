@@ -1,12 +1,12 @@
-import { z } from "zod";
 import { pointSchema } from "@evavo/adventure-project-schema";
 import type { RuntimeBundle } from "@evavo/adventure-runtime-bundle";
 import {
   loadSaveGame,
   runtimeBundleFingerprint,
-  saveGameSchema,
   type SaveGame,
+  saveGameSchema,
 } from "@evavo/adventure-save-game";
+import { z } from "zod";
 
 const fnvFingerprintSchema = z
   .string()
@@ -113,9 +113,7 @@ export class ReplayDivergenceError extends Error {
   readonly actualFingerprint: string;
 
   constructor(expectedFingerprint: string, actualFingerprint: string) {
-    super(
-      `Replay diverged: expected final save '${expectedFingerprint}', received '${actualFingerprint}'.`,
-    );
+    super(`Replay diverged: expected final save '${expectedFingerprint}', received '${actualFingerprint}'.`);
     this.name = "ReplayDivergenceError";
     this.expectedFingerprint = expectedFingerprint;
     this.actualFingerprint = actualFingerprint;
@@ -127,9 +125,7 @@ const canonicalize = (value: unknown): unknown => {
   if (value && typeof value === "object") {
     const source = value as Readonly<Record<string, unknown>>;
     const output: Record<string, unknown> = {};
-    for (const key of Object.keys(source).sort((left, right) =>
-      left.localeCompare(right),
-    )) {
+    for (const key of Object.keys(source).sort((left, right) => left.localeCompare(right))) {
       const child = source[key];
       if (child !== undefined) output[key] = canonicalize(child);
     }
@@ -295,8 +291,7 @@ export const createReplayLog = (
   return replay;
 };
 
-export const serializeReplayLog = (replay: ReplayLog): string =>
-  `${canonicalReplayJson(replay)}\n`;
+export const serializeReplayLog = (replay: ReplayLog): string => `${canonicalReplayJson(replay)}\n`;
 
 export interface ReplayRuntimeAdapter {
   restoreSaveGame(input: unknown): number;
@@ -354,10 +349,7 @@ export const executeReplay = (
     replay.expectedFinalSaveFingerprint &&
     replay.expectedFinalSaveFingerprint !== finalSave.saveFingerprint
   ) {
-    throw new ReplayDivergenceError(
-      replay.expectedFinalSaveFingerprint,
-      finalSave.saveFingerprint,
-    );
+    throw new ReplayDivergenceError(replay.expectedFinalSaveFingerprint, finalSave.saveFingerprint);
   }
 
   return {

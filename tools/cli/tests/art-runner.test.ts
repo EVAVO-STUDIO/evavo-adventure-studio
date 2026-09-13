@@ -1,17 +1,11 @@
 import { createHash } from "node:crypto";
-import {
-  mkdir,
-  mkdtemp,
-  readFile,
-  rm,
-  writeFile,
-} from "node:fs/promises";
+import { mkdir, mkdtemp, readFile, rm, writeFile } from "node:fs/promises";
 import { tmpdir } from "node:os";
 import { dirname, join } from "node:path";
-import { afterEach, describe, expect, it } from "vitest";
 import { createArtDirectionManifest } from "@evavo/adventure-art-direction";
 import { artVisualEvidenceManifestSchema } from "@evavo/adventure-art-direction/evidence";
 import { parseAdventureProject } from "@evavo/adventure-project-schema";
+import { afterEach, describe, expect, it } from "vitest";
 import { runCli } from "../src/runner.js";
 
 const temporaryDirectories: string[] = [];
@@ -21,9 +15,7 @@ const canonicalize = (value: unknown): unknown => {
   if (value && typeof value === "object") {
     const source = value as Readonly<Record<string, unknown>>;
     const output: Record<string, unknown> = {};
-    for (const key of Object.keys(source).sort((left, right) =>
-      left.localeCompare(right),
-    )) {
+    for (const key of Object.keys(source).sort((left, right) => left.localeCompare(right))) {
       const child = source[key];
       if (child !== undefined) output[key] = canonicalize(child);
     }
@@ -32,8 +24,7 @@ const canonicalize = (value: unknown): unknown => {
   return value;
 };
 
-const sha256 = (value: string | Uint8Array): string =>
-  createHash("sha256").update(value).digest("hex");
+const sha256 = (value: string | Uint8Array): string => createHash("sha256").update(value).digest("hex");
 
 const writeJson = async (path: string, value: unknown): Promise<void> => {
   await mkdir(dirname(path), { recursive: true });
@@ -144,10 +135,7 @@ const createFixture = async () => {
     fingerprint: sha256(JSON.stringify(canonicalize(manifestPayload))),
   });
 
-  await writeJson(
-    artPath,
-    createArtDirectionManifest(project, "vga-256-320x200"),
-  );
+  await writeJson(artPath, createArtDirectionManifest(project, "vga-256-320x200"));
   const evidence = (colourCount: number) =>
     artVisualEvidenceManifestSchema.parse({
       manifestVersion: 1,
@@ -172,16 +160,13 @@ const createFixture = async () => {
     evidencePath,
     bundlePath,
     reportPath,
-    writeEvidence: (colourCount: number) =>
-      writeJson(evidencePath, evidence(colourCount)),
+    writeEvidence: (colourCount: number) => writeJson(evidencePath, evidence(colourCount)),
   };
 };
 
 afterEach(async () => {
   await Promise.all(
-    temporaryDirectories.splice(0).map((directory) =>
-      rm(directory, { recursive: true, force: true }),
-    ),
+    temporaryDirectories.splice(0).map((directory) => rm(directory, { recursive: true, force: true })),
   );
 });
 
@@ -227,12 +212,8 @@ describe("art-gated CLI runner", () => {
       artEvidencePath: fixture.evidencePath,
       artProfile: "vga-256-320x200",
     });
-    expect(await readFile(fixture.bundlePath, "utf8")).toContain(
-      "project.art-runner",
-    );
-    expect(await readFile(fixture.reportPath, "utf8")).toContain(
-      "artEvidencePath",
-    );
+    expect(await readFile(fixture.bundlePath, "utf8")).toContain("project.art-runner");
+    expect(await readFile(fixture.reportPath, "utf8")).toContain("artEvidencePath");
   });
 
   it("blocks validation when pixel proof exceeds the colour budget", async () => {

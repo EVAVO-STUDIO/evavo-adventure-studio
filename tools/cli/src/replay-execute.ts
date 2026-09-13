@@ -1,10 +1,11 @@
+import type { Stats } from "node:fs";
 import { readFile, stat } from "node:fs/promises";
 import { resolve } from "node:path";
 import {
   executeInspectedReplay,
   ReplayExecutionLimitError,
-  resolveReplayExecutionLimits,
   type ReplayExecutionLimits,
+  resolveReplayExecutionLimits,
 } from "@evavo/adventure-playtest-inspector/replay-execution";
 import {
   ReplayCompatibilityError,
@@ -76,22 +77,15 @@ class ReplayExecuteInputError extends Error {
   }
 }
 
-const positiveIntegerOption = (
-  values: ReadonlyMap<string, string>,
-  option: string,
-): number | undefined => {
+const positiveIntegerOption = (values: ReadonlyMap<string, string>, option: string): number | undefined => {
   const value = values.get(option);
   if (value === undefined) return undefined;
   if (!/^[1-9]\d*$/u.test(value)) {
-    throw new ReplayExecuteUsageError(
-      `Option '${option}' must be a positive safe integer.`,
-    );
+    throw new ReplayExecuteUsageError(`Option '${option}' must be a positive safe integer.`);
   }
   const parsed = Number(value);
   if (!Number.isSafeInteger(parsed)) {
-    throw new ReplayExecuteUsageError(
-      `Option '${option}' must be a positive safe integer.`,
-    );
+    throw new ReplayExecuteUsageError(`Option '${option}' must be a positive safe integer.`);
   }
   return parsed;
 };
@@ -101,13 +95,7 @@ const parseCommand = (argv: readonly string[]): ReplayExecuteCommand | null => {
   if (command !== "replay-execute") return null;
 
   const values = new Map<string, string>();
-  const allowed = new Set([
-    "--bundle",
-    "--replay",
-    "--output-save",
-    "--max-events",
-    "--max-duration-ticks",
-  ]);
+  const allowed = new Set(["--bundle", "--replay", "--output-save", "--max-events", "--max-duration-ticks"]);
   let json = false;
 
   for (let index = 0; index < tokens.length; index += 1) {
@@ -115,22 +103,16 @@ const parseCommand = (argv: readonly string[]): ReplayExecuteCommand | null => {
     if (!token) continue;
     if (token === "--json") {
       if (json) {
-        throw new ReplayExecuteUsageError(
-          "Option '--json' was supplied more than once.",
-        );
+        throw new ReplayExecuteUsageError("Option '--json' was supplied more than once.");
       }
       json = true;
       continue;
     }
     if (!allowed.has(token)) {
-      throw new ReplayExecuteUsageError(
-        `Option '${token}' is not valid for 'replay-execute'.`,
-      );
+      throw new ReplayExecuteUsageError(`Option '${token}' is not valid for 'replay-execute'.`);
     }
     if (values.has(token)) {
-      throw new ReplayExecuteUsageError(
-        `Option '${token}' was supplied more than once.`,
-      );
+      throw new ReplayExecuteUsageError(`Option '${token}' was supplied more than once.`);
     }
     const value = tokens[index + 1];
     if (!value || value.startsWith("--")) {
@@ -154,19 +136,12 @@ const parseCommand = (argv: readonly string[]): ReplayExecuteCommand | null => {
     replayPath,
     outputSavePath: values.get("--output-save") ?? null,
     maxEvents: positiveIntegerOption(values, "--max-events"),
-    maxDurationTicks: positiveIntegerOption(
-      values,
-      "--max-duration-ticks",
-    ),
+    maxDurationTicks: positiveIntegerOption(values, "--max-duration-ticks"),
     json,
   };
 };
 
-const inputFailure = (
-  path: string,
-  label: string,
-  error: unknown,
-): ReplayExecuteInputError => {
+const inputFailure = (path: string, label: string, error: unknown): ReplayExecuteInputError => {
   const code =
     typeof error === "object" && error !== null && "code" in error
       ? String((error as { readonly code: unknown }).code)
@@ -174,18 +149,12 @@ const inputFailure = (
   return new ReplayExecuteInputError(
     code,
     path,
-    `Unable to read ${label} '${path}': ${
-      error instanceof Error ? error.message : String(error)
-    }`,
+    `Unable to read ${label} '${path}': ${error instanceof Error ? error.message : String(error)}`,
   );
 };
 
-const readJson = async (
-  path: string,
-  label: string,
-  maximumBytes: number,
-): Promise<unknown> => {
-  let metadata;
+const readJson = async (path: string, label: string, maximumBytes: number): Promise<unknown> => {
+  let metadata: Stats;
   try {
     metadata = await stat(path);
   } catch (error) {
@@ -212,9 +181,7 @@ const readJson = async (
     throw new ReplayExecuteInputError(
       "invalid-json",
       path,
-      `Invalid JSON in ${label} '${path}': ${
-        error instanceof Error ? error.message : String(error)
-      }`,
+      `Invalid JSON in ${label} '${path}': ${error instanceof Error ? error.message : String(error)}`,
     );
   }
 };
@@ -223,12 +190,7 @@ const issuePath = (value: unknown): string => {
   if (!Array.isArray(value)) return String(value ?? "$ ").trim() || "$";
   let output = "";
   for (const segment of value) {
-    output +=
-      typeof segment === "number"
-        ? `[${segment}]`
-        : output
-          ? `.${String(segment)}`
-          : String(segment);
+    output += typeof segment === "number" ? `[${segment}]` : output ? `.${String(segment)}` : String(segment);
   }
   return output || "$";
 };
@@ -289,10 +251,7 @@ const executionError = (error: unknown): ReplayExecuteDiagnostic => {
   if (error instanceof ReplayExecutionLimitError) {
     return {
       code: "replay-limit-exceeded",
-      path:
-        error.code === "event-count-exceeded"
-          ? "events"
-          : "finalTick",
+      path: error.code === "event-count-exceeded" ? "events" : "finalTick",
       message: error.message,
     };
   }
@@ -316,10 +275,7 @@ const executionError = (error: unknown): ReplayExecuteDiagnostic => {
   if (error instanceof ReplayExecutionError) {
     return { code: "replay-execution", path: "$", message: error.message };
   }
-  if (
-    error instanceof Error &&
-    error.name === "ControlledActorSaveMismatchError"
-  ) {
+  if (error instanceof Error && error.name === "ControlledActorSaveMismatchError") {
     return {
       code: "controlled-actor-mismatch",
       path: "initialSave.interface.controlledActorInstanceId",
@@ -338,9 +294,8 @@ const executionError = (error: unknown): ReplayExecuteDiagnostic => {
   };
 };
 
-export const replayExecuteExitCodeForDiagnosticCode = (
-  code: string,
-): 1 | 3 => (code === "replay-execute-failed" ? 3 : 1);
+export const replayExecuteExitCodeForDiagnosticCode = (code: string): 1 | 3 =>
+  code === "replay-execute-failed" ? 3 : 1;
 
 const writeFailure = (
   command: ReplayExecuteCommand,
@@ -366,21 +321,13 @@ const writeFailure = (
   if (command.json) {
     environment.stdout(`${JSON.stringify(report, null, 2)}\n`);
   } else {
-    environment.stderr(
-      `[ERROR] replay-execution/${error.code} ${error.path}: ${error.message}\n`,
-    );
+    environment.stderr(`[ERROR] replay-execution/${error.code} ${error.path}: ${error.message}\n`);
   }
 };
 
-const commandLimits = (
-  command: ReplayExecuteCommand,
-): ReplayExecutionLimits => ({
-  ...(command.maxEvents !== undefined
-    ? { maxEvents: command.maxEvents }
-    : {}),
-  ...(command.maxDurationTicks !== undefined
-    ? { maxDurationTicks: command.maxDurationTicks }
-    : {}),
+const commandLimits = (command: ReplayExecuteCommand): ReplayExecutionLimits => ({
+  ...(command.maxEvents !== undefined ? { maxEvents: command.maxEvents } : {}),
+  ...(command.maxDurationTicks !== undefined ? { maxDurationTicks: command.maxDurationTicks } : {}),
 });
 
 export const runReplayExecuteCli = async (
@@ -413,20 +360,14 @@ export const runReplayExecuteCli = async (
 
   const bundlePath = resolve(command.bundlePath);
   const replayPath = resolve(command.replayPath);
-  const outputSavePath = command.outputSavePath
-    ? resolve(command.outputSavePath)
-    : null;
+  const outputSavePath = command.outputSavePath ? resolve(command.outputSavePath) : null;
 
   try {
     if (outputSavePath) {
       assertReplayOutputPath(outputSavePath, [bundlePath, replayPath]);
     }
     const bundle = parseRuntimeBundle(
-      await readJson(
-        bundlePath,
-        "runtime bundle",
-        MAXIMUM_REPLAY_BUNDLE_BYTES,
-      ),
+      await readJson(bundlePath, "runtime bundle", MAXIMUM_REPLAY_BUNDLE_BYTES),
     );
     const limits = commandLimits(command);
     const resolvedLimits = resolveReplayExecutionLimits(bundle, limits);

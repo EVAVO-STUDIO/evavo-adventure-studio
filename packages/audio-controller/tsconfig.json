@@ -1,0 +1,17 @@
+{
+  "extends": "../../tsconfig.package.json",
+  "compilerOptions": {
+    "rootDir": ".",
+    "outDir": "dist"
+  },
+  "include": ["src/**/*.ts", "tests/**/*.ts"],
+  "references": [
+    { "path": "../audio" },
+    { "path": "../core" },
+    { "path": "../project-schema" },
+    { "path": "../runtime-bundle" },
+    { "path": "../runtime-controller" },
+    { "path": "../save-game" },
+    { "path": "../scene-runtime" }
+  ]
+}

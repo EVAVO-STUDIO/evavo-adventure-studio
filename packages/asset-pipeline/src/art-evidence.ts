@@ -1,16 +1,13 @@
-import type {
-  AssetBuildManifest,
-  CompiledOutputFile,
-} from "@evavo/adventure-asset-contract";
 import {
-  artImageVisualEvidenceSchema,
-  artSpritesheetVisualEvidenceSchema,
-  artVisualEvidenceManifestSchema,
   type ArtImageVisualEvidence,
   type ArtSpritesheetVisualEvidence,
   type ArtVisualEvidenceManifest,
   type ArtVisualEvidenceRecord,
+  artImageVisualEvidenceSchema,
+  artSpritesheetVisualEvidenceSchema,
+  artVisualEvidenceManifestSchema,
 } from "@evavo/adventure-art-direction/evidence";
+import type { AssetBuildManifest, CompiledOutputFile } from "@evavo/adventure-asset-contract";
 import type { Id } from "@evavo/adventure-project-schema";
 import type { CompiledAtlas } from "./atlas-compiler.js";
 import type { CompiledImage } from "./index.js";
@@ -56,9 +53,7 @@ export const createArtVisualEvidenceManifest = (
     manifestVersion: 1,
     projectId,
     compilerVersion,
-    assets: [...assets].sort((left, right) =>
-      left.assetId.localeCompare(right.assetId),
-    ),
+    assets: [...assets].sort((left, right) => left.assetId.localeCompare(right.assetId)),
   });
 };
 
@@ -86,14 +81,10 @@ export const createArtVisualEvidenceFromAssetManifest = async (
 ): Promise<ArtVisualEvidenceManifest> => {
   const records: ArtVisualEvidenceRecord[] = [];
 
-  for (const asset of [...manifest.assets].sort((left, right) =>
-    left.assetId.localeCompare(right.assetId),
-  )) {
+  for (const asset of [...manifest.assets].sort((left, right) => left.assetId.localeCompare(right.assetId))) {
     if (asset.kind === "image") {
       const output = outputByRole(asset.outputFiles, "primary", asset.assetId);
-      const evidence = await analysePngEvidence(
-        await readOutput(asset.assetId, output),
-      );
+      const evidence = await analysePngEvidence(await readOutput(asset.assetId, output));
       records.push(
         artImageVisualEvidenceSchema.parse({
           assetId: asset.assetId,
@@ -109,16 +100,10 @@ export const createArtVisualEvidenceFromAssetManifest = async (
       for (const page of [...asset.metadata.pages].sort((left, right) =>
         left.outputRole.localeCompare(right.outputRole),
       )) {
-        const output = outputByRole(
-          asset.outputFiles,
-          page.outputRole,
-          asset.assetId,
-        );
+        const output = outputByRole(asset.outputFiles, page.outputRole, asset.assetId);
         pages.push({
           outputRole: page.outputRole,
-          ...(await analysePngEvidence(
-            await readOutput(asset.assetId, output),
-          )),
+          ...(await analysePngEvidence(await readOutput(asset.assetId, output))),
         });
       }
       records.push(
@@ -131,9 +116,5 @@ export const createArtVisualEvidenceFromAssetManifest = async (
     }
   }
 
-  return createArtVisualEvidenceManifest(
-    manifest.projectId,
-    records,
-    compilerVersion,
-  );
+  return createArtVisualEvidenceManifest(manifest.projectId, records, compilerVersion);
 };

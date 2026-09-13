@@ -1,14 +1,7 @@
-import { describe, expect, it } from "vitest";
-import type {
-  DialogueGraph,
-  Id,
-} from "@evavo/adventure-project-schema";
 import type { RuntimeState } from "@evavo/adventure-core";
-import {
-  beginDialogue,
-  chooseDialogueOption,
-  resolveDialogueView,
-} from "../src/index.js";
+import type { DialogueGraph, Id } from "@evavo/adventure-project-schema";
+import { describe, expect, it } from "vitest";
+import { beginDialogue, chooseDialogueOption, resolveDialogueView } from "../src/index.js";
 
 const id = <T extends string>(value: string) => value as Id<T>;
 
@@ -52,9 +45,7 @@ const dialogue: DialogueGraph = {
           id: id<"dialogue-choice">("choice.ask-ledger"),
           text: "Ask about the ledger",
           once: true,
-          actions: [
-            { kind: "set-flag", flag: "ledgerMentioned", value: true },
-          ],
+          actions: [{ kind: "set-flag", flag: "ledgerMentioned", value: true }],
           nextNodeId: id<"dialogue-node">("node.introduction"),
           closeDialogue: false,
         },
@@ -133,16 +124,16 @@ describe("dialogue runtime", () => {
       throw new Error("Expected dialogue to remain active.");
     }
 
-    expect(chosen.transition.state.flags.ledgerMentioned).toBe(true);
-    expect(chosen.transition.state.consumedDialogueChoiceIds).toContain(
-      "choice.ask-ledger",
-    );
-    expect(
-      chosen.view.choices.find((choice) => choice.id === "choice.ask-ledger"),
-    ).toMatchObject({ exhausted: true, enabled: false });
-    expect(
-      chosen.view.choices.find((choice) => choice.id === "choice.accuse"),
-    ).toMatchObject({ visible: true, enabled: true });
+    expect(chosen.transition.state.flags["ledgerMentioned"]).toBe(true);
+    expect(chosen.transition.state.consumedDialogueChoiceIds).toContain("choice.ask-ledger");
+    expect(chosen.view.choices.find((choice) => choice.id === "choice.ask-ledger")).toMatchObject({
+      exhausted: true,
+      enabled: false,
+    });
+    expect(chosen.view.choices.find((choice) => choice.id === "choice.accuse")).toMatchObject({
+      visible: true,
+      enabled: true,
+    });
   });
 
   it("rejects an exhausted choice without changing state", () => {
@@ -152,16 +143,10 @@ describe("dialogue runtime", () => {
         dialogueId: dialogue.id,
         nodeId: dialogue.startNodeId,
       },
-      consumedDialogueChoiceIds: [
-        id<"dialogue-choice">("choice.ask-ledger"),
-      ],
+      consumedDialogueChoiceIds: [id<"dialogue-choice">("choice.ask-ledger")],
     };
 
-    const result = chooseDialogueOption(
-      activeState,
-      dialogue,
-      id<"dialogue-choice">("choice.ask-ledger"),
-    );
+    const result = chooseDialogueOption(activeState, dialogue, id<"dialogue-choice">("choice.ask-ledger"));
 
     expect(result).toMatchObject({ kind: "rejected", reason: "choice-exhausted" });
     expect(result.kind === "rejected" ? result.state : null).toBe(activeState);

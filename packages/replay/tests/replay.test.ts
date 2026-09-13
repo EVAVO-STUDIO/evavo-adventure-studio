@@ -1,23 +1,19 @@
-import { describe, expect, it } from "vitest";
 import { parseRuntimeBundle } from "@evavo/adventure-runtime-bundle";
-import {
-  createSaveGame,
-  loadSaveGame,
-  type SaveGame,
-} from "@evavo/adventure-save-game";
+import { createSaveGame, loadSaveGame, type SaveGame } from "@evavo/adventure-save-game";
 import { createInitialInteractiveRuntimeWorldState } from "@evavo/adventure-scene-runtime/commands";
+import { describe, expect, it } from "vitest";
 import {
   createReplayLog,
   executeReplay,
   parseReplayLog,
   ReplayCompatibilityError,
   ReplayDivergenceError,
+  type ReplayEvent,
   ReplayExecutionError,
   ReplayIntegrityError,
-  serializeReplayLog,
-  type ReplayEvent,
   type ReplayParserInput,
   type ReplayRuntimeAdapter,
+  serializeReplayLog,
 } from "../src/index.js";
 
 const hash = "0".repeat(64);
@@ -84,24 +80,19 @@ const bundle = parseRuntimeBundle({
         },
       ],
       fallbackText: "Nothing happens.",
-      interactionIndex: {},
     },
   ],
   dialogues: [],
   sequences: [],
 });
 
-const initialSave = createSaveGame(
-  bundle,
-  createInitialInteractiveRuntimeWorldState(bundle),
-  {
-    controlledActorInstanceId: null,
-    selectedVerbId: null,
-    selectedItemId: null,
-    statusText: "READY",
-    parser: { text: "", history: [] },
-  },
-);
+const initialSave = createSaveGame(bundle, createInitialInteractiveRuntimeWorldState(bundle), {
+  controlledActorInstanceId: null,
+  selectedVerbId: null,
+  selectedItemId: null,
+  statusText: "READY",
+  parser: { text: "", history: [] },
+});
 
 class FixtureRuntime implements ReplayRuntimeAdapter {
   private save: SaveGame = initialSave;
@@ -130,7 +121,7 @@ class FixtureRuntime implements ReplayRuntimeAdapter {
   }
 
   activate(position: { readonly x: number; readonly y: number }): void {
-    const activations = Number(this.save.world.story.variables.activations ?? 0) + 1;
+    const activations = Number(this.save.world.story.variables["activations"] ?? 0) + 1;
     this.save = createSaveGame(
       bundle,
       {
@@ -266,9 +257,7 @@ describe("deterministic replay", () => {
       expectedFinalSaveFingerprint: initialSave.saveFingerprint,
     });
 
-    expect(() => executeReplay(bundle, replay, new FixtureRuntime())).toThrow(
-      ReplayDivergenceError,
-    );
+    expect(() => executeReplay(bundle, replay, new FixtureRuntime())).toThrow(ReplayDivergenceError);
   });
 
   it("rejects parser events that the runtime cannot handle", () => {
@@ -293,8 +282,6 @@ describe("deterministic replay", () => {
       handleKey: () => false,
     };
 
-    expect(() => executeReplay(bundle, replay, rejecting)).toThrow(
-      ReplayExecutionError,
-    );
+    expect(() => executeReplay(bundle, replay, rejecting)).toThrow(ReplayExecutionError);
   });
 });

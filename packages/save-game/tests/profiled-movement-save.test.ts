@@ -1,24 +1,21 @@
-import { describe, expect, it } from "vitest";
 import type { Id } from "@evavo/adventure-project-schema";
 import type { RuntimeBundle } from "@evavo/adventure-runtime-bundle";
-import {
-  beginActorMovement,
-} from "@evavo/adventure-scene-runtime/movement";
 import {
   advanceInteractiveRuntimeWorld,
   createInitialInteractiveRuntimeWorldState,
   type InteractiveRuntimeWorldState,
 } from "@evavo/adventure-scene-runtime/commands";
+import { beginActorMovement } from "@evavo/adventure-scene-runtime/movement";
+import { describe, expect, it } from "vitest";
 import {
   createSaveGame,
   loadSaveGame,
+  type SaveGame,
   serializeSaveGame,
   validateSaveGameCompatibility,
-  type SaveGame,
 } from "../src/index.js";
 
-const actorInstanceId =
-  "actor-instance.traveller" as Id<"actor-instance">;
+const actorInstanceId = "actor-instance.traveller" as Id<"actor-instance">;
 
 const actorFrame = (frameId: string, x: number) => ({
   id: frameId,
@@ -59,11 +56,7 @@ const bundle = {
     {
       id: "actor.traveller",
       name: "Traveller",
-      frames: [
-        actorFrame("frame.idle", 0),
-        actorFrame("frame.walk-a", 14),
-        actorFrame("frame.walk-b", 28),
-      ],
+      frames: [actorFrame("frame.idle", 0), actorFrame("frame.walk-a", 14), actorFrame("frame.walk-b", 28)],
       animations: [
         {
           id: "animation.idle-east",
@@ -164,26 +157,17 @@ const movingWorld = (
     { playFeelProfileId },
   );
   if (started.kind !== "started") throw new Error("Expected movement start.");
-  return advanceInteractiveRuntimeWorld(
-    bundle,
-    started.state as InteractiveRuntimeWorldState,
-    37,
-  ).state;
+  return advanceInteractiveRuntimeWorld(bundle, started.state as InteractiveRuntimeWorldState, 37).state;
 };
 
 describe("profiled movement save compatibility", () => {
   it("round-trips deterministic motion state through the normal save API", () => {
     const world = movingWorld();
     const save = createSaveGame(bundle, world, interfaceState);
-    const loaded = loadSaveGame(
-      bundle,
-      JSON.parse(serializeSaveGame(save)) as unknown,
-    );
+    const loaded = loadSaveGame(bundle, JSON.parse(serializeSaveGame(save)) as unknown);
     const movement = loaded.world.movements[actorInstanceId];
 
-    expect(movement?.profiled).toEqual(
-      world.movements[actorInstanceId]?.profiled,
-    );
+    expect(movement?.profiled).toEqual(world.movements[actorInstanceId]?.profiled);
     expect(movement?.profiled?.profileId).toBe("gothic-measured");
     expect(loaded.world.actorInstances[actorInstanceId]?.position).toEqual(
       movement?.profiled?.extension.motion.position,
@@ -225,8 +209,7 @@ describe("profiled movement save compatibility", () => {
             ...movement,
             profiled: {
               ...movement.profiled,
-              completedSegmentCount:
-                movement.profiled.completedSegmentCount + 1,
+              completedSegmentCount: movement.profiled.completedSegmentCount + 1,
             },
           },
         },

@@ -1,14 +1,11 @@
 import type { AdventureProject, Id } from "@evavo/adventure-project-schema";
 import {
-  validateSceneInstanceManifest,
   type SceneInstanceIssue,
   type SceneInstanceManifest,
+  validateSceneInstanceManifest,
 } from "@evavo/adventure-scene-instances";
 
-export type StudioValidationGroupKind =
-  | "scene"
-  | "object-definition"
-  | "document";
+export type StudioValidationGroupKind = "scene" | "object-definition" | "document";
 
 export interface StudioValidationGroup {
   readonly kind: StudioValidationGroupKind;
@@ -85,9 +82,7 @@ export const validateStudioManifest = (
     ),
   ].sort((left, right) => {
     const pathDifference = left.path.localeCompare(right.path);
-    return pathDifference !== 0
-      ? pathDifference
-      : left.code.localeCompare(right.code);
+    return pathDifference !== 0 ? pathDifference : left.code.localeCompare(right.code);
   });
 
   const groups = new Map<string, StudioValidationGroup>();
@@ -107,14 +102,10 @@ export const validateStudioManifest = (
     issues,
     groups: [...groups.values()].sort((left, right) => {
       const kindDifference = left.kind.localeCompare(right.kind);
-      return kindDifference !== 0
-        ? kindDifference
-        : left.label.localeCompare(right.label);
+      return kindDifference !== 0 ? kindDifference : left.label.localeCompare(right.label);
     }),
   };
 };
 
-export const sceneIdForValidationGroup = (
-  group: StudioValidationGroup,
-): Id<"scene"> | null =>
+export const sceneIdForValidationGroup = (group: StudioValidationGroup): Id<"scene"> | null =>
   group.kind === "scene" ? (group.id as Id<"scene">) : null;

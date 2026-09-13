@@ -1,40 +1,19 @@
+import { type ArtDirectionManifest, parseArtDirectionManifest } from "@evavo/adventure-art-direction";
 import {
-  useMemo,
-  useRef,
-  useState,
-  type ChangeEvent,
-  type ReactNode,
-} from "react";
-import {
-  parseArtDirectionManifest,
-  type ArtDirectionManifest,
-} from "@evavo/adventure-art-direction";
-import {
-  parseArtVisualEvidenceManifest,
   type ArtVisualEvidenceManifest,
+  parseArtVisualEvidenceManifest,
 } from "@evavo/adventure-art-direction/evidence";
+import { type AssetBuildManifest, parseAssetBuildManifest } from "@evavo/adventure-asset-contract";
+import { type BitmapFontManifest, parseBitmapFontManifest } from "@evavo/adventure-bitmap-font";
 import {
-  parseAssetBuildManifest,
-  type AssetBuildManifest,
-} from "@evavo/adventure-asset-contract";
-import {
-  parseBitmapFontManifest,
-  type BitmapFontManifest,
-} from "@evavo/adventure-bitmap-font";
-import {
+  type AdventureCompiledEvidenceFinding,
   createAdventureAuthenticityEvidenceRequirements,
   evaluateAdventureCompiledEvidence,
-  type AdventureCompiledEvidenceFinding,
 } from "@evavo/adventure-design/compiled-evidence";
 import { showcaseAdventureDesigns } from "@evavo/adventure-design/showcases";
-import {
-  parseAdventureProject,
-  type AdventureProject,
-} from "@evavo/adventure-project-schema";
-import {
-  parseUiSkinManifest,
-  type UiSkinManifest,
-} from "@evavo/adventure-ui-skin";
+import { type AdventureProject, parseAdventureProject } from "@evavo/adventure-project-schema";
+import { parseUiSkinManifest, type UiSkinManifest } from "@evavo/adventure-ui-skin";
+import { type ChangeEvent, type ReactNode, useMemo, useRef, useState } from "react";
 import "./adventure-evidence.css";
 
 type ArtifactKind =
@@ -100,9 +79,7 @@ const parseJson = (text: string, label: string): unknown => {
     return JSON.parse(text) as unknown;
   } catch (error) {
     throw new SyntaxError(
-      `${label} is not valid JSON: ${
-        error instanceof Error ? error.message : String(error)
-      }`,
+      `${label} is not valid JSON: ${error instanceof Error ? error.message : String(error)}`,
     );
   }
 };
@@ -149,10 +126,7 @@ const withArtifactValue = (
   }
 };
 
-const artifactValue = (
-  values: EvidenceValues,
-  kind: ArtifactKind,
-): unknown | null => {
+const artifactValue = (values: EvidenceValues, kind: ArtifactKind): unknown | null => {
   switch (kind) {
     case "project":
       return values.project;
@@ -254,17 +228,9 @@ export const AdventureEvidenceApp = () => {
     "ui-skins": 0,
   });
   const design = showcaseAdventureDesigns[designIndex] ?? showcaseAdventureDesigns[0]!;
-  const requirements = useMemo(
-    () => createAdventureAuthenticityEvidenceRequirements(design),
-    [design],
-  );
+  const requirements = useMemo(() => createAdventureAuthenticityEvidenceRequirements(design), [design]);
   const report = useMemo(() => {
-    if (
-      !values.project ||
-      !values.artDirection ||
-      !values.assetBuild ||
-      !values.pixelEvidence
-    ) {
+    if (!values.project || !values.artDirection || !values.assetBuild || !values.pixelEvidence) {
       return null;
     }
     return evaluateAdventureCompiledEvidence(design, {
@@ -307,9 +273,7 @@ export const AdventureEvidenceApp = () => {
     setMeta((current) => ({ ...current, [kind]: { name: null, error: null } }));
   };
 
-  const loadedCount = artifactKinds.filter(
-    (kind) => artifactValue(values, kind) !== null,
-  ).length;
+  const loadedCount = artifactKinds.filter((kind) => artifactValue(values, kind) !== null).length;
   const clearAll = (): void => {
     for (const kind of artifactKinds) generations.current[kind] += 1;
     setValues(initialValues());
@@ -353,8 +317,8 @@ export const AdventureEvidenceApp = () => {
           <span className="evd-eyebrow">PROOF CONTRACT</span>
           <h1>{design.title}</h1>
           <p>
-            Authored intent becomes verified only when the exact compiled assets, encoded
-            pixels, bitmap fonts and native interface agree with the canonical project.
+            Authored intent becomes verified only when the exact compiled assets, encoded pixels, bitmap fonts
+            and native interface agree with the canonical project.
           </p>
           <ol>
             {requirements.map((requirement, index) => (
@@ -376,8 +340,8 @@ export const AdventureEvidenceApp = () => {
               <span className="evd-eyebrow">EVIDENCE-BACKED VGA REVIEW</span>
               <h2>Prove the pixels, not only the prose</h2>
               <p>
-                Files are parsed locally. The audit reuses the canonical art, asset, font
-                and UI validators before applying scene, actor and native-output gates.
+                Files are parsed locally. The audit reuses the canonical art, asset, font and UI validators
+                before applying scene, actor and native-output gates.
               </p>
             </div>
             <Button disabled={loadedCount === 0} onClick={clearAll}>
@@ -442,18 +406,15 @@ export const AdventureEvidenceApp = () => {
                 {report.findings.length > 0 ? (
                   <div>
                     {report.findings.map((finding) => (
-                      <Finding
-                        key={`${finding.id}:${finding.path}:${finding.message}`}
-                        finding={finding}
-                      />
+                      <Finding key={`${finding.id}:${finding.path}:${finding.message}`} finding={finding} />
                     ))}
                   </div>
                 ) : (
                   <div className="evd-empty">
                     <strong>Evidence contract satisfied.</strong>
                     <p>
-                      Continue with human review at 1× native size and deterministic playtest
-                      replays; this gate proves artifacts, not artistic excellence by itself.
+                      Continue with human review at 1× native size and deterministic playtest replays; this
+                      gate proves artifacts, not artistic excellence by itself.
                     </p>
                   </div>
                 )}
@@ -464,9 +425,8 @@ export const AdventureEvidenceApp = () => {
               <span className="evd-eyebrow">AUDIT NOT STARTED</span>
               <h2>Load the four core artifacts</h2>
               <p>
-                Project, art-direction, compiled-asset and encoded-pixel evidence are needed
-                to run. Bitmap fonts and UI skins remain visible requirements and produce
-                attention findings until supplied.
+                Project, art-direction, compiled-asset and encoded-pixel evidence are needed to run. Bitmap
+                fonts and UI skins remain visible requirements and produce attention findings until supplied.
               </p>
             </section>
           )}

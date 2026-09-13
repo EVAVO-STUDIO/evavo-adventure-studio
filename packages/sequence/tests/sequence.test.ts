@@ -1,11 +1,7 @@
-import { describe, expect, it } from "vitest";
-import type { Id, Sequence } from "@evavo/adventure-project-schema";
 import type { RuntimeState } from "@evavo/adventure-core";
-import {
-  advanceSequence,
-  skipSequence,
-  startSequence,
-} from "../src/index.js";
+import type { Id, Sequence } from "@evavo/adventure-project-schema";
+import { describe, expect, it } from "vitest";
+import { advanceSequence, skipSequence, startSequence } from "../src/index.js";
 
 const id = <T extends string>(value: string) => value as Id<T>;
 
@@ -39,9 +35,7 @@ const sequence: Sequence = {
   skip: {
     allowed: true,
     safeAfterTick: 3,
-    completionActions: [
-      { kind: "set-flag", flag: "officeIntroComplete", value: true },
-    ],
+    completionActions: [{ kind: "set-flag", flag: "officeIntroComplete", value: true }],
   },
   tracks: [
     {
@@ -111,14 +105,12 @@ describe("cinematic sequence runtime", () => {
       throw new Error("Expected sequence to remain active.");
     }
 
-    const reached = advanced.transition.events.filter(
-      (event) => event.kind === "sequence-cue-reached",
-    );
-    expect(reached.map((event) => event.kind === "sequence-cue-reached" ? event.trackId : null)).toEqual([
+    const reached = advanced.transition.events.filter((event) => event.kind === "sequence-cue-reached");
+    expect(reached.map((event) => (event.kind === "sequence-cue-reached" ? event.trackId : null))).toEqual([
       "track.audio",
       "track.story",
     ]);
-    expect(advanced.transition.state.flags.doorSlammed).toBe(true);
+    expect(advanced.transition.state.flags["doorSlammed"]).toBe(true);
 
     const completed = advanceSequence(advanced.transition.state, sequence, 5);
     expect(completed.kind).toBe("completed");
@@ -141,12 +133,10 @@ describe("cinematic sequence runtime", () => {
       throw new Error("Expected sequence to remain active.");
     }
 
-    expect(
-      resumed.transition.events.filter(
-        (event) => event.kind === "sequence-cue-reached",
-      ),
-    ).toHaveLength(2);
-    expect(resumed.transition.state.flags.doorSlammed).toBe(true);
+    expect(resumed.transition.events.filter((event) => event.kind === "sequence-cue-reached")).toHaveLength(
+      2,
+    );
+    expect(resumed.transition.state.flags["doorSlammed"]).toBe(true);
   });
 
   it("enforces safe skip boundaries and authored completion state", () => {
@@ -168,7 +158,7 @@ describe("cinematic sequence runtime", () => {
 
     expect(skipped.kind).toBe("skipped");
     if (skipped.kind === "skipped") {
-      expect(skipped.transition.state.flags.officeIntroComplete).toBe(true);
+      expect(skipped.transition.state.flags["officeIntroComplete"]).toBe(true);
       expect(skipped.transition.state.activeSequences).toEqual([]);
       expect(skipped.transition.events.map((event) => event.kind)).toEqual([
         "flag-changed",

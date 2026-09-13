@@ -1,43 +1,26 @@
 import type { AnimationPlaybackState } from "@evavo/adventure-animation";
-import {
-  ADVENTURE_MOTION_UNITS_PER_PIXEL,
-  adventurePlayFeelProfileById,
-} from "@evavo/adventure-play-feel";
+import { ADVENTURE_MOTION_UNITS_PER_PIXEL, adventurePlayFeelProfileById } from "@evavo/adventure-play-feel";
 import type { Actor } from "@evavo/adventure-project-schema";
 import type { RuntimeBundle } from "@evavo/adventure-runtime-bundle";
 import type { ActorInstanceAnimationEvent } from "./index.js";
-import type {
-  ActorMovementState,
-  NavigableRuntimeWorldState,
-} from "./movement-types.js";
+import type { ActorMovementState, NavigableRuntimeWorldState } from "./movement-types.js";
 
-const actorsById = (
-  bundle: Pick<RuntimeBundle, "actors">,
-): ReadonlyMap<string, Actor> =>
+const actorsById = (bundle: Pick<RuntimeBundle, "actors">): ReadonlyMap<string, Actor> =>
   new Map(bundle.actors.map((actor) => [actor.id as string, actor] as const));
 
-const animationFrames = (
-  actor: Actor,
-  clipId: AnimationPlaybackState["clipId"],
-) => {
+const animationFrames = (actor: Actor, clipId: AnimationPlaybackState["clipId"]) => {
   const clip = actor.animations.find((candidate) => candidate.id === clipId);
   if (!clip) {
     throw new Error(`Actor '${actor.id}' has no animation clip '${clipId}'.`);
   }
   if (!clip.loop) {
-    throw new Error(
-      `Profile-driven movement animation '${clip.id}' must be authored as a looping clip.`,
-    );
+    throw new Error(`Profile-driven movement animation '${clip.id}' must be authored as a looping clip.`);
   }
-  const framesById = new Map(
-    actor.frames.map((frame) => [frame.id as string, frame] as const),
-  );
+  const framesById = new Map(actor.frames.map((frame) => [frame.id as string, frame] as const));
   const frames = clip.frameIds.map((frameId) => {
     const frame = framesById.get(frameId);
     if (!frame) {
-      throw new Error(
-        `Animation clip '${clip.id}' references missing frame '${frameId}'.`,
-      );
+      throw new Error(`Animation clip '${clip.id}' references missing frame '${frameId}'.`);
     }
     return frame;
   });
@@ -57,9 +40,7 @@ const safeCycleTicks = (
   const frames = animationFrames(actor, playback.clipId);
   const cycleTicks = frames.reduce((total, frame) => {
     if (!Number.isSafeInteger(frame.durationTicks) || frame.durationTicks <= 0) {
-      throw new RangeError(
-        `Animation frame '${frame.id}' requires a positive safe duration.`,
-      );
+      throw new RangeError(`Animation frame '${frame.id}' requires a positive safe duration.`);
     }
     const next = total + frame.durationTicks;
     if (!Number.isSafeInteger(next)) {
@@ -83,9 +64,7 @@ const absoluteAnimationTick = (
   ) {
     throw new RangeError("Profiled movement distance and cycle size must be safe integers.");
   }
-  const value =
-    (BigInt(distanceMicropixels) * BigInt(cycleTicks)) /
-    BigInt(cycleMicropixels);
+  const value = (BigInt(distanceMicropixels) * BigInt(cycleTicks)) / BigInt(cycleMicropixels);
   if (value > BigInt(Number.MAX_SAFE_INTEGER)) {
     throw new RangeError("Animation cycle position exceeds the safe integer range.");
   }
@@ -134,9 +113,7 @@ export const playbackForProfiledMovement = (
   };
 };
 
-const profileDrivenActorIds = (
-  state: NavigableRuntimeWorldState,
-): ReadonlySet<string> => {
+const profileDrivenActorIds = (state: NavigableRuntimeWorldState): ReadonlySet<string> => {
   const ids = new Set<string>();
   for (const movement of Object.values(state.movements)) {
     if (!movement.profiled) continue;
@@ -165,15 +142,11 @@ export const synchronizeProfiledMovementAnimations = (
 
   const actors = actorsById(bundle);
   const actorInstances = { ...state.actorInstances };
-  for (const actorInstanceId of [...drivenIds].sort((left, right) =>
-    left.localeCompare(right),
-  )) {
+  for (const actorInstanceId of [...drivenIds].sort((left, right) => left.localeCompare(right))) {
     const runtime = actorInstances[actorInstanceId];
     const movement = state.movements[actorInstanceId];
     if (!runtime || !movement?.profiled) {
-      throw new Error(
-        `Profile-driven actor '${actorInstanceId}' is missing runtime movement state.`,
-      );
+      throw new Error(`Profile-driven actor '${actorInstanceId}' is missing runtime movement state.`);
     }
     const actor = actors.get(runtime.actorId);
     if (!actor) {
@@ -193,8 +166,6 @@ export const synchronizeProfiledMovementAnimations = (
 
   return {
     state: { ...state, actorInstances },
-    animationEvents: animationEvents.filter(
-      (event) => !drivenIds.has(event.actorInstanceId),
-    ),
+    animationEvents: animationEvents.filter((event) => !drivenIds.has(event.actorInstanceId)),
   };
 };

@@ -4,9 +4,7 @@
   width: 100%;
   height: 100%;
   color: var(--text);
-  background:
-    radial-gradient(circle at 58% 18%, rgb(63 46 58 / 22%), transparent 38%),
-    #08090d;
+  background: radial-gradient(circle at 58% 18%, rgb(63 46 58 / 22%), transparent 38%), #08090d;
 }
 
 .design-topbar,
@@ -135,7 +133,7 @@
 }
 
 .design-eyebrow,
-.design-inspector label > span,
+.design-inspector .design-field > span,
 .design-select-field > span,
 .design-card dt,
 .design-inspector dt {
@@ -248,8 +246,7 @@
   overflow: hidden;
   background:
     linear-gradient(rgb(255 255 255 / 2%) 1px, transparent 1px),
-    linear-gradient(90deg, rgb(255 255 255 / 2%) 1px, transparent 1px),
-    #0a0b10;
+    linear-gradient(90deg, rgb(255 255 255 / 2%) 1px, transparent 1px), #0a0b10;
   background-size: 20px 20px;
 }
 
@@ -464,8 +461,7 @@
   color: #66717d;
   background:
     radial-gradient(circle at 28% 32%, rgb(122 98 70 / 16%), transparent 30%),
-    radial-gradient(circle at 73% 57%, rgb(74 114 112 / 15%), transparent 32%),
-    #0d1015;
+    radial-gradient(circle at 73% 57%, rgb(74 114 112 / 15%), transparent 32%), #0d1015;
 }
 
 .design-map-board svg {
@@ -592,7 +588,9 @@
 
 .design-puzzle-card.is-selected {
   border-color: rgb(255 36 78 / 48%);
-  box-shadow: inset 3px 0 0 var(--red), 0 16px 40px rgb(0 0 0 / 18%);
+  box-shadow:
+    inset 3px 0 0 var(--red),
+    0 16px 40px rgb(0 0 0 / 18%);
 }
 
 .design-chip-row {
@@ -652,7 +650,7 @@
   border-color: rgb(255 36 78 / 48%);
 }
 
-.design-cutscene-card > header {
+.design-cutscene-card > .design-cutscene-select {
   cursor: pointer;
 }
 
@@ -662,7 +660,7 @@
   gap: 10px;
 }
 
-.design-storyboard article {
+.design-storyboard .design-storyboard-card {
   overflow: hidden;
   border: 1px solid #30333c;
   border-radius: 5px;
@@ -677,15 +675,15 @@
   image-rendering: pixelated;
 }
 
-.design-storyboard article > span,
-.design-storyboard article > h3,
-.design-storyboard article > p,
-.design-storyboard article > footer {
+.design-storyboard .design-storyboard-card > span,
+.design-storyboard .design-storyboard-card > h3,
+.design-storyboard .design-storyboard-card > p,
+.design-storyboard .design-storyboard-card > footer {
   margin-right: 10px;
   margin-left: 10px;
 }
 
-.design-storyboard article > span {
+.design-storyboard .design-storyboard-card > span {
   display: block;
   margin-top: 10px;
   color: var(--red);
@@ -693,11 +691,11 @@
   font-weight: 800;
 }
 
-.design-storyboard article > h3 {
+.design-storyboard .design-storyboard-card > h3 {
   margin-top: 6px;
 }
 
-.design-storyboard article > footer {
+.design-storyboard .design-storyboard-card > footer {
   margin-top: 10px;
   padding: 9px 0 11px;
   border-top: 1px solid var(--line-soft);
@@ -715,7 +713,7 @@
   white-space: nowrap;
 }
 
-.design-inspector label {
+.design-inspector .design-field {
   display: grid;
   gap: 6px;
   margin-top: 14px;

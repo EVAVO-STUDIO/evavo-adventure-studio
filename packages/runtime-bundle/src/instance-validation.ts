@@ -1,8 +1,5 @@
 import type { RuntimeAssetRecord } from "@evavo/adventure-asset-contract/runtime-asset";
-import {
-  validateSceneInstanceManifest,
-  type SceneInstanceIssue,
-} from "@evavo/adventure-scene-instances";
+import { type SceneInstanceIssue, validateSceneInstanceManifest } from "@evavo/adventure-scene-instances";
 import type { RuntimeBundle } from "./index.js";
 
 export type RuntimeSceneInstanceIssueCode =
@@ -42,10 +39,7 @@ const sameRectangle = (
     readonly height: number;
   },
 ): boolean =>
-  left.x === right.x &&
-  left.y === right.y &&
-  left.width === right.width &&
-  left.height === right.height;
+  left.x === right.x && left.y === right.y && left.width === right.width && left.height === right.height;
 
 const sameSize = (
   left: { readonly width: number; readonly height: number },
@@ -57,9 +51,7 @@ const samePoint = (
   right: { readonly x: number; readonly y: number },
 ): boolean => left.x === right.x && left.y === right.y;
 
-const runtimeAssetsById = (
-  assets: readonly RuntimeAssetRecord[],
-): ReadonlyMap<string, RuntimeAssetRecord> =>
+const runtimeAssetsById = (assets: readonly RuntimeAssetRecord[]): ReadonlyMap<string, RuntimeAssetRecord> =>
   new Map(assets.map((asset) => [asset.assetId as string, asset] as const));
 
 export const validateRuntimeSceneInstances = (
@@ -129,9 +121,7 @@ export const validateRuntimeSceneInstances = (
         return;
       }
 
-      const compiledFrame = asset.metadata.frames.find(
-        (frame) => frame.frameId === visual.frameId,
-      );
+      const compiledFrame = asset.metadata.frames.find((frame) => frame.frameId === visual.frameId);
       if (!compiledFrame) {
         addIssue(
           issues,

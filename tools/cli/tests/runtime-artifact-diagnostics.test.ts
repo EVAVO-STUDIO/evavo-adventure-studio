@@ -2,10 +2,7 @@ import { mkdtemp, rm, writeFile } from "node:fs/promises";
 import { tmpdir } from "node:os";
 import { join } from "node:path";
 import { afterEach, describe, expect, it } from "vitest";
-import {
-  runRuntimeArtifactCli,
-  type RuntimeArtifactCliEnvironment,
-} from "../src/runtime-artifacts.js";
+import { type RuntimeArtifactCliEnvironment, runRuntimeArtifactCli } from "../src/runtime-artifacts.js";
 
 const directories: string[] = [];
 
@@ -30,9 +27,7 @@ const temporaryRoot = async (): Promise<string> => {
 
 afterEach(async () => {
   await Promise.all(
-    directories.splice(0).map((directory) =>
-      rm(directory, { recursive: true, force: true }),
-    ),
+    directories.splice(0).map((directory) => rm(directory, { recursive: true, force: true })),
   );
 });
 
@@ -44,14 +39,7 @@ describe("runtime artifact CLI diagnostics", () => {
     const { output, environment } = captureEnvironment();
 
     const exitCode = await runRuntimeArtifactCli(
-      [
-        "save-validate",
-        "--bundle",
-        bundlePath,
-        "--save",
-        savePath,
-        "--json",
-      ],
+      ["save-validate", "--bundle", bundlePath, "--save", savePath, "--json"],
       environment,
     );
 
@@ -78,17 +66,11 @@ describe("runtime artifact CLI diagnostics", () => {
     const savePath = join(root, "quick.save.json");
     const malformed = captureEnvironment();
     await writeFile(bundlePath, "{", "utf8");
+    await writeFile(savePath, "{}\n", "utf8");
 
     expect(
       await runRuntimeArtifactCli(
-        [
-          "save-validate",
-          "--bundle",
-          bundlePath,
-          "--save",
-          savePath,
-          "--json",
-        ],
+        ["save-validate", "--bundle", bundlePath, "--save", savePath, "--json"],
         malformed.environment,
       ),
     ).toBe(1);
@@ -106,14 +88,7 @@ describe("runtime artifact CLI diagnostics", () => {
     const invalidSchema = captureEnvironment();
     expect(
       await runRuntimeArtifactCli(
-        [
-          "save-validate",
-          "--bundle",
-          bundlePath,
-          "--save",
-          savePath,
-          "--json",
-        ],
+        ["save-validate", "--bundle", bundlePath, "--save", savePath, "--json"],
         invalidSchema.environment,
       ),
     ).toBe(1);
@@ -125,14 +100,10 @@ describe("runtime artifact CLI diagnostics", () => {
     };
     expect(report.diagnostics.length).toBeGreaterThan(0);
     expect(report.diagnostics).toEqual(
-      expect.arrayContaining([
-        expect.objectContaining({ source: "runtime-bundle-schema" }),
-      ]),
+      expect.arrayContaining([expect.objectContaining({ source: "runtime-bundle-schema" })]),
     );
     expect(report.diagnostics).not.toEqual(
-      expect.arrayContaining([
-        expect.objectContaining({ source: "runtime-bundle-semantics" }),
-      ]),
+      expect.arrayContaining([expect.objectContaining({ source: "runtime-bundle-semantics" })]),
     );
   });
 

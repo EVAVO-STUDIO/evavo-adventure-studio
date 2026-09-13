@@ -1,29 +1,20 @@
 import { createHash } from "node:crypto";
-import {
-  mkdir,
-  mkdtemp,
-  readFile,
-  rm,
-  writeFile,
-} from "node:fs/promises";
+import { mkdir, mkdtemp, readFile, rm, writeFile } from "node:fs/promises";
 import { tmpdir } from "node:os";
 import { dirname, join } from "node:path";
-import { afterEach, describe, expect, it } from "vitest";
-import {
-  encodeRgbaPng,
-  type RgbaImage,
-} from "@evavo/adventure-asset-pipeline";
 import { parseArtVisualEvidenceManifest } from "@evavo/adventure-art-direction/evidence";
+import { encodeRgbaPng, type RgbaImage } from "@evavo/adventure-asset-pipeline";
 import { parseAdventureProject } from "@evavo/adventure-project-schema";
+import { afterEach, describe, expect, it } from "vitest";
 import { runCli } from "../src/runner.js";
 
 const temporaryDirectories: string[] = [];
 
-const image = (
-  pixels: readonly (readonly [number, number, number, number])[],
-): RgbaImage => {
+const image = (pixels: readonly (readonly [number, number, number, number])[]): RgbaImage => {
   const data = new Uint8Array(pixels.length * 4);
-  pixels.forEach((pixel, index) => data.set(pixel, index * 4));
+  pixels.forEach((pixel, index) => {
+    data.set(pixel, index * 4);
+  });
   return { width: pixels.length, height: 1, data };
 };
 
@@ -32,9 +23,7 @@ const canonicalize = (value: unknown): unknown => {
   if (value && typeof value === "object") {
     const source = value as Readonly<Record<string, unknown>>;
     const output: Record<string, unknown> = {};
-    for (const key of Object.keys(source).sort((left, right) =>
-      left.localeCompare(right),
-    )) {
+    for (const key of Object.keys(source).sort((left, right) => left.localeCompare(right))) {
       const child = source[key];
       if (child !== undefined) output[key] = canonicalize(child);
     }
@@ -43,8 +32,7 @@ const canonicalize = (value: unknown): unknown => {
   return value;
 };
 
-const sha256 = (value: string | Uint8Array): string =>
-  createHash("sha256").update(value).digest("hex");
+const sha256 = (value: string | Uint8Array): string => createHash("sha256").update(value).digest("hex");
 
 const writeJson = async (path: string, value: unknown): Promise<void> => {
   await mkdir(dirname(path), { recursive: true });
@@ -250,9 +238,7 @@ const fixture = async () => {
 
 afterEach(async () => {
   await Promise.all(
-    temporaryDirectories.splice(0).map((directory) =>
-      rm(directory, { recursive: true, force: true }),
-    ),
+    temporaryDirectories.splice(0).map((directory) => rm(directory, { recursive: true, force: true })),
   );
 });
 
@@ -291,32 +277,30 @@ describe("art evidence CLI command", () => {
       assetCount: 2,
       visualOutputCount: 2,
     });
-    expect(
-      parseArtVisualEvidenceManifest(
-        JSON.parse(await readFile(files.proofPath, "utf8")),
-      ),
-    ).toMatchObject({
-      projectId: "project.art-proof-runner",
-      assets: [
-        {
-          assetId: "asset.actor",
-          kind: "spritesheet",
-          pages: [
-            {
-              outputRole: "page-000",
-              palette: true,
-              alphaMode: "binary",
-            },
-          ],
-        },
-        {
-          assetId: "asset.office",
-          kind: "image",
-          palette: true,
-          alphaMode: "opaque",
-        },
-      ],
-    });
+    expect(parseArtVisualEvidenceManifest(JSON.parse(await readFile(files.proofPath, "utf8")))).toMatchObject(
+      {
+        projectId: "project.art-proof-runner",
+        assets: [
+          {
+            assetId: "asset.actor",
+            kind: "spritesheet",
+            pages: [
+              {
+                outputRole: "page-000",
+                palette: true,
+                alphaMode: "binary",
+              },
+            ],
+          },
+          {
+            assetId: "asset.office",
+            kind: "image",
+            palette: true,
+            alphaMode: "opaque",
+          },
+        ],
+      },
+    );
   });
 
   it("refuses to overwrite the asset manifest", async () => {

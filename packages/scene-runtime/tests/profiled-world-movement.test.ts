@@ -1,14 +1,13 @@
-import { describe, expect, it } from "vitest";
 import type { Id } from "@evavo/adventure-project-schema";
 import type { RuntimeBundle } from "@evavo/adventure-runtime-bundle";
+import { describe, expect, it } from "vitest";
 import {
   advanceNavigableRuntimeWorld,
   beginActorMovement,
   createInitialNavigableRuntimeWorldState,
 } from "../src/movement.js";
 
-const actorInstanceId =
-  "actor-instance.traveller" as Id<"actor-instance">;
+const actorInstanceId = "actor-instance.traveller" as Id<"actor-instance">;
 
 const actorFrame = (frameId: string, x: number) => ({
   id: frameId,
@@ -50,11 +49,7 @@ const runtimeBundle = (portal = false): RuntimeBundle =>
       {
         id: "actor.traveller",
         name: "Traveller",
-        frames: [
-          actorFrame("frame.idle", 0),
-          actorFrame("frame.walk-a", 14),
-          actorFrame("frame.walk-b", 28),
-        ],
+        frames: [actorFrame("frame.idle", 0), actorFrame("frame.walk-a", 14), actorFrame("frame.walk-b", 28)],
         animations: [
           {
             id: "animation.idle-east",
@@ -179,9 +174,7 @@ const finishSteppedMovement = (
   initial: ReturnType<typeof createInitialNavigableRuntimeWorldState>,
 ) => {
   let state = initial;
-  const events: ReturnType<
-    typeof advanceNavigableRuntimeWorld
-  >["movementEvents"][number][] = [];
+  const events: ReturnType<typeof advanceNavigableRuntimeWorld>["movementEvents"][number][] = [];
   let ticks = 0;
   while (state.movements[actorInstanceId]) {
     const advanced = advanceNavigableRuntimeWorld(bundle, state, 1);
@@ -197,12 +190,7 @@ describe("profiled movement in the canonical runtime world", () => {
   it("uses the bundle profile and converges identically in chunks or single ticks", () => {
     const bundle = runtimeBundle();
     const initial = createInitialNavigableRuntimeWorldState(bundle);
-    const started = beginActorMovement(
-      bundle,
-      initial,
-      actorInstanceId,
-      { x: 270, y: 160 },
-    );
+    const started = beginActorMovement(bundle, initial, actorInstanceId, { x: 270, y: 160 });
 
     expect(started.kind).toBe("started");
     if (started.kind !== "started") throw new Error("Expected movement start.");
@@ -214,11 +202,7 @@ describe("profiled movement in the canonical runtime world", () => {
     expect(started.state.movements[actorInstanceId]?.profiled).toBeDefined();
 
     const stepped = finishSteppedMovement(bundle, started.state);
-    const chunked = advanceNavigableRuntimeWorld(
-      bundle,
-      started.state,
-      stepped.ticks,
-    );
+    const chunked = advanceNavigableRuntimeWorld(bundle, started.state, stepped.ticks);
 
     expect(chunked.state).toEqual(stepped.state);
     expect(chunked.movementEvents).toEqual(stepped.events);
@@ -226,18 +210,10 @@ describe("profiled movement in the canonical runtime world", () => {
       x: 270,
       y: 160,
     });
+    expect(stepped.state.actorInstances[actorInstanceId]?.animationState).toBe("idle");
+    expect(stepped.events.some((event) => event.kind === "movement-footfall")).toBe(true);
     expect(
-      stepped.state.actorInstances[actorInstanceId]?.animationState,
-    ).toBe("idle");
-    expect(
-      stepped.events.some((event) => event.kind === "movement-footfall"),
-    ).toBe(true);
-    expect(
-      stepped.events.some(
-        (event) =>
-          event.kind === "movement-phase-changed" &&
-          event.phase === "arrived",
-      ),
+      stepped.events.some((event) => event.kind === "movement-phase-changed" && event.phase === "arrived"),
     ).toBe(true);
     expect(stepped.events.at(-1)).toMatchObject({
       kind: "movement-completed",
@@ -274,12 +250,7 @@ describe("profiled movement in the canonical runtime world", () => {
   it("falls back visibly when a portal cost is not physical walking distance", () => {
     const bundle = runtimeBundle(true);
     const initial = createInitialNavigableRuntimeWorldState(bundle);
-    const started = beginActorMovement(
-      bundle,
-      initial,
-      actorInstanceId,
-      { x: 250, y: 160 },
-    );
+    const started = beginActorMovement(bundle, initial, actorInstanceId, { x: 250, y: 160 });
 
     expect(started.kind).toBe("started");
     if (started.kind !== "started") throw new Error("Expected movement start.");

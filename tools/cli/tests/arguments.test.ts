@@ -1,11 +1,8 @@
 import { describe, expect, it } from "vitest";
-import {
-  CliUsageError,
-  parseCliArguments,
-} from "../src/arguments.js";
+import { CliUsageError, parseCliArguments } from "../src/arguments.js";
 
 describe("cli arguments", () => {
-  it("parses complete compile commands with visual font and UI evidence", () => {
+  it("parses complete compile commands with scene staging, indexed palette data and production evidence", () => {
     expect(
       parseCliArguments([
         "compile",
@@ -15,6 +12,12 @@ describe("cli arguments", () => {
         "build/assets.json",
         "--scene-instances",
         "game/scene-instances.json",
+        "--scene-staging",
+        "game/scene-staging.json",
+        "--indexed-assets",
+        "build/indexed-assets.json",
+        "--palette-maps",
+        "game/palette-maps.json",
         "--art-direction",
         "game/art-direction.json",
         "--art-evidence",
@@ -23,6 +26,8 @@ describe("cli arguments", () => {
         "game/bitmap-fonts.json",
         "--ui-skins",
         "game/ui-skins.json",
+        "--audio-mix",
+        "game/audio-mix.json",
         "--out",
         "build/game.bundle.json",
         "--report",
@@ -34,10 +39,14 @@ describe("cli arguments", () => {
       projectPath: "game/project.json",
       assetManifestPath: "build/assets.json",
       sceneInstancesPath: "game/scene-instances.json",
+      sceneStagingPath: "game/scene-staging.json",
+      indexedAssetsPath: "build/indexed-assets.json",
+      paletteMapsPath: "game/palette-maps.json",
       artDirectionPath: "game/art-direction.json",
       artEvidencePath: "build/art-evidence.json",
       bitmapFontsPath: "game/bitmap-fonts.json",
       uiSkinsPath: "game/ui-skins.json",
+      audioMixPath: "game/audio-mix.json",
       outputPath: "build/game.bundle.json",
       reportPath: "build/report.json",
       format: "json",
@@ -61,10 +70,14 @@ describe("cli arguments", () => {
       projectPath: "game/project.json",
       assetManifestPath: "build/assets.json",
       sceneInstancesPath: null,
+      sceneStagingPath: null,
+      indexedAssetsPath: null,
+      paletteMapsPath: null,
       artDirectionPath: null,
       artEvidencePath: null,
       bitmapFontsPath: null,
       uiSkinsPath: null,
+      audioMixPath: null,
       outputDirectory: "release/windows",
       format: "json",
     });
@@ -78,31 +91,86 @@ describe("cli arguments", () => {
       projectPath: "project.json",
       assetManifestPath: null,
       sceneInstancesPath: null,
+      sceneStagingPath: null,
+      indexedAssetsPath: null,
+      paletteMapsPath: null,
       artDirectionPath: null,
       artEvidencePath: null,
       bitmapFontsPath: null,
       uiSkinsPath: null,
+      audioMixPath: null,
       format: "human",
     });
   });
 
-  it("allows focused font and interface validation without compiled assets", () => {
+  it("allows focused staging, font, interface and audio validation without compiled assets", () => {
     expect(
       parseCliArguments([
         "validate",
         "--project",
         "project.json",
+        "--scene-staging",
+        "scene-staging.json",
         "--bitmap-fonts",
         "bitmap-fonts.json",
         "--ui-skins",
         "ui-skins.json",
+        "--audio-mix",
+        "audio-mix.json",
       ]),
     ).toMatchObject({
       kind: "validate",
+      sceneStagingPath: "scene-staging.json",
+      indexedAssetsPath: null,
+      paletteMapsPath: null,
       bitmapFontsPath: "bitmap-fonts.json",
       uiSkinsPath: "ui-skins.json",
+      audioMixPath: "audio-mix.json",
       assetManifestPath: null,
     });
+  });
+
+  it("allows indexed assets and palette maps when compiled asset identity is available", () => {
+    expect(
+      parseCliArguments([
+        "validate",
+        "--project",
+        "project.json",
+        "--asset-manifest",
+        "assets.json",
+        "--indexed-assets",
+        "indexed-assets.json",
+        "--palette-maps",
+        "palette-maps.json",
+      ]),
+    ).toMatchObject({
+      kind: "validate",
+      assetManifestPath: "assets.json",
+      indexedAssetsPath: "indexed-assets.json",
+      paletteMapsPath: "palette-maps.json",
+    });
+  });
+
+  it("requires an asset manifest for indexed assets and palette maps", () => {
+    expect(() =>
+      parseCliArguments([
+        "validate",
+        "--project",
+        "project.json",
+        "--indexed-assets",
+        "indexed-assets.json",
+      ]),
+    ).toThrow(/--indexed-assets.*--asset-manifest/u);
+
+    expect(() =>
+      parseCliArguments([
+        "validate",
+        "--project",
+        "project.json",
+        "--palette-maps",
+        "palette-maps.json",
+      ]),
+    ).toThrow(/--palette-maps.*--asset-manifest/u);
   });
 
   it("allows policy validation before compiled evidence exists", () => {
@@ -172,7 +240,25 @@ describe("cli arguments", () => {
       ]),
     ).toThrow(CliUsageError);
     expect(() =>
-      parseCliArguments(["validate", "--project", "project.json", "--wat"]),
+      parseCliArguments([
+        "art-evidence",
+        "--project",
+        "project.json",
+        "--asset-manifest",
+        "assets.json",
+        "--scene-staging",
+        "scene-staging.json",
+        "--out",
+        "evidence.json",
+      ]),
+    ).toThrow(CliUsageError);
+    expect(() =>
+      parseCliArguments([
+        "validate",
+        "--project",
+        "project.json",
+        "--wat",
+      ]),
     ).toThrow(CliUsageError);
   });
 });

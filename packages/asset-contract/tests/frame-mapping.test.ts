@@ -1,7 +1,7 @@
-import { describe, expect, it } from "vitest";
-import { assetBuildManifestSchema } from "../src/index.js";
-import { validateCompiledFrameMappings } from "../src/frame-mapping.js";
 import { parseAdventureProject } from "@evavo/adventure-project-schema";
+import { describe, expect, it } from "vitest";
+import { validateCompiledFrameMappings } from "../src/frame-mapping.js";
+import { assetBuildManifestSchema } from "../src/index.js";
 
 const hash = "0".repeat(64);
 
@@ -94,9 +94,7 @@ const manifest = assetBuildManifestSchema.parse({
     {
       assetId: "asset.office",
       kind: "image",
-      sourceFiles: [
-        { path: "art/office.png", sha256: hash, byteLength: 1 },
-      ],
+      sourceFiles: [{ path: "art/office.png", sha256: hash, byteLength: 1 }],
       outputFiles: [
         {
           role: "primary",
@@ -164,9 +162,7 @@ describe("compiled sprite frame mappings", () => {
   });
 
   it("reports missing compiled frames", () => {
-    const spritesheet = manifest.assets.find(
-      (asset) => asset.kind === "spritesheet",
-    );
+    const spritesheet = manifest.assets.find((asset) => asset.kind === "spritesheet");
     if (!spritesheet || spritesheet.kind !== "spritesheet") {
       throw new Error("Spritesheet fixture is missing.");
     }

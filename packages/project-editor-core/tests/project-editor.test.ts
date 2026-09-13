@@ -1,15 +1,17 @@
+import { type Id, parseAdventureProject } from "@evavo/adventure-project-schema";
 import { describe, expect, it } from "vitest";
-import { parseAdventureProject } from "@evavo/adventure-project-schema";
+import { parseProjectEditorCommand } from "../src/command-schema.js";
 import {
   createProjectEditorHistory,
   executeProjectEditorCommand,
   isProjectEditorDocumentDirty,
   markProjectEditorHistorySaved,
-  ProjectEditorCommandError,
+  type ProjectEditorCommandError,
   redoProjectEditorCommand,
   undoProjectEditorCommand,
 } from "../src/index.js";
-import { parseProjectEditorCommand } from "../src/command-schema.js";
+
+const id = <T extends string>(value: string) => value as Id<T>;
 
 const project = parseAdventureProject({
   schemaVersion: 1,
@@ -140,21 +142,24 @@ describe("project editor history", () => {
       },
     });
 
-    expect(
-      history.document.project.scenes[0]?.navigationAreas[0]?.shape.points[0],
-    ).toEqual({ x: 18, y: 118 });
+    expect(history.document.project.scenes[0]?.navigationAreas[0]?.shape.points[0]).toEqual({
+      x: 18,
+      y: 118,
+    });
     expect(isProjectEditorDocumentDirty(history.document)).toBe(true);
 
     history = undoProjectEditorCommand(history);
-    expect(
-      history.document.project.scenes[0]?.navigationAreas[0]?.shape.points[0],
-    ).toEqual({ x: 10, y: 110 });
+    expect(history.document.project.scenes[0]?.navigationAreas[0]?.shape.points[0]).toEqual({
+      x: 10,
+      y: 110,
+    });
     expect(isProjectEditorDocumentDirty(history.document)).toBe(false);
 
     history = redoProjectEditorCommand(history);
-    expect(
-      history.document.project.scenes[0]?.navigationAreas[0]?.shape.points[0],
-    ).toEqual({ x: 18, y: 118 });
+    expect(history.document.project.scenes[0]?.navigationAreas[0]?.shape.points[0]).toEqual({
+      x: 18,
+      y: 118,
+    });
 
     history = markProjectEditorHistorySaved(history);
     expect(isProjectEditorDocumentDirty(history.document)).toBe(false);
@@ -197,7 +202,7 @@ describe("project editor history", () => {
         sceneId: project.scenes[0]!.id,
         index: 1,
         hotspot: {
-          id: "hotspot.office.cabinet",
+          id: id<"hotspot">("hotspot.office.cabinet"),
           name: "Cabinet",
           shape: {
             points: [
@@ -229,10 +234,10 @@ describe("project editor history", () => {
       commands: [
         {
           kind: "insert-depth-band",
-          sceneId: "scene.alley",
+          sceneId: project.scenes[1]!.id,
           index: 0,
           band: {
-            id: "depth.alley.floor",
+            id: id<"depth-band">("depth.alley.floor"),
             farY: 105,
             nearY: 190,
             farScale: 0.66,
@@ -241,10 +246,10 @@ describe("project editor history", () => {
         },
         {
           kind: "insert-navigation-area",
-          sceneId: "scene.alley",
+          sceneId: project.scenes[1]!.id,
           index: 0,
           area: {
-            id: "navigation.alley.main",
+            id: id<"navigation-area">("navigation.alley.main"),
             shape: {
               points: [
                 { x: 8, y: 105 },
@@ -285,8 +290,6 @@ describe("project editor command schema", () => {
   });
 
   it("rejects empty batches", () => {
-    expect(() =>
-      parseProjectEditorCommand({ kind: "batch", commands: [] }),
-    ).toThrow();
+    expect(() => parseProjectEditorCommand({ kind: "batch", commands: [] })).toThrow();
   });
 });

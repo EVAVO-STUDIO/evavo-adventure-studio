@@ -13,9 +13,7 @@ describe("adventure authenticity audit", () => {
     expect(report.reportVersion).toBe(1);
     expect(report.maximumScore).toBe(100);
     expect(report.dimensions).toHaveLength(10);
-    expect(report.score).toBe(
-      report.dimensions.reduce((total, dimension) => total + dimension.score, 0),
-    );
+    expect(report.score).toBe(report.dimensions.reduce((total, dimension) => total + dimension.score, 0));
     expect(report.dimensions.map((dimension) => dimension.id)).toEqual([
       "native-canvas",
       "palette-values",
@@ -28,9 +26,7 @@ describe("adventure authenticity audit", () => {
       "cinematic-continuity",
       "production-discipline",
     ]);
-    expect(evaluateAdventureAuthenticity(showcaseAdventureDesigns[0]!)).toEqual(
-      report,
-    );
+    expect(evaluateAdventureAuthenticity(showcaseAdventureDesigns[0]!)).toEqual(report);
   });
 
   it("keeps every original showcase above the developing threshold", () => {
@@ -38,9 +34,7 @@ describe("adventure authenticity audit", () => {
       const report = evaluateAdventureAuthenticity(document);
       expect(report.score).toBeGreaterThanOrEqual(65);
       expect(report.status).not.toBe("blocked");
-      expect(report.findings.some((finding) => finding.severity === "error")).toBe(
-        false,
-      );
+      expect(report.findings.some((finding) => finding.severity === "error")).toBe(false);
     }
   });
 

@@ -1,8 +1,8 @@
 import type { RuntimeEvent } from "@evavo/adventure-core";
 import {
-  advanceAdventureCamera,
   type AdventureCameraState,
   type AdventurePlayFeelProfile,
+  advanceAdventureCamera,
 } from "@evavo/adventure-play-feel";
 import type { Id } from "@evavo/adventure-project-schema";
 import type { ResolvedCamera } from "@evavo/adventure-render-contract";
@@ -31,40 +31,21 @@ export const createProfiledRuntimeCamera = (
 ): ProfiledRuntimeCameraState | null => {
   const profile = playFeelProfileForRuntimeCamera(input.bundle);
   if (!profile) return null;
-  const scene = profiledCameraScene(
-    input.bundle,
-    input.world.story.currentSceneId,
-  );
-  const target = profiledCameraTargetForWorld(
-    input.bundle,
-    input.world,
-    input.controlledActorInstanceId,
-  );
-  const position = initialProfiledCameraPosition(
-    input.bundle,
-    scene,
-    target,
-    profile,
-  );
+  const scene = profiledCameraScene(input.bundle, input.world.story.currentSceneId);
+  const target = profiledCameraTargetForWorld(input.bundle, input.world, input.controlledActorInstanceId);
+  const position = initialProfiledCameraPosition(input.bundle, scene, target, profile);
   return {
     stateVersion: 1,
     profileId: profile.id,
     sceneId: scene.id,
-    camera: profiledCameraStateAt(
-      position,
-      input.world.story.tick,
-      profile,
-    ),
+    camera: profiledCameraStateAt(position, input.world.story.tick, profile),
     activeShot: null,
   };
 };
 
 const clamp01 = (value: number): number => Math.min(1, Math.max(0, value));
 
-const easedProgress = (
-  progress: number,
-  easing: ProfiledRuntimeCameraEasing,
-): number => {
+const easedProgress = (progress: number, easing: ProfiledRuntimeCameraEasing): number => {
   const value = clamp01(progress);
   switch (easing) {
     case "step":
@@ -76,9 +57,7 @@ const easedProgress = (
     case "ease-out":
       return 1 - (1 - value) * (1 - value);
     case "ease-in-out":
-      return value < 0.5
-        ? 2 * value * value
-        : 1 - ((-2 * value + 2) ** 2) / 2;
+      return value < 0.5 ? 2 * value * value : 1 - (-2 * value + 2) ** 2 / 2;
   }
 };
 
@@ -90,8 +69,7 @@ const shotCameraState = (
   profile: AdventurePlayFeelProfile,
 ): AdventureCameraState => {
   const elapsed = Math.max(0, storyTick - shot.startedAtStoryTick);
-  const progress =
-    shot.durationTicks === 0 ? 1 : elapsed / shot.durationTicks;
+  const progress = shot.durationTicks === 0 ? 1 : elapsed / shot.durationTicks;
   const eased = easedProgress(progress, shot.easing);
   const unquantizedPosition = {
     x: shot.from.x + (shot.to.x - shot.from.x) * eased,
@@ -101,14 +79,8 @@ const shotCameraState = (
   const velocityPixelsPerSecond =
     tickDelta > 0
       ? {
-          x:
-            ((unquantizedPosition.x - current.unquantizedPosition.x) *
-              ticksPerSecond) /
-            tickDelta,
-          y:
-            ((unquantizedPosition.y - current.unquantizedPosition.y) *
-              ticksPerSecond) /
-            tickDelta,
+          x: ((unquantizedPosition.x - current.unquantizedPosition.x) * ticksPerSecond) / tickDelta,
+          y: ((unquantizedPosition.y - current.unquantizedPosition.y) * ticksPerSecond) / tickDelta,
         }
       : { x: 0, y: 0 };
   return {
@@ -117,8 +89,7 @@ const shotCameraState = (
     position: quantizeProfiledCameraPoint(unquantizedPosition, profile),
     unquantizedPosition,
     velocityPixelsPerSecond,
-    settledTicks:
-      progress >= 1 ? current.settledTicks + Math.max(1, tickDelta) : 0,
+    settledTicks: progress >= 1 ? current.settledTicks + Math.max(1, tickDelta) : 0,
   };
 };
 
@@ -132,28 +103,16 @@ const genericCameraState = (
 ): AdventureCameraState => {
   const tickDelta = nextWorld.story.tick - previousWorld.story.tick;
   if (tickDelta === 0) return { ...state, tick: nextWorld.story.tick };
-  const previousTarget = profiledCameraTargetForWorld(
-    bundle,
-    previousWorld,
-    controlledActorInstanceId,
-  );
-  const nextTarget = profiledCameraTargetForWorld(
-    bundle,
-    nextWorld,
-    controlledActorInstanceId,
-  );
+  const previousTarget = profiledCameraTargetForWorld(bundle, previousWorld, controlledActorInstanceId);
+  const nextTarget = profiledCameraTargetForWorld(bundle, nextWorld, controlledActorInstanceId);
   const scene = profiledCameraScene(bundle, nextWorld.story.currentSceneId);
   return advanceAdventureCamera(
     state,
     {
       position: nextTarget,
       velocityPixelsPerSecond: {
-        x:
-          (nextTarget.x - previousTarget.x) *
-          bundle.presentation.logicalTicksPerSecond,
-        y:
-          (nextTarget.y - previousTarget.y) *
-          bundle.presentation.logicalTicksPerSecond,
+        x: (nextTarget.x - previousTarget.x) * bundle.presentation.logicalTicksPerSecond,
+        y: (nextTarget.y - previousTarget.y) * bundle.presentation.logicalTicksPerSecond,
       },
     },
     {
@@ -183,10 +142,7 @@ const applyCameraEvents = (
   const scene = profiledCameraScene(bundle, state.sceneId);
 
   for (const event of events) {
-    if (
-      event.kind === "sequence-cue-reached" &&
-      event.cue.kind === "camera-shot"
-    ) {
+    if (event.kind === "sequence-cue-reached" && event.cue.kind === "camera-shot") {
       const to = clampProfiledCameraPoint(event.cue.position, bundle, scene);
       const shot: ProfiledRuntimeCameraShotState = {
         sequenceId: event.sequenceId,
@@ -213,10 +169,7 @@ const applyCameraEvents = (
             : next.camera,
       };
     }
-    if (
-      event.kind === "sequence-completed" ||
-      event.kind === "sequence-skipped"
-    ) {
+    if (event.kind === "sequence-completed" || event.kind === "sequence-skipped") {
       releases.add(event.sequenceId);
     }
   }
@@ -235,19 +188,14 @@ export const advanceProfiledRuntimeCamera = (
   }
   const tickDelta = input.nextWorld.story.tick - input.previousWorld.story.tick;
   if (!Number.isSafeInteger(tickDelta) || tickDelta < 0 || tickDelta > 1) {
-    throw new RangeError(
-      "Profiled runtime camera advancement requires zero or one logical tick.",
-    );
+    throw new RangeError("Profiled runtime camera advancement requires zero or one logical tick.");
   }
 
   let state = input.state;
   if (state && state.profileId !== profile.id) {
-    throw new RangeError(
-      "Runtime camera profile changed during active playback.",
-    );
+    throw new RangeError("Runtime camera profile changed during active playback.");
   }
-  const reset =
-    !state || state.sceneId !== input.nextWorld.story.currentSceneId;
+  const reset = !state || state.sceneId !== input.nextWorld.story.currentSceneId;
   if (reset) {
     state = createProfiledRuntimeCamera({
       bundle: input.bundle,
@@ -289,8 +237,7 @@ export const advanceProfiledRuntimeCamera = (
           profile,
         );
   const activeShot =
-    state.activeShot &&
-    !planned.releaseSequenceIds.has(state.activeShot.sequenceId)
+    state.activeShot && !planned.releaseSequenceIds.has(state.activeShot.sequenceId)
       ? state.activeShot
       : null;
   const nextState: ProfiledRuntimeCameraState = {

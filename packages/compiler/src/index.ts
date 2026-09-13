@@ -1,26 +1,35 @@
 import {
-  toRuntimeAssetRecord,
-  validateAssetBuildManifest,
+  type AudioMixIssue,
+  type AudioMixManifest,
+  validateAudioMixManifest,
+} from "@evavo/adventure-audio";
+import {
+  type AudioCompiledIssue,
+  validateCompiledAudioMappings,
+} from "@evavo/adventure-audio/compiled-mapping";
+import {
   type AssetBuildManifest,
   type AssetManifestIssue,
+  toRuntimeAssetRecord,
+  validateAssetBuildManifest,
 } from "@evavo/adventure-asset-contract";
 import {
-  validateCompiledFrameMappings,
   type FrameAssetMappingIssue,
+  validateCompiledFrameMappings,
 } from "@evavo/adventure-asset-contract/frame-mapping";
 import {
-  validatePortableRuntimePaths,
   type PortableRuntimePathIssue,
+  validatePortableRuntimePaths,
 } from "@evavo/adventure-asset-contract/portable-path";
 import type { RuntimeAssetRecord } from "@evavo/adventure-asset-contract/runtime-asset";
 import {
-  validateBitmapFontManifest,
   type BitmapFontIssue,
   type BitmapFontManifest,
+  validateBitmapFontManifest,
 } from "@evavo/adventure-bitmap-font";
 import {
-  validateCompiledBitmapFontMappings,
   type BitmapFontCompiledIssue,
+  validateCompiledBitmapFontMappings,
 } from "@evavo/adventure-bitmap-font/compiled-mapping";
 import type {
   Actor,
@@ -32,26 +41,26 @@ import type {
   Sequence,
 } from "@evavo/adventure-project-schema";
 import {
-  parseRuntimeBundle,
   type CompiledDialogue,
   type CompiledHotspot,
   type CompiledScene,
   type CompiledSequence,
+  parseRuntimeBundle,
   type RuntimeBundle,
 } from "@evavo/adventure-runtime-bundle";
 import {
-  validateUiSkinManifest,
   type UiSkinIssue,
   type UiSkinManifest,
+  validateUiSkinManifest,
 } from "@evavo/adventure-ui-skin";
 import {
-  validateCompiledUiSkinMappings,
   type UiSkinCompiledIssue,
+  validateCompiledUiSkinMappings,
 } from "@evavo/adventure-ui-skin/compiled-mapping";
 import {
   hasValidationErrors,
-  validateProjectSemantics,
   type ValidationIssue,
+  validateProjectSemantics,
 } from "@evavo/adventure-validation";
 
 export type CompilationIssue =
@@ -62,7 +71,9 @@ export type CompilationIssue =
   | BitmapFontIssue
   | BitmapFontCompiledIssue
   | UiSkinIssue
-  | UiSkinCompiledIssue;
+  | UiSkinCompiledIssue
+  | AudioMixIssue
+  | AudioCompiledIssue;
 
 export interface CompiledProject {
   readonly bundle: RuntimeBundle;
@@ -81,8 +92,9 @@ export class ProjectCompilationError extends Error {
   }
 }
 
-const sortById = <T extends { readonly id: string }>(values: readonly T[]): T[] =>
-  [...values].sort((left, right) => left.id.localeCompare(right.id));
+const sortById = <T extends { readonly id: string }>(
+  values: readonly T[],
+): T[] => [...values].sort((left, right) => left.id.localeCompare(right.id));
 
 export const interactionIndexKey = (
   verb: string,
@@ -92,7 +104,10 @@ export const interactionIndexKey = (
 const compileHotspot = (hotspot: Hotspot): CompiledHotspot => {
   const mutableIndex: Record<string, Id<"interaction">[]> = {};
   for (const interaction of hotspot.interactions) {
-    const key = interactionIndexKey(interaction.verb, interaction.itemId ?? null);
+    const key = interactionIndexKey(
+      interaction.verb,
+      interaction.itemId ?? null,
+    );
     const existing = mutableIndex[key];
     if (existing) existing.push(interaction.id);
     else mutableIndex[key] = [interaction.id];
@@ -127,7 +142,10 @@ const compileDialogue = (dialogue: DialogueGraph): CompiledDialogue => {
 const compileSequence = (sequence: Sequence): CompiledSequence => ({
   ...sequence,
   tracks: sortById(sequence.tracks),
-  cueCount: sequence.tracks.reduce((total, track) => total + track.cues.length, 0),
+  cueCount: sequence.tracks.reduce(
+    (total, track) => total + track.cues.length,
+    0,
+  ),
 });
 
 const compileBitmapFonts = (
@@ -160,7 +178,33 @@ const compileUiSkins = (manifest: UiSkinManifest): UiSkinManifest => ({
   ),
 });
 
-const canonicalRuntimeAsset = (asset: RuntimeAssetRecord): RuntimeAssetRecord => {
+const compileAudioMix = (manifest: AudioMixManifest): AudioMixManifest => ({
+  ...manifest,
+  buses: [...manifest.buses].sort((left, right) =>
+    left.id.localeCompare(right.id),
+  ),
+  ducking: [...manifest.ducking].sort((left, right) =>
+    left.id.localeCompare(right.id),
+  ),
+  cues: [...manifest.cues].sort((left, right) =>
+    left.id.localeCompare(right.id),
+  ),
+  soundscapes: [...manifest.soundscapes]
+    .sort((left, right) => left.sceneId.localeCompare(right.sceneId))
+    .map((soundscape) => ({
+      ...soundscape,
+      layers: [...soundscape.layers].sort((left, right) =>
+        left.id.localeCompare(right.id),
+      ),
+    })),
+  speechBindings: [...manifest.speechBindings].sort((left, right) =>
+    left.id.localeCompare(right.id),
+  ),
+});
+
+const canonicalRuntimeAsset = (
+  asset: RuntimeAssetRecord,
+): RuntimeAssetRecord => {
   const outputFiles = [...asset.outputFiles].sort((left, right) => {
     const roleDifference = left.role.localeCompare(right.role);
     return roleDifference !== 0
@@ -198,7 +242,9 @@ const canonicalize = (value: unknown): unknown => {
   if (value && typeof value === "object") {
     const source = value as Readonly<Record<string, unknown>>;
     const result: Record<string, unknown> = {};
-    for (const key of Object.keys(source).sort((left, right) => left.localeCompare(right))) {
+    for (const key of Object.keys(source).sort((left, right) =>
+      left.localeCompare(right),
+    )) {
       const child = source[key];
       if (child !== undefined) result[key] = canonicalize(child);
     }
@@ -210,7 +256,9 @@ const canonicalize = (value: unknown): unknown => {
 export const canonicalStringify = (value: unknown): string => {
   const serialized = JSON.stringify(canonicalize(value));
   if (serialized === undefined) {
-    throw new TypeError("The supplied value cannot be represented as canonical JSON.");
+    throw new TypeError(
+      "The supplied value cannot be represented as canonical JSON.",
+    );
   }
   return serialized;
 };
@@ -231,6 +279,7 @@ export const compileProject = (
   assetManifest: AssetBuildManifest,
   bitmapFonts?: BitmapFontManifest,
   uiSkins?: UiSkinManifest,
+  audioMix?: AudioMixManifest,
 ): CompiledProject => {
   const projectIssues = validateProjectSemantics(project);
   const assetIssues = validateAssetBuildManifest(project, assetManifest);
@@ -248,6 +297,12 @@ export const compileProject = (
   const uiSkinMappingIssues = uiSkins
     ? validateCompiledUiSkinMappings(uiSkins, assetManifest)
     : [];
+  const audioIssues = audioMix
+    ? validateAudioMixManifest(project, audioMix)
+    : [];
+  const audioMappingIssues = audioMix
+    ? validateCompiledAudioMappings(project, audioMix, assetManifest)
+    : [];
   const issues: CompilationIssue[] = [
     ...projectIssues,
     ...assetIssues,
@@ -257,6 +312,8 @@ export const compileProject = (
     ...bitmapFontMappingIssues,
     ...uiSkinIssues,
     ...uiSkinMappingIssues,
+    ...audioIssues,
+    ...audioMappingIssues,
   ];
   if (
     hasValidationErrors(projectIssues) ||
@@ -266,7 +323,9 @@ export const compileProject = (
     bitmapFontIssues.length > 0 ||
     bitmapFontMappingIssues.length > 0 ||
     uiSkinIssues.some((issue) => issue.severity === "error") ||
-    uiSkinMappingIssues.length > 0
+    uiSkinMappingIssues.length > 0 ||
+    audioIssues.some((issue) => issue.severity === "error") ||
+    audioMappingIssues.some((issue) => issue.severity === "error")
   ) {
     throw new ProjectCompilationError(issues);
   }
@@ -289,6 +348,7 @@ export const compileProject = (
     sequences: sortById(project.sequences).map(compileSequence),
     ...(bitmapFonts ? { bitmapFonts: compileBitmapFonts(bitmapFonts) } : {}),
     ...(uiSkins ? { uiSkins: compileUiSkins(uiSkins) } : {}),
+    ...(audioMix ? { audioMix: compileAudioMix(audioMix) } : {}),
   });
   const canonicalJson = canonicalStringify(bundle);
   return {
@@ -301,18 +361,28 @@ export const compileProject = (
 
 export type CompilationResult =
   | { readonly kind: "compiled"; readonly project: CompiledProject }
-  | { readonly kind: "invalid"; readonly issues: readonly CompilationIssue[] };
+  | {
+      readonly kind: "invalid";
+      readonly issues: readonly CompilationIssue[];
+    };
 
 export const tryCompileProject = (
   project: AdventureProject,
   assetManifest: AssetBuildManifest,
   bitmapFonts?: BitmapFontManifest,
   uiSkins?: UiSkinManifest,
+  audioMix?: AudioMixManifest,
 ): CompilationResult => {
   try {
     return {
       kind: "compiled",
-      project: compileProject(project, assetManifest, bitmapFonts, uiSkins),
+      project: compileProject(
+        project,
+        assetManifest,
+        bitmapFonts,
+        uiSkins,
+        audioMix,
+      ),
     };
   } catch (error) {
     if (error instanceof ProjectCompilationError) {

@@ -1,10 +1,10 @@
+import type { RuntimeBundle } from "@evavo/adventure-runtime-bundle";
 import {
   loadSaveGame,
   runtimeBundleFingerprint,
-  serializeSaveGame,
   type SaveGame,
+  serializeSaveGame,
 } from "@evavo/adventure-save-game";
-import type { RuntimeBundle } from "@evavo/adventure-runtime-bundle";
 
 export interface SaveGameStorage {
   getItem(key: string): string | null;
@@ -29,10 +29,7 @@ const assertSlot = (slot: number): number => {
   return slot;
 };
 
-export const saveGameStorageKey = (
-  bundle: RuntimeBundle,
-  slot = 0,
-): string =>
+export const saveGameStorageKey = (bundle: RuntimeBundle, slot = 0): string =>
   [
     "evavo-adventure-save",
     bundle.projectId,
@@ -83,3 +80,67 @@ export const hasSaveGameSlot = (
   bundle: RuntimeBundle,
   slot = 0,
 ): boolean => storage.getItem(saveGameStorageKey(bundle, slot)) !== null;
+
+export type SaveGameSlotSnapshot =
+  | {
+      readonly slot: number;
+      readonly status: "empty";
+    }
+  | {
+      readonly slot: number;
+      readonly status: "invalid";
+      readonly message: string;
+    }
+  | {
+      readonly slot: number;
+      readonly status: "valid";
+      readonly tick: number;
+      readonly sceneId: string;
+      readonly sceneName: string;
+      readonly score: number;
+      readonly inventoryCount: number;
+      readonly saveFingerprint: string;
+    };
+
+export const inspectSaveGameSlot = (
+  storage: SaveGameStorage,
+  bundle: RuntimeBundle,
+  slot: number,
+): SaveGameSlotSnapshot => {
+  const normalizedSlot = assertSlot(slot);
+  if (!hasSaveGameSlot(storage, bundle, normalizedSlot)) {
+    return { slot: normalizedSlot, status: "empty" };
+  }
+  try {
+    const save = readSaveGameSlot(storage, bundle, normalizedSlot);
+    const sceneId = save.world.story.currentSceneId;
+    const sceneName = bundle.scenes.find((scene) => scene.id === sceneId)?.name ?? sceneId;
+    return {
+      slot: normalizedSlot,
+      status: "valid",
+      tick: save.world.story.tick,
+      sceneId,
+      sceneName,
+      score: save.world.story.score,
+      inventoryCount: save.world.story.inventory.length,
+      saveFingerprint: save.saveFingerprint,
+    };
+  } catch (error) {
+    return {
+      slot: normalizedSlot,
+      status: "invalid",
+      message: error instanceof Error ? error.message : String(error),
+    };
+  }
+};
+
+export const listSaveGameSlots = (
+  storage: SaveGameStorage,
+  bundle: RuntimeBundle,
+  slotCount = 10,
+): readonly SaveGameSlotSnapshot[] => {
+  if (!Number.isSafeInteger(slotCount) || slotCount < 1 || slotCount > 100) {
+    throw new RangeError("Save-game slot count must be an integer from 1 to 100.");
+  }
+  return Array.from({ length: slotCount }, (_, slot) => inspectSaveGameSlot(storage, bundle, slot));
+};

@@ -1,16 +1,16 @@
-import {
-  useEffect,
-  useState,
-  type ChangeEvent,
-  type CSSProperties,
-  type KeyboardEvent as ReactKeyboardEvent,
-  type ReactNode,
-} from "react";
 import type {
   ClassicAdventureCreatorProject,
   ClassicAdventureCreatorScene,
   ClassicAdventureCreatorTimingField,
 } from "@evavo/adventure-design/classic-game-creator";
+import {
+  type ChangeEvent,
+  type CSSProperties,
+  type KeyboardEvent as ReactKeyboardEvent,
+  type ReactNode,
+  useEffect,
+  useState,
+} from "react";
 
 export type CreatorSurface = "scene" | "interface" | "puzzles" | "timing";
 
@@ -170,9 +170,7 @@ export const CommitText = ({
     <input
       type="text"
       value={draft}
-      onChange={(event: ChangeEvent<HTMLInputElement>) =>
-        setDraft(event.currentTarget.value)
-      }
+      onChange={(event: ChangeEvent<HTMLInputElement>) => setDraft(event.currentTarget.value)}
       onBlur={() => {
         const normalized = draft.trim();
         if (normalized && normalized !== value) onCommit(normalized);
@@ -201,9 +199,7 @@ export const downloadProject = (project: ClassicAdventureCreatorProject): void =
   URL.revokeObjectURL(url);
 };
 
-export const firstScene = (
-  project: ClassicAdventureCreatorProject,
-): ClassicAdventureCreatorScene => {
+export const firstScene = (project: ClassicAdventureCreatorProject): ClassicAdventureCreatorScene => {
   const scene = project.scenes[0];
   if (!scene) throw new Error(`Creator project '${project.id}' has no scenes.`);
   return scene;
@@ -212,8 +208,7 @@ export const firstScene = (
 export const sceneById = (
   project: ClassicAdventureCreatorProject,
   id: string,
-): ClassicAdventureCreatorScene =>
-  project.scenes.find((scene) => scene.id === id) ?? firstScene(project);
+): ClassicAdventureCreatorScene => project.scenes.find((scene) => scene.id === id) ?? firstScene(project);
 
 export const sceneKindLabel = (scene: ClassicAdventureCreatorScene): string =>
   scene.kind === "gameplay"
@@ -267,9 +262,7 @@ export const RangeField = ({
       min={minimum}
       max={maximum}
       value={value}
-      onChange={(event: ChangeEvent<HTMLInputElement>) =>
-        onChange(Number(event.currentTarget.value))
-      }
+      onChange={(event: ChangeEvent<HTMLInputElement>) => onChange(Number(event.currentTarget.value))}
     />
     <output>{value}</output>
   </label>

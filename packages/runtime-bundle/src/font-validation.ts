@@ -1,17 +1,12 @@
+import { type BitmapFontIssue, validateBitmapFontManifest } from "@evavo/adventure-bitmap-font";
 import {
-  validateBitmapFontManifest,
-  type BitmapFontIssue,
-} from "@evavo/adventure-bitmap-font";
-import {
-  validateCompiledBitmapFontMappings,
   type BitmapFontCompiledIssue,
+  validateCompiledBitmapFontMappings,
 } from "@evavo/adventure-bitmap-font/compiled-mapping";
 import type { AdventureProject } from "@evavo/adventure-project-schema";
 import type { RuntimeBundle } from "./index.js";
 
-export type RuntimeBitmapFontIssue =
-  | BitmapFontIssue
-  | BitmapFontCompiledIssue;
+export type RuntimeBitmapFontIssue = BitmapFontIssue | BitmapFontCompiledIssue;
 
 export class RuntimeBitmapFontValidationError extends Error {
   readonly issues: readonly RuntimeBitmapFontIssue[];

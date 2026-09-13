@@ -1,10 +1,4 @@
-import type {
-  Action,
-  AdventureProject,
-  DialogueGraph,
-  Id,
-  Sequence,
-} from "@evavo/adventure-project-schema";
+import type { Action, AdventureProject, DialogueGraph, Id, Sequence } from "@evavo/adventure-project-schema";
 
 export class NarrativeLibraryCommandError extends Error {
   readonly code:
@@ -16,11 +10,7 @@ export class NarrativeLibraryCommandError extends Error {
     | "empty-batch";
   readonly path: string;
 
-  constructor(
-    code: NarrativeLibraryCommandError["code"],
-    path: string,
-    message: string,
-  ) {
+  constructor(code: NarrativeLibraryCommandError["code"], path: string, message: string) {
     super(message);
     this.name = "NarrativeLibraryCommandError";
     this.code = code;
@@ -91,9 +81,7 @@ const canonicalize = (value: unknown): unknown => {
   if (value && typeof value === "object") {
     const source = value as Readonly<Record<string, unknown>>;
     const output: Record<string, unknown> = {};
-    for (const key of Object.keys(source).sort((left, right) =>
-      left.localeCompare(right),
-    )) {
+    for (const key of Object.keys(source).sort((left, right) => left.localeCompare(right))) {
       const child = source[key];
       if (child !== undefined) output[key] = canonicalize(child);
     }
@@ -110,12 +98,7 @@ export const canonicalNarrativeLibraryJson = (value: unknown): string => {
   return output;
 };
 
-const insertAt = <T>(
-  values: readonly T[],
-  index: number,
-  value: T,
-  path: string,
-): T[] => {
+const insertAt = <T>(values: readonly T[], index: number, value: T, path: string): T[] => {
   if (!Number.isSafeInteger(index) || index < 0 || index > values.length) {
     throw new NarrativeLibraryCommandError(
       "invalid-index",
@@ -123,11 +106,7 @@ const insertAt = <T>(
       `Insert index ${index} is outside 0 to ${values.length}.`,
     );
   }
-  return [
-    ...values.slice(0, index).map(cloneJson),
-    cloneJson(value),
-    ...values.slice(index).map(cloneJson),
-  ];
+  return [...values.slice(0, index).map(cloneJson), cloneJson(value), ...values.slice(index).map(cloneJson)];
 };
 
 const removeAt = <T>(values: readonly T[], index: number): T[] => [
@@ -211,11 +190,7 @@ const assertUniqueIds = (
   }
 };
 
-const assertStableIdentity = (
-  expected: string,
-  actual: string,
-  path: string,
-): void => {
+const assertStableIdentity = (expected: string, actual: string, path: string): void => {
   if (expected !== actual) {
     throw new NarrativeLibraryCommandError(
       "identity-change",
@@ -302,10 +277,7 @@ const projectActions = (project: AdventureProject): readonly ActionLocation[] =>
   return locations;
 };
 
-const dialogueReference = (
-  project: AdventureProject,
-  dialogueId: Id<"dialogue">,
-): string | null => {
+const dialogueReference = (project: AdventureProject, dialogueId: Id<"dialogue">): string | null => {
   for (const location of projectActions(project)) {
     if (
       location.action.kind === "start-dialogue" &&
@@ -318,10 +290,7 @@ const dialogueReference = (
   return null;
 };
 
-const sequenceReference = (
-  project: AdventureProject,
-  sequenceId: Id<"sequence">,
-): string | null => {
+const sequenceReference = (project: AdventureProject, sequenceId: Id<"sequence">): string | null => {
   for (const location of projectActions(project)) {
     if (
       location.action.kind === "play-sequence" &&
@@ -338,9 +307,7 @@ const findDialogue = (
   project: AdventureProject,
   dialogueId: Id<"dialogue">,
 ): { readonly index: number; readonly dialogue: DialogueGraph } => {
-  const index = project.dialogues.findIndex(
-    (dialogue) => dialogue.id === dialogueId,
-  );
+  const index = project.dialogues.findIndex((dialogue) => dialogue.id === dialogueId);
   if (index < 0) {
     throw new NarrativeLibraryCommandError(
       "missing-entity",
@@ -357,9 +324,7 @@ const findSequence = (
   project: AdventureProject,
   sequenceId: Id<"sequence">,
 ): { readonly index: number; readonly sequence: Sequence } => {
-  const index = project.sequences.findIndex(
-    (sequence) => sequence.id === sequenceId,
-  );
+  const index = project.sequences.findIndex((sequence) => sequence.id === sequenceId);
   if (index < 0) {
     throw new NarrativeLibraryCommandError(
       "missing-entity",
@@ -402,12 +367,7 @@ export const applyNarrativeLibraryCommand = (
       return {
         project: {
           ...project,
-          dialogues: insertAt(
-            project.dialogues,
-            command.index,
-            command.dialogue,
-            "index",
-          ),
+          dialogues: insertAt(project.dialogues, command.index, command.dialogue, "index"),
         },
         inverse: {
           kind: "remove-dialogue",
@@ -433,21 +393,9 @@ export const applyNarrativeLibraryCommand = (
       };
     }
     case "replace-dialogue": {
-      const { index, dialogue: previous } = findDialogue(
-        project,
-        command.dialogueId,
-      );
-      assertStableIdentity(
-        command.dialogueId,
-        command.dialogue.id,
-        "dialogue.id",
-      );
-      assertUniqueIds(
-        project,
-        dialogueIds(command.dialogue),
-        "dialogue",
-        new Set(dialogueIds(previous)),
-      );
+      const { index, dialogue: previous } = findDialogue(project, command.dialogueId);
+      assertStableIdentity(command.dialogueId, command.dialogue.id, "dialogue.id");
+      assertUniqueIds(project, dialogueIds(command.dialogue), "dialogue", new Set(dialogueIds(previous)));
       return {
         project: {
           ...project,
@@ -465,12 +413,7 @@ export const applyNarrativeLibraryCommand = (
       return {
         project: {
           ...project,
-          sequences: insertAt(
-            project.sequences,
-            command.index,
-            command.sequence,
-            "index",
-          ),
+          sequences: insertAt(project.sequences, command.index, command.sequence, "index"),
         },
         inverse: {
           kind: "remove-sequence",
@@ -496,21 +439,9 @@ export const applyNarrativeLibraryCommand = (
       };
     }
     case "replace-sequence": {
-      const { index, sequence: previous } = findSequence(
-        project,
-        command.sequenceId,
-      );
-      assertStableIdentity(
-        command.sequenceId,
-        command.sequence.id,
-        "sequence.id",
-      );
-      assertUniqueIds(
-        project,
-        sequenceIds(command.sequence),
-        "sequence",
-        new Set(sequenceIds(previous)),
-      );
+      const { index, sequence: previous } = findSequence(project, command.sequenceId);
+      assertStableIdentity(command.sequenceId, command.sequence.id, "sequence.id");
+      assertUniqueIds(project, sequenceIds(command.sequence), "sequence", new Set(sequenceIds(previous)));
       return {
         project: {
           ...project,
@@ -526,9 +457,7 @@ export const applyNarrativeLibraryCommand = (
   }
 };
 
-export const createNarrativeLibraryDocument = (
-  project: AdventureProject,
-): NarrativeLibraryDocumentState => {
+export const createNarrativeLibraryDocument = (project: AdventureProject): NarrativeLibraryDocumentState => {
   const snapshot = cloneJson(project);
   return {
     project: snapshot,
@@ -537,15 +466,10 @@ export const createNarrativeLibraryDocument = (
   };
 };
 
-export const isNarrativeLibraryDocumentDirty = (
-  document: NarrativeLibraryDocumentState,
-): boolean =>
-  canonicalNarrativeLibraryJson(document.project) !==
-  canonicalNarrativeLibraryJson(document.savedProject);
+export const isNarrativeLibraryDocumentDirty = (document: NarrativeLibraryDocumentState): boolean =>
+  canonicalNarrativeLibraryJson(document.project) !== canonicalNarrativeLibraryJson(document.savedProject);
 
-export const createNarrativeLibraryHistory = (
-  project: AdventureProject,
-): NarrativeLibraryHistoryState => ({
+export const createNarrativeLibraryHistory = (project: AdventureProject): NarrativeLibraryHistoryState => ({
   document: createNarrativeLibraryDocument(project),
   undoStack: [],
   redoStack: [],
@@ -576,10 +500,7 @@ export const executeNarrativeLibraryCommand = (
   const applied = applyToDocument(history.document, command);
   return {
     document: applied.document,
-    undoStack: [
-      ...history.undoStack,
-      { undo: applied.inverse, redo: cloneJson(command) },
-    ],
+    undoStack: [...history.undoStack, { undo: applied.inverse, redo: cloneJson(command) }],
     redoStack: [],
   };
 };

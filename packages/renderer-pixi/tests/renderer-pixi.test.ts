@@ -1,14 +1,11 @@
-import { describe, expect, it } from "vitest";
 import type { Id } from "@evavo/adventure-project-schema";
 import type {
   BitmapTextRenderNode,
   SolidRectangleRenderNode,
   SpriteRenderNode,
 } from "@evavo/adventure-render-contract";
-import {
-  pixiSupportsNode,
-  toPixiFill,
-} from "../src/index.js";
+import { describe, expect, it } from "vitest";
+import { pixiSupportsNode, toPixiFill } from "../src/index.js";
 
 const id = <T extends string>(value: string) => value as Id<T>;
 

@@ -1,4 +1,5 @@
 import { describe, expect, it } from "vitest";
+import { studioBitmapFonts, studioFontProject } from "../src/font-fixture.js";
 import {
   bitmapFontPreviewLayout,
   bitmapFontWorkspaceIsDirty,
@@ -11,24 +12,15 @@ import {
   selectedBitmapFont,
   selectedBitmapGlyph,
 } from "../src/font-workspace.js";
-import {
-  studioBitmapFonts,
-  studioFontProject,
-} from "../src/font-fixture.js";
 
 describe("bitmap font workspace", () => {
   it("lays out the preview with native integer metrics", () => {
-    const state = createBitmapFontWorkspace(
-      studioFontProject,
-      studioBitmapFonts,
-    );
+    const state = createBitmapFontWorkspace(studioFontProject, studioBitmapFonts);
     const layout = bitmapFontPreviewLayout(state);
 
     expect(layout.width).toBe(180);
     expect(layout.placements.length).toBeGreaterThan(10);
-    expect(layout.placements.every((placement) => Number.isInteger(placement.x))).toBe(
-      true,
-    );
+    expect(layout.placements.every((placement) => Number.isInteger(placement.x))).toBe(true);
     expect(layout.fallbackCodePoints).toEqual([]);
   });
 

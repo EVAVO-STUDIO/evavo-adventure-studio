@@ -1,10 +1,6 @@
-import { useRef, useState, type ChangeEvent } from "react";
-import type {
-  ReplayInspection,
-  SaveGameInspection,
-} from "@evavo/adventure-playtest-inspector";
+import type { ReplayInspection, SaveGameInspection } from "@evavo/adventure-playtest-inspector";
 import type { CanonicalSaveDiff } from "@evavo/adventure-playtest-inspector/canonical-diff";
-import { ReplayCheckpointPanel } from "./ReplayCheckpointPanel.js";
+import { type ChangeEvent, useRef, useState } from "react";
 import { reportPlaytestArtifactReadFailure } from "./playtest-file-controller.js";
 import {
   clearPlaytestArtifact,
@@ -13,6 +9,7 @@ import {
   type PlaytestArtifactKind,
   type PlaytestInspectorWorkspaceState,
 } from "./playtest-workspace.js";
+import { ReplayCheckpointPanel } from "./ReplayCheckpointPanel.js";
 import "./playtest.css";
 import "./playtest-controls.css";
 import "./playtest-audit.css";
@@ -26,14 +23,7 @@ interface ArtifactPickerProps {
   readonly onClear: (kind: PlaytestArtifactKind) => void;
 }
 
-const ArtifactPicker = ({
-  kind,
-  label,
-  fileName,
-  error,
-  onLoad,
-  onClear,
-}: ArtifactPickerProps) => {
+const ArtifactPicker = ({ kind, label, fileName, error, onLoad, onClear }: ArtifactPickerProps) => {
   const inputId = `playtest-artifact-${kind}`;
   const statusId = `${inputId}-status`;
   const canClear = fileName !== null || error !== null;
@@ -74,13 +64,7 @@ const ArtifactPicker = ({
   );
 };
 
-const Metric = ({
-  label,
-  value,
-}: {
-  readonly label: string;
-  readonly value: string | number;
-}) => (
+const Metric = ({ label, value }: { readonly label: string; readonly value: string | number }) => (
   <div className="playtest-metric">
     <span>{label}</span>
     <strong>{value}</strong>
@@ -180,25 +164,20 @@ const CanonicalAudit = ({
             : "Canonical states match"}
         </h2>
       </div>
-      <span
-        className={`playtest-canonical-status${diff.changed ? " has-difference" : ""}`}
-      >
+      <span className={`playtest-canonical-status${diff.changed ? " has-difference" : ""}`}>
         {diff.changed ? "Divergence found" : "Exact match"}
       </span>
     </header>
     <p className="playtest-canonical-copy">
-      This audit compares every serialized world and interface field, including
-      random streams, consumed interactions, dialogue choices and score-award
-      identities that are intentionally summarized by the semantic view.
+      This audit compares every serialized world and interface field, including random streams, consumed
+      interactions, dialogue choices and score-award identities that are intentionally summarized by the
+      semantic view.
     </p>
     <div className="playtest-metric-grid">
       <Metric label="Exact paths" value={diff.entries.length} />
       <Metric label="Truncated" value={diff.truncated ? "Yes" : "No"} />
       <Metric label="Semantic changes" value={semanticChanged ? "Yes" : "No"} />
-      <Metric
-        label="Hidden divergence"
-        value={diff.changed && !semanticChanged ? "Yes" : "No"}
-      />
+      <Metric label="Hidden divergence" value={diff.changed && !semanticChanged ? "Yes" : "No"} />
     </div>
     {diff.changed ? (
       <details className="playtest-canonical-details" open={!semanticChanged}>
@@ -231,8 +210,7 @@ const CanonicalAudit = ({
         </div>
         {diff.truncated ? (
           <p className="playtest-canonical-note">
-            The audit reached its 250-path display limit. The saves still differ
-            beyond the paths shown here.
+            The audit reached its 250-path display limit. The saves still differ beyond the paths shown here.
           </p>
         ) : null}
       </details>
@@ -240,11 +218,7 @@ const CanonicalAudit = ({
   </section>
 );
 
-const ReplayTimeline = ({
-  inspection,
-}: {
-  readonly inspection: ReplayInspection;
-}) => (
+const ReplayTimeline = ({ inspection }: { readonly inspection: ReplayInspection }) => (
   <section className="playtest-card playtest-replay">
     <header>
       <div>
@@ -275,9 +249,7 @@ const ReplayTimeline = ({
         </li>
       ))}
     </ol>
-    <footer>
-      Expected final save: {inspection.expectedFinalSaveFingerprint ?? "Not recorded"}
-    </footer>
+    <footer>Expected final save: {inspection.expectedFinalSaveFingerprint ?? "Not recorded"}</footer>
   </section>
 );
 
@@ -294,24 +266,17 @@ export const PlaytestApp = () => {
   );
   const readGeneration = useRef(initialReadGeneration());
 
-  const loadFile = async (
-    kind: PlaytestArtifactKind,
-    file: File,
-  ): Promise<void> => {
+  const loadFile = async (kind: PlaytestArtifactKind, file: File): Promise<void> => {
     const generation = readGeneration.current[kind] + 1;
     readGeneration.current[kind] = generation;
 
     try {
       const text = await file.text();
       if (readGeneration.current[kind] !== generation) return;
-      setState((current) =>
-        loadPlaytestArtifactText(current, kind, text, file.name),
-      );
+      setState((current) => loadPlaytestArtifactText(current, kind, text, file.name));
     } catch (error) {
       if (readGeneration.current[kind] !== generation) return;
-      setState((current) =>
-        reportPlaytestArtifactReadFailure(current, kind, file.name, error),
-      );
+      setState((current) => reportPlaytestArtifactReadFailure(current, kind, file.name, error));
     }
   };
 
@@ -327,8 +292,8 @@ export const PlaytestApp = () => {
           <span className="playtest-eyebrow">EVAVO Adventure Studio</span>
           <h1>Playtest Inspector</h1>
           <p>
-            Validate packaged saves and replays, inspect canonical world state,
-            and compare two checkpoints without starting the renderer.
+            Validate packaged saves and replays, inspect canonical world state, and compare two checkpoints
+            without starting the renderer.
           </p>
         </div>
         <div className="playtest-header-status">
@@ -376,19 +341,15 @@ export const PlaytestApp = () => {
         <section className="playtest-empty">
           <strong>Start with game.bundle.json</strong>
           <p>
-            Every save and replay is checked against the exact project, asset
-            manifest and runtime-bundle fingerprint.
+            Every save and replay is checked against the exact project, asset manifest and runtime-bundle
+            fingerprint.
           </p>
         </section>
       ) : null}
 
       <section className="playtest-summary-grid">
-        {state.beforeInspection ? (
-          <SaveSummary title="Save A" inspection={state.beforeInspection} />
-        ) : null}
-        {state.afterInspection ? (
-          <SaveSummary title="Save B" inspection={state.afterInspection} />
-        ) : null}
+        {state.beforeInspection ? <SaveSummary title="Save A" inspection={state.beforeInspection} /> : null}
+        {state.afterInspection ? <SaveSummary title="Save B" inspection={state.afterInspection} /> : null}
       </section>
 
       {state.diff ? (
@@ -397,9 +358,7 @@ export const PlaytestApp = () => {
             <div>
               <span className="playtest-eyebrow">Semantic state diff</span>
               <h2>
-                {state.diff.changed
-                  ? `${state.diff.entries.length} changes`
-                  : "No semantic state changes"}
+                {state.diff.changed ? `${state.diff.entries.length} changes` : "No semantic state changes"}
               </h2>
             </div>
           </header>
@@ -433,18 +392,12 @@ export const PlaytestApp = () => {
       ) : null}
 
       {state.canonicalDiff ? (
-        <CanonicalAudit
-          diff={state.canonicalDiff}
-          semanticChanged={state.diff?.changed ?? false}
-        />
+        <CanonicalAudit diff={state.canonicalDiff} semanticChanged={state.diff?.changed ?? false} />
       ) : null}
 
       {state.replayInspection ? (
         <>
-          <ReplayCheckpointPanel
-            replay={state.replayInspection}
-            afterSave={state.afterInspection}
-          />
+          <ReplayCheckpointPanel replay={state.replayInspection} afterSave={state.afterInspection} />
           <ReplayTimeline inspection={state.replayInspection} />
         </>
       ) : null}

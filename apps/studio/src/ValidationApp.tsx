@@ -1,17 +1,7 @@
-import {
-  useMemo,
-  useState,
-  type ChangeEvent,
-} from "react";
-import {
-  parseSceneInstanceManifest,
-  type SceneInstanceManifest,
-} from "@evavo/adventure-scene-instances";
+import { parseSceneInstanceManifest, type SceneInstanceManifest } from "@evavo/adventure-scene-instances";
+import { type ChangeEvent, useMemo, useState } from "react";
 import { studioProject, studioSceneInstances } from "./fixture.js";
-import {
-  validateStudioManifest,
-  type StudioValidationGroup,
-} from "./validation.js";
+import { type StudioValidationGroup, validateStudioManifest } from "./validation.js";
 import "./validation.css";
 
 const createBrokenDemo = (): SceneInstanceManifest =>
@@ -75,38 +65,27 @@ export const ValidationApp = () => {
   const [sourceName, setSourceName] = useState("Representative studio fixture");
   const [selectedGroupKey, setSelectedGroupKey] = useState<string | null>(null);
   const [loadError, setLoadError] = useState<string | null>(null);
-  const summary = useMemo(
-    () => validateStudioManifest(studioProject, manifest),
-    [manifest],
-  );
+  const summary = useMemo(() => validateStudioManifest(studioProject, manifest), [manifest]);
   const selectedGroup =
-    summary.groups.find(
-      (group) => `${group.kind}:${group.id}` === selectedGroupKey,
-    ) ?? summary.groups[0] ?? null;
+    summary.groups.find((group) => `${group.kind}:${group.id}` === selectedGroupKey) ??
+    summary.groups[0] ??
+    null;
 
-  const openManifest = async (
-    event: ChangeEvent<HTMLInputElement>,
-  ): Promise<void> => {
+  const openManifest = async (event: ChangeEvent<HTMLInputElement>): Promise<void> => {
     const file = event.currentTarget.files?.[0];
     event.currentTarget.value = "";
     if (!file) return;
     try {
-      const loaded = parseSceneInstanceManifest(
-        JSON.parse(await file.text()) as unknown,
-      );
+      const loaded = parseSceneInstanceManifest(JSON.parse(await file.text()) as unknown);
       if (loaded.projectId !== studioProject.id) {
-        throw new Error(
-          `Manifest project '${loaded.projectId}' does not match '${studioProject.id}'.`,
-        );
+        throw new Error(`Manifest project '${loaded.projectId}' does not match '${studioProject.id}'.`);
       }
       setManifest(loaded);
       setSourceName(file.name);
       setSelectedGroupKey(null);
       setLoadError(null);
     } catch (error) {
-      setLoadError(
-        error instanceof Error ? error.message : "The manifest could not be loaded.",
-      );
+      setLoadError(error instanceof Error ? error.message : "The manifest could not be loaded.");
     }
   };
 
@@ -196,9 +175,7 @@ export const ValidationApp = () => {
                 <button
                   type="button"
                   key={key}
-                  className={`validation-group-row ${
-                    selectedGroup === group ? "is-active" : ""
-                  }`}
+                  className={`validation-group-row ${selectedGroup === group ? "is-active" : ""}`}
                   onClick={() => setSelectedGroupKey(key)}
                 >
                   <span>{group.kind === "scene" ? "S" : group.kind === "object-definition" ? "O" : "D"}</span>
@@ -247,7 +224,8 @@ export const ValidationApp = () => {
                 <span>✓</span>
                 <h2>Ready for compiled-asset validation</h2>
                 <p>
-                  The scene composition is structurally and semantically valid. Compilation must still verify source files, runtime outputs and atlas geometry.
+                  The scene composition is structurally and semantically valid. Compilation must still verify
+                  source files, runtime outputs and atlas geometry.
                 </p>
               </div>
             ) : null}

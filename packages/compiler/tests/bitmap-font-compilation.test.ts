@@ -1,11 +1,8 @@
-import { describe, expect, it } from "vitest";
 import { assetBuildManifestSchema } from "@evavo/adventure-asset-contract";
 import { bitmapFontManifestSchema } from "@evavo/adventure-bitmap-font";
 import { parseAdventureProject } from "@evavo/adventure-project-schema";
-import {
-  compileProject,
-  ProjectCompilationError,
-} from "../src/index.js";
+import { describe, expect, it } from "vitest";
+import { compileProject, type ProjectCompilationError } from "../src/index.js";
 
 const hash = "0".repeat(64);
 
@@ -70,9 +67,7 @@ const assets = assetBuildManifestSchema.parse({
     {
       assetId: "asset.office",
       kind: "image",
-      sourceFiles: [
-        { path: "art/office.png", sha256: hash, byteLength: 1 },
-      ],
+      sourceFiles: [{ path: "art/office.png", sha256: hash, byteLength: 1 }],
       outputFiles: [
         {
           role: "primary",
@@ -93,9 +88,7 @@ const assets = assetBuildManifestSchema.parse({
     {
       assetId: "asset.font.dialogue",
       kind: "image",
-      sourceFiles: [
-        { path: "art/font-dialogue.png", sha256: hash, byteLength: 1 },
-      ],
+      sourceFiles: [{ path: "art/font-dialogue.png", sha256: hash, byteLength: 1 }],
       outputFiles: [
         {
           role: "primary",
@@ -165,9 +158,7 @@ describe("bitmap font compilation", () => {
     const compiled = compileProject(project, assets, fonts);
 
     expect(compiled.bundle.bitmapFonts?.fonts[0]?.glyphs.map((glyph) => glyph.codePoint)).toEqual([
-      63,
-      65,
-      86,
+      63, 65, 86,
     ]);
     expect(compiled.bundle.bitmapFonts?.fonts[0]?.kernings).toEqual([
       { leftCodePoint: 65, rightCodePoint: 86, adjustment: -1 },
@@ -214,9 +205,7 @@ describe("bitmap font compilation", () => {
 
     expect(() => compileProject(project, assets, broken)).toThrowError(
       expect.objectContaining<Partial<ProjectCompilationError>>({
-        issues: expect.arrayContaining([
-          expect.objectContaining({ code: "compiled-font-image-bounds" }),
-        ]),
+        issues: expect.arrayContaining([expect.objectContaining({ code: "compiled-font-image-bounds" })]),
       }),
     );
   });

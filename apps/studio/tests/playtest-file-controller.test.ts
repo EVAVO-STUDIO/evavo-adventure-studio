@@ -22,12 +22,8 @@ describe("playtest artifact file controller", () => {
     expect(state.beforeSaveName).toBe("broken.save.json");
     expect(state.beforeInspection).toBeNull();
     expect(state.diff).toBeNull();
-    expect(state.errors.beforeSave).toBe(
-      "Unable to read 'broken.save.json': permission denied",
-    );
-    expect(state.errors.replay).toBe(
-      "Unable to read 'broken.replay.json': device disconnected",
-    );
+    expect(state.errors.beforeSave).toBe("Unable to read 'broken.save.json': permission denied");
+    expect(state.errors.replay).toBe("Unable to read 'broken.replay.json': device disconnected");
   });
 
   it("invalidates bundle-dependent views when the selected bundle cannot be read", () => {
@@ -59,12 +55,7 @@ describe("playtest artifact file controller", () => {
       "after.save.json",
       new Error("after failed"),
     );
-    state = reportPlaytestArtifactReadFailure(
-      state,
-      "replay",
-      "run.replay.json",
-      new Error("replay failed"),
-    );
+    state = reportPlaytestArtifactReadFailure(state, "replay", "run.replay.json", new Error("replay failed"));
 
     expect(state.afterSaveName).toBe("after.save.json");
     expect(state.replayName).toBe("run.replay.json");

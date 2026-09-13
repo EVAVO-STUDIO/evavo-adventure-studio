@@ -208,8 +208,7 @@
   border-color: color-mix(in srgb, var(--ppf-accent) 48%, #272b35);
   color: white;
   background:
-    linear-gradient(100deg, color-mix(in srgb, var(--ppf-accent) 13%, transparent), transparent 70%),
-    #171a22;
+    linear-gradient(100deg, color-mix(in srgb, var(--ppf-accent) 13%, transparent), transparent 70%), #171a22;
 }
 
 .scg-family-number {
@@ -258,11 +257,21 @@
   border: 1px solid rgb(255 255 255 / 9%);
 }
 
-.scg-family-palette i:nth-child(1) { height: 9px; }
-.scg-family-palette i:nth-child(2) { height: 13px; }
-.scg-family-palette i:nth-child(3) { height: 17px; }
-.scg-family-palette i:nth-child(4) { height: 21px; }
-.scg-family-palette i:nth-child(5) { height: 25px; }
+.scg-family-palette i:nth-child(1) {
+  height: 9px;
+}
+.scg-family-palette i:nth-child(2) {
+  height: 13px;
+}
+.scg-family-palette i:nth-child(3) {
+  height: 17px;
+}
+.scg-family-palette i:nth-child(4) {
+  height: 21px;
+}
+.scg-family-palette i:nth-child(5) {
+  height: 25px;
+}
 
 .scg-family-rail > footer,
 .scg-inspector > footer {
@@ -282,8 +291,7 @@
   padding: 22px 26px 34px;
   background:
     linear-gradient(rgb(255 255 255 / 1.4%) 1px, transparent 1px),
-    linear-gradient(90deg, rgb(255 255 255 / 1.4%) 1px, transparent 1px),
-    #0a0b10;
+    linear-gradient(90deg, rgb(255 255 255 / 1.4%) 1px, transparent 1px), #0a0b10;
   background-size: 32px 32px;
 }
 
@@ -362,8 +370,7 @@
 .scg-button.is-active {
   border-color: color-mix(in srgb, var(--ppf-accent) 56%, #343945);
   background:
-    linear-gradient(100deg, color-mix(in srgb, var(--ppf-accent) 16%, transparent), transparent),
-    #171a23;
+    linear-gradient(100deg, color-mix(in srgb, var(--ppf-accent) 16%, transparent), transparent), #171a23;
 }
 
 .scg-button span {
@@ -487,7 +494,11 @@
 }
 
 .scg-treatment {
-  background: linear-gradient(145deg, color-mix(in srgb, var(--ppf-accent) 11%, transparent), transparent 72%);
+  background: linear-gradient(
+    145deg,
+    color-mix(in srgb, var(--ppf-accent) 11%, transparent),
+    transparent 72%
+  );
 }
 
 .scg-treatment h2 {

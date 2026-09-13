@@ -1,11 +1,11 @@
 import { evaluateAdventureDesignDimensions } from "./authenticity-design.js";
 import { evaluateAdventureFoundationDimensions } from "./authenticity-foundation.js";
 import {
-  finalizeAuthenticityDimension,
   type AdventureAuthenticityDimension,
   type AdventureAuthenticityGrade,
   type AdventureAuthenticityReport,
   type AdventureAuthenticityStatus,
+  finalizeAuthenticityDimension,
 } from "./authenticity-types.js";
 import type { AdventureDesignDocument } from "./types.js";
 
@@ -40,9 +40,7 @@ export const evaluateAdventureAuthenticity = (
   });
   const score = dimensions.reduce((total, dimension) => total + dimension.score, 0);
   const findings = dimensions.flatMap((dimension) => dimension.findings);
-  const status: AdventureAuthenticityStatus = dimensions.some(
-    (dimension) => dimension.status === "blocked",
-  )
+  const status: AdventureAuthenticityStatus = dimensions.some((dimension) => dimension.status === "blocked")
     ? "blocked"
     : dimensions.some((dimension) => dimension.status === "attention")
       ? "attention"
